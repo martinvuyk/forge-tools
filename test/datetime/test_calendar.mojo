@@ -1,6 +1,8 @@
+# RUN: %mojo %s
+
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
-from src.datetime.calendar import (
+from forge_tools.datetime.calendar import (
     CalendarHashes,
     Calendar,
     Gregorian,

@@ -1,9 +1,16 @@
+# RUN: %mojo %s
+
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
 from time import time
 
-from src.datetime.fast import DateTime64, DateTime32, DateTime16, DateTime8
-from src.datetime.dt_str import IsoFormat
+from forge_tools.datetime.fast import (
+    DateTime64,
+    DateTime32,
+    DateTime16,
+    DateTime8,
+)
+from forge_tools.datetime.dt_str import IsoFormat
 
 
 fn test_add64() raises:

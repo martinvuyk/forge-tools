@@ -1,1 +1,4 @@
+build/
+*.mojopkg
+
 install_id

@@ -1,6 +1,8 @@
+# RUN: %mojo %s
+
 from testing import assert_equal, assert_false, assert_true, assert_almost_equal
 
-from src.complex import Quaternion, DualQuaternion
+from forge_tools.complex import Quaternion, DualQuaternion
 
 
 fn test_quaternion_ops() raises:

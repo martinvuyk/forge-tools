@@ -1,6 +1,8 @@
+# RUN: %mojo %s
+
 from testing import assert_equal, assert_false, assert_true, assert_raises
 
-from src.collections.array import Array
+from forge_tools.collections.array import Array
 
 
 fn test_array() raises:

@@ -1,8 +1,16 @@
 # Forge Tools
 Tools to extend the functionality of the Mojo standard library. Hopefully they will all someday be available in the stdlib. The main focus is to only include things that would make sense in such a library.
 
-# How to Install
-TODO
+## How to Install
+```bash
+source ./scripts/package-lib.sh
+```
+The semi-compiled package will be under `./build/forge_tools.mojopkg`
+## How to run tests
+test an entire directory or subdirectories or specific file
+```bash
+source ./scripts/run-tests.sh test/
+```
 
 # Packages
 

@@ -428,7 +428,7 @@ struct ResultReg[T: AnyTrivialRegType](Boolable):
             self = Self(err=value[1])
 
     @always_inline("nodebug")
-    fn __init__(inout self, owned other: ResultReg[T]):
+    fn __init__[A: AnyTrivialRegType](inout self, owned other: ResultReg[A]):
         """Create a `ResultReg` by transferring another `ResultReg`'s Error.
 
         Parameters:

@@ -1,6 +1,8 @@
+# RUN: %mojo %s
+
 from testing import assert_true, assert_false, assert_equal
 
-from src.collections.result import Result, ResultReg
+from forge_tools.collections.result import Result, ResultReg, Err, ErrorReg
 
 
 fn _returning_err_reg[T: AnyTrivialRegType](value: T) raises -> ResultReg[T]:
@@ -18,7 +20,7 @@ fn _returning_ok_reg[T: AnyTrivialRegType](value: T) raises -> ResultReg[T]:
 
 
 fn _returning_err[T: CollectionElement](value: T) raises -> Result[T]:
-    var result = Result[T](err=Error("something"))
+    var result = Result[T](err=Err("something"))
     if not result:
         return result
     raise Error("shouldn't get here")
@@ -37,14 +39,14 @@ fn _returning_transferred_err[
     # this value and err at the same time will never happen, just for testing
     # the value "some other string" should NOT get transferred
     var res1 = Result(String("some other string"))
-    res1.err = Error("some error")
+    res1.err = Err("some error")
     if res1:
         return res1
     raise Error("shouldn't get here")
 
 
 fn _returning_none_err[T: CollectionElement](value: T) raises -> Result[T]:
-    var res1 = Result[String](err=Error("some error"))
+    var res1 = Result[String](err=Err("some error"))
     if res1.err:
         return None, res1.err
     raise Error("shouldn't get here")
@@ -190,7 +192,7 @@ def test_basic():
 
 def test_result_reg_basic():
     var val = ResultReg[Int](err=ErrorReg("something"))
-    var val2 = Result[Int](err=Error("something"))
+    var val2 = Result[Int](err=Err("something"))
     assert_false(val and val2)
 
     val = ResultReg[Int](15)

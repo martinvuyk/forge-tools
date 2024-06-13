@@ -1,10 +1,12 @@
+# RUN: %mojo %s
+
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
 from time import time
 
-from src.datetime.date import Date
-from src.datetime.calendar import Calendar, PythonCalendar, UTCCalendar
-from src.datetime.dt_str import IsoFormat
+from forge_tools.datetime.date import Date
+from forge_tools.datetime.calendar import Calendar, PythonCalendar, UTCCalendar
+from forge_tools.datetime.dt_str import IsoFormat
 
 
 fn test_add() raises:
