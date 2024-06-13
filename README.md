@@ -24,17 +24,14 @@ This is typically faster than Python's `Array` as it is stack-allocated
 and does not require any dynamic memory allocation and uses vectorized
 operations wherever possible.
 ```mojo
-from forge_tools.collections import Array
-
-fn main():
-    var a = Array[DType.uint8, 3](1, 2, 3)
-    var b = Array[DType.uint8, 3](1, 2, 3)
-    print((a - b).sum()) # prints 0
-    print(a.avg()) # prints 2
-    print(a * b) # dot product: 14
-    print(a.cross(b)) # cross product: Array(0, 0, 0)
-    print(2 in a) # prints True
-    print(a.index(2).or_else(-1)) # prints 1
+var a = Array[DType.uint8, 3](1, 2, 3)
+var b = Array[DType.uint8, 3](1, 2, 3)
+print((a - b).sum()) # prints 0
+print(a.avg()) # prints 2
+print(a * b) # dot product: 14
+print(a.cross(b)) # cross product: Array(0, 0, 0)
+print(2 in a) # prints True
+print(a.index(2).or_else(-1)) # prints 1
 ```
 ### result.mojo
 ### Result
@@ -48,13 +45,12 @@ and explicitly extract the value to get it out.
 Examples:
 
 ```mojo
-from collections import Result
 var a = Result(1)
 var b = Result[Int]()
 if a:
-    print(a.value()[])  # prints 1
+    print(a.value())  # prints 1
 if b:  # bool(b) is False, so no print
-    print(b.value()[])
+    print(b.value())
 var c = a.or_else(2)
 var d = b.or_else(2)
 print(c)  # prints 1
@@ -64,7 +60,6 @@ print(d)  # prints 2
 And if more information about the returned Error is wanted it is available.
 
 ```mojo
-from collections import Result
 var a = Result(1)
 var b = Result[Int](err=Error("something went wrong"))
 var c = Result[Int](None, Error("error 1"))

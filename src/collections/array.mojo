@@ -10,17 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
-"""Defines the `Array` type.
+"""Defines the `Array` type."""
 
-You can import these APIs from the `collections` package. For example:
-
-```mojo
-from collections import Array
-```
-"""
-
-# from math import sqrt, acos, sin
-# from algorithm import vectorize
+from math import sqrt, acos, sin
+from algorithm import vectorize
 
 # ===----------------------------------------------------------------------===#
 # Array
@@ -288,7 +281,7 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         """Verify if a given value is present in the Array.
 
         ```mojo
-        %# from collections import Array
+        %# from src.collections import Array
         var x = Array(1,2,3)
         if 3 in x: print("x contains 3")
         ```
@@ -346,7 +339,7 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         the way to call this method is a bit special. Here is an example below:
 
         ```mojo
-        %# from collections import Array
+        %# from src.collections import Array
         var my_array = Array(1, 2, 3)
         print(str(my_array))
         ```
@@ -383,7 +376,7 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         the way to call this method is a bit special. Here is an example below:
 
         ```mojo
-        %# from collections import Array
+        %# from src.collections import Array
         var my_array = Array(1, 2, 3)
         print(repr(my_array))
         ```
@@ -477,7 +470,7 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         restricted by the range given the start and stop bounds.
 
         ```mojo
-        %# from collections import Array
+        %# from src.collections import Array
         var item = Array(1, 2, 3).index(2)
         print(item.value() if item else -1) # prints `1`
         ```
@@ -585,7 +578,7 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         the way to call this method is a bit special. Here is an example below.
 
         ```mojo
-        %# from collections import Array
+        %# from src.collections import Array
         var my_array = Array(1, 2, 3)
         print(my_array.count(1))
         ```
@@ -971,7 +964,6 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         Returns:
             The result.
         """
-        from math import sqrt
 
         return sqrt((self.vec**2).reduce_add())
 
@@ -1198,7 +1190,6 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         Returns:
             The result.
         """
-        from math import acos
 
         return acos(self.cos(other))
 
@@ -1252,8 +1243,6 @@ struct Array[T: DType = DType.int16, capacity: Int = 256 // T.bitwidth()](
         Args:
             func: The function to apply.
         """
-
-        from algorithm import vectorize
 
         @parameter
         fn closure[simd_width: Int](i: Int):

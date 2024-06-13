@@ -13,7 +13,7 @@
 # RUN: %mojo -debug-level full %s
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
-from datetime.zoneinfo import (
+from src.datetime.zoneinfo import (
     Offset,
     TzDT,
     ZoneDST,

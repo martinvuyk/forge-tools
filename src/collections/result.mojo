@@ -20,13 +20,13 @@ and explicitly extract the value to get it out.
 Examples:
 
 ```mojo
-from collections import Result
+%# from src.collections import Result
 var a = Result(1)
 var b = Result[Int]()
 if a:
-    print(a.value()[])  # prints 1
+    print(a.value())  # prints 1
 if b:  # bool(b) is False, so no print
-    print(b.value()[])
+    print(b.value())
 var c = a.or_else(2)
 var d = b.or_else(2)
 print(c)  # prints 1
@@ -36,11 +36,12 @@ print(d)  # prints 2
 And if more information about the returned Error is wanted it is available.
 
 ```mojo
-from collections import Result
+%# from src.collections import Result
+%# from src.builtin.error import Error as Err
 var a = Result(1)
-var b = Result[Int](err=Error("something went wrong"))
-var c = Result[Int](None, Error("error 1"))
-var d = Result[Int](err=Error("error 2"))
+var b = Result[Int](err=Err("something went wrong"))
+var c = Result[Int](None, Err("error 1"))
+var d = Result[Int](err=Err("error 2"))
 if a:
     print(a.err)  # prints ""
 if not b:
@@ -78,6 +79,7 @@ fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T
 """
 
 from utils import Variant
+from src.builtin.error import Error as Err, ErrorReg
 
 
 # TODO(27780): NoneType can't currently conform to traits
@@ -109,13 +111,13 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     Examples:
 
     ```mojo
-    from collections import Result
+    %# from src.collections import Result
     var a = Result(1)
     var b = Result[Int]()
     if a:
-        print(a.value()[])  # prints 1
+        print(a.value())  # prints 1
     if b:  # bool(b) is False, so no print
-        print(b.value()[])
+        print(b.value())
     var c = a.or_else(2)
     var d = b.or_else(2)
     print(c)  # prints 1
@@ -125,11 +127,12 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     And if more information about the returned Error is wanted it is available.
 
     ```mojo
-    from collections import Result
+    %# from src.collections import Result
+    %# from src.builtin.error import Error as Err
     var a = Result(1)
-    var b = Result[Int](err=Error("something went wrong"))
-    var c = Result[Int](None, Error("error 1"))
-    var d = Result[Int](err=Error("error 2"))
+    var b = Result[Int](err=Err("something went wrong"))
+    var c = Result[Int](None, Err("error 1"))
+    var d = Result[Int](err=Err("error 2"))
     if a:
         print(a.err)  # prints ""
     if not b:
@@ -170,14 +173,14 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     # This means that Results that are 0-initialized will be None.
     alias _type = Variant[_NoneType, T]
     var _value: Self._type
-    var err: Error
+    var err: Err
     """The Error inside the `Result`."""
 
     @always_inline("nodebug")
     fn __init__(
         inout self,
         value: NoneType = None,
-        err: Error = Error("Result value was not set"),
+        err: Err = Err("Result value was not set"),
         /,
     ):
         """Create an empty `Result` with an `Error`.
@@ -189,7 +192,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self = Self(err=err)
 
     @always_inline("nodebug")
-    fn __init__(inout self, value: Tuple[NoneType, Error], /):
+    fn __init__(inout self, value: Tuple[NoneType, Err], /):
         """Create an empty `Result` with an `Error`.
 
         Args:
@@ -220,10 +223,10 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             value: The value to store in the `Result`.
         """
         self._value = Self._type(value^)
-        self.err = Error()
+        self.err = Err()
 
     @always_inline("nodebug")
-    fn __init__(inout self, *, err: Error):
+    fn __init__(inout self, *, err: Err):
         """Create an empty `Result`.
 
         Args:
@@ -233,9 +236,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self.err = err
 
     @always_inline
-    fn value(
-        self: Reference[Self, _, _]
-    ) -> Reference[T, self.is_mutable, self.lifetime]:
+    fn value(ref [_]self) -> ref [__lifetime_of(self)] T:
         """Retrieve a reference to the value of the `Result`.
 
         This check to see if the `Result` contains a value.
@@ -246,15 +247,15 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             A reference to the contained data of the `Result` as a Reference[T].
         """
-        if not self[]:
+        if not self:
             abort(".value() on empty `Result`")
 
-        return self[].unsafe_value()
+        return self.unsafe_value()
 
     @always_inline
     fn unsafe_value(
-        self: Reference[Self, _, _]
-    ) -> Reference[T, self.is_mutable, self.lifetime]:
+        ref [_]self,
+    ) -> ref [__lifetime_of(self)] T:
         """Unsafely retrieve a reference to the value of the `Result`.
 
         This doesn't check to see if the `Result` contains a value.
@@ -265,8 +266,8 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             A reference to the contained data of the `Result` as a Reference[T].
         """
-        debug_assert(self[], ".value() on empty Result")
-        return self[]._value[T]
+        debug_assert(self, ".value() on empty Result")
+        return self._value[T]
 
     @always_inline
     fn _value_copy(self) -> T:
@@ -382,7 +383,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 
 
 @register_passable("trivial")
-struct ResultReg[T: AnyRegType](Boolable):
+struct ResultReg[T: AnyTrivialRegType](Boolable):
     """A register-passable `ResultReg` type.
 
     This struct `ResultReg` contains a value. It only works with trivial register
@@ -427,7 +428,7 @@ struct ResultReg[T: AnyRegType](Boolable):
             self = Self(err=value[1])
 
     @always_inline("nodebug")
-    fn __init__[A: CollectionElement](inout self, owned other: ResultReg[A]):
+    fn __init__(inout self, owned other: ResultReg[T]):
         """Create a `ResultReg` by transferring another `ResultReg`'s Error.
 
         Parameters:

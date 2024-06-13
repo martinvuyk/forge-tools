@@ -13,7 +13,12 @@
 # RUN: %mojo -debug-level full %s
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
-from datetime.timezone import TimeZone, ZoneInfo, ZoneInfoMem32, ZoneInfoMem8
+from src.datetime.timezone import (
+    TimeZone,
+    ZoneInfo,
+    ZoneInfoMem32,
+    ZoneInfoMem8,
+)
 
 
 fn test_tz_no_iana() raises:
