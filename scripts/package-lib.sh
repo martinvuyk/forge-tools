@@ -32,11 +32,11 @@ if [ -z "${MOJO_OVERRIDE_COMPILER_VERSION_CHECK:-}" ]; then
   fi
 fi
 
-STDLIB_PATH="${REPO_ROOT}/src"
+LIB_PATH="${REPO_ROOT}/src/forge_tools"
 
 echo "Packaging up the Library."
 PACKAGE_NAME="forge_tools.mojopkg"
 FULL_PACKAGE_PATH="${BUILD_DIR}"/"${PACKAGE_NAME}"
-mojo package "${STDLIB_PATH}" -o "${FULL_PACKAGE_PATH}"
+mojo package "${LIB_PATH}" -o "${FULL_PACKAGE_PATH}"
 
 echo Successfully created "${FULL_PACKAGE_PATH}"

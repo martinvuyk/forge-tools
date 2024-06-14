@@ -20,7 +20,7 @@ and explicitly extract the value to get it out.
 Examples:
 
 ```mojo
-%# from src.collections import Result
+from forge_tools.collections import Result
 var a = Result(1)
 var b = Result[Int]()
 if a:
@@ -36,8 +36,8 @@ print(d)  # prints 2
 And if more information about the returned Error is wanted it is available.
 
 ```mojo
-%# from src.collections import Result
-%# from src.builtin.error import Error as Err
+from forge_tools.collections import Result
+from forge_tools.builtin.error import Error as Err
 var a = Result(1)
 var b = Result[Int](err=Err("something went wrong"))
 var c = Result[Int](None, Err("error 1"))
@@ -79,13 +79,7 @@ fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T
 """
 
 from utils import Variant
-from src.builtin.error import Error as Err, ErrorReg
-
-
-# TODO(27780): NoneType can't currently conform to traits
-@value
-struct _NoneType(CollectionElement):
-    pass
+from forge_tools.builtin.error import Error as Err, ErrorReg
 
 
 # ===----------------------------------------------------------------------===#
@@ -111,7 +105,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     Examples:
 
     ```mojo
-    %# from src.collections import Result
+    from forge_tools.collections import Result
     var a = Result(1)
     var b = Result[Int]()
     if a:
@@ -127,8 +121,8 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     And if more information about the returned Error is wanted it is available.
 
     ```mojo
-    %# from src.collections import Result
-    %# from src.builtin.error import Error as Err
+    from forge_tools.collections import Result
+    from forge_tools.builtin.error import Error as Err
     var a = Result(1)
     var b = Result[Int](err=Err("something went wrong"))
     var c = Result[Int](None, Err("error 1"))
@@ -169,9 +163,9 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     .
     """
 
-    # _NoneType comes first so its index is 0.
+    # NoneType comes first so its index is 0.
     # This means that Results that are 0-initialized will be None.
-    alias _type = Variant[_NoneType, T]
+    alias _type = Variant[NoneType, T]
     var _value: Self._type
     var err: Err
     """The Error inside the `Result`."""
@@ -232,7 +226,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Args:
             err: Must be an `Error`.
         """
-        self._value = Self._type(_NoneType())
+        self._value = Self._type(None)
         self.err = err
 
     @always_inline
@@ -365,7 +359,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             True if the `Result` has a value and False otherwise.
         """
-        return not self._value.isa[_NoneType]()
+        return not self._value.isa[NoneType]()
 
     @always_inline("nodebug")
     fn __invert__(self) -> Bool:
