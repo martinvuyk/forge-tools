@@ -89,9 +89,9 @@ if c.err:
     print("c had an error")
 
 # TODO: pattern matching
-if d.err == "error 1":
+if str(d.err) == "error 1":
     print("d had error 1")
-elif d.err == "error 2":
+elif str(d.err) == "error 2":
     print("d had error 2")
 ```
 

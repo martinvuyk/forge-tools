@@ -39,9 +39,9 @@ And if more information about the returned Error is wanted it is available.
 from forge_tools.collections import Result
 from forge_tools.builtin.error import Error as Err
 var a = Result(1)
-var b = Result[Int](err=Err("something went wrong"))
-var c = Result[Int](None, Err("error 1"))
-var d = Result[Int](err=Err("error 2"))
+var b = Result[Int](err=Error("something went wrong"))
+var c = Result[Int](None, Error("error 1"))
+var d = Result[Int](err=Error("error 2"))
 if a:
     print(a.err)  # prints ""
 if not b:
@@ -51,9 +51,9 @@ if c.err:
     print("c had an error")
 
 # TODO: pattern matching
-if d.err == "error 1":
+if str(d.err) == "error 1":
     print("d had error 1")
-elif d.err == "error 2":
+elif str(d.err) == "error 2":
     print("d had error 2")
 ```
 
@@ -79,7 +79,7 @@ fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T
 """
 
 from utils import Variant
-from forge_tools.builtin.error import Error as Err, ErrorReg
+from forge_tools.builtin.error import ErrorReg
 
 
 # ===----------------------------------------------------------------------===#
@@ -124,9 +124,9 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     from forge_tools.collections import Result
     from forge_tools.builtin.error import Error as Err
     var a = Result(1)
-    var b = Result[Int](err=Err("something went wrong"))
-    var c = Result[Int](None, Err("error 1"))
-    var d = Result[Int](err=Err("error 2"))
+    var b = Result[Int](err=Error("something went wrong"))
+    var c = Result[Int](None, Error("error 1"))
+    var d = Result[Int](err=Error("error 2"))
     if a:
         print(a.err)  # prints ""
     if not b:
@@ -136,9 +136,9 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         print("c had an error")
 
     # TODO: pattern matching
-    if d.err == "error 1":
+    if str(d.err) == "error 1":
         print("d had error 1")
-    elif d.err == "error 2":
+    elif str(d.err) == "error 2":
         print("d had error 2")
     ```
 
@@ -167,14 +167,14 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     # This means that Results that are 0-initialized will be None.
     alias _type = Variant[NoneType, T]
     var _value: Self._type
-    var err: Err
+    var err: Error
     """The Error inside the `Result`."""
 
     @always_inline("nodebug")
     fn __init__(
         inout self,
         value: NoneType = None,
-        err: Err = Err("Result value was not set"),
+        err: Error = Error("Result value was not set"),
         /,
     ):
         """Create an empty `Result` with an `Error`.
@@ -186,7 +186,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self = Self(err=err)
 
     @always_inline("nodebug")
-    fn __init__(inout self, value: Tuple[NoneType, Err], /):
+    fn __init__(inout self, value: Tuple[NoneType, Error], /):
         """Create an empty `Result` with an `Error`.
 
         Args:
@@ -217,10 +217,10 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             value: The value to store in the `Result`.
         """
         self._value = Self._type(value^)
-        self.err = Err()
+        self.err = Error()
 
     @always_inline("nodebug")
-    fn __init__(inout self, *, err: Err):
+    fn __init__(inout self, *, err: Error):
         """Create an empty `Result`.
 
         Args:

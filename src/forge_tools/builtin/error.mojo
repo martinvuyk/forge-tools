@@ -153,17 +153,6 @@ struct Error(Stringable, Boolable):
         """
         return str(self)
 
-    fn __eq__(self, other: String) -> Bool:
-        """Whether the Error message is equal to the string.
-
-        Args:
-            other: The String to compare to.
-
-        Returns:
-            The comparison.
-        """
-        return str(self) == other
-
     @always_inline
     fn _message(self) -> String:
         """Converts the Error to string representation.
