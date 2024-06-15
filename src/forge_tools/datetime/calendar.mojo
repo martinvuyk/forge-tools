@@ -1,15 +1,3 @@
-# ===----------------------------------------------------------------------=== #
-# Copyright (c) 2024, Modular Inc. All rights reserved.
-#
-# Licensed under the Apache License v2.0 with LLVM Exceptions:
-# https://llvm.org/LICENSE.txt
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ===----------------------------------------------------------------------=== #
 """`Calendar` module."""
 
 from utils import Variant
@@ -25,88 +13,89 @@ alias _date = (UInt16, UInt8, UInt8, UInt8, UInt8, UInt8, UInt16, UInt16)
 """Alias for the date type. Up to microsecond resolution."""
 
 
-@value
-# @register_passable("trivial")
+@register_passable("trivial")
 struct CalendarHashes:
     """Hashing definitions. Up to microsecond resolution for
     the 64bit hash. Each calendar implementation can still
     override with its own definitions."""
 
     alias UINT8 = 8
-    """Hash width UINT8"""
+    """Hash width UINT8."""
     alias UINT16 = 16
-    """Hash width UINT16"""
+    """Hash width UINT16."""
     alias UINT32 = 32
-    """Hash width UINT32"""
+    """Hash width UINT32."""
     alias UINT64 = 64
-    """Hash width UINT64"""
+    """Hash width UINT64."""
     var selected: Int
     """What hash width was selected."""
 
-    alias _10b = 0b1111111111
-    alias _9b = 0b111111111
-    alias _6b = 0b111111
-    alias _5b = 0b11111
-    alias _4b = 0b1111
-    alias _2b = 0b11
+    alias _17b = 0b1_1111_1111_1111_1111
+    alias _12b = 0b0_0000_1111_1111_1111
+    alias _10b = 0b0_0000_0011_1111_1111
+    alias _9b = 0b0_0000_0001_1111_1111
+    alias _6b = 0b0_0000_0000_0011_1111
+    alias _5b = 0b0_0000_0000_0001_1111
+    alias _4b = 0b0_0000_0000_0000_1111
+    alias _2b = 0b0_0000_0000_0000_0011
 
     alias shift_64_y = (5 + 5 + 5 + 6 + 6 + 10 + 10)
-    """Up to 131_072 years"""
+    """Up to 131_072 years in total (-1 numeric)."""
     alias shift_64_mon = (5 + 5 + 6 + 6 + 10 + 10)
-    """Up to 32 months"""
+    """Up to 32 months in total (-1 numeric)."""
     alias shift_64_d = (5 + 6 + 6 + 10 + 10)
-    """Up to 32 days"""
+    """Up to 32 days in total (-1 numeric)."""
     alias shift_64_h = (6 + 6 + 10 + 10)
-    """Up to 32 hours"""
+    """Up to 32 hours in total (-1 numeric)."""
     alias shift_64_m = (6 + 10 + 10)
-    """Up to 64 minutes"""
+    """Up to 64 minutes in total (-1 numeric)."""
     alias shift_64_s = (10 + 10)
-    """Up to 64 seconds"""
+    """Up to 64 seconds in total (-1 numeric)."""
     alias shift_64_ms = 10
-    """Up to 1024 m_seconds"""
+    """Up to 1024 m_seconds in total (-1 numeric)."""
     alias shift_64_us = 0
-    """Up to 1024 u_seconds"""
-    alias mask_64_y: UInt64 = CalendarHashes._10b << CalendarHashes.shift_64_y
-    alias mask_64_mon: UInt64 = CalendarHashes._5b << CalendarHashes.shift_64_mon
-    alias mask_64_d: UInt64 = CalendarHashes._5b << CalendarHashes.shift_64_d
-    alias mask_64_h: UInt64 = CalendarHashes._5b << CalendarHashes.shift_64_h
-    alias mask_64_m: UInt64 = CalendarHashes._6b << CalendarHashes.shift_64_m
-    alias mask_64_s: UInt64 = CalendarHashes._6b << CalendarHashes.shift_64_s
-    alias mask_64_ms: UInt64 = CalendarHashes._10b << CalendarHashes.shift_64_ms
-    alias mask_64_us: UInt64 = CalendarHashes._10b << CalendarHashes.shift_64_us
+    """Up to 1024 u_seconds in total (-1 numeric)."""
+    alias mask_64_y: UInt64 = CalendarHashes._17b
+    alias mask_64_mon: UInt64 = CalendarHashes._5b
+    alias mask_64_d: UInt64 = CalendarHashes._5b
+    alias mask_64_h: UInt64 = CalendarHashes._5b
+    alias mask_64_m: UInt64 = CalendarHashes._6b
+    alias mask_64_s: UInt64 = CalendarHashes._6b
+    alias mask_64_ms: UInt64 = CalendarHashes._10b
+    alias mask_64_us: UInt64 = CalendarHashes._10b
 
     alias shift_32_y = (4 + 5 + 5 + 6)
-    """Up to 4096 years"""
+    """Up to 4096 years in total (-1 numeric)."""
     alias shift_32_mon = (5 + 5 + 6)
-    """Up to 16 months"""
+    """Up to 16 months in total (-1 numeric)."""
     alias shift_32_d = (5 + 6)
-    """Up to 32 days"""
+    """Up to 32 days in total (-1 numeric)."""
     alias shift_32_h = 6
-    """Up to 32 hours"""
+    """Up to 32 hours in total (-1 numeric)."""
     alias shift_32_m = 0
-    """Up to 64 minutes"""
-    alias mask_32_y: UInt32 = CalendarHashes._10b << CalendarHashes.shift_32_y
-    alias mask_32_d: UInt32 = CalendarHashes._4b << CalendarHashes.shift_32_mon
-    alias mask_32_mon: UInt32 = CalendarHashes._5b << CalendarHashes.shift_32_d
-    alias mask_32_h: UInt32 = CalendarHashes._5b << CalendarHashes.shift_32_h
-    alias mask_32_m: UInt32 = CalendarHashes._6b << CalendarHashes.shift_32_m
+    """Up to 64 minutes in total (-1 numeric)."""
+    alias mask_32_y: UInt32 = CalendarHashes._12b
+    alias mask_32_d: UInt32 = CalendarHashes._4b
+    alias mask_32_mon: UInt32 = CalendarHashes._5b
+    alias mask_32_h: UInt32 = CalendarHashes._5b
+    alias mask_32_m: UInt32 = CalendarHashes._6b
 
     alias shift_16_y = (9 + 5)
-    """Up to 4 years"""
+    """Up to 4 years in total (-1 numeric)."""
     alias shift_16_d = 5
-    """Up to 512 days"""
+    """Up to 512 days in total (-1 numeric)."""
     alias shift_16_h = 0
-    """Up to 32 hours"""
-    alias mask_16_y: UInt16 = CalendarHashes._2b << CalendarHashes.shift_16_y
-    alias mask_16_d: UInt16 = CalendarHashes._9b << CalendarHashes.shift_16_d
-    alias mask_16_h: UInt16 = CalendarHashes._5b << CalendarHashes.shift_16_h
+    """Up to 32 hours in total (-1 numeric)."""
+    alias mask_16_y: UInt16 = CalendarHashes._2b
+    alias mask_16_d: UInt16 = CalendarHashes._9b
+    alias mask_16_h: UInt16 = CalendarHashes._5b
 
     alias shift_8_d = 5
-    """Up to 8 days"""
+    """Up to 8 days in total (-1 numeric)."""
     alias shift_8_h = 0
-    """Up to 32 hours"""
-    alias mask_8_d: UInt8 = CalendarHashes._5b << CalendarHashes.shift_8_d
-    alias mask_8_h: UInt8 = CalendarHashes._5b << CalendarHashes.shift_8_h
+    """Up to 32 hours in total (-1 numeric)."""
+    alias mask_8_d: UInt8 = CalendarHashes._5b
+    alias mask_8_h: UInt8 = CalendarHashes._5b
 
     fn __init__(inout self, selected: Int = 64):
         """Construct a `CalendarHashes`.
@@ -1297,19 +1286,17 @@ struct Gregorian(_Calendarized):
         elif cal_h.selected == cal_h.UINT16:
             pass
         elif cal_h.selected == cal_h.UINT32:  # hash for `Date`
-            result = int(
-                (UInt32(year) << (5 + 5)) | (UInt32(month) << 5) | UInt32(day)
-            )
+            result = (int(year) << (5 + 5)) | (int(month) << 5) | int(day)
         elif cal_h.selected == cal_h.UINT64:  # hash for `DateTime`
-            result = int(
-                UInt64(year) << cal_h.shift_64_y
-                | UInt64(month) << cal_h.shift_64_mon
-                | UInt64(day) << cal_h.shift_64_d
-                | UInt64(hour) << cal_h.shift_64_h
-                | UInt64(minute) << cal_h.shift_64_m
-                | UInt64(second) << cal_h.shift_64_s
-                | UInt64(m_second) << cal_h.shift_64_ms
-                | UInt64(u_second) << cal_h.shift_64_us
+            result = (
+                (int(year) << cal_h.shift_64_y)
+                | (int(month) << cal_h.shift_64_mon)
+                | (int(day) << cal_h.shift_64_d)
+                | (int(hour) << cal_h.shift_64_h)
+                | (int(minute) << cal_h.shift_64_m)
+                | (int(second) << cal_h.shift_64_s)
+                | (int(m_second) << cal_h.shift_64_ms)
+                | (int(u_second) << cal_h.shift_64_us)
             )
         return result
 
@@ -1339,18 +1326,18 @@ struct Gregorian(_Calendarized):
         elif cal_h.selected == cal_h.UINT16:
             pass
         elif cal_h.selected == cal_h.UINT32:  # hash for `Date`
-            result[0] = value >> (5 + 5)
-            result[1] = (value >> 5) & 5
-            result[2] = value & 5
+            result[0] = int(value >> (5 + 5))
+            result[1] = int((value >> 5) & 0b1_1111)
+            result[2] = int(value & 0b1_1111)
         elif cal_h.selected == cal_h.UINT64:  # hash for `DateTime`
-            result[0] = int(((value & cal_h.mask_64_y) >> cal_h.shift_64_y))
-            result[1] = int(((value & cal_h.mask_64_mon) >> cal_h.shift_64_mon))
-            result[2] = int(((value & cal_h.mask_64_d) >> cal_h.shift_64_d))
-            result[3] = int(((value & cal_h.mask_64_h) >> cal_h.shift_64_h))
-            result[4] = int(((value & cal_h.mask_64_m) >> cal_h.shift_64_m))
-            result[5] = int(((value & cal_h.mask_64_s) >> cal_h.shift_64_s))
-            result[6] = int(((value & cal_h.mask_64_ms) >> cal_h.shift_64_ms))
-            result[7] = int(((value & cal_h.mask_64_us) >> cal_h.shift_64_us))
+            result[0] = int((value >> cal_h.shift_64_y) & cal_h.mask_64_y)
+            result[1] = int((value >> cal_h.shift_64_mon) & cal_h.mask_64_mon)
+            result[2] = int((value >> cal_h.shift_64_d) & cal_h.mask_64_d)
+            result[3] = int((value >> cal_h.shift_64_h) & cal_h.mask_64_h)
+            result[4] = int((value >> cal_h.shift_64_m) & cal_h.mask_64_m)
+            result[5] = int((value >> cal_h.shift_64_s) & cal_h.mask_64_s)
+            result[6] = int((value >> cal_h.shift_64_ms) & cal_h.mask_64_ms)
+            result[7] = int((value >> cal_h.shift_64_us) & cal_h.mask_64_us)
         return result^
 
     @staticmethod
@@ -1784,33 +1771,32 @@ struct UTCFast(_Calendarized):
 
         @parameter
         if cal_h.selected == cal_h.UINT8:
-            result = int(
-                (UInt8(day) << cal_h.shift_8_d)
-                | (UInt8(hour) << cal_h.shift_8_h)
+            result = (int(day) << cal_h.shift_8_d) | (
+                int(hour) << cal_h.shift_8_h
             )
         elif cal_h.selected == cal_h.UINT16:
-            result = int(
-                (UInt16(year) << cal_h.shift_16_y)
-                | (UInt16(day) << cal_h.shift_16_d)
-                | (UInt16(hour) << cal_h.shift_16_h)
+            result = (
+                (int(year) << cal_h.shift_16_y)
+                | (int(day) << cal_h.shift_16_d)
+                | (int(hour) << cal_h.shift_16_h)
             )
         elif cal_h.selected == cal_h.UINT32:
-            result = int(
-                (UInt32(year) << cal_h.shift_32_y)
-                | (UInt32(month) << cal_h.shift_32_mon)
-                | (UInt32(day) << cal_h.shift_32_d)
-                | (UInt32(hour) << cal_h.shift_32_h)
-                | (UInt32(minute) << cal_h.shift_32_m)
+            result = (
+                (int(year) << cal_h.shift_32_y)
+                | (int(month) << cal_h.shift_32_mon)
+                | (int(day) << cal_h.shift_32_d)
+                | (int(hour) << cal_h.shift_32_h)
+                | (int(minute) << cal_h.shift_32_m)
             )
         elif cal_h.selected == cal_h.UINT64:
-            result = int(
-                (UInt64(year) << (cal_h.shift_64_y - cal_h.shift_64_ms))
-                | (UInt64(month) << (cal_h.shift_64_mon - cal_h.shift_64_ms))
-                | (UInt64(day) << (cal_h.shift_64_d - cal_h.shift_64_ms))
-                | (UInt64(hour) << (cal_h.shift_64_h - cal_h.shift_64_ms))
-                | (UInt64(minute) << (cal_h.shift_64_m - cal_h.shift_64_ms))
-                | (UInt64(second) << (cal_h.shift_64_s - cal_h.shift_64_ms))
-                | UInt64(m_second)
+            result = (
+                (int(year) << (cal_h.shift_64_y - cal_h.shift_64_ms))
+                | (int(month) << (cal_h.shift_64_mon - cal_h.shift_64_ms))
+                | (int(day) << (cal_h.shift_64_d - cal_h.shift_64_ms))
+                | (int(hour) << (cal_h.shift_64_h - cal_h.shift_64_ms))
+                | (int(minute) << (cal_h.shift_64_m - cal_h.shift_64_ms))
+                | (int(second) << (cal_h.shift_64_s - cal_h.shift_64_ms))
+                | int(m_second)
             )
         return result
 
@@ -1836,42 +1822,42 @@ struct UTCFast(_Calendarized):
 
         @parameter
         if cal_h.selected == cal_h.UINT8:
-            result[2] = int(((value & cal_h.mask_8_d) >> cal_h.shift_8_d))
-            result[3] = int(((value & cal_h.mask_8_h) >> cal_h.shift_8_h))
+            result[2] = int(((value >> cal_h.shift_8_d)) & cal_h.mask_8_d)
+            result[3] = int(((value >> cal_h.shift_8_h)) & cal_h.mask_8_h)
         elif cal_h.selected == cal_h.UINT16:
-            result[0] = int(((value & cal_h.mask_16_y) >> cal_h.shift_16_y))
-            result[2] = int(((value & cal_h.mask_16_d) >> cal_h.shift_16_d))
-            result[3] = int(((value & cal_h.mask_16_h) >> cal_h.shift_16_h))
+            result[0] = int(((value >> cal_h.shift_16_y)) & cal_h.mask_16_y)
+            result[2] = int(((value >> cal_h.shift_16_d)) & cal_h.mask_16_d)
+            result[3] = int(((value >> cal_h.shift_16_h)) & cal_h.mask_16_h)
         elif cal_h.selected == cal_h.UINT32:
-            result[0] = int(((value & cal_h.mask_32_y) >> cal_h.shift_32_y))
-            result[1] = int(((value & cal_h.mask_32_mon) >> cal_h.shift_32_mon))
-            result[2] = int(((value & cal_h.mask_32_d) >> cal_h.shift_32_d))
-            result[3] = int(((value & cal_h.mask_32_h) >> cal_h.shift_32_h))
-            result[4] = int(((value & cal_h.mask_32_m) >> cal_h.shift_32_m))
+            result[0] = int(((value >> cal_h.shift_32_y)) & cal_h.mask_32_y)
+            result[1] = int(((value >> cal_h.shift_32_mon)) & cal_h.mask_32_mon)
+            result[2] = int(((value >> cal_h.shift_32_d)) & cal_h.mask_32_d)
+            result[3] = int(((value >> cal_h.shift_32_h)) & cal_h.mask_32_h)
+            result[4] = int(((value >> cal_h.shift_32_m)) & cal_h.mask_32_m)
         elif cal_h.selected == cal_h.UINT64:
             result[0] = int(
-                (value & cal_h.mask_64_y)
-                >> (cal_h.shift_64_y - cal_h.shift_64_ms)
+                (value >> (cal_h.shift_64_y - cal_h.shift_64_ms))
+                & cal_h.mask_64_y
             )
             result[1] = int(
-                (value & cal_h.mask_64_mon)
-                >> (cal_h.shift_64_mon - cal_h.shift_64_ms)
+                (value >> (cal_h.shift_64_mon - cal_h.shift_64_ms))
+                & cal_h.mask_64_mon
             )
             result[2] = int(
-                (value & cal_h.mask_64_d)
-                >> (cal_h.shift_64_d - cal_h.shift_64_ms)
+                (value >> (cal_h.shift_64_d - cal_h.shift_64_ms))
+                & cal_h.mask_64_d
             )
             result[3] = int(
-                (value & cal_h.mask_64_h)
-                >> (cal_h.shift_64_h - cal_h.shift_64_ms)
+                (value >> (cal_h.shift_64_h - cal_h.shift_64_ms))
+                & cal_h.mask_64_h
             )
             result[4] = int(
-                (value & cal_h.mask_64_m)
-                >> (cal_h.shift_64_m - cal_h.shift_64_ms)
+                (value >> (cal_h.shift_64_m - cal_h.shift_64_ms))
+                & cal_h.mask_64_m
             )
             result[5] = int(
-                (value & cal_h.mask_64_s)
-                >> (cal_h.shift_64_s - cal_h.shift_64_ms)
+                (value >> (cal_h.shift_64_s - cal_h.shift_64_ms))
+                & cal_h.mask_64_s
             )
             result[6] = int(value & cal_h.mask_64_ms)
         return result^
