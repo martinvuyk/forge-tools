@@ -103,16 +103,19 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
     alias Arr = Array[DType.uint8, 3]
     var a = Arr(1, 2, 3)
     var b = Arr(1, 2, 3)
-    print((a - b).sum()) # prints 0
-    print(a.avg()) # prints 2
+    print((a - b).sum()) # 0
+    print(a.avg()) # 2
     print(a * b) # dot product: 14
     print(a.cross(b)) # cross product: Array(0, 0, 0)
-    print(2 in a) # prints True
-    print(a.index(2).value() if a.index(2) else -1) # prints 1
+    print(2 in a) # True
+    print(a.index(2).value() if a.index(2) else -1) # 1
     print((Arr(2, 2, 2) % 2).sum()) # 0
     print((Arr(2, 2, 2) // 2).sum()) # 3
     print((Arr(2, 2, 2) ** 2).sum()) # 12
     ```
+
+    Constraints:
+        Maximum capacity is 256.
 
     Notes:
         Setting Array items directly doesn't update self.capacity_left,
@@ -135,7 +138,13 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
     @always_inline
     fn __init__(inout self):
-        """This constructor creates an empty Array."""
+        """This constructor creates an empty Array.
+
+        Constraints:
+            Maximum capacity is 256.
+        """
+
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
         self.vec = Self._vec_type()
         self.capacity_left = capacity
 
@@ -146,7 +155,12 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Args:
             fill: The value to populate the Array with.
+
+        Constraints:
+            Maximum capacity is 256.
         """
+
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
         self.vec = Self._vec_type(fill)
         self.capacity_left = 0
 
@@ -157,7 +171,12 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Args:
             values: The values to populate the Array with.
+
+        Constraints:
+            Maximum capacity is 256.
         """
+
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
         # TODO: capacity should be statically determined from
         # this constructor
         self = Self()
@@ -172,20 +191,42 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Args:
             values: The values to populate the Array with.
+
+        Constraints:
+            Maximum capacity is 256.
         """
 
-        @parameter
-        if cap == capacity:
-            self.vec = values
-            self.capacity_left = 0
-        else:
-            alias size = min(cap, capacity)
-            self.capacity_left = capacity - size
-            self.vec = Self._vec_type()
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
+        self.vec = Self._vec_type(0)
+        var size = min(cap, capacity)
 
-            @parameter
-            for i in range(size):
-                self.vec[i] = values[i]
+        for i in range(size):
+            self.vec[i] = values[i]
+
+        self.capacity_left = capacity - size
+
+        # FIXME
+        # alias delta = Self._vec_type.size - cap
+
+        # @parameter
+        # if delta == 0:
+        #     self.vec = values
+        # elif delta < 0:
+        #     self.vec = values.slice[Self._vec_type.size]()
+        # else:
+        #     self.vec = Self._vec_type()
+
+        #     @parameter
+        #     for i in range(cap):
+        #         self.vec[i] = values[i]
+
+        # @parameter
+        # if capacity != Self._vec_type.size and cap < capacity:
+        #     self.capacity_left = capacity - cap
+        # elif delta > 0:
+        #     self.capacity_left = delta
+        # else:
+        #     self.capacity_left = 0
 
     fn __init__[cap: Int](inout self, owned existing: Array[T, cap]):
         """Constructs an Array from an existing Array.
@@ -195,11 +236,19 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Args:
             existing: The existing Array.
+
+        Constraints:
+            Maximum capacity is 256.
         """
-        self = Self()
-        for i in range(len(existing)):  # FIXME using memcpy?
-            self.vec[i] = existing.unsafe_get(i)
-        self.capacity_left = capacity - (cap - existing.capacity_left)
+
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
+        self = Self(existing.vec)
+
+        @parameter
+        if capacity - cap > 0:
+            self.capacity_left = existing.capacity_left + capacity - cap
+        else:
+            self.capacity_left = 0
 
     fn __init__(
         inout self,
@@ -212,25 +261,56 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Args:
             unsafe_pointer: The pointer to the data.
             length: The number of elements pointed to.
+
+        Constraints:
+            Maximum capacity is 256.
         """
+
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
         var s = min(capacity, length)
         self.vec = Self._vec_type()
-        # FIXME: will this even work? is there no faster way?
+        # FIXME: is there no faster way?
         for i in range(s):
             self.vec[i] = unsafe_pointer[i]
         self.capacity_left = capacity - s
 
-    fn __init__(inout self, owned existing: List[Self._scalar_type]):
+    fn __init__(inout self, existing: List[Self._scalar_type]):
         """Constructs an Array from an existing List.
 
         Args:
             existing: The existing List.
-        """
-        self.vec = Self._vec_type()
-        self.capacity_left = capacity - existing.size
 
-        for i in range(existing.size):
-            self.unsafe_set(i, existing.unsafe_get(i))
+        Constraints:
+            Maximum capacity is 256.
+        """
+
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
+        self = Self(unsafe_pointer=existing.unsafe_ptr(), length=len(existing))
+        _ = existing
+
+    fn __init__[size: Int](inout self, owned existing: List[Self._scalar_type]):
+        """Constructs an Array from an existing List.
+
+        Parameters:
+            size: The size of the List.
+
+        Args:
+            existing: The existing List.
+
+        Constraints:
+            Maximum capacity is 256.
+            Array capacity must be power of 2.
+            Size must be == capacity.
+        """
+
+        constrained[capacity <= 256, "Maximum capacity is 256."]()
+        constrained[
+            capacity == Self._vec_type.size,
+            "Array capacity must be power of 2.",
+        ]()
+        constrained[size == capacity, "Size must be == capacity."]()
+        self.vec = SIMD[T, size].load(DTypePointer(existing.steal_data()))
+        self.capacity_left = 0
 
     @always_inline
     fn __len__(self) -> Int:
@@ -289,12 +369,6 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
     fn __contains__(self, value: Self._scalar_type) -> Bool:
         """Verify if a given value is present in the Array.
 
-        ```mojo
-        from forge_tools.collections import Array
-        var x = Array[DType.uint8, 3](1,2,3)
-        if 3 in x: print("x contains 3")
-        ```
-
         Args:
             value: The value to find.
 
@@ -303,8 +377,15 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
 
         var size_mask = SIMD[DType.bool, Self._vec_type.size](False)
-        for i in range(len(self)):
-            size_mask[i] = True
+        var size = len(self)
+
+        @parameter
+        fn closure[simd_width: Int](i: Int):
+            size_mask[i] = i < size
+
+        # FIXME will this work?
+        vectorize[closure, simdwidthof[T]()](capacity)
+
         return ((self.vec == value).cast[DType.bool]() & size_mask).reduce_or()
 
     @always_inline
@@ -331,11 +412,9 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The newly created Array.
         """
-        alias array = Array[T, capacity + cap]
-        var arr = array(self)
-        print(arr)
+
+        var arr = Array[T, capacity + cap](self)
         arr.append(other)
-        print(arr)
         return arr
 
     fn __str__(self) -> String:
@@ -597,7 +676,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
     #     Returns:
     #         The UnsafePointer to the SIMD vector.
     #     """
-    #     return UnsafePointer.address_of(self.vec)
+    #     return UnsafePointer[Self._scalar_type].address_of(self.vec)
 
     @always_inline
     fn unsafe_get(self, idx: Int) -> Self._scalar_type:

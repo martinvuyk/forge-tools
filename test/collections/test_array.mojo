@@ -265,7 +265,6 @@ fn test_array_index() raises:
     assert_false(test_array_a.index(10, start=-4, stop=-1))
     assert_false(test_array_a.index(10, start=5, stop=50))
     assert_false(Array[DType.int8, 1]().index(10))
-    # print("5")
     # # Test empty slice
     assert_false(test_array_a.index(10, start=1, stop=1))
     # Test empty slice with 0 start and end
