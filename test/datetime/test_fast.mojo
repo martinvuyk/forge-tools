@@ -16,7 +16,7 @@ from forge_tools.datetime.dt_str import IsoFormat
 fn test_add64() raises:
     # test february leapyear
     var result = DateTime64(2024, 2, 28).add(days=1)
-    var offset_0 = DateTime64(2024, 3, 1)
+    var offset_0 = DateTime64(2024, 2, 29)
     assert_equal(result, offset_0)
     var add_seconds = DateTime64(2024, 2, 28).add(seconds=24 * 3600)
     assert_equal(result, add_seconds)
@@ -38,7 +38,8 @@ fn test_add64() raises:
     # test december
     result = DateTime64(2024, 12, 31).add(days=1)
     offset_0 = DateTime64(2025, 1, 1)
-    assert_equal(result, offset_0)
+    print(DateTime64(2024, 12, 31).m_seconds, DateTime64(2025, 1, 1).m_seconds)
+    assert_equal(result.m_seconds, offset_0.m_seconds)
     add_seconds = DateTime64(2024, 12, 31).add(seconds=24 * 3600)
     assert_equal(result, add_seconds)
 
@@ -65,7 +66,7 @@ fn test_add64() raises:
 fn test_add32() raises:
     # test february leapyear
     var result = DateTime32(2024, 2, 28).add(days=1)
-    var offset_0 = DateTime32(2024, 3, 1)
+    var offset_0 = DateTime32(2024, 2, 29)
     assert_equal(result, offset_0)
     var add_seconds = DateTime32(2024, 2, 28).add(seconds=24 * 3600)
     assert_equal(result, add_seconds)
@@ -113,28 +114,28 @@ fn test_add32() raises:
 
 fn test_subtract64() raises:
     # test february leapyear
-    var result = DateTime64(2024, 3, 1).add(days=1)
-    var offset_0 = DateTime64(2024, 2, 28)
+    var result = DateTime64(2024, 3, 1).subtract(days=1)
+    var offset_0 = DateTime64(2024, 2, 29)
     assert_equal(result, offset_0)
     var sub_seconds = DateTime64(2024, 3, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test february not leapyear
-    result = DateTime64(2023, 3, 1).add(days=1)
+    result = DateTime64(2023, 3, 1).subtract(days=1)
     offset_0 = DateTime64(2023, 2, 28)
     assert_equal(result, offset_0)
     sub_seconds = DateTime64(2023, 3, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test normal month
-    result = DateTime64(2024, 6, 1).add(days=1)
+    result = DateTime64(2024, 6, 1).subtract(days=1)
     offset_0 = DateTime64(2024, 5, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime64(2024, 6, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test december
-    result = DateTime64(2025, 1, 1).add(days=1)
+    result = DateTime64(2025, 1, 1).subtract(days=1)
     offset_0 = DateTime64(2024, 12, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime64(2025, 1, 1).subtract(seconds=1)
@@ -146,14 +147,14 @@ fn test_subtract64() raises:
     assert_equal(result, offset_0)
 
     # test negative overflow pycal
-    result = DateTime64(1, 1, 1).add(days=1)
+    result = DateTime64(1, 1, 1).subtract(days=1)
     offset_0 = DateTime64(9999, 12, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime64(1, 1, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test negative overflow unixcal
-    result = DateTime64(1970, 1, 1).add(days=1)
+    result = DateTime64(1970, 1, 1).subtract(days=1)
     offset_0 = DateTime64(9999, 12, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime64(1970, 1, 1).subtract(seconds=1)
@@ -162,28 +163,28 @@ fn test_subtract64() raises:
 
 fn test_subtract32() raises:
     # test february leapyear
-    var result = DateTime32(2024, 3, 1).add(days=1)
-    var offset_0 = DateTime32(2024, 2, 28)
+    var result = DateTime32(2024, 3, 1).subtract(days=1)
+    var offset_0 = DateTime32(2024, 2, 29)
     assert_equal(result, offset_0)
     var sub_seconds = DateTime32(2024, 3, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test february not leapyear
-    result = DateTime32(2023, 3, 1).add(days=1)
+    result = DateTime32(2023, 3, 1).subtract(days=1)
     offset_0 = DateTime32(2023, 2, 28)
     assert_equal(result, offset_0)
     sub_seconds = DateTime32(2023, 3, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test normal month
-    result = DateTime32(2024, 6, 1).add(days=1)
+    result = DateTime32(2024, 6, 1).subtract(days=1)
     offset_0 = DateTime32(2024, 5, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime32(2024, 6, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test december
-    result = DateTime32(2025, 1, 1).add(days=1)
+    result = DateTime32(2025, 1, 1).subtract(days=1)
     offset_0 = DateTime32(2024, 12, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime32(2025, 1, 1).subtract(seconds=1)
@@ -195,14 +196,14 @@ fn test_subtract32() raises:
     assert_equal(result, offset_0)
 
     # test negative overflow pycal
-    result = DateTime32(1, 1, 1).add(days=1)
+    result = DateTime32(1, 1, 1).subtract(days=1)
     offset_0 = DateTime32(9999, 12, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime32(1, 1, 1).subtract(seconds=1)
     assert_equal(result, sub_seconds)
 
     # test negative overflow unixcal
-    result = DateTime32(1970, 1, 1).add(days=1)
+    result = DateTime32(1970, 1, 1).subtract(days=1)
     offset_0 = DateTime32(9999, 12, 31)
     assert_equal(result, offset_0)
     sub_seconds = DateTime32(1970, 1, 1).subtract(seconds=1)

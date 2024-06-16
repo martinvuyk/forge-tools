@@ -2,13 +2,15 @@
 
 from utils import Variant
 
+from ._lists import leapsecs
+
 # TODO: other calendars besides Gregorian
 alias PythonCalendar = Calendar()
-"""The default Python proleptic Gregorian calendar, goes from [0001-01-01, 9999-12-31]"""
+"""The default Python proleptic Gregorian calendar, goes from [0001-01-01, 9999-12-31]."""
 alias UTCCalendar = Calendar(Gregorian(min_year=1970))
-"""The leap year and leap second aware UTC calendar, goes from [1970-01-01, 9999-12-31]"""
+"""The leap year and leap second aware UTC calendar, goes from [1970-01-01, 9999-12-31]."""
 alias UTCFastCal = Calendar(UTCFast())
-"""UTC calendar for the fast module."""
+"""UTC calendar for the fast module. Leap day aware, goes from [1970-01-01, 9999-12-31]."""
 alias _date = (UInt16, UInt8, UInt8, UInt8, UInt8, UInt8, UInt16, UInt16)
 """Alias for the date type. Up to microsecond resolution."""
 
@@ -130,10 +132,10 @@ trait _Calendarized:
     ) -> Bool:
         ...
 
-    fn dayofweek(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
+    fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
         ...
 
-    fn dayofyear(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
+    fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
         ...
 
     fn max_second(
@@ -325,7 +327,7 @@ struct Calendar:
             self._implementation = imp
 
     @always_inline("nodebug")
-    fn dayofweek(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
+    fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
         """Calculates the day of the week for a given date.
 
         Args:
@@ -337,18 +339,18 @@ struct Calendar:
             - day: Day of the week: [0, 6] (monday - sunday).
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].dayofweek(
+            return self._implementation.unsafe_get[Gregorian]()[].day_of_week(
                 year, month, day
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].dayofweek(
+            return self._implementation.unsafe_get[UTCFast]()[].day_of_week(
                 year, month, day
             )
         else:
             return 0
 
     @always_inline("nodebug")
-    fn dayofyear(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
+    fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
         """Calculates the day of the year for a given date.
 
         Args:
@@ -360,11 +362,11 @@ struct Calendar:
             - day: Day of the year: [1, 366] (for gregorian calendar).
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].dayofyear(
+            return self._implementation.unsafe_get[Gregorian]()[].day_of_year(
                 year, month, day
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].dayofyear(
+            return self._implementation.unsafe_get[UTCFast]()[].day_of_year(
                 year, month, day
             )
         else:
@@ -394,16 +396,16 @@ struct Calendar:
 
     @always_inline("nodebug")
     fn monthrange(self, year: UInt16, month: UInt8) -> (UInt8, UInt8):
-        """Calculates the day of the week and the day of the month
-        that a month in a given year ends.
+        """Returns day of the week for the first day of the month and number of
+        days in month, for the specified year and month.
 
         Args:
             year: Year.
             month: Month.
 
         Returns:
-            - dayofweek: Day of the week.
-            - dayofmonth: Day of the month.
+            - day_of_week: Day of the week.
+            - day_of_month: Day of the month.
         """
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[Gregorian]()[].monthrange(
@@ -537,6 +539,7 @@ struct Calendar:
         Returns:
             The amount.
         """
+
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[
                 Gregorian
@@ -740,8 +743,8 @@ struct Calendar:
         u_second: UInt16 = 0,
         n_second: UInt16 = 0,
     ) -> Int:
-        """Hash the given values according to the calendar's component
-        lengths bitshifted, BigEndian (i.e. yyyymmdd...).
+        """Hash the given values according to the calendar's bitshifted
+        component lengths, BigEndian (i.e. yyyymmdd...).
 
         Parameters:
             cal_hash: The hashing schema (CalendarHashes).
@@ -862,10 +865,14 @@ struct Gregorian(_Calendarized):
     alias min_nanosecond: UInt16 = 0
     """Default minimum nanosecond."""
     alias _monthdays: List[UInt8] = List[UInt8](
-        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+        0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
     )
     """An array with the amount of days each month contains without 
-    leap values. It's assumed that `len(monthdays) == max_month`."""
+    leap values. It's assumed that `len(monthdays) == max_month + 1`.
+    And that the first month is 1."""
+    alias _days_before_month: List[UInt8] = List[UInt8](
+        0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+    )
 
     fn __init__(
         inout self,
@@ -883,20 +890,21 @@ struct Gregorian(_Calendarized):
         self.min_year = min_year
 
     fn monthrange(self, year: UInt16, month: UInt8) -> (UInt8, UInt8):
-        """Calculates the day of the week and the day of the month
-        that a month in a given year ends.
+        """Returns day of the week for the first day of the month and number of
+        days in month, for the specified year and month.
 
         Args:
             year: Year.
             month: Month.
 
         Returns:
-            - dayofweek: Day of the week.
-            - dayofmonth: Day of the month.
+            - day_of_week: Day of the week.
+            - day_of_month: Day of the month.
         """
-        _ = self, year, month
-        # TODO
-        return UInt8(0), UInt8(0)
+
+        return self.day_of_week(year, month, 1), self.max_days_in_month(
+            year, month
+        )
 
     @always_inline("nodebug")
     fn max_second(
@@ -916,7 +924,7 @@ struct Gregorian(_Calendarized):
         Returns:
             The amount.
         """
-        if self.is_leapsec(year, month, day, hour, minute, 60):
+        if self.is_leapsec(year, month, day, hour, minute, 59):
             return 60
         return 59
 
@@ -931,13 +939,14 @@ struct Gregorian(_Calendarized):
         Returns:
             The amount of days.
         """
-        var days = self._monthdays[int(month) - 1]
-        if month == 2 and self.is_leapyear(year):
+
+        var days = Self._monthdays[int(month)]
+        if month == 2 and Self.is_leapyear(year):
             return days + 1
         return days
 
     @always_inline("nodebug")
-    fn dayofweek(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
+    fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
         """Calculates the day of the week for a given date.
 
         Args:
@@ -948,13 +957,14 @@ struct Gregorian(_Calendarized):
         Returns:
             - day: Day of the week: [0, 6] (monday - sunday).
         """
-        var days = int(self.dayofyear(year, month, day))
+
+        var days = int(self.day_of_year(year, month, day))
         var y = int(year - 1)
         var days_before_year = y * 365 + y // 4 - y // 100 + y // 400
         return (days_before_year + days + 6) % 7
 
     @always_inline("nodebug")
-    fn dayofyear(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
+    fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
         """Calculates the day of the year for a given date.
 
         Args:
@@ -965,13 +975,10 @@ struct Gregorian(_Calendarized):
         Returns:
             - day: Day of the year: [1, 366] (for gregorian calendar).
         """
-        var total: UInt16 = 1 if self.is_leapyear(year) else 0
-        for i in range(month):
-            var amnt_days = self._monthdays[i].cast[DType.uint16]()
-            total += (
-                amnt_days if (i + 1) != int(month) else day.cast[DType.uint16]()
-            )
-        return total
+
+        var total: UInt16 = 1 if month > 2 and self.is_leapyear(year) else 0
+        total += Self._days_before_month[int(month)].cast[DType.uint16]()
+        return total + day.cast[DType.uint16]()
 
     @always_inline("nodebug")
     fn is_leapyear(self, year: UInt16) -> Bool:
@@ -1008,8 +1015,20 @@ struct Gregorian(_Calendarized):
         Returns:
             Bool.
         """
-        _ = self, year, month, day, hour, minute, second
-        # TODO: use hardcoded list in _lists ?
+
+        if (
+            hour == 23
+            and minute == 59
+            and second == 59
+            and (month == 6 or month == 12)
+            and (day == 30 or day == 31)
+        ):
+            alias calh32 = CalendarHashes(CalendarHashes.UINT32)
+            var h: UInt32 = self.hash[calh32](year, month, day)
+            for i in range(len(leapsecs)):
+                if h == leapsecs[i]:
+                    return True
+            return False
         return False
 
     fn leapsecs_since_epoch(
@@ -1025,11 +1044,20 @@ struct Gregorian(_Calendarized):
         Returns:
             The amount.
         """
-        _ = self, month, day
+
         if year < 1972:
             return 0
-        # TODO: use hardcoded list in _lists ?
-        return 27
+        var size = len(leapsecs)
+        alias calh32 = CalendarHashes(CalendarHashes.UINT32)
+        var h: UInt32 = self.hash[calh32](year, month, day)
+        if h > leapsecs[size - 1]:
+            return size
+        var amnt = 0
+        for i in range(size):
+            if h < leapsecs[i]:
+                return amnt
+            amnt += 1
+        return size
 
     fn leapdays_since_epoch(
         self, year: UInt16, month: UInt8, day: UInt8
@@ -1044,11 +1072,12 @@ struct Gregorian(_Calendarized):
         Returns:
             The amount.
         """
+
         var leapdays: UInt32 = 0
         for i in range(self.min_year, year):
-            if self.is_leapyear(i):
+            if Self.is_leapyear(i):
                 leapdays += 1
-        if self.is_leapyear(year) and month >= 2:
+        if Self.is_leapyear(year) and month >= 2:
             if not (month == 2 and day != 29):
                 leapdays += 1
         return leapdays
@@ -1082,24 +1111,17 @@ struct Gregorian(_Calendarized):
         alias days_to_sec: UInt64 = 24 * hours_to_sec
         alias years_to_sec: UInt64 = 365 * days_to_sec
 
-        var leapsecs = self.leapsecs_since_epoch(year, month, day)
-        var leapdays = self.leapdays_since_epoch(year, month, day).cast[
+        var leaps = self.leapsecs_since_epoch(year, month, day).cast[
             DType.uint64
         ]()
-        var leaps = leapsecs.cast[DType.uint64]() + leapdays * days_to_sec
 
         var y_d = (year - self.min_year).cast[DType.uint64]() * years_to_sec
-
-        var days: UInt64 = 0
-        for i in range(self.min_month, month + 1):
-            days += self._monthdays[i].cast[DType.uint64]()
-        var mon_d = days * days_to_sec
-
-        var d_d = (day - self.min_day).cast[DType.uint64]() * days_to_sec
+        var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
+        var d_d = (doy - int(self.min_day)) * days_to_sec
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_sec
         var min_d = (minute - self.min_minute).cast[DType.uint64]() * min_to_sec
         var s_d = (second - self.min_second).cast[DType.uint64]()
-        return y_d + mon_d + d_d + h_d + min_d + s_d + leaps
+        return y_d + d_d + h_d + min_d + s_d + leaps
 
     fn m_seconds_since_epoch(
         self,
@@ -1131,39 +1153,19 @@ struct Gregorian(_Calendarized):
         alias days_to_mili = 24 * hours_to_mili
         alias years_to_mili = 365 * days_to_mili
 
-        var leapsecs = self.leapsecs_since_epoch(year, month, day).cast[
-            DType.uint64
-        ]()
-        var leapdays = self.leapdays_since_epoch(year, month, day).cast[
-            DType.uint64
-        ]()
-        var leaps = (leapsecs * sec_to_mili + leapdays * days_to_mili).cast[
-            DType.uint64
-        ]()
+        var leapsecs = self.leapsecs_since_epoch(year, month, day)
+        var leaps = leapsecs.cast[DType.uint64]() * sec_to_mili
 
         var y_d = (year - self.min_year).cast[DType.uint64]() * years_to_mili
-
-        var days: UInt64 = 0
-        for i in range(self.min_month, month + 1):
-            days += self._monthdays[i].cast[DType.uint64]()
-        var mon_d = days * days_to_mili
-
-        var d_d = (day - UInt8(self.min_day)).cast[
-            DType.uint64
-        ]() * days_to_mili
-        var h_d = (hour - UInt8(self.min_hour)).cast[
-            DType.uint64
-        ]() * hours_to_mili
-        var min_d = (minute - UInt8(self.min_minute)).cast[
+        var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
+        var d_d = (doy - int(self.min_day)) * days_to_mili
+        var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_mili
+        var min_d = (minute - self.min_minute).cast[
             DType.uint64
         ]() * min_to_mili
-        var s_d = (second - UInt8(self.min_second)).cast[
-            DType.uint64
-        ]() * sec_to_mili
-        var m_sec = (m_second - UInt16(self.min_milisecond)).cast[
-            DType.uint64
-        ]()
-        return m_sec + y_d + mon_d + d_d + h_d + min_d + s_d + leaps
+        var s_d = (second - self.min_second).cast[DType.uint64]() * sec_to_mili
+        var m_sec = (m_second - self.min_milisecond).cast[DType.uint64]()
+        return m_sec + y_d + d_d + h_d + min_d + s_d + leaps
 
     fn n_seconds_since_epoch(
         self,
@@ -1201,45 +1203,25 @@ struct Gregorian(_Calendarized):
         alias days_to_nano = 24 * hours_to_nano
         alias years_to_nano = 365 * days_to_nano
 
-        var leapsecs = self.leapsecs_since_epoch(year, month, day).cast[
-            DType.uint64
-        ]()
-        var leapdays = self.leapdays_since_epoch(year, month, day).cast[
-            DType.uint64
-        ]()
-        var leaps = (leapsecs * sec_to_nano + leapdays * days_to_nano).cast[
-            DType.uint64
-        ]()
+        var leapsecs = self.leapsecs_since_epoch(year, month, day)
+        var leaps = leapsecs.cast[DType.uint64]() * sec_to_nano
 
         var y_d = ((year - self.min_year) * years_to_nano).cast[DType.uint64]()
-
-        var days: UInt64 = 0
-        for i in range(self.min_month, month + 1):
-            days += self._monthdays[i].cast[DType.uint64]()
-        var mon_d = days * days_to_nano
-
-        var d_d = (day - UInt8(self.min_day)).cast[
-            DType.uint64
-        ]() * days_to_nano
-        var h_d = (hour - UInt8(self.min_hour)).cast[
-            DType.uint64
-        ]() * hours_to_nano
-        var min_d = (minute - UInt8(self.min_minute)).cast[
+        var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
+        var d_d = (doy - int(self.min_day)) * days_to_nano
+        var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_nano
+        var min_d = (minute - self.min_minute).cast[
             DType.uint64
         ]() * min_to_nano
-        var s_d = (second - UInt8(self.min_second)).cast[
-            DType.uint64
-        ]() * sec_to_nano
-        var ms_d = (m_second - UInt16(self.min_milisecond)).cast[
+        var s_d = (second - self.min_second).cast[DType.uint64]() * sec_to_nano
+        var ms_d = (m_second - self.min_milisecond).cast[
             DType.uint64
         ]() * 1_000_000
         var us_d = (u_second - UInt16(self.min_microsecond)).cast[
             DType.uint64
         ]() * 1_000
         var ns_d = (n_second - UInt16(self.min_nanosecond)).cast[DType.uint64]()
-        return (
-            y_d + mon_d + d_d + h_d + min_d + s_d + ms_d + us_d + ns_d + leaps
-        )
+        return y_d + d_d + h_d + min_d + s_d + ms_d + us_d + ns_d + leaps
 
     @always_inline("nodebug")
     fn hash[
@@ -1256,8 +1238,8 @@ struct Gregorian(_Calendarized):
         u_second: UInt16 = 0,
         n_second: UInt16 = 0,
     ) -> Int:
-        """Hash the given values according to the calendar's component
-        lengths bitshifted, BigEndian (i.e. yyyymmdd...).
+        """Hash the given values according to the calendar's bitshifted
+        component lengths, BigEndian (i.e. yyyymmdd...).
 
         Parameters:
             cal_h: The hashing schema (CalendarHashes).
@@ -1351,6 +1333,7 @@ struct Gregorian(_Calendarized):
         Returns:
             Bool.
         """
+
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
     @staticmethod
@@ -1364,6 +1347,7 @@ struct Gregorian(_Calendarized):
         Returns:
             Self.
         """
+
         return Self(min_year=year)
 
 
@@ -1413,10 +1397,14 @@ struct UTCFast(_Calendarized):
     alias min_nanosecond: UInt16 = 0
     """Default minimum nanosecond."""
     alias _monthdays: List[UInt8] = List[UInt8](
-        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+        0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
     )
     """An array with the amount of days each month contains without 
-    leap values. It's assumed that `len(monthdays) == max_month`."""
+    leap values. It's assumed that `len(monthdays) == max_month + 1`.
+    And that the first month is 1."""
+    alias _days_before_month: List[UInt8] = List[UInt8](
+        0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+    )
 
     fn __init__(
         inout self, *, max_year: UInt16 = 9999, min_year: UInt16 = 1970
@@ -1431,19 +1419,19 @@ struct UTCFast(_Calendarized):
         self.min_year = min_year
 
     fn monthrange(self, year: UInt16, month: UInt8) -> (UInt8, UInt8):
-        """Calculates the day of the week and the day of the month
-        that a month in a given year ends.
+        """Returns day of the week for the first day of the month and number of
+        days in month, for the specified year and month.
 
         Args:
             year: Year.
             month: Month.
 
         Returns:
-            - dayofweek: Day of the week.
-            - dayofmonth: Day of the month.
+            - day_of_week: Day of the week.
+            - day_of_month: Day of the month.
         """
-        var day = self._monthdays[int(month) - 1]
-        return self.dayofweek(year, month, day), day
+
+        return self.day_of_week(year, month, 1), self._monthdays[int(month)]
 
     @always_inline("nodebug")
     fn max_second(
@@ -1461,6 +1449,7 @@ struct UTCFast(_Calendarized):
         Returns:
             The amount.
         """
+
         _ = self, year, month, day, hour, minute
         return 59
 
@@ -1475,11 +1464,12 @@ struct UTCFast(_Calendarized):
         Returns:
             The amount of days.
         """
-        _ = self, year, month
-        return 0
+
+        _ = self, year
+        return Self._days_before_month[int(month)]
 
     @always_inline("nodebug")
-    fn dayofweek(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
+    fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
         """Calculates the day of the week for a given date.
 
         Args:
@@ -1490,12 +1480,14 @@ struct UTCFast(_Calendarized):
         Returns:
             - day: Day of the week: [0, 6] (monday - sunday).
         """
-        # TODO
-        _ = self, year, month, day
-        return 0
+
+        var days = int(self.day_of_year(year, month, day))
+        var y = int(year - 1)
+        var days_before_year = y * 365 + y // 4 - y // 100 + y // 400
+        return (days_before_year + days + 6) % 7
 
     @always_inline("nodebug")
-    fn dayofyear(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
+    fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
         """Calculates the day of the year for a given date.
 
         Args:
@@ -1506,9 +1498,10 @@ struct UTCFast(_Calendarized):
         Returns:
             - day: Day of the year: [1, 366] (for gregorian calendar).
         """
-        # TODO
-        _ = self, year, month, day
-        return 0
+
+        var total: UInt16 = 1 if month > 2 and self.is_leapyear(year) else 0
+        total += Self._days_before_month[int(month)].cast[DType.uint16]()
+        return total + day.cast[DType.uint16]()
 
     @always_inline("nodebug")
     fn is_leapyear(self, year: UInt16) -> Bool:
@@ -1520,8 +1513,9 @@ struct UTCFast(_Calendarized):
         Returns:
             Bool.
         """
-        _ = self, year
-        return False
+
+        _ = self
+        return Self.is_leapyear(year)
 
     @always_inline("nodebug")
     fn is_leapsec(
@@ -1546,6 +1540,7 @@ struct UTCFast(_Calendarized):
         Returns:
             Bool.
         """
+
         _ = self, year, month, day, hour, minute, second
         return False
 
@@ -1563,6 +1558,7 @@ struct UTCFast(_Calendarized):
         Returns:
             The amount.
         """
+
         _ = self, year, month, day
         return 0
 
@@ -1580,8 +1576,15 @@ struct UTCFast(_Calendarized):
         Returns:
             The amount.
         """
-        _ = self, year, month, day
-        return 0
+
+        var leapdays: UInt32 = 0
+        for i in range(self.min_year, year):
+            if Self.is_leapyear(i):
+                leapdays += 1
+        if Self.is_leapyear(year) and month >= 2:
+            if not (month == 2 and day != 29):
+                leapdays += 1
+        return leapdays
 
     fn seconds_since_epoch(
         self,
@@ -1605,24 +1608,19 @@ struct UTCFast(_Calendarized):
         Returns:
             The amount.
         """
+
         alias min_to_sec: UInt64 = 60
         alias hours_to_sec: UInt64 = 60 * min_to_sec
         alias days_to_sec: UInt64 = 24 * hours_to_sec
         alias years_to_sec: UInt64 = 365 * days_to_sec
 
         var y = (year - self.min_year).cast[DType.uint64]() * years_to_sec
-
-        var days: UInt64 = 0
-        for i in range(self.min_month, month):
-            days += self._monthdays[i].cast[DType.uint64]()
-        var mon_d = days * days_to_sec
-
-        var d_d = (day - self.min_day).cast[DType.uint64]() * days_to_sec
+        var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
+        var d_d = (doy - int(self.min_day)) * days_to_sec
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_sec
         var min_d = (minute - self.min_minute).cast[DType.uint64]() * min_to_sec
         var s_d = (second - self.min_second).cast[DType.uint64]()
-
-        return y + mon_d + d_d + h_d + min_d + s_d
+        return y + d_d + h_d + min_d + s_d
 
     fn m_seconds_since_epoch(
         self,
@@ -1648,6 +1646,7 @@ struct UTCFast(_Calendarized):
         Returns:
             The amount.
         """
+
         alias sec_to_mili = 1000
         alias min_to_mili = 60 * sec_to_mili
         alias hours_to_mili = 60 * min_to_mili
@@ -1655,21 +1654,15 @@ struct UTCFast(_Calendarized):
         alias years_to_mili = 365 * days_to_mili
 
         var y = (year - self.min_year).cast[DType.uint64]() * years_to_mili
-
-        var days: UInt64 = 0
-        for i in range(self.min_month, month):
-            days += self._monthdays[i].cast[DType.uint64]()
-        var mon_d = days * days_to_mili
-
-        var d_d = (day - self.min_day).cast[DType.uint64]() * days_to_mili
+        var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
+        var d_d = (doy - int(self.min_day)) * days_to_mili
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_mili
         var min_d = (minute - self.min_minute).cast[
             DType.uint64
         ]() * min_to_mili
         var s_d = (second - self.min_second).cast[DType.uint64]()
         var ms_d = (m_second - self.min_milisecond).cast[DType.uint64]()
-
-        return y + mon_d + d_d + h_d + min_d + s_d + ms_d
+        return y + d_d + h_d + min_d + s_d + ms_d
 
     fn n_seconds_since_epoch(
         self,
@@ -1701,6 +1694,7 @@ struct UTCFast(_Calendarized):
         Returns:
             The amount.
         """
+
         alias sec_to_nano = 1_000_000_000
         alias min_to_nano = 60 * sec_to_nano
         alias hours_to_nano = 60 * min_to_nano
@@ -1708,13 +1702,8 @@ struct UTCFast(_Calendarized):
         alias years_to_nano = 365 * days_to_nano
 
         var y = (year - self.min_year).cast[DType.uint64]() * years_to_nano
-
-        var days: UInt64 = 0
-        for i in range(self.min_month, month):
-            days += self._monthdays[i].cast[DType.uint64]()
-        var mon_d = days * days_to_nano
-
-        var d_d = (day - self.min_day).cast[DType.uint64]() * days_to_nano
+        var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
+        var d_d = (doy - int(self.min_day)) * days_to_nano
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_nano
         var min_d = (minute - self.min_minute).cast[
             DType.uint64
@@ -1727,8 +1716,7 @@ struct UTCFast(_Calendarized):
             DType.uint64
         ]() * 1_000
         var ns_d = (n_second - self.min_nanosecond).cast[DType.uint64]()
-
-        return y + mon_d + d_d + h_d + min_d + s_d + ms_d + us_d + ns_d
+        return y + d_d + h_d + min_d + s_d + ms_d + us_d + ns_d
 
     @always_inline("nodebug")
     fn hash[
@@ -1745,8 +1733,8 @@ struct UTCFast(_Calendarized):
         u_second: UInt16 = 0,
         n_second: UInt16 = 0,
     ) -> Int:
-        """Hash the given values according to the calendar's component
-        lengths bitshifted, BigEndian (i.e. yyyymmdd...).
+        """Hash the given values according to the calendar's bitshifted
+        component lengths, BigEndian (i.e. yyyymmdd...).
 
         Parameters:
             cal_h: The hashing schema (CalendarHashes).
@@ -1873,8 +1861,8 @@ struct UTCFast(_Calendarized):
         Returns:
             Bool.
         """
-        _ = year
-        return False
+
+        return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
     @staticmethod
     @always_inline("nodebug")
@@ -1887,4 +1875,5 @@ struct UTCFast(_Calendarized):
         Returns:
             Self.
         """
+
         return Self(min_year=year)

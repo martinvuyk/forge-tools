@@ -475,21 +475,21 @@ struct Date[
         self = self.subtract(other)
 
     # @always_inline("nodebug")
-    fn dayofweek(self) -> UInt8:
+    fn day_of_week(self) -> UInt8:
         """Calculates the day of the week for a `Date`.
 
         Returns:
             - day: Day of the week: [0, 6] (monday - sunday) (default).
         """
-        return self.calendar.dayofweek(self.year, self.month, self.day)
+        return self.calendar.day_of_week(self.year, self.month, self.day)
 
-    fn dayofyear(self) -> UInt16:
+    fn day_of_year(self) -> UInt16:
         """Calculates the day of the year for a `Date`.
 
         Returns:
             - day: Day of the year: [1, 366] (for gregorian calendar).
         """
-        return self.calendar.dayofyear(self.year, self.month, self.day)
+        return self.calendar.day_of_year(self.year, self.month, self.day)
 
     fn leapsec_since_epoch(self) -> UInt32:
         """Cumulative leap seconds since the calendar's epoch start.

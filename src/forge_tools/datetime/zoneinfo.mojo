@@ -559,17 +559,17 @@ struct Leapsecs:
     var year: UInt16
     """Year in which the leap second was added."""
 
-    fn __init__(inout self, day: Int, month: Int, year: Int):
+    fn __init__(inout self, year: Int, month: Int, day: Int):
         """Construct an `Leapsecs` from values.
 
         Args:
-            day: Day.
-            month: Month.
             year: Year.
+            month: Month.
+            day: Day.
         """
-        self.day = day
-        self.month = month
         self.year = year
+        self.month = month
+        self.day = day
 
     fn __init__(inout self, values: Tuple[Int, Int, Int], /):
         """Construct an `Leapsecs` from values.
@@ -580,30 +580,60 @@ struct Leapsecs:
 
         self = Self(values[0], values[1], values[2])
 
+    fn __eq__(self, value: Tuple[UInt16, UInt8, UInt8]) -> Bool:
+        """Eq.
 
-@always_inline
-fn get_leapsecs() -> Optional[List[Leapsecs]]:
-    """Get the leap seconds added to UTC.
+        Args:
+            value: The tuple of year, month, day.
 
-    Returns:
-        A list of tuples (day, month, year) of leapseconds.
-    """
-    # try:
-    #     # TODO: maybe some policy that only if x amount
-    #     of years have passed since latest hardcoded value
-    #     from python import Python
+        Returns:
+            Whether they are equal.
+        """
+        return (
+            self.year == value[0]
+            and self.month == value[1]
+            and self.day == value[2]
+        )
 
-    #     var requests = Python.import_module("requests")
-    #     var secs = requests.get(
-    #         "https://raw.githubusercontent.com/eggert/tz/main/leap-seconds.list"
-    #     )
-    #     var leapsecs = _parse_iana_leapsecs(secs.text)
-    #     return leapsecs
-    # except:
-    #    pass
-    from ._lists import leapsecs
+    fn __eq__(self, other: Self) -> Bool:
+        """Eq.
 
-    return leapsecs
+        Args:
+            other: The other Leapsecond.
+
+        Returns:
+            Whether they are equal.
+        """
+        return (
+            self.year == other.year
+            and self.month == other.month
+            and self.day == other.day
+        )
+
+
+# @always_inline
+# fn get_leapsecs() -> Optional[List[Leapsecs]]:
+#     """Get the leap seconds added to UTC.
+
+#     Returns:
+#         A list of tuples (day, month, year) of leapseconds.
+#     """
+#     # try:
+#     #     # TODO: maybe some policy that only if x amount
+#     #     of years have passed since latest hardcoded value
+#     #     from python import Python
+
+#     #     var requests = Python.import_module("requests")
+#     #     var secs = requests.get(
+#     #         "https://raw.githubusercontent.com/eggert/tz/main/leap-seconds.list"
+#     #     )
+#     #     var leapsecs = _parse_iana_leapsecs(secs.text)
+#     #     return leapsecs
+#     # except:
+#     #    pass
+#     from ._lists import leapsecs
+
+#     return leapsecs
 
 
 trait ZoneStorageDST(CollectionElement):
@@ -853,12 +883,12 @@ fn offset_at(
             iterable = range(maxdays - 1, -1, step=-1)
 
         var dow_target = data.dow
-        var dow = _cal.dayofweek(year, month, day)
+        var dow = _cal.day_of_week(year, month, day)
         var amnt_weeks_target = data.week
         var is_later = hour > data.hour and minute > 0 and second >= 0
         var accum: UInt8 = 0
         for i in iterable:
-            if _cal.dayofweek(year, month, i) == dow_target:
+            if _cal.day_of_week(year, month, i) == dow_target:
                 if accum != amnt_weeks_target:
                     accum += 1
                     continue

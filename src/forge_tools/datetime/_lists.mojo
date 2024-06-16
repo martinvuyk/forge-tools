@@ -355,34 +355,39 @@ alias tz_list = List[StringLiteral](
     "WET",
 )
 """List of tz_str."""
-alias leapsecs = List[Leapsecs](
-    (1, 1, 1972),
-    (1, 7, 1972),
-    (1, 1, 1973),
-    (1, 1, 1974),
-    (1, 1, 1975),
-    (1, 1, 1976),
-    (1, 1, 1977),
-    (1, 1, 1978),
-    (1, 1, 1979),
-    (1, 1, 1980),
-    (1, 7, 1981),
-    (1, 7, 1982),
-    (1, 7, 1983),
-    (1, 7, 1985),
-    (1, 1, 1988),
-    (1, 1, 1990),
-    (1, 1, 1991),
-    (1, 7, 1992),
-    (1, 7, 1993),
-    (1, 7, 1994),
-    (1, 1, 1996),
-    (1, 7, 1997),
-    (1, 1, 1999),
-    (1, 1, 2006),
-    (1, 1, 2009),
-    (1, 7, 2012),
-    (1, 7, 2015),
-    (1, 1, 2017),
+
+from .calendar import PythonCalendar, CalendarHashes
+
+alias cal = PythonCalendar
+alias calh32 = CalendarHashes(CalendarHashes.UINT32)
+alias leapsecs = List[UInt32](
+    cal.hash[calh32](1972, 6, 30),
+    cal.hash[calh32](1972, 12, 31),
+    cal.hash[calh32](1973, 12, 31),
+    cal.hash[calh32](1974, 12, 31),
+    cal.hash[calh32](1975, 12, 31),
+    cal.hash[calh32](1976, 12, 31),
+    cal.hash[calh32](1977, 12, 31),
+    cal.hash[calh32](1978, 12, 31),
+    cal.hash[calh32](1979, 12, 31),
+    cal.hash[calh32](1981, 6, 30),
+    cal.hash[calh32](1982, 6, 30),
+    cal.hash[calh32](1983, 6, 30),
+    cal.hash[calh32](1985, 6, 30),
+    cal.hash[calh32](1987, 12, 31),
+    cal.hash[calh32](1989, 12, 31),
+    cal.hash[calh32](1990, 12, 31),
+    cal.hash[calh32](1992, 6, 30),
+    cal.hash[calh32](1993, 6, 30),
+    cal.hash[calh32](1994, 6, 30),
+    cal.hash[calh32](1995, 12, 31),
+    cal.hash[calh32](1997, 6, 30),
+    cal.hash[calh32](1998, 12, 31),
+    cal.hash[calh32](2005, 12, 31),
+    cal.hash[calh32](2008, 12, 31),
+    cal.hash[calh32](2012, 6, 30),
+    cal.hash[calh32](2015, 6, 30),
+    cal.hash[calh32](2016, 12, 31),
 )
-"""List of leap seconds. (day, month, year)."""
+"""List of leap seconds: cal.hash[calh32](year, month, day).
+They MUST be on either June 30th at 23:59 or Dec. 31st at 23:59."""

@@ -130,11 +130,11 @@ stack with very efficient vectorized operations.
 ### calendar.mojo
 ```mojo
 alias PythonCalendar = Calendar()
-"""The default Python proleptic Gregorian calendar, goes from [0001-01-01, 9999-12-31]"""
+"""The default Python proleptic Gregorian calendar, goes from [0001-01-01, 9999-12-31]."""
 alias UTCCalendar = Calendar(Gregorian(min_year=1970))
-"""The leap year and leap second aware UTC calendar, goes from [1970-01-01, 9999-12-31]"""
+"""The leap day and leap second aware UTC calendar, goes from [1970-01-01, 9999-12-31]."""
 alias UTCFastCal = Calendar(UTCFast())
-"""UTC calendar for the fast module."""
+"""UTC calendar for the fast module. Leap day aware, goes from [1970-01-01, 9999-12-31]."""
 ```
 #### CalendarHashes
 ```mojo
@@ -237,8 +237,7 @@ calendar with its given epoch and max year:
 #### IsoFormat
 Available formats to parse from and to [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601).
 ### fast.mojo
-Fast implementations of `DateTime` module. All assume no leap seconds or
-years.
+Fast implementations of `DateTime` module. All assume no leap seconds.
 
 - `DateTime64`:
     - This is a "normal" `DateTime` with milisecond resolution.

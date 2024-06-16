@@ -1,5 +1,4 @@
-"""Fast implementations of `DateTime` module. All assume no leap seconds or
-years.
+"""Fast implementations of `DateTime` module. All assume no leap seconds.
 
 - `DateTime64`:
     - This is a "normal" `DateTime` with milisecond resolution.
@@ -34,7 +33,7 @@ struct DateTime64(Hashable, Stringable):
     UTCFastCal epoch [1970-01-01, 9999-12-31] and other
     params at build time. Assumes all instances have
     the same timezone and epoch and that there are no
-    leap seconds or days.
+    leap seconds.
 
     - Hash Resolution:
         - year: Up to year 134_217_728.
@@ -102,6 +101,7 @@ struct DateTime64(Hashable, Stringable):
             m_second: M_second.
             hash_val: Hash_val.
         """
+
         var y = int(year.take()) if year else int(self._calendar.min_year)
         var mon = int(month.take()) if month else int(self._calendar.min_month)
         var d = int(day.take()) if day else int(self._calendar.min_day)
@@ -447,6 +447,7 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             Self.
         """
+
         self.m_seconds += (
             (((years * 365 + days) * 24 + hours) * 60 + minutes) * 60 + seconds
         ) * 1000 + m_seconds
@@ -574,7 +575,7 @@ struct DateTime32(Hashable, Stringable):
     with minute resolution. Uses UTCFastCal epoch
     [1970-01-01, 9999-12-31] and other params at build time.
     Assumes all instances have the same timezone and epoch
-    and that there are no leap seconds or days.
+    and that there are no leap seconds.
 
     - Hash Resolution:
         - year: Up to year 4_096.
@@ -1078,7 +1079,7 @@ struct DateTime16(Hashable, Stringable):
     hour representation. Uses UTCFastCal epoch
     [1970-01-01, 9999-12-31] and other params at build time.
     Assumes all instances have the same timezone and epoch
-    and that there are no leap seconds or days.
+    and that there are no leap seconds.
 
     - Hash Resolution:
         year: Up to year 4.
@@ -1544,7 +1545,7 @@ struct DateTime8(Hashable, Stringable):
     hour representation. Uses UTCFastCal epoch
     [1970-01-01, 9999-12-31] and other params at build time.
     Assumes all instances have the same timezone and epoch
-    and that there are no leap seconds or days.
+    and that there are no leap seconds.
 
     - Hash Resolution:
         - day: Up to day 8.
