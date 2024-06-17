@@ -870,7 +870,7 @@ struct Gregorian(_Calendarized):
     """An array with the amount of days each month contains without 
     leap values. It's assumed that `len(monthdays) == max_month + 1`.
     And that the first month is 1."""
-    alias _days_before_month: List[UInt8] = List[UInt8](
+    alias _days_before_month: List[UInt16] = List[UInt16](
         0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
     )
 
@@ -1111,11 +1111,11 @@ struct Gregorian(_Calendarized):
         alias days_to_sec: UInt64 = 24 * hours_to_sec
         alias years_to_sec: UInt64 = 365 * days_to_sec
 
-        var leaps = self.leapsecs_since_epoch(year, month, day).cast[
-            DType.uint64
-        ]()
-
-        var y_d = (year - self.min_year).cast[DType.uint64]() * years_to_sec
+        var leaps = int(self.leapsecs_since_epoch(year, month, day))
+        var leapdays = int(
+            self.leapdays_since_epoch(year, self.min_month, self.min_day)
+        )
+        var y_d = (int(year - self.min_year) * 365 + leapdays) * days_to_sec
         var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
         var d_d = (doy - int(self.min_day)) * days_to_sec
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_sec
@@ -1151,12 +1151,12 @@ struct Gregorian(_Calendarized):
         alias min_to_mili = 60 * sec_to_mili
         alias hours_to_mili = 60 * min_to_mili
         alias days_to_mili = 24 * hours_to_mili
-        alias years_to_mili = 365 * days_to_mili
 
-        var leapsecs = self.leapsecs_since_epoch(year, month, day)
-        var leaps = leapsecs.cast[DType.uint64]() * sec_to_mili
-
-        var y_d = (year - self.min_year).cast[DType.uint64]() * years_to_mili
+        var leapsecs = int(self.leapsecs_since_epoch(year, month, day))
+        var leapdays = int(
+            self.leapdays_since_epoch(year, self.min_month, self.min_day)
+        )
+        var y_d = (int(year - self.min_year) * 365 + leapdays) * days_to_mili
         var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
         var d_d = (doy - int(self.min_day)) * days_to_mili
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_mili
@@ -1165,7 +1165,7 @@ struct Gregorian(_Calendarized):
         ]() * min_to_mili
         var s_d = (second - self.min_second).cast[DType.uint64]() * sec_to_mili
         var m_sec = (m_second - self.min_milisecond).cast[DType.uint64]()
-        return m_sec + y_d + d_d + h_d + min_d + s_d + leaps
+        return m_sec + y_d + d_d + h_d + min_d + s_d + leapsecs
 
     fn n_seconds_since_epoch(
         self,
@@ -1201,12 +1201,12 @@ struct Gregorian(_Calendarized):
         alias min_to_nano = 60 * sec_to_nano
         alias hours_to_nano = 60 * min_to_nano
         alias days_to_nano = 24 * hours_to_nano
-        alias years_to_nano = 365 * days_to_nano
 
-        var leapsecs = self.leapsecs_since_epoch(year, month, day)
-        var leaps = leapsecs.cast[DType.uint64]() * sec_to_nano
-
-        var y_d = ((year - self.min_year) * years_to_nano).cast[DType.uint64]()
+        var leapsecs = int(self.leapsecs_since_epoch(year, month, day))
+        var leapdays = int(
+            self.leapdays_since_epoch(year, self.min_month, self.min_day)
+        )
+        var y_d = (int(year - self.min_year) * 365 + leapdays) * days_to_nano
         var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
         var d_d = (doy - int(self.min_day)) * days_to_nano
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_nano
@@ -1221,7 +1221,7 @@ struct Gregorian(_Calendarized):
             DType.uint64
         ]() * 1_000
         var ns_d = (n_second - UInt16(self.min_nanosecond)).cast[DType.uint64]()
-        return y_d + d_d + h_d + min_d + s_d + ms_d + us_d + ns_d + leaps
+        return y_d + d_d + h_d + min_d + s_d + ms_d + us_d + ns_d + leapsecs
 
     @always_inline("nodebug")
     fn hash[
@@ -1402,7 +1402,7 @@ struct UTCFast(_Calendarized):
     """An array with the amount of days each month contains without 
     leap values. It's assumed that `len(monthdays) == max_month + 1`.
     And that the first month is 1."""
-    alias _days_before_month: List[UInt8] = List[UInt8](
+    alias _days_before_month: List[UInt16] = List[UInt16](
         0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
     )
 
@@ -1609,17 +1609,19 @@ struct UTCFast(_Calendarized):
             The amount.
         """
 
-        alias min_to_sec: UInt64 = 60
-        alias hours_to_sec: UInt64 = 60 * min_to_sec
-        alias days_to_sec: UInt64 = 24 * hours_to_sec
-        alias years_to_sec: UInt64 = 365 * days_to_sec
+        alias min_to_sec = 60
+        alias hours_to_sec = 60 * min_to_sec
+        alias days_to_sec = 24 * hours_to_sec
 
-        var y = (year - self.min_year).cast[DType.uint64]() * years_to_sec
-        var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
+        var leapdays = int(
+            self.leapdays_since_epoch(year, self.min_month, self.min_day)
+        )
+        var y = int((year - self.min_year) * 365 + leapdays) * days_to_sec
+        var doy = int(self.day_of_year(year, month, day))
         var d_d = (doy - int(self.min_day)) * days_to_sec
-        var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_sec
-        var min_d = (minute - self.min_minute).cast[DType.uint64]() * min_to_sec
-        var s_d = (second - self.min_second).cast[DType.uint64]()
+        var h_d = int(hour - self.min_hour) * hours_to_sec
+        var min_d = int(minute - self.min_minute) * min_to_sec
+        var s_d = int(second - self.min_second)
         return y + d_d + h_d + min_d + s_d
 
     fn m_seconds_since_epoch(
@@ -1651,16 +1653,18 @@ struct UTCFast(_Calendarized):
         alias min_to_mili = 60 * sec_to_mili
         alias hours_to_mili = 60 * min_to_mili
         alias days_to_mili = 24 * hours_to_mili
-        alias years_to_mili = 365 * days_to_mili
 
-        var y = (year - self.min_year).cast[DType.uint64]() * years_to_mili
+        var leapdays = int(
+            self.leapdays_since_epoch(year, self.min_month, self.min_day)
+        )
+        var y = (int(year - self.min_year) * 365 + leapdays) * days_to_mili
         var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
         var d_d = (doy - int(self.min_day)) * days_to_mili
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_mili
         var min_d = (minute - self.min_minute).cast[
             DType.uint64
         ]() * min_to_mili
-        var s_d = (second - self.min_second).cast[DType.uint64]()
+        var s_d = (second - self.min_second).cast[DType.uint64]() * sec_to_mili
         var ms_d = (m_second - self.min_milisecond).cast[DType.uint64]()
         return y + d_d + h_d + min_d + s_d + ms_d
 
@@ -1699,9 +1703,11 @@ struct UTCFast(_Calendarized):
         alias min_to_nano = 60 * sec_to_nano
         alias hours_to_nano = 60 * min_to_nano
         alias days_to_nano = 24 * hours_to_nano
-        alias years_to_nano = 365 * days_to_nano
 
-        var y = (year - self.min_year).cast[DType.uint64]() * years_to_nano
+        var leapdays = int(
+            self.leapdays_since_epoch(year, self.min_month, self.min_day)
+        )
+        var y = (int(year - self.min_year) * 365 + leapdays) * days_to_nano
         var doy = self.day_of_year(year, month, day).cast[DType.uint64]()
         var d_d = (doy - int(self.min_day)) * days_to_nano
         var h_d = (hour - self.min_hour).cast[DType.uint64]() * hours_to_nano
@@ -1764,8 +1770,8 @@ struct UTCFast(_Calendarized):
             )
         elif cal_h.selected == cal_h.UINT16:
             result = (
-                (int(year) << cal_h.shift_16_y)
-                | (int(day) << cal_h.shift_16_d)
+                (int(year - self.min_year) << cal_h.shift_16_y)
+                | (int(self.day_of_year(year, month, day)) << cal_h.shift_16_d)
                 | (int(hour) << cal_h.shift_16_h)
             )
         elif cal_h.selected == cal_h.UINT32:
@@ -1810,18 +1816,28 @@ struct UTCFast(_Calendarized):
 
         @parameter
         if cal_h.selected == cal_h.UINT8:
-            result[2] = int(((value >> cal_h.shift_8_d)) & cal_h.mask_8_d)
-            result[3] = int(((value >> cal_h.shift_8_h)) & cal_h.mask_8_h)
+            result[2] = int((value >> cal_h.shift_8_d) & cal_h.mask_8_d)
+            result[3] = int((value >> cal_h.shift_8_h) & cal_h.mask_8_h)
         elif cal_h.selected == cal_h.UINT16:
-            result[0] = int(((value >> cal_h.shift_16_y)) & cal_h.mask_16_y)
-            result[2] = int(((value >> cal_h.shift_16_d)) & cal_h.mask_16_d)
-            result[3] = int(((value >> cal_h.shift_16_h)) & cal_h.mask_16_h)
+            result[0] = (
+                int((value >> cal_h.shift_16_y) & cal_h.mask_16_y)
+                + self.min_year
+            )
+            var doy = int((value >> cal_h.shift_16_d) & cal_h.mask_16_d)
+            var idx = 1
+            for i in range(1, 13):
+                if Self._days_before_month[i] > doy:
+                    idx = i - 1
+                    break
+            result[1] = idx
+            result[2] = doy - Self._days_before_month[idx]
+            result[3] = int((value >> cal_h.shift_16_h) & cal_h.mask_16_h)
         elif cal_h.selected == cal_h.UINT32:
-            result[0] = int(((value >> cal_h.shift_32_y)) & cal_h.mask_32_y)
-            result[1] = int(((value >> cal_h.shift_32_mon)) & cal_h.mask_32_mon)
-            result[2] = int(((value >> cal_h.shift_32_d)) & cal_h.mask_32_d)
-            result[3] = int(((value >> cal_h.shift_32_h)) & cal_h.mask_32_h)
-            result[4] = int(((value >> cal_h.shift_32_m)) & cal_h.mask_32_m)
+            result[0] = int((value >> cal_h.shift_32_y) & cal_h.mask_32_y)
+            result[1] = int((value >> cal_h.shift_32_mon) & cal_h.mask_32_mon)
+            result[2] = int((value >> cal_h.shift_32_d) & cal_h.mask_32_d)
+            result[3] = int((value >> cal_h.shift_32_h) & cal_h.mask_32_h)
+            result[4] = int((value >> cal_h.shift_32_m) & cal_h.mask_32_m)
         elif cal_h.selected == cal_h.UINT64:
             result[0] = int(
                 (value >> (cal_h.shift_64_y - cal_h.shift_64_ms))

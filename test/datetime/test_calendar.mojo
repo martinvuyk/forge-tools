@@ -79,6 +79,8 @@ fn test_python_calendar() raises:
     assert_equal(5, cal.day_of_week(2024, 6, 15))
     assert_equal(166, cal.day_of_year(2023, 6, 15))
     assert_equal(167, cal.day_of_year(2024, 6, 15))
+    assert_equal(365, cal.day_of_year(2023, 12, 31))
+    assert_equal(366, cal.day_of_year(2024, 12, 31))
 
     for i in range(1, 3_000):
         if i % 4 == 0 and (i % 100 != 0 or i % 400 == 0):
@@ -127,6 +129,27 @@ fn test_python_calendar() raises:
     assert_equal(
         int(120 * 1e9), cal.n_seconds_since_epoch(1, 1, 1, 0, 2, 0, 0, 0, 0)
     )
+    var d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
+    var d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
+    assert_equal(120, d1 - d2)
+    d1 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0)
+    d2 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0)
+    assert_equal(120 * 1_000, d1 - d2)
+    d1 = cal.n_seconds_since_epoch(500, 1, 1, 0, 2, 0, 0, 0, 0)
+    d2 = cal.n_seconds_since_epoch(500, 1, 1, 0, 0, 0, 0, 0, 0)
+    assert_equal(int(120 * 1e9), d1 - d2)
+
+    alias day_to_sec = 24 * 60 * 60
+    alias sec_to_nano = 1_000_000_000
+    d1 = cal.seconds_since_epoch(2024, 12, 31, 3, 4, 5)
+    d2 = cal.seconds_since_epoch(2025, 1, 1, 3, 4, 5)
+    assert_equal(1 * day_to_sec, d2 - d1)
+    d1 = cal.m_seconds_since_epoch(2024, 12, 31, 3, 4, 5, 6)
+    d2 = cal.m_seconds_since_epoch(2025, 1, 1, 3, 4, 5, 6)
+    assert_equal(1 * day_to_sec * 1_000, d2 - d1)
+    d1 = cal.n_seconds_since_epoch(500, 12, 31, 3, 4, 5, 6, 7, 8)
+    d2 = cal.n_seconds_since_epoch(501, 1, 1, 3, 4, 5, 6, 7, 8)
+    assert_equal(1 * day_to_sec * sec_to_nano, d2 - d1)
 
 
 fn test_gregorian_utc_calendar() raises:
@@ -147,6 +170,27 @@ fn test_gregorian_utc_calendar() raises:
     assert_equal(
         int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
     )
+    var d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
+    var d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
+    assert_equal(120, d1 - d2)
+    d1 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0)
+    d2 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0)
+    assert_equal(120 * 1_000, d1 - d2)
+    d1 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0, 0, 0)
+    d2 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0, 0, 0)
+    assert_equal(int(120 * 1e9), d1 - d2)
+
+    alias day_to_sec = 24 * 60 * 60
+    alias sec_to_nano = 1_000_000_000
+    d1 = cal.seconds_since_epoch(2024, 12, 31, 3, 4, 5)
+    d2 = cal.seconds_since_epoch(2025, 1, 1, 3, 4, 5)
+    assert_equal(1 * day_to_sec, d2 - d1)
+    d1 = cal.m_seconds_since_epoch(2024, 12, 31, 3, 4, 5, 6)
+    d2 = cal.m_seconds_since_epoch(2025, 1, 1, 3, 4, 5, 6)
+    assert_equal(1 * day_to_sec * 1_000, d2 - d1)
+    d1 = cal.n_seconds_since_epoch(2024, 12, 31, 3, 4, 5, 6, 7, 8)
+    d2 = cal.n_seconds_since_epoch(2025, 1, 1, 3, 4, 5, 6, 7, 8)
+    assert_equal(1 * day_to_sec * sec_to_nano, d2 - d1)
 
 
 fn test_utcfast_calendar() raises:
@@ -155,6 +199,9 @@ fn test_utcfast_calendar() raises:
     assert_equal(5, cal.day_of_week(2024, 6, 15))
     assert_equal(166, cal.day_of_year(2023, 6, 15))
     assert_equal(167, cal.day_of_year(2024, 6, 15))
+    assert_equal(365, cal.day_of_year(2023, 12, 31))
+    assert_equal(366, cal.day_of_year(2024, 12, 31))
+
     assert_equal(0, cal.leapsecs_since_epoch(2017, 1, 2))
     var res = cal.monthrange(2023, 2)
     assert_equal(2, res[0])
@@ -167,6 +214,27 @@ fn test_utcfast_calendar() raises:
     assert_equal(
         int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
     )
+    var d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
+    var d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
+    assert_equal(120, d1 - d2)
+    d1 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0)
+    d2 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0)
+    assert_equal(120 * 1_000, d1 - d2)
+    d1 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0, 0, 0)
+    d2 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0, 0, 0)
+    assert_equal(int(120 * 1e9), d1 - d2)
+
+    alias day_to_sec = 24 * 60 * 60
+    alias sec_to_nano = 1_000_000_000
+    d1 = cal.seconds_since_epoch(2024, 12, 31, 3, 4, 5)
+    d2 = cal.seconds_since_epoch(2025, 1, 1, 3, 4, 5)
+    assert_equal(1 * day_to_sec, d2 - d1)
+    d1 = cal.m_seconds_since_epoch(2024, 12, 31, 3, 4, 5, 6)
+    d2 = cal.m_seconds_since_epoch(2025, 1, 1, 3, 4, 5, 6)
+    assert_equal(1 * day_to_sec * 1_000, d2 - d1)
+    d1 = cal.n_seconds_since_epoch(2024, 12, 31, 3, 4, 5, 6, 7, 8)
+    d2 = cal.n_seconds_since_epoch(2025, 1, 1, 3, 4, 5, 6, 7, 8)
+    assert_equal(1 * day_to_sec * sec_to_nano, d2 - d1)
 
 
 fn main() raises:

@@ -36,13 +36,13 @@ struct DateTime64(Hashable, Stringable):
     leap seconds.
 
     - Hash Resolution:
-        - year: Up to year 134_217_728.
-        - month: Up to month 32.
-        - day: Up to day 32.
-        - hour: Up to hour 32.
-        - minute: Up to minute 64.
-        - second: Up to second 64.
-        - m_second: Up to m_second 1024.
+        - year: Up to year 134_217_728 -1.
+        - month: Up to month 32 -1.
+        - day: Up to day 32 -1.
+        - hour: Up to hour 32 -1.
+        - minute: Up to minute 64 -1.
+        - second: Up to second 64 -1.
+        - m_second: Up to m_second 1024 -1.
 
     - Milisecond Resolution (Gregorian as reference):
         - year: Up to year 584_942_417 since calendar epoch.
@@ -58,7 +58,18 @@ struct DateTime64(Hashable, Stringable):
     var hash: UInt64
     """Hash."""
     alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(64)
+    alias _cal_h = CalendarHashes(CalendarHashes.UINT64)
+
+    fn __init__(inout self, m_seconds: UInt64, hash_val: UInt64):
+        """Construct a DateTime64.
+
+        Args:
+            m_seconds: The miliseconds.
+            hash_val: The hash.
+        """
+
+        self.m_seconds = m_seconds
+        self.hash = hash_val
 
     fn __init__[
         T1: _IntCollect = Int,
@@ -353,13 +364,13 @@ struct DateTime64(Hashable, Stringable):
         return self.m_seconds < other.m_seconds
 
     # @always_inline("nodebug")
-    fn __invert__(self) -> UInt64:
+    fn __invert__(self) -> Self:
         """Invert.
 
         Returns:
-            Inverted hash.
+            An instance of self with inverted hash.
         """
-        return ~self.hash
+        return Self(m_seconds=int(self.m_seconds), hash_val=~self.hash)
 
     # @always_inline("nodebug")
     fn __and__[T: Hashable](self, other: T) -> UInt64:
@@ -454,17 +465,32 @@ struct DateTime64(Hashable, Stringable):
         return self
 
     # @always_inline("nodebug")
-    fn subtract(owned self, seconds: Int = 0, m_seconds: Int = 0) -> Self:
+    fn subtract(
+        owned self,
+        years: Int = 0,
+        days: Int = 0,
+        hours: Int = 0,
+        minutes: Int = 0,
+        seconds: Int = 0,
+        m_seconds: Int = 0,
+    ) -> Self:
         """Subtract from self.
 
         Args:
+            years: Years.
+            days: Days.
+            hours: Hours.
+            minutes: Minutes.
             seconds: Seconds.
             m_seconds: Miliseconds.
 
         Returns:
             Self.
         """
-        self.m_seconds -= seconds * 1000 + m_seconds
+
+        self.m_seconds -= (
+            (((years * 365 + days) * 24 + hours) * 60 + minutes) * 60 + seconds
+        ) * 1000 + m_seconds
         return self
 
     @staticmethod
@@ -578,11 +604,11 @@ struct DateTime32(Hashable, Stringable):
     and that there are no leap seconds.
 
     - Hash Resolution:
-        - year: Up to year 4_096.
-        - month: Up to month 16.
-        - day: Up to day 32.
-        - hour: Up to hour 32.
-        - minute: Up to minute 64.
+        - year: Up to year 4_096 -1.
+        - month: Up to month 16 -1.
+        - day: Up to day 32 -1.
+        - hour: Up to hour 32 -1.
+        - minute: Up to minute 64 -1.
 
     - Minute Resolution (Gregorian as reference):
         - year: Up to year 8_171 since calendar epoch.
@@ -598,7 +624,18 @@ struct DateTime32(Hashable, Stringable):
     var hash: UInt32
     """Hash."""
     alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(32)
+    alias _cal_h = CalendarHashes(CalendarHashes.UINT32)
+
+    fn __init__(inout self, minutes: UInt32, hash_val: UInt32):
+        """Construct a DateTime32.
+
+        Args:
+            minutes: The minutes.
+            hash_val: The hash.
+        """
+
+        self.minutes = minutes
+        self.hash = hash_val
 
     fn __init__[
         T1: _IntCollect = Int,
@@ -860,13 +897,13 @@ struct DateTime32(Hashable, Stringable):
         return self.minutes < other.minutes
 
     # @always_inline("nodebug")
-    fn __invert__(self) -> UInt32:
+    fn __invert__(self) -> Self:
         """Invert.
 
         Returns:
-            Inverted hash.
+            An instance of self with inverted hash.
         """
-        return ~self.hash
+        return Self(minutes=self.minutes, hash_val=~self.hash)
 
     # @always_inline("nodebug")
     fn __and__[T: Hashable](self, other: T) -> UInt32:
@@ -955,21 +992,34 @@ struct DateTime32(Hashable, Stringable):
 
         self.minutes += (
             ((years * 365 + days) * 24 + hours) * 60 + minutes
-        ) * 60 + seconds
+        ) + seconds // 60
         return self
 
     # @always_inline("nodebug")
-    fn subtract(owned self, minutes: Int = 0, seconds: Int = 0) -> Self:
+    fn subtract(
+        owned self,
+        years: Int = 0,
+        days: Int = 0,
+        hours: Int = 0,
+        minutes: Int = 0,
+        seconds: Int = 0,
+    ) -> Self:
         """Subtract from self.
 
         Args:
+            years: Years.
+            days: Days.
+            hours: Hours.
             minutes: Minutes.
             seconds: Seconds.
 
         Returns:
             Self.
         """
-        self.minutes -= minutes + seconds * 60
+
+        self.minutes -= (
+            ((years * 365 + days) * 24 + hours) * 60 + minutes
+        ) + seconds // 60
         return self
 
     @staticmethod
@@ -1082,9 +1132,9 @@ struct DateTime16(Hashable, Stringable):
     and that there are no leap seconds.
 
     - Hash Resolution:
-        year: Up to year 4.
-        day: Up to day 512.
-        hour: Up to hour 32.
+        year: Up to year 4 -1.
+        day: Up to day 512 -1.
+        hour: Up to hour 32 -1.
 
     - Hour Resolution (Gregorian as reference):
         - year: Up to year 7 since calendar epoch.
@@ -1100,7 +1150,18 @@ struct DateTime16(Hashable, Stringable):
     var hash: UInt16
     """Hash."""
     alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(16)
+    alias _cal_h = CalendarHashes(CalendarHashes.UINT16)
+
+    fn __init__(inout self, hours: UInt16, hash_val: UInt16):
+        """Construct a DateTime16.
+
+        Args:
+            hours: The hours.
+            hash_val: The hash.
+        """
+
+        self.hours = hours
+        self.hash = hash_val
 
     fn __init__[
         T1: _IntCollect = Int,
@@ -1140,6 +1201,7 @@ struct DateTime16(Hashable, Stringable):
         self.hours = (
             self._calendar.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         ).cast[DType.uint16]()
+
         self.hash = int(hash_val.take()) if hash_val else int(
             self._calendar.hash[self._cal_h](y, mon, d, h, m, s)
         )
@@ -1328,13 +1390,13 @@ struct DateTime16(Hashable, Stringable):
         return self.hours < other.hours
 
     # @always_inline("nodebug")
-    fn __invert__(self) -> UInt16:
+    fn __invert__(self) -> Self:
         """Invert.
 
         Returns:
-            Inverted hash.
+            An instance of self with inverted hash.
         """
-        return ~self.hash
+        return Self(hours=self.hours, hash_val=~self.hash)
 
     # @always_inline("nodebug")
     fn __and__[T: Hashable](self, other: T) -> UInt16:
@@ -1423,17 +1485,26 @@ struct DateTime16(Hashable, Stringable):
         return self
 
     # @always_inline("nodebug")
-    fn subtract(owned self, hours: Int = 0, seconds: Int = 0) -> Self:
+    fn subtract(
+        owned self,
+        days: Int = 0,
+        hours: Int = 0,
+        minutes: Int = 0,
+        seconds: Int = 0,
+    ) -> Self:
         """Subtract from self.
 
         Args:
+            days: Days.
             hours: Hours.
+            minutes: Minutes.
             seconds: Seconds.
 
         Returns:
             Self.
         """
-        self.hours -= hours + seconds * 60 * 60
+
+        self.hours -= days * 24 + hours + minutes // 60 + seconds // (60 * 60)
         return self
 
     @staticmethod
@@ -1532,9 +1603,7 @@ struct DateTime16(Hashable, Stringable):
             Self.
         """
         var d = Self._calendar.from_hash[Self._cal_h](int(value))
-        return Self(
-            year=int(d[0]), day=int(d[2]), hour=int(d[3]), hash_val=value
-        )
+        return Self(year=d[0], month=d[1], day=d[2], hour=d[3], hash_val=value)
 
 
 # @value
@@ -1548,8 +1617,8 @@ struct DateTime8(Hashable, Stringable):
     and that there are no leap seconds.
 
     - Hash Resolution:
-        - day: Up to day 8.
-        - hour: Up to hour 32.
+        - day: Up to day 8 -1.
+        - hour: Up to hour 32 -1.
 
     - Hour Resolution (Gregorian as reference):
         - hour: Up to hour 256 (~ 10 days) since calendar epoch.
@@ -1565,7 +1634,18 @@ struct DateTime8(Hashable, Stringable):
     var hash: UInt8
     """Hash."""
     alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(8)
+    alias _cal_h = CalendarHashes(CalendarHashes.UINT8)
+
+    fn __init__(inout self, hours: UInt8, hash_val: UInt8):
+        """Construct a DateTime8.
+
+        Args:
+            hours: The hours.
+            hash_val: The hash.
+        """
+
+        self.hours = hours
+        self.hash = hash_val
 
     fn __init__[
         T1: _IntCollect = Int,
@@ -1791,13 +1871,13 @@ struct DateTime8(Hashable, Stringable):
         return self.hours < other.hours
 
     # @always_inline("nodebug")
-    fn __invert__(self) -> UInt8:
+    fn __invert__(self) -> Self:
         """Invert.
 
         Returns:
-            Inverted hash.
+            An instance of self with inverted hash.
         """
-        return ~self.hash
+        return Self(hours=self.hours, hash_val=~self.hash)
 
     # @always_inline("nodebug")
     fn __and__[T: Hashable](self, other: T) -> UInt8:
@@ -1886,17 +1966,26 @@ struct DateTime8(Hashable, Stringable):
         return self
 
     # @always_inline("nodebug")
-    fn subtract(owned self, hours: Int = 0, seconds: Int = 0) -> Self:
+    fn subtract(
+        owned self,
+        days: Int = 0,
+        hours: Int = 0,
+        minutes: Int = 0,
+        seconds: Int = 0,
+    ) -> Self:
         """Subtract from self.
 
         Args:
+            days: Days.
             hours: Hours.
+            minutes: Minutes.
             seconds: Seconds.
 
         Returns:
             Self.
         """
-        self.hours -= hours + seconds * 60 * 60
+
+        self.hours -= days * 24 + hours + minutes // 60 + seconds // (60 * 60)
         return self
 
     @staticmethod
@@ -1995,4 +2084,4 @@ struct DateTime8(Hashable, Stringable):
             Self.
         """
         var d = Self._calendar.from_hash[Self._cal_h](int(value))
-        return Self(day=int(d[2]), hour=int(d[3]), hash_val=value)
+        return Self(day=int(d[2]), hash_val=value).add(hours=int(d[3]))
