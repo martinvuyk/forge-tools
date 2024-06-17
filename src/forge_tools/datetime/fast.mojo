@@ -380,14 +380,14 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             An instance of self with inverted hash.
         """
-        return Self(m_seconds=int(self.m_seconds), hash_val=~self.hash)
+        return Self(m_seconds=self.m_seconds, hash_val=~self.hash)
 
     # @always_inline("nodebug")
     fn __and__[T: Hashable](self, other: T) -> UInt64:
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -402,7 +402,7 @@ struct DateTime64(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -417,7 +417,7 @@ struct DateTime64(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -913,7 +913,7 @@ struct DateTime32(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -928,7 +928,7 @@ struct DateTime32(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -943,7 +943,7 @@ struct DateTime32(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1199,7 +1199,9 @@ struct DateTime16(Hashable, Stringable):
             self._calendar.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         )
         self.hash = int(hash_val.take()) if hash_val else int(
-            self._calendar.hash[self._cal_h](y, mon, d, h, m, s)
+            self._calendar.hash[self._cal_h](
+                y - self._calendar.min_year, mon, d, h, m, s
+            )
         )
 
     # @always_inline("nodebug")
@@ -1215,7 +1217,9 @@ struct DateTime16(Hashable, Stringable):
 
         @parameter
         if name == "year":
-            return (self.hash >> self._cal_h.shift_16_y) & self._cal_h.mask_16_y
+            return (
+                self.hash >> self._cal_h.shift_16_y
+            ) & self._cal_h.mask_16_y + self._calendar.min_year
         elif name == "day":
             return (self.hash >> self._cal_h.shift_16_d) & self._cal_h.mask_16_d
         elif name == "hour":
@@ -1251,7 +1255,7 @@ struct DateTime16(Hashable, Stringable):
         if hour:
             mask |= self._cal_h.mask_16_h << self._cal_h.shift_16_h
         var h = self._calendar.hash[self._cal_h](
-            year.or_else(0),
+            (year.value() - self._calendar.min_year if year else 0),
             day.or_else(0),
             hour.or_else(0),
         )
@@ -1406,7 +1410,7 @@ struct DateTime16(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1421,7 +1425,7 @@ struct DateTime16(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1436,7 +1440,7 @@ struct DateTime16(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1557,7 +1561,8 @@ struct DateTime16(Hashable, Stringable):
         """
 
         var d = self._calendar.from_hash[Self._cal_h](int(self.hash))
-        return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
+        var y = d[0] + Self._calendar.min_year
+        return dt_str.to_iso[iso](y, d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
     # @always_inline("nodebug")
@@ -1600,7 +1605,8 @@ struct DateTime16(Hashable, Stringable):
             Self.
         """
         var d = Self._calendar.from_hash[Self._cal_h](int(value))
-        return Self(year=d[0], month=d[1], day=d[2], hour=d[3], hash_val=value)
+        var y = d[0] + Self._calendar.min_year
+        return Self(year=y, month=d[1], day=d[2], hour=d[3], hash_val=value)
 
 
 # @value
@@ -1884,7 +1890,7 @@ struct DateTime8(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1899,7 +1905,7 @@ struct DateTime8(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1914,7 +1920,7 @@ struct DateTime8(Hashable, Stringable):
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.

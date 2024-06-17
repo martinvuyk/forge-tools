@@ -1840,7 +1840,7 @@ struct UTCFast(_Calendarized):
             )
         elif cal_h.selected == cal_h.UINT16:
             result = (
-                (int(year - self.min_year) << cal_h.shift_16_y)
+                (int(year) << cal_h.shift_16_y)
                 | (int(self.day_of_year(year, month, day)) << cal_h.shift_16_d)
                 | (int(hour) << cal_h.shift_16_h)
             )
@@ -1889,9 +1889,7 @@ struct UTCFast(_Calendarized):
             result[2] = int((value >> cal_h.shift_8_d) & cal_h.mask_8_d)
             result[3] = int((value >> cal_h.shift_8_h) & cal_h.mask_8_h)
         elif cal_h.selected == cal_h.UINT16:
-            result[0] = int(
-                (value >> cal_h.shift_16_y) & cal_h.mask_16_y
-            ) + int(self.min_year)
+            result[0] = int((value >> cal_h.shift_16_y) & cal_h.mask_16_y)
             var doy = int((value >> cal_h.shift_16_d) & cal_h.mask_16_d)
             var res = self.day_of_month(result[0], doy)
             result[1] = res[0]

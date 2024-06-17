@@ -10,7 +10,7 @@ from forge_tools.datetime.dt_str import IsoFormat
 
 
 fn test_add() raises:
-    # when using python and unix calendar there should be no difference in results
+    # using python and unix calendar there should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
@@ -109,7 +109,7 @@ fn test_add() raises:
 
 
 fn test_subtract() raises:
-    # when using python and unix calendar there should be no difference in results
+    # using python and unix calendar there should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
@@ -198,7 +198,7 @@ fn test_subtract() raises:
 
 
 fn test_logic() raises:
-    # when using python and unix calendar there should be no difference in results
+    # using python and unix calendar there should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
@@ -219,7 +219,7 @@ fn test_logic() raises:
 
 
 fn test_bitwise() raises:
-    # when using python and unix calendar there should be no difference in results
+    # using python and unix calendar there should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
@@ -229,16 +229,15 @@ fn test_bitwise() raises:
     var tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
 
     var ref1 = dt(1970, 1, 1, tz=tz_0_, calendar=pycal)
-    assert_true(ref1 & dt(1970, 1, 1, tz=tz_0_, calendar=unixcal) == 0)
-    assert_true(ref1 & dt(1970, 1, 1, tz=tz_1, calendar=unixcal) == 0)
-    assert_true(ref1 & dt(1969, 12, 31, tz=tz1_, calendar=pycal) == 0)
-
+    assert_true(ref1 ^ dt(1970, 1, 1, tz=tz_0_, calendar=unixcal) == 0)
+    assert_true(ref1 ^ dt(1970, 1, 1, tz=tz_1, calendar=unixcal) == 0)
+    assert_true(ref1 ^ dt(1969, 12, 31, tz=tz1_, calendar=pycal) != 0)
     assert_true((ref1 ^ dt(1970, 1, 2, tz=tz_0_, calendar=pycal)) != 0)
     assert_true(
         (ref1 | (dt(1970, 1, 2, tz=tz_0_, calendar=pycal) & 0)) == hash(ref1)
     )
-    assert_true((ref1 & ~ref1) == 0)
-    assert_true(~(ref1 ^ ~ref1) == 0)
+    assert_true((hash(ref1) & ~ref1) == 0)
+    assert_true(~(hash(ref1) ^ ~ref1) == 0)
 
 
 fn test_iso() raises:
@@ -247,35 +246,35 @@ fn test_iso() raises:
     alias TZ = dt._tz
     var tz_0_ = TZ("Etc/UTC", 0, 0)
 
-    var ref1 = dt(1970, 1, 1, tz=tz_0_, calendar=pycal)
-    var iso_str = "1970-01-01T00:00:00+00:00"
+    var ref1 = dt(2024, 6, 16, 18, 51, 20, tz=tz_0_, calendar=pycal)
+    var iso_str = "2024-06-16T18:51:20+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_true(ref1 == dt.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
 
-    iso_str = "1970-01-01 00:00:00+00:00"
+    iso_str = "2024-06-16 18:51:20"
     alias fmt2 = IsoFormat(IsoFormat.YYYY_MM_DD___HH_MM_SS)
     assert_true(ref1 == dt.from_iso[fmt2](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt2]())
 
-    iso_str = "1970-01-01T00:00:00"
+    iso_str = "2024-06-16T18:51:20"
     alias fmt3 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS)
     assert_true(ref1 == dt.from_iso[fmt3](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt3]())
 
-    iso_str = "19700101000000"
+    iso_str = "20240616185120"
     alias fmt4 = IsoFormat(IsoFormat.YYYYMMDDHHMMSS)
     assert_true(ref1 == dt.from_iso[fmt4](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt4]())
 
-    iso_str = "00:00:00"
+    iso_str = "18:51:20"
     alias fmt5 = IsoFormat(IsoFormat.HH_MM_SS)
-    assert_true(ref1 == dt.from_iso[fmt5](iso_str).value())
+    assert_true(ref1 == dt.from_iso[fmt5, calendar=unixcal](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt5]())
 
-    iso_str = "000000"
+    iso_str = "185120"
     alias fmt6 = IsoFormat(IsoFormat.HHMMSS)
-    assert_true(ref1 == dt.from_iso[fmt6](iso_str).value())
+    assert_true(ref1 == dt.from_iso[fmt6, calendar=unixcal](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 

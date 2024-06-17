@@ -215,9 +215,9 @@ struct TimeZone[
                 pass
 
         var data = self._no_dst.get(self.tz_str)
-        if not data:
-            return Offset(0, 0, 1)
-        return data.value()
+        if data:
+            return data.value()
+        return Offset(0, 0, 1)
 
     @always_inline("nodebug")
     fn __str__(self) -> StringLiteral:

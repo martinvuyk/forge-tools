@@ -213,24 +213,17 @@ struct Date[
         Returns:
             Self with tz casted to UTC.
         """
+
         var TZ_UTC = Self._tz()
+        print(self.tz == TZ_UTC)
         if self.tz == TZ_UTC:
-            return self
-        var new_self = self
+            return self^
         var offset = self.tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
-        var of_h = int(offset.hour)
-        var of_m = int(offset.minute)
-        var maxmin = self.calendar.max_minute
-        var maxsec = self.calendar.max_typical_second + int(
-            self.calendar.leapsecs_since_epoch(self.year, self.month, self.day)
-        )
-        var amnt = int(of_h * maxmin * maxsec + of_m * maxsec)
+        print(offset.sign)
         if offset.sign == -1:
-            new_self = self.add(seconds=amnt)
-        else:
-            new_self = self.subtract(seconds=amnt)
-        new_self.tz = TZ_UTC
-        return new_self
+            self = self.add(days=1)
+        self.tz = TZ_UTC
+        return self^
 
     fn from_utc(owned self, tz: Self._tz) -> Self:
         """Translate `TimeZone` from UTC. If `self.tz` is UTC
@@ -244,24 +237,21 @@ struct Date[
         """
         var TZ_UTC = Self._tz()
         if tz == TZ_UTC:
-            return self
+            return self^
         var maxmin = self.calendar.max_minute
         var maxsec = self.calendar.max_typical_second
         var offset = tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
         var of_h = int(offset.hour)
         var of_m = int(offset.minute)
         var amnt = int(of_h * maxmin * maxsec + of_m * maxsec)
-        var new_self = self
         if offset.sign == 1:
-            new_self = self.add(seconds=amnt)
+            self = self.add(seconds=amnt)
         else:
-            new_self = self.subtract(seconds=amnt)
+            self = self.subtract(seconds=amnt)
         var leapsecs = int(
-            new_self.calendar.leapsecs_since_epoch(
-                new_self.year, new_self.month, new_self.day
-            )
+            self.calendar.leapsecs_since_epoch(self.year, self.month, self.day)
         )
-        return new_self.add(seconds=leapsecs).replace(tz=tz)
+        return self.add(seconds=leapsecs).replace(tz=tz)
 
     fn seconds_since_epoch(self) -> UInt64:
         """Seconds since the begining of the calendar's epoch.
@@ -287,9 +277,9 @@ struct Date[
         var s = self
         var o = other.replace(calendar=self.calendar)
 
-        if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
+        if s.tz != o.tz:
+            s = s.to_utc()
+            o = o.to_utc()
         var self_s = s.seconds_since_epoch()
         var other_s = o.seconds_since_epoch()
         return self_s, other_s
@@ -518,12 +508,10 @@ struct Date[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) == hash(o)
+            return hash(self.to_utc()) == hash(other.to_utc())
+        return hash(self) == hash(other)
 
     # @always_inline("nodebug")
     fn __ne__(self, other: Self) -> Bool:
@@ -535,12 +523,10 @@ struct Date[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) != hash(o)
+            return hash(self.to_utc()) != hash(other.to_utc())
+        return hash(self) != hash(other)
 
     # @always_inline("nodebug")
     fn __gt__(self, other: Self) -> Bool:
@@ -552,12 +538,10 @@ struct Date[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) > hash(o)
+            return hash(self.to_utc()) > hash(other.to_utc())
+        return hash(self) > hash(other)
 
     # @always_inline("nodebug")
     fn __ge__(self, other: Self) -> Bool:
@@ -569,12 +553,10 @@ struct Date[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) >= hash(o)
+            return hash(self.to_utc()) >= hash(other.to_utc())
+        return hash(self) >= hash(other)
 
     # @always_inline("nodebug")
     fn __le__(self, other: Self) -> Bool:
@@ -586,12 +568,10 @@ struct Date[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) <= hash(o)
+            return hash(self.to_utc()) <= hash(other.to_utc())
+        return hash(self) <= hash(other)
 
     # @always_inline("nodebug")
     fn __lt__(self, other: Self) -> Bool:
@@ -603,12 +583,10 @@ struct Date[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) < hash(o)
+            return hash(self.to_utc()) < hash(other.to_utc())
+        return hash(self) < hash(other)
 
     # @always_inline("nodebug")
     fn __invert__(self) -> UInt32:
@@ -624,7 +602,7 @@ struct Date[
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -639,7 +617,7 @@ struct Date[
         """Or.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -654,7 +632,7 @@ struct Date[
         """Xor.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -904,9 +882,10 @@ struct Date[
         Returns:
             String.
         """
-        var date = (int(self.year), int(self.month), int(self.day))
-        var time = dt_str.to_iso[iso](date[0], date[1], date[2], 0, 0, 0)
-        return time[:10]
+
+        return dt_str.to_iso[iso](
+            self.year, self.month, self.day, 0, 0, 0, self.tz.to_iso()
+        )
 
     @staticmethod
     @parameter
@@ -960,11 +939,22 @@ struct Date[
         Returns:
             An Optional Self.
         """
+
         try:
             var p = dt_str.from_iso[
                 iso, dst_storage, no_dst_storage, iana, pyzoneinfo, native
             ](s)
-            var dt = Self(p[0], p[1], p[2], tz=p[6], calendar=calendar)
+            var year = p[0]
+            var month = p[1]
+            var day = p[2]
+
+            @parameter
+            if iso.selected in (iso.HHMMSS, iso.HH_MM_SS):
+                year = calendar.min_year
+                month = calendar.min_month
+                day = calendar.min_day
+
+            var dt = Self(year, month, day, tz=p[6], calendar=calendar)
             if tz:
                 var t = tz.value()
                 if t != dt.tz:

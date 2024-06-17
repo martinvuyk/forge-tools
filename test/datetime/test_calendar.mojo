@@ -63,7 +63,7 @@ fn test_calendar_hashes() raises:
     h = utcfast.hash[calh32](d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
     result = _get_dates_as_lists(d, utcfast.from_hash[calh32](h))
     assert_equal(result[0].__str__(), result[1].__str__())
-    d = _date(1973, 12, 31, 23, 0, 0, 0, 0)
+    d = _date(3, 12, 31, 23, 0, 0, 0, 0)
     h = utcfast.hash[calh16](d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
     result = _get_dates_as_lists(d, utcfast.from_hash[calh16](h))
     assert_equal(result[0].__str__(), result[1].__str__())

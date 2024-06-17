@@ -197,6 +197,7 @@ fn test_bitwise64() raises:
     var ref1 = DateTime64(2000, 1, 1)
     assert_true((ref1 ^ DateTime64(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime64(2000, 1, 2) & 0)) == hash(ref1))
+    assert_true((ref1 & ~ref1) == 0)
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 
@@ -204,6 +205,7 @@ fn test_bitwise32() raises:
     var ref1 = DateTime32(2000, 1, 1)
     assert_true((ref1 ^ DateTime32(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime32(2000, 1, 2) & 0)) == hash(ref1))
+    assert_true((ref1 & ~ref1) == 0)
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 
@@ -211,6 +213,7 @@ fn test_bitwise16() raises:
     var ref1 = DateTime16(2000, 1, 1)
     assert_true((ref1 ^ DateTime16(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime16(2000, 1, 2) & 0)) == hash(ref1))
+    assert_true((ref1 & ~ref1) == 0)
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 
@@ -218,6 +221,7 @@ fn test_bitwise8() raises:
     var ref1 = DateTime8(2000, 1, 1)
     assert_true((ref1 ^ DateTime8(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime8(2000, 1, 2) & 0)) == hash(ref1))
+    assert_true((ref1 & ~ref1) == 0)
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 

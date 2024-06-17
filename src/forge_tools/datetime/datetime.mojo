@@ -788,12 +788,10 @@ struct DateTime[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) == hash(o)
+            return hash(self.to_utc()) == hash(other.to_utc())
+        return hash(self) == hash(other)
 
     # @always_inline("nodebug")
     fn __ne__(self, other: Self) -> Bool:
@@ -805,12 +803,10 @@ struct DateTime[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) != hash(o)
+            return hash(self.to_utc()) != hash(other.to_utc())
+        return hash(self) != hash(other)
 
     # @always_inline("nodebug")
     fn __gt__(self, other: Self) -> Bool:
@@ -822,12 +818,10 @@ struct DateTime[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) > hash(o)
+            return hash(self.to_utc()) > hash(other.to_utc())
+        return hash(self) > hash(other)
 
     # @always_inline("nodebug")
     fn __ge__(self, other: Self) -> Bool:
@@ -839,12 +833,10 @@ struct DateTime[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) >= hash(o)
+            return hash(self.to_utc()) >= hash(other.to_utc())
+        return hash(self) >= hash(other)
 
     # @always_inline("nodebug")
     fn __le__(self, other: Self) -> Bool:
@@ -856,12 +848,10 @@ struct DateTime[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) <= hash(o)
+            return hash(self.to_utc()) <= hash(other.to_utc())
+        return hash(self) <= hash(other)
 
     # @always_inline("nodebug")
     fn __lt__(self, other: Self) -> Bool:
@@ -873,12 +863,10 @@ struct DateTime[
         Returns:
             Bool.
         """
-        var s = self
-        var o = other
+
         if self.tz != other.tz:
-            s = self.to_utc()
-            o = other.to_utc()
-        return hash(s) < hash(o)
+            return hash(self.to_utc()) < hash(other.to_utc())
+        return hash(self) < hash(other)
 
     # @always_inline("nodebug")
     fn __invert__(self) -> UInt32:
@@ -894,7 +882,7 @@ struct DateTime[
         """And.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -909,7 +897,7 @@ struct DateTime[
         """Or.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -924,7 +912,7 @@ struct DateTime[
         """Xor.
 
         Parameters:
-            T: Any Intable type.
+            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1259,12 +1247,16 @@ struct DateTime[
         Returns:
             String.
         """
-        var date = (int(self.year), int(self.month), int(self.day))
-        var hour = (int(self.hour), int(self.minute), int(self.second))
-        var time = dt_str.to_iso[iso](
-            date[0], date[1], date[2], hour[0], hour[1], hour[2]
+
+        return dt_str.to_iso[iso](
+            self.year,
+            self.month,
+            self.day,
+            self.hour,
+            self.minute,
+            self.second,
+            self.tz.to_iso(),
         )
-        return time + self.tz.to_iso()
 
     @staticmethod
     # @always_inline("nodebug")
@@ -1333,8 +1325,19 @@ struct DateTime[
             var p = dt_str.from_iso[
                 iso, dst_storage, no_dst_storage, iana, pyzoneinfo, native
             ](s)
+
+            var year = p[0]
+            var month = p[1]
+            var day = p[2]
+
+            @parameter
+            if iso.selected in (iso.HHMMSS, iso.HH_MM_SS):
+                year = calendar.min_year
+                month = calendar.min_month
+                day = calendar.min_day
+
             var dt = Self(
-                p[0], p[1], p[2], p[3], p[4], p[5], tz=p[6], calendar=calendar
+                year, month, day, p[3], p[4], p[5], tz=p[6], calendar=calendar
             )
             if tz:
                 var t = tz.value()
