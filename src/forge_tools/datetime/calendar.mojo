@@ -39,6 +39,7 @@ struct CalendarHashes:
     alias _6b = 0b0_0000_0000_0011_1111
     alias _5b = 0b0_0000_0000_0001_1111
     alias _4b = 0b0_0000_0000_0000_1111
+    alias _3b = 0b0_0000_0000_0000_0111
     alias _2b = 0b0_0000_0000_0000_0011
 
     alias shift_64_y = (5 + 5 + 5 + 6 + 6 + 10 + 10)
@@ -77,8 +78,8 @@ struct CalendarHashes:
     alias shift_32_m = 0
     """Up to 64 minutes in total (-1 numeric)."""
     alias mask_32_y: UInt32 = CalendarHashes._12b
-    alias mask_32_d: UInt32 = CalendarHashes._4b
-    alias mask_32_mon: UInt32 = CalendarHashes._5b
+    alias mask_32_mon: UInt32 = CalendarHashes._4b
+    alias mask_32_d: UInt32 = CalendarHashes._5b
     alias mask_32_h: UInt32 = CalendarHashes._5b
     alias mask_32_m: UInt32 = CalendarHashes._6b
 
@@ -96,7 +97,7 @@ struct CalendarHashes:
     """Up to 8 days in total (-1 numeric)."""
     alias shift_8_h = 0
     """Up to 32 hours in total (-1 numeric)."""
-    alias mask_8_d: UInt8 = CalendarHashes._5b
+    alias mask_8_d: UInt8 = CalendarHashes._3b
     alias mask_8_h: UInt8 = CalendarHashes._5b
 
     fn __init__(inout self, selected: Int = 64):
@@ -371,6 +372,30 @@ struct Calendar:
             )
         else:
             return 0
+
+    @always_inline("nodebug")
+    fn day_of_month(self, year: UInt16, day_of_year: UInt16) -> (UInt8, UInt8):
+        """Calculates the month, day of the month for a given day of the year.
+
+        Args:
+            year: Year.
+            day_of_year: The day of the year.
+
+        Returns:
+            - month: Month of the year: [1, 12] (for gregorian calendar).
+            - day: Day of the month: [1, 31] (for gregorian calendar).
+        """
+
+        if self._implementation.isa[Gregorian]():
+            return self._implementation.unsafe_get[Gregorian]()[].day_of_month(
+                year, day_of_year
+            )
+        elif self._implementation.isa[UTCFast]():
+            return self._implementation.unsafe_get[UTCFast]()[].day_of_month(
+                year, day_of_year
+            )
+        else:
+            return UInt8(0), UInt8(0)
 
     @always_inline("nodebug")
     fn max_days_in_month(self, year: UInt16, month: UInt8) -> UInt8:
@@ -981,6 +1006,29 @@ struct Gregorian(_Calendarized):
         return total + day.cast[DType.uint16]()
 
     @always_inline("nodebug")
+    fn day_of_month(self, year: UInt16, day_of_year: UInt16) -> (UInt8, UInt8):
+        """Calculates the month, day of the month for a given day of the year.
+
+        Args:
+            year: Year.
+            day_of_year: The day of the year.
+
+        Returns:
+            - month: Month of the year: [1, 12] (for gregorian calendar).
+            - day: Day of the month: [1, 31] (for gregorian calendar).
+        """
+
+        var idx: UInt8 = 0
+        for i in range(1, 13):
+            if Self._days_before_month[i] > day_of_year:
+                break
+            idx += 1
+        var rest = (day_of_year - Self._days_before_month[int(idx)])
+        if idx > 2 and Self.is_leapyear(year):
+            rest -= 1
+        return idx, rest.cast[DType.uint8]()
+
+    @always_inline("nodebug")
     fn is_leapyear(self, year: UInt16) -> Bool:
         """Whether the year is a leap year.
 
@@ -1504,6 +1552,29 @@ struct UTCFast(_Calendarized):
         return total + day.cast[DType.uint16]()
 
     @always_inline("nodebug")
+    fn day_of_month(self, year: UInt16, day_of_year: UInt16) -> (UInt8, UInt8):
+        """Calculates the month, day of the month for a given day of the year.
+
+        Args:
+            year: Year.
+            day_of_year: The day of the year.
+
+        Returns:
+            - month: Month of the year: [1, 12] (for gregorian calendar).
+            - day: Day of the month: [1, 31] (for gregorian calendar).
+        """
+
+        var idx: UInt8 = 0
+        for i in range(1, 13):
+            if Self._days_before_month[i] > day_of_year:
+                break
+            idx += 1
+        var rest = (day_of_year - Self._days_before_month[int(idx)])
+        if idx > 2 and Self.is_leapyear(year):
+            rest -= 1
+        return idx, rest.cast[DType.uint8]()
+
+    @always_inline("nodebug")
     fn is_leapyear(self, year: UInt16) -> Bool:
         """Whether the year is a leap year.
 
@@ -1514,7 +1585,6 @@ struct UTCFast(_Calendarized):
             Bool.
         """
 
-        _ = self
         return Self.is_leapyear(year)
 
     @always_inline("nodebug")
@@ -1819,18 +1889,13 @@ struct UTCFast(_Calendarized):
             result[2] = int((value >> cal_h.shift_8_d) & cal_h.mask_8_d)
             result[3] = int((value >> cal_h.shift_8_h) & cal_h.mask_8_h)
         elif cal_h.selected == cal_h.UINT16:
-            result[0] = (
-                int((value >> cal_h.shift_16_y) & cal_h.mask_16_y)
-                + self.min_year
-            )
+            result[0] = int(
+                (value >> cal_h.shift_16_y) & cal_h.mask_16_y
+            ) + int(self.min_year)
             var doy = int((value >> cal_h.shift_16_d) & cal_h.mask_16_d)
-            var idx = 1
-            for i in range(1, 13):
-                if Self._days_before_month[i] > doy:
-                    idx = i - 1
-                    break
-            result[1] = idx
-            result[2] = doy - Self._days_before_month[idx]
+            var res = self.day_of_month(result[0], doy)
+            result[1] = res[0]
+            result[2] = res[1]
             result[3] = int((value >> cal_h.shift_16_h) & cal_h.mask_16_h)
         elif cal_h.selected == cal_h.UINT32:
             result[0] = int((value >> cal_h.shift_32_y) & cal_h.mask_32_y)

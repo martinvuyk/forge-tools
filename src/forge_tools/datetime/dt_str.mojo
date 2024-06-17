@@ -17,21 +17,21 @@ struct IsoFormat:
     [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)."""
 
     alias YYYYMMDD = "%Y%m%d"
-    """e.g. 19700101"""
+    """e.g. `19700101`"""
     alias YYYY_MM_DD = "%Y-%m-%d"
-    """e.g. 1970-01-01"""
+    """e.g. `1970-01-01`"""
     alias HHMMSS = "%H%M%S"
-    """e.g. 000000"""
+    """e.g. `000000`"""
     alias HH_MM_SS = "%H:%M:%S"
-    """e.g. 00:00:00"""
+    """e.g. `00:00:00`"""
     alias YYYYMMDDHHMMSS = "%Y%m%d" + "%H%M%S"
-    """e.g. 19700101000000"""
+    """e.g. `19700101000000`"""
     alias YYYY_MM_DD___HH_MM_SS = "%Y-%m-%d" + " " + "%H:%M:%S"
-    """e.g. 1970-01-01 00:00:00"""
+    """e.g. `1970-01-01 00:00:00`"""
     alias YYYY_MM_DD_T_HH_MM_SS = "%Y-%m-%d" + "T" + "%H:%M:%S"
-    """e.g. 1970-01-01T00:00:00"""
-    alias YYYY_MM_DD_T_HH_MM_SS_TZD = "%Y-%m-%d" + "T" + "%H:%M:%S"
-    """e.g. 1970-01-01T00:00:00+0000"""
+    """e.g. `1970-01-01T00:00:00`"""
+    alias YYYY_MM_DD_T_HH_MM_SS_TZD = "%Y-%m-%d" + "T" + "%H:%M:%S" + "TZD"
+    """e.g. `1970-01-01T00:00:00+00:00`"""
     alias TZD_REGEX = "+|-[0-9]{2}:?[0-9]{2}"
     var selected: StringLiteral
     """The selected IsoFormat."""
@@ -64,12 +64,12 @@ fn _get_strings(
 ) -> (String, String, String, String, String, String):
     var yyyy = str(min(year, 9999))
     if year < 1000:
-        var prepend = "0"
+        var prefix = "0"
         if year < 100:
-            prepend = "00"
+            prefix = "00"
             if year < 10:
-                prepend = "000"
-        yyyy = prepend + str(year)
+                prefix = "000"
+        yyyy = prefix + str(year)
 
     var mm = str(min(month, 99)) if month > 9 else "0" + str(month)
     var dd = str(min(day, 99)) if day > 9 else "0" + str(day)
@@ -80,15 +80,33 @@ fn _get_strings(
 
 
 fn to_iso[
-    iso: IsoFormat = IsoFormat()
+    iso: IsoFormat = IsoFormat(),
+    T1: Intable = Int,
+    T2: Intable = Int,
+    T3: Intable = Int,
+    T4: Intable = Int,
+    T5: Intable = Int,
+    T6: Intable = Int,
 ](
-    year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int
+    year: T1,
+    month: T2,
+    day: T3,
+    hour: T4,
+    minute: T5,
+    second: T6,
+    tzd: String = "+00:00",
 ) -> String:
     """Build an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
     `String`.
 
     Parameters:
         iso: The chosen IsoFormat.
+        T1: An Intable Type.
+        T2: An Intable Type.
+        T3: An Intable Type.
+        T4: An Intable Type.
+        T5: An Intable Type.
+        T6: An Intable Type.
 
     Args:
         year: Year.
@@ -97,25 +115,38 @@ fn to_iso[
         hour: Hour.
         minute: Minute.
         second: Second.
+        tzd: Time Zone designation String.
 
     Returns:
         String.
     """
-    var s = _get_strings(year, month, day, hour, minute, second)
+
+    var s = _get_strings(
+        int(year), int(month), int(day), int(hour), int(minute), int(second)
+    )
     var yyyy_mm_dd = s[0] + "-" + s[1] + "-" + s[2]
     var hh_mm_ss = s[3] + ":" + s[4] + ":" + s[5]
 
     @parameter
-    if iso.YYYY_MM_DD___HH_MM_SS == iso.selected:
-        return yyyy_mm_dd + " " + hh_mm_ss
-    elif iso.YYYYMMDD in iso.selected:
-        return s[0] + s[1] + s[2] + s[3] + s[4] + s[5]
-    elif iso.HH_MM_SS == iso.selected:
-        return s[3] + ":" + s[4] + ":" + s[5]
-    elif iso.HHMMSS == iso.selected:
-        return s[3] + s[4] + s[5]
-    else:
+    if iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS:
         return yyyy_mm_dd + "T" + hh_mm_ss
+    elif iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS_TZD:
+        return yyyy_mm_dd + "T" + hh_mm_ss + tzd
+    elif iso.selected == iso.YYYY_MM_DD___HH_MM_SS:
+        return yyyy_mm_dd + " " + hh_mm_ss
+    elif iso.selected == iso.YYYYMMDDHHMMSS:
+        return s[0] + s[1] + s[2] + s[3] + s[4] + s[5]
+    elif iso.selected == iso.YYYYMMDD:
+        return s[0] + s[1] + s[2] + s[3]
+    elif iso.selected == iso.HHMMSS:
+        return s[3] + s[4] + s[5]
+    elif iso.selected == iso.YYYY_MM_DD:
+        return yyyy_mm_dd
+    elif iso.selected == iso.HH_MM_SS:
+        return s[3] + ":" + s[4] + ":" + s[5]
+    else:
+        constrained[False, "that IsoFormat is not yet supported"]()
+        return ""
 
 
 fn from_iso[
