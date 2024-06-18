@@ -127,31 +127,6 @@ struct Date[
         self.tz = zone
         self.calendar = calendar
 
-    @staticmethod
-    fn _from_overflow(
-        years: Int = 0,
-        months: Int = 0,
-        days: Int = 0,
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `Date` from possibly overflowing values."""
-        var zone = tz.value() if tz else Self._tz()
-        var d = Self._from_days(days, zone, calendar)
-        var mon = Self._from_months(months, zone, calendar)
-        var y = Self._from_years(years, zone, calendar)
-
-        y.year = 0 if years == 0 else y.year
-
-        for dt in List(mon, d):
-            if dt[].year != calendar.min_year:
-                y.year += dt[].year
-        y.month = mon.month
-        if d.month != calendar.min_month:
-            y.month += d.month
-        y.day = d.day
-        return y
-
     fn replace(
         owned self,
         *,
@@ -215,11 +190,9 @@ struct Date[
         """
 
         var TZ_UTC = Self._tz()
-        print(self.tz == TZ_UTC)
         if self.tz == TZ_UTC:
             return self^
         var offset = self.tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
-        print(offset.sign)
         if offset.sign == -1:
             self = self.add(days=1)
         self.tz = TZ_UTC
@@ -263,26 +236,23 @@ struct Date[
             self.year, self.month, self.day, 0, 0, 0
         )
 
-    fn delta_s(self, other: Self) -> (UInt64, UInt64):
-        """Calculates the seconds for `self` and other, using
-        a reference calendar.
+    fn delta_s(self, other: Self) -> UInt64:
+        """Calculates the difference in seconds between `self` and other.
 
         Args:
             other: Other.
 
         Returns:
-            - self_ns: Seconds from `self` to reference calendar.
-            - other_ns: Seconds from other to reference calendar.
+            `self.seconds_since_epoch() - other.seconds_since_epoch()`.
         """
+
         var s = self
         var o = other.replace(calendar=self.calendar)
 
         if s.tz != o.tz:
             s = s.to_utc()
             o = o.to_utc()
-        var self_s = s.seconds_since_epoch()
-        var other_s = o.seconds_since_epoch()
-        return self_s, other_s
+        return s.seconds_since_epoch() - o.seconds_since_epoch()
 
     fn add(
         owned self,
@@ -299,7 +269,7 @@ struct Date[
             years: Amount of years to add.
             months: Amount of months to add.
             days: Amount of days to add.
-            seconds: It is assumed that each day has always `24*60*60` seconds.
+            seconds: Amount of seconds to add.
 
         Returns:
             Self.
@@ -308,36 +278,41 @@ struct Date[
             On overflow, the `Date` starts from the beginning of the
             calendar's epoch and keeps evaluating until valid.
         """
-        var dt = self._from_overflow(
-            int(self.year) + years,
-            int(self.month) + months,
+
+        var y = int(self.year) + years
+        var mon = int(self.month) + months
+        var d = (
             int(self.day)
             + days
             + seconds
             // (
-                int(self.calendar.max_hour + 1)
-                * int(self.calendar.max_minute + 1)
-                * int(self.calendar.max_typical_second + 1)
-            ),
-            self.tz,
-            self.calendar,
-        )
-
-        var minyear = dt.calendar.min_year
-        var maxyear = dt.calendar.max_year
-        if dt.year > maxyear:
-            dt = dt.replace(year=minyear).add(years=int(dt.year - maxyear))
-        var minmon = dt.calendar.min_month
-        var maxmon = dt.calendar.max_month
-        if dt.month > maxmon:
-            dt = dt.replace(month=minmon).add(
-                years=1, months=int(dt.month - maxmon)
+                (int(self.calendar.max_hour) + 1)
+                * (int(self.calendar.max_minute) + 1)
+                * (int(self.calendar.max_typical_second) + 1)
             )
-        var minday = dt.calendar.min_day
-        var maxday = dt.calendar.max_days_in_month(dt.year, dt.month)
-        if dt.day > maxday:
-            dt = dt.replace(day=minday).add(months=1, days=int(dt.day - maxday))
-        return dt
+        )
+        var minyear = self.calendar.min_year
+        var maxyear = int(self.calendar.max_year)
+        if y > maxyear:
+            var delta = y - (maxyear + 1)
+            self = self.replace(year=minyear).add(years=delta)
+        else:
+            self.year = y
+        var minmon = self.calendar.min_month
+        var maxmon = int(self.calendar.max_month)
+        if mon > maxmon:
+            var delta = mon - (maxmon + int(minmon))
+            self = self.replace(month=minmon).add(years=1, months=delta)
+        else:
+            self.month = mon
+        var minday = self.calendar.min_day
+        var maxday = int(self.calendar.max_days_in_month(self.year, self.month))
+        if d > maxday:
+            var delta = d - (maxday + int(minday))
+            self = self.replace(day=minday).add(months=1, days=delta)
+        else:
+            self.day = d
+        return self^
 
     fn subtract(
         owned self,
@@ -363,36 +338,43 @@ struct Date[
             On overflow, the `Date` goes to the end of the
             calendar's epoch and keeps evaluating until valid.
         """
-        var dt = self._from_overflow(
-            int(self.year) - years,
-            int(self.month) - months,
+
+        var y = int(self.year) - years
+        var mon = int(self.month) - months
+        var d = (
             int(self.day)
             - days
             - seconds
-            // int(
-                (self.calendar.max_hour + 1)
-                * (self.calendar.max_minute + 1)
-                * (self.calendar.max_typical_second + 1)
-            ),
-            self.tz,
-            self.calendar,
-        )
-        var minyear = dt.calendar.min_year
-        var maxyear = dt.calendar.max_year
-        if dt.year < minyear:
-            dt = dt.replace(year=maxyear).subtract(years=int(minyear - dt.year))
-        var minmonth = dt.calendar.min_month
-        var maxmonth = dt.calendar.max_month
-        if dt.month < minmonth:
-            dt = dt.replace(month=maxmonth).subtract(
-                years=1, months=int(minmonth - dt.month)
+            // (
+                int(self.calendar.max_hour + 1)
+                * int(self.calendar.max_minute + 1)
+                * int(self.calendar.max_typical_second + 1)
             )
-        var minday = dt.calendar.min_day
-        if dt.day < minday:
-            dt = dt.subtract(months=1)
-            var prev_day = dt.calendar.max_days_in_month(dt.year, dt.month - 1)
-            dt = dt.replace(day=prev_day).subtract(days=int(minday - dt.day))
-        return dt
+        )
+
+        var minyear = int(self.calendar.min_year)
+        var maxyear = self.calendar.max_year
+        if y < minyear:
+            var delta = abs(y - minyear + 1)
+            self = self.replace(year=maxyear).subtract(years=delta)
+        else:
+            self.year = y
+        var minmonth = int(self.calendar.min_month)
+        var maxmonth = self.calendar.max_month
+        if mon < minmonth:
+            var delta = abs(mon - minmonth + 1)
+            self = self.replace(month=maxmonth).subtract(years=1, months=delta)
+        else:
+            self.month = mon
+        var minday = int(self.calendar.min_day)
+        if d < minday:
+            self = self.subtract(months=1)
+            var max_day = self.calendar.max_days_in_month(self.year, self.month)
+            var delta = abs(d - minday + 1)
+            self = self.replace(day=max_day).subtract(days=delta)
+        else:
+            self.day = d
+        return self^
 
     # @always_inline("nodebug")
     fn add(owned self, other: Self) -> Self:
@@ -661,148 +643,9 @@ struct Date[
         return self.to_iso()
 
     @staticmethod
-    fn _from_years(
-        years: Int,
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `Date` from years."""
-        var zone = tz.value() if tz else Self._tz()
-        var delta = int(calendar.max_year) - years
-        if delta > 0:
-            if years > int(calendar.min_year):
-                return Self(year=years, tz=zone, calendar=calendar)
-            return Self._from_years(delta)
-        return Self._from_years(int(calendar.max_year) - delta)
-
-    @staticmethod
-    fn _from_months(
-        months: Int,
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `Date` from months."""
-        var zone = tz.value() if tz else Self._tz()
-        if months <= int(calendar.max_month):
-            return Self(month=months, tz=zone, calendar=calendar)
-        var y = months // int(calendar.max_month)
-        var rest = months % int(calendar.max_month)
-        var dt = Self._from_years(y, zone, calendar)
-        dt.month = rest
-        return dt
-
-    @staticmethod
-    fn _from_days[
-        add_leap: Bool = False
-    ](
-        days: Int,
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `Date` from days."""
-        var zone = tz.value() if tz else Self._tz()
-        var minyear = int(calendar.min_year)
-        var dt = Self(minyear, tz=zone, calendar=calendar)
-        var maxtdays = int(calendar.max_typical_days_in_year)
-        var maxposdays = int(calendar.max_possible_days_in_year)
-        var years = days // maxtdays
-        if years > minyear:
-            dt = Self._from_years(years, zone, calendar)
-        var maxydays = maxposdays if calendar.is_leapyear(dt.year) else maxtdays
-        var day = days
-        if add_leap:
-            var leapdays = calendar.leapdays_since_epoch(
-                dt.year, dt.month, dt.day
-            )
-            day += int(leapdays)
-        if day > maxydays:
-            var y = day // maxydays
-            day = day % maxydays
-            var dt2 = Self._from_years(y, zone, calendar)
-            dt.year += dt2.year
-        var maxmondays = int(calendar.max_days_in_month(dt.year, dt.month))
-        while day > maxmondays:
-            day -= maxmondays
-            dt.month += 1
-            maxmondays = int(calendar.max_days_in_month(dt.year, dt.month))
-        dt.day = day
-        return dt
-
-    @staticmethod
-    fn _from_hours[
-        add_leap: Bool = False
-    ](
-        hours: Int,
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `Date` from hours."""
-        var zone = tz.value() if tz else Self._tz()
-        var h = int(calendar.max_hour)
-        if hours <= h:
-            return Self(int(calendar.min_year), tz=zone, calendar=calendar)
-        var d = hours // (h + 1)
-        return Self._from_days[add_leap](d, zone, calendar)
-
-    @staticmethod
-    fn _from_minutes[
-        add_leap: Bool = False
-    ](
-        minutes: Int,
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `Date` from minutes."""
-        var zone = tz.value() if tz else Self._tz()
-        var m = int(calendar.max_minute)
-        if minutes < m:
-            return Self(int(calendar.min_year), tz=zone, calendar=calendar)
-        var h = minutes // (m + 1)
-        return Self._from_hours[add_leap](h, zone, calendar)
-
-    @staticmethod
-    fn from_seconds[
-        add_leap: Bool = False
-    ](
-        seconds: Int,
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `Date` from seconds.
-
-        Parameters:
-            add_leap: Whether to add the leap seconds and leap days
-                since the start of the calendar's epoch.
-
-        Args:
-            seconds: Seconds.
-            tz: Tz.
-            calendar: Calendar.
-
-        Returns:
-            Self.
-        """
-        var zone = tz.value() if tz else Self._tz()
-        var minutes = seconds // (int(calendar.max_typical_second) + 1)
-        var dt = Self._from_minutes(minutes, zone, calendar)
-        if not add_leap:
-            return dt
-        var max_second = calendar.max_second(
-            dt.year, dt.month, dt.day, calendar.min_hour, calendar.min_minute
-        )
-        var numerator = seconds
-        if add_leap:
-            var leapsecs = calendar.leapsecs_since_epoch(
-                dt.year, dt.month, dt.day
-            )
-            numerator += int(leapsecs)
-        var m = numerator // (int(max_second) + 1)
-        return Self._from_minutes(m, zone, calendar)
-
-    @staticmethod
     fn from_unix_epoch[
         add_leap: Bool = False
-    ](seconds: Int, tz: Optional[Self._tz] = None,) -> Self:
+    ](seconds: Int, tz: Optional[Self._tz] = None) -> Self:
         """Construct a `Date` from the seconds since the Unix Epoch
         1970-01-01. Adding the cumulative leap seconds since 1972
         to the given date.
@@ -818,10 +661,9 @@ struct Date[
         Returns:
             Self.
         """
+
         var zone = tz.value() if tz else Self._tz()
-        return Self.from_seconds[add_leap](
-            seconds, tz=zone, calendar=UTCCalendar
-        )
+        return Self(tz=zone, calendar=UTCCalendar).add(seconds=seconds)
 
     @staticmethod
     fn now(
@@ -836,6 +678,7 @@ struct Date[
         Returns:
             Self.
         """
+
         var zone = tz.value() if tz else Self._tz()
         var s = time.now() // 1_000_000_000
         return Date.from_unix_epoch(s, zone).replace(calendar=calendar)

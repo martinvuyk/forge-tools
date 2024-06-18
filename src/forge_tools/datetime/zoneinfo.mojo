@@ -26,7 +26,7 @@ struct Offset:
     """Hour: [0, 15]."""
     var minute: UInt8
     """Minute: {0, 30, 45}."""
-    var sign: UInt8
+    var sign: Int8
     """Sign: {1, -1}. Positive means east of UTC."""
     var buf: UInt8
     """Buffer."""
@@ -37,9 +37,11 @@ struct Offset:
         Args:
             buf: The buffer.
         """
+
+        self.sign = 1 if (buf >> 7) == 0 else -1
         self.hour = (buf >> 3) & 0b1111
-        self.minute = (buf >> 1) & 0b11
-        self.sign = buf >> 7 & 0b1
+        var m = (buf >> 1) & 0b11
+        self.minute = 0 if m == 0 else (30 if m == 1 else 45)
         self.buf = buf
 
     fn __init__(inout self, values: Tuple[UInt8, UInt8, UInt8], /):
@@ -68,10 +70,27 @@ struct Offset:
             minute: Minute.
             sign: Sign.
         """
+
+        debug_assert(
+            hour < 100
+            and hour >= 0
+            and minute < 100
+            and minute >= 0
+            and (sign == 1 or sign == -1),
+            "utc offsets can't have a member bigger than 100, ",
+            "and sign must be either 1 or -1",
+        )
+
         self.hour = hour
         self.minute = minute
         self.sign = sign
-        self.buf = (sign << 7) | (hour << 3) | (minute << 1) | 0
+        var m: UInt8 = 0
+        if minute == 30:
+            m = 1
+        elif minute == 45:
+            m = 2
+        var s: UInt8 = 0 if sign == 1 else -1
+        self.buf = (s << 7) | (hour << 3) | (m << 1) | 0
 
     fn __init__(
         inout self,
@@ -85,52 +104,35 @@ struct Offset:
             iso_tzd_dst: String with the full ISO8601 TZD (i.e. +00:00).
         """
         try:
-            var sign = (0 if iso_tzd_std[0] == "+" else 1)
+            var sign = 0 if iso_tzd_std[0] == "+" else 1
 
             var std_h: UInt8 = atol(iso_tzd_std[1:2])
             var dst_h: UInt8 = atol(iso_tzd_dst[1:2])
 
             var std_m: UInt8 = atol(iso_tzd_std[4:6])
             var dst_m: UInt8 = atol(iso_tzd_std[4:6])
-            var jumps_2hours: UInt8 = 0
-            if std_m - dst_m == 30:  # "Australia/Lord_Howe"
-                std_m = 3  # jumps 30 minutes
-            elif (dst_h - std_h) ^ 0b10 == 0:  # "Antarctica/Troll"
-                jumps_2hours = 1
-            else:
-                if std_m == 30:
-                    std_m = 1
-                elif std_m == 45:
-                    std_m = 2
+
             self.hour = std_h
             self.minute = std_m
-            self.sign = sign
-            self.buf = (sign << 7) | (std_h << 3) | (std_m << 1) | jumps_2hours
+            self.sign = 1 if iso_tzd_std[0] == "+" else -1
+
+            var jumps_2hours: UInt8 = 0
+            if std_m - dst_m == 30:  # "Australia/Lord_Howe"
+                dst_m = 3  # jumps 30 minutes
+            elif (dst_h - std_h) ^ 0b10 == 0:  # "Antarctica/Troll"
+                jumps_2hours = 1
+            elif std_m == 30:
+                dst_m = 1
+            elif std_m == 45:
+                dst_m = 2
+            else:
+                dst_m = 0
+            self.buf = (sign << 7) | (std_h << 3) | (dst_m << 1) | jumps_2hours
         except:
             self.hour = 0
             self.minute = 0
             self.sign = 1
             self.buf = 1 << 7
-
-    @always_inline("nodebug")
-    @staticmethod
-    fn from_hash(buf: UInt8) -> Self:
-        """Get the values from hash.
-
-        Args:
-            buf: The hash.
-
-        Returns:
-            Self.
-        """
-        var self = Self()
-        var s = (buf >> 7) & 0b1
-        self.sign = 1 if s == 0 else -1
-        self.hour = (buf >> 3) & 0b1111
-        var m = (buf >> 1) & 0b11
-        self.minute = 0 if m == 0 else (30 if m == 1 else 45)
-        self.buf = buf
-        return self
 
     fn __eq__(self, other: Self) -> Bool:
         """Whether the given Offset is equal to self.
@@ -206,25 +208,19 @@ struct TzDT:
         self.hour = hour
         self.buf = (mon << 8) | (d << 5) | (eo << 4) | (w << 3) | h
 
-    @always_inline("nodebug")
-    @staticmethod
-    fn from_hash(buf: UInt16) -> Self:
+    fn __init__(inout self, buf: UInt16):
         """Get the values from hash.
 
         Args:
             buf: The hash.
-
-        Returns:
-            Self.
         """
-        var self = Self()
+
         self.month = (buf >> 8) & 0b1111
         self.dow = (buf >> 5) & 0b111
         self.eomon = (buf >> 4) & 0b1
         self.week = (buf >> 3) & 0b1
         self.hour = buf & 0b111
         self.buf = buf
-        return self
 
     @always_inline("nodebug")
     fn __eq__(self, other: Self) -> Bool:
@@ -258,7 +254,7 @@ struct ZoneDST:
         """
         self.buf = (
             (dst_start.buf.cast[DType.uint32]() << 20)
-            | (dst_end.buf.cast[DType.uint32]() << 12)
+            | (dst_end.buf.cast[DType.uint32]() << 8)
             | offset.buf.cast[DType.uint32]()
         )
 
@@ -280,13 +276,9 @@ struct ZoneDST:
             - offset: Offset hash (8 bits in a UInt16 buffer).
         """
         return (
-            TzDT.from_hash(
-                ((self.buf >> 20) & 0b11111111).cast[DType.uint16]()
-            ),
-            TzDT.from_hash(
-                ((self.buf >> 12) & 0b11111111).cast[DType.uint16]()
-            ),
-            Offset.from_hash((self.buf & 0b111111111111).cast[DType.uint8]()),
+            TzDT(((self.buf >> 20) & 0b11_1111_1111).cast[DType.uint16]()),
+            TzDT(((self.buf >> 8) & 0b11_1111_1111).cast[DType.uint16]()),
+            Offset((self.buf & 0b1111_1111).cast[DType.uint8]()),
         )
 
 

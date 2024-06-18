@@ -18,20 +18,16 @@ from forge_tools.datetime.zoneinfo import (
 )
 
 
-fn _test_offset(i: Int, j: Int, k: Int) raises:
-    var minutes = List[UInt8](0, 30, 45)
-    var sign = 1 if k == 0 else -1
-    var of = Offset(i, minutes[j], sign)
-    assert_equal(of.hour, i)
-    assert_equal(of.minute, minutes[j])
-    assert_equal(of.sign, sign)
-
-
 fn test_offset() raises:
+    var minutes = List[UInt8](0, 30, 45)
     for k in range(2):
+        var sign = 1 if k == 0 else -1
         for j in range(3):
             for i in range(16):
-                _test_offset(i, j, k)
+                var of = Offset(i, minutes[j], sign)
+                assert_equal(of.hour, i)
+                assert_equal(of.minute, minutes[j])
+                assert_equal(of.sign, sign)
 
 
 fn test_tzdst() raises:
@@ -49,8 +45,8 @@ fn test_zoneinfomem32() raises:
     var tz0 = "tz0"
     var tz1 = "tz1"
     var tz2 = "tz2"
-    var tz30 = "tz2"
-    var tz45 = "tz2"
+    var tz30 = "tz30"
+    var tz45 = "tz45"
     var tz0_of = Offset(0, 0, 1)
     var tz1_of = Offset(1, 0, 1)
     var tz2_of = Offset(2, 0, 1)
@@ -93,8 +89,8 @@ fn test_zoneinfomem8() raises:
     var tz0 = "tz0"
     var tz1 = "tz1"
     var tz2 = "tz2"
-    var tz30 = "tz2"
-    var tz45 = "tz2"
+    var tz30 = "tz30"
+    var tz45 = "tz45"
     var tz0_of = Offset(0, 0, 1)
     var tz1_of = Offset(1, 0, 1)
     var tz2_of = Offset(2, 0, 1)
@@ -137,8 +133,8 @@ fn test_zoneinfofile32() raises:
     var tz0 = "tz0"
     var tz1 = "tz1"
     var tz2 = "tz2"
-    var tz30 = "tz2"
-    var tz45 = "tz2"
+    var tz30 = "tz30"
+    var tz45 = "tz45"
     var tz0_of = Offset(0, 0, 1)
     var tz1_of = Offset(1, 0, 1)
     var tz2_of = Offset(2, 0, 1)
@@ -181,8 +177,8 @@ fn test_zoneinfofile8() raises:
     var tz0 = "tz0"
     var tz1 = "tz1"
     var tz2 = "tz2"
-    var tz30 = "tz2"
-    var tz45 = "tz2"
+    var tz30 = "tz30"
+    var tz45 = "tz45"
     var tz0_of = Offset(0, 0, 1)
     var tz1_of = Offset(1, 0, 1)
     var tz2_of = Offset(2, 0, 1)
@@ -246,6 +242,9 @@ fn test_parse_iana_dst_transitions() raises:
 
 
 fn main() raises:
+    test_offset()
+    test_tzdst()
+    test_zonedst()
     test_zoneinfomem32()
     test_zoneinfomem8()
     test_zoneinfofile32()

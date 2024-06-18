@@ -64,12 +64,12 @@ fn test_add() raises:
     assert_equal(result, add_seconds)
 
     # test year and month add
-    result = date(2022, 6, 1, tz_0_, pycal) + date(3, 6, 31, tz_0_, pycal)
+    result = date(2022, 6, 1, tz_0_, pycal) + date(2, 6, 31, tz_0_, pycal)
     offset_0 = date(2025, 1, 1, tz_0_, unixcal)
     offset_p_1 = date(2025, 1, 1, tz_1, unixcal)
     offset_n_1 = date(2024, 12, 31, tz1_, unixcal)
-    add_seconds = date(2024, 12, 31, tz_0_, unixcal).add(
-        years=3, months=6, days=31
+    add_seconds = date(2022, 6, 1, tz_0_, unixcal).add(
+        years=2, months=6, days=31
     )
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
@@ -113,7 +113,7 @@ fn test_subtract() raises:
     var result = date(2024, 3, 1, tz_0_, pycal) - date(0, 0, 1, tz_0_, pycal)
     var offset_0 = date(2024, 2, 29, tz_0_, unixcal)
     var offset_p_1 = date(2024, 2, 29, tz_1, unixcal)
-    var offset_n_1 = date(2024, 3, 1, tz1_, unixcal)
+    var offset_n_1 = date(2024, 2, 28, tz1_, unixcal)
     var sub_seconds = date(2024, 3, 1, tz_0_, unixcal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
@@ -124,7 +124,7 @@ fn test_subtract() raises:
     result = date(2023, 3, 1, tz_0_, pycal) - date(0, 0, 1, tz_0_, pycal)
     offset_0 = date(2023, 2, 28, tz_0_, unixcal)
     offset_p_1 = date(2023, 2, 28, tz_1, unixcal)
-    offset_n_1 = date(2023, 3, 1, tz1_, unixcal)
+    offset_n_1 = date(2023, 2, 27, tz1_, unixcal)
     sub_seconds = date(2023, 3, 1, tz_0_, unixcal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
@@ -135,7 +135,7 @@ fn test_subtract() raises:
     result = date(2024, 6, 1, tz_0_, pycal) - date(0, 0, 1, tz_0_, pycal)
     offset_0 = date(2024, 5, 31, tz_0_, unixcal)
     offset_p_1 = date(2024, 5, 31, tz_1, unixcal)
-    offset_n_1 = date(2024, 6, 1, tz1_, unixcal)
+    offset_n_1 = date(2024, 5, 30, tz1_, unixcal)
     sub_seconds = date(2024, 6, 1, tz_0_, unixcal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
@@ -146,7 +146,7 @@ fn test_subtract() raises:
     result = date(2025, 1, 1, tz_0_, pycal) - date(0, 0, 1, tz_0_, pycal)
     offset_0 = date(2024, 12, 31, tz_0_, unixcal)
     offset_p_1 = date(2024, 12, 31, tz_1, unixcal)
-    offset_n_1 = date(2025, 1, 1, tz1_, unixcal)
+    offset_n_1 = date(2024, 12, 30, tz1_, unixcal)
     sub_seconds = date(2025, 1, 1, tz_0_, unixcal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
@@ -154,12 +154,14 @@ fn test_subtract() raises:
     assert_equal(result, sub_seconds)
 
     # test year and month subtract
-    result = date(2025, 1, 1, tz_0_, pycal) - date(3, 6, 31, tz_0_, pycal)
-    offset_0 = date(2022, 6, 1, tz_0_, unixcal)
-    offset_p_1 = date(2022, 6, 1, tz_1, unixcal)
-    offset_n_1 = date(2022, 5, 31, tz1_, unixcal)
+    # there will always be a difference of 1 day between this one and test_add()
+    # because of the leap day in february 2024
+    result = date(2025, 1, 1, tz_0_, pycal) - date(2, 6, 31, tz_0_, pycal)
+    offset_0 = date(2022, 5, 31, tz_0_, unixcal)
+    offset_p_1 = date(2022, 5, 31, tz_1, unixcal)
+    offset_n_1 = date(2022, 5, 30, tz1_, unixcal)
     sub_seconds = date(2025, 1, 1, tz_0_, unixcal).subtract(
-        years=3, months=6, days=31
+        years=2, months=6, days=31
     )
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
@@ -170,7 +172,7 @@ fn test_subtract() raises:
     result = date(1, 1, 1, tz_0_, pycal) - date(0, 0, 1, tz_0_, pycal)
     offset_0 = date(9999, 12, 31, tz_0_, pycal)
     offset_p_1 = date(9999, 12, 31, tz_1, pycal)
-    offset_n_1 = date(9999, 12, 31, tz1_, pycal)
+    offset_n_1 = date(9999, 12, 30, tz1_, pycal)
     sub_seconds = date(1, 1, 1, tz_0_, pycal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
@@ -181,7 +183,7 @@ fn test_subtract() raises:
     result = date(1970, 1, 1, tz_0_, unixcal) - date(0, 0, 1, tz_0_, unixcal)
     offset_0 = date(9999, 12, 31, tz_0_, unixcal)
     offset_p_1 = date(9999, 12, 31, tz_1, unixcal)
-    offset_n_1 = date(9999, 12, 31, tz1_, unixcal)
+    offset_n_1 = date(9999, 12, 30, tz1_, unixcal)
     sub_seconds = date(1970, 1, 1, tz_0_, unixcal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
