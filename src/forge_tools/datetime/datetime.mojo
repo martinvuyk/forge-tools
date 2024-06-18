@@ -124,17 +124,17 @@ struct DateTime[
         T9: _IntCollect = Int,
     ](
         inout self,
-        owned year: Optional[T1] = None,
-        owned month: Optional[T2] = None,
-        owned day: Optional[T3] = None,
-        owned hour: Optional[T4] = None,
-        owned minute: Optional[T5] = None,
-        owned second: Optional[T6] = None,
-        owned m_second: Optional[T7] = None,
-        owned u_second: Optional[T8] = None,
-        owned n_second: Optional[T9] = None,
-        owned tz: Self._tz = Self._tz(),
-        owned calendar: Calendar = _calendar,
+        year: Optional[T1] = None,
+        month: Optional[T2] = None,
+        day: Optional[T3] = None,
+        hour: Optional[T4] = None,
+        minute: Optional[T5] = None,
+        second: Optional[T6] = None,
+        m_second: Optional[T7] = None,
+        u_second: Optional[T8] = None,
+        n_second: Optional[T9] = None,
+        tz: Optional[Self._tz] = None,
+        calendar: Calendar = _calendar,
     ):
         """Construct a `DateTime` from valid values.
 
@@ -162,38 +162,43 @@ struct DateTime[
             tz: Tz.
             calendar: Calendar.
         """
-        self.year = int(year.take()) if year else int(calendar.min_year)
-        self.month = int(month.take()) if month else int(calendar.min_month)
-        self.day = int(day.take()) if day else int(calendar.min_day)
-        self.hour = int(hour.take()) if hour else int(calendar.min_hour)
-        self.minute = int(minute.take()) if minute else int(calendar.min_minute)
-        self.second = int(second.take()) if second else int(calendar.min_second)
-        self.m_second = int(m_second.take()) if m_second else int(
+
+        self.year = int(year.value()) if year else int(calendar.min_year)
+        self.month = int(month.value()) if month else int(calendar.min_month)
+        self.day = int(day.value()) if day else int(calendar.min_day)
+        self.hour = int(hour.value()) if hour else int(calendar.min_hour)
+        self.minute = int(minute.value()) if minute else int(
+            calendar.min_minute
+        )
+        self.second = int(second.value()) if second else int(
+            calendar.min_second
+        )
+        self.m_second = int(m_second.value()) if m_second else int(
             calendar.min_milisecond
         )
-        self.u_second = int(u_second.take()) if u_second else int(
+        self.u_second = int(u_second.value()) if u_second else int(
             calendar.min_microsecond
         )
-        self.n_second = int(n_second.take()) if n_second else int(
+        self.n_second = int(n_second.value()) if n_second else int(
             calendar.min_nanosecond
         )
-        self.tz = tz
+        self.tz = tz.value() if tz else Self._tz()
         self.calendar = calendar
 
     fn replace(
         owned self,
         *,
-        owned year: Optional[UInt16] = None,
-        owned month: Optional[UInt8] = None,
-        owned day: Optional[UInt8] = None,
-        owned hour: Optional[UInt8] = None,
-        owned minute: Optional[UInt8] = None,
-        owned second: Optional[UInt8] = None,
-        owned m_second: Optional[UInt16] = None,
-        owned u_second: Optional[UInt16] = None,
-        owned n_second: Optional[UInt16] = None,
-        owned tz: Optional[Self._tz] = None,
-        owned calendar: Optional[Calendar] = None,
+        year: Optional[UInt16] = None,
+        month: Optional[UInt8] = None,
+        day: Optional[UInt8] = None,
+        hour: Optional[UInt8] = None,
+        minute: Optional[UInt8] = None,
+        second: Optional[UInt8] = None,
+        m_second: Optional[UInt16] = None,
+        u_second: Optional[UInt16] = None,
+        n_second: Optional[UInt16] = None,
+        tz: Optional[Self._tz] = None,
+        calendar: Optional[Calendar] = None,
     ) -> Self:
         """Replace with give value/s.
 
@@ -217,27 +222,27 @@ struct DateTime[
         """
 
         if year:
-            self.year = year.take()
+            self.year = year.value()
         if month:
-            self.month = month.take()
+            self.month = month.value()
         if day:
-            self.day = day.take()
+            self.day = day.value()
         if hour:
-            self.hour = hour.take()
+            self.hour = hour.value()
         if minute:
-            self.minute = minute.take()
+            self.minute = minute.value()
         if second:
-            self.second = second.take()
+            self.second = second.value()
         if m_second:
-            self.m_second = m_second.take()
+            self.m_second = m_second.value()
         if u_second:
-            self.u_second = u_second.take()
+            self.u_second = u_second.value()
         if n_second:
-            self.n_second = n_second.take()
+            self.n_second = n_second.value()
         if tz:
-            self.tz = tz.take()
+            self.tz = tz.value()
         if calendar:
-            self.calendar = calendar.take()
+            self.calendar = calendar.value()
         return self
 
     fn to_calendar(owned self, calendar: Calendar) -> Self:
@@ -280,15 +285,10 @@ struct DateTime[
         )
         var of_h = int(offset.hour)
         var of_m = int(offset.minute)
-        print(self.hour)
-        print(of_h, of_m)
         if offset.sign == -1:
-            print("adding")
             self = self.add(hours=of_h, minutes=of_m)
         else:
-            print("subtracting")
             self = self.subtract(hours=of_h, minutes=of_m)
-        print(self.hour)
         self.tz = TZ_UTC
         return self^
 
@@ -948,156 +948,6 @@ struct DateTime[
         return self.to_iso()
 
     @staticmethod
-    fn _from_years(
-        years: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from years."""
-        var delta = int(calendar.max_year) - years
-        if delta > 0:
-            if years > int(calendar.min_year):
-                return Self(year=years, tz=tz, calendar=calendar)
-            return Self._from_years(delta)
-        return Self._from_years(int(calendar.max_year) - delta)
-
-    @staticmethod
-    # @always_inline("nodebug")
-    fn _from_months(
-        months: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from months."""
-        if months <= int(calendar.max_month):
-            return Self(month=months, tz=tz, calendar=calendar)
-        var y = months // int(calendar.max_month)
-        var rest = months % int(calendar.max_month)
-        var dt = Self._from_years(y, tz, calendar)
-        dt.month = rest
-        return dt
-
-    @staticmethod
-    fn _from_days[
-        add_leap: Bool = False
-    ](
-        days: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from days."""
-        var minyear = int(calendar.min_year)
-        var dt = Self(minyear, tz=tz, calendar=calendar)
-        var maxtdays = int(calendar.max_typical_days_in_year)
-        var maxposdays = int(calendar.max_possible_days_in_year)
-        var years = days // maxtdays
-        if years > minyear:
-            dt = Self._from_years(years, tz, calendar)
-        var maxydays = maxposdays if calendar.is_leapyear(dt.year) else maxtdays
-        var day = days
-        if add_leap:
-            var leapdays = calendar.leapdays_since_epoch(
-                dt.year, dt.month, dt.day
-            )
-            day += int(leapdays)
-        if day > maxydays:
-            var y = day // maxydays
-            day = day % maxydays
-            var dt2 = Self._from_years(y, tz, calendar)
-            dt.year += dt2.year
-        var maxmondays = int(calendar.max_days_in_month(dt.year, dt.month))
-        while day > maxmondays:
-            day -= maxmondays
-            dt.month += 1
-            maxmondays = int(calendar.max_days_in_month(dt.year, dt.month))
-        dt.day = day
-        return dt
-
-    @staticmethod
-    fn _from_hours[
-        add_leap: Bool = False
-    ](
-        hours: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from hours."""
-        var h = int(calendar.max_hour)
-        if hours <= h:
-            return Self(hour=hours, tz=tz, calendar=calendar)
-        var d = hours // (h + 1)
-        var rest = hours % (h + 1)
-        var dt = Self._from_days[add_leap](d, tz, calendar)
-        dt.hour = rest
-        return dt
-
-    @staticmethod
-    fn _from_minutes[
-        add_leap: Bool = False
-    ](
-        minutes: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from minutes."""
-        var m = int(calendar.max_minute)
-        if minutes < m:
-            return Self(minute=minutes, tz=tz, calendar=calendar)
-        var h = minutes // (m + 1)
-        var rest = minutes % (m + 1)
-        var dt = Self._from_hours[add_leap](h, tz, calendar)
-        dt.minute = rest
-        return dt
-
-    @staticmethod
-    fn from_seconds[
-        add_leap: Bool = False
-    ](
-        seconds: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from seconds.
-
-        Parameters:
-            add_leap: Whether to add the leap seconds and leap days
-                since the start of the calendar's epoch.
-
-        Args:
-            seconds: Seconds.
-            tz: Tz.
-            calendar: Calendar.
-
-        Returns:
-            Self.
-        """
-        var s = int(calendar.max_typical_second)
-        var minutes = seconds // (s + 1)
-        var dt = Self._from_minutes(minutes, tz, calendar)
-        var numerator = seconds
-        if add_leap:
-            var leapsecs = calendar.leapsecs_since_epoch(
-                dt.year, dt.month, dt.day
-            )
-            numerator += int(leapsecs)
-        var m = numerator // (s + 1)
-        var rest = numerator % (s + 1)
-        dt = Self._from_minutes(m, tz, calendar)
-        var max_second = int(
-            calendar.max_second(dt.year, dt.month, dt.day, dt.hour, dt.minute)
-        )
-        while rest > max_second:
-            rest -= max_second
-            dt.minute += 1
-            max_second = int(
-                calendar.max_second(
-                    dt.year, dt.month, dt.day, dt.hour, dt.minute
-                )
-            )
-        dt.second = rest
-        return dt
-
-    @staticmethod
     # @always_inline("nodebug")
     fn from_unix_epoch[
         add_leap: Bool = False
@@ -1151,23 +1001,6 @@ struct DateTime[
         return dt.replace(m_second=ms, u_second=us, n_second=UInt16(ns))
 
     # @always_inline("nodebug")
-    fn strftime[format_str: StringLiteral](self) -> String:
-        """Formats time into a `String`.
-
-        Parameters:
-            format_str: Format string.
-
-        Returns:
-            The formatted string.
-
-        - TODO
-            - localization.
-        """
-        return dt_str.strftime[format_str](
-            self.year, self.month, self.day, self.hour, self.minute, self.second
-        )
-
-    # @always_inline("nodebug")
     fn strftime(self, fmt: String) -> String:
         """Formats time into a `String`.
 
@@ -1176,10 +1009,8 @@ struct DateTime[
 
         Returns:
             The formatted string.
-
-        - TODO
-            - localization.
         """
+
         return dt_str.strftime(
             fmt,
             self.year,
@@ -1188,6 +1019,8 @@ struct DateTime[
             self.hour,
             self.minute,
             self.second,
+            self.m_second,
+            self.u_second,
         )
 
     # @always_inline("nodebug")
@@ -1227,28 +1060,29 @@ struct DateTime[
 
     @staticmethod
     # @always_inline("nodebug")
-    fn strptime[
+    fn strptime(
+        s: String,
         format_str: StringLiteral,
-        tz: Self._tz = Self._tz(),
+        tz: Optional[Self._tz] = None,
         calendar: Calendar = _calendar,
-    ](s: String) -> Optional[Self]:
+    ) -> Optional[Self]:
         """Parse a `DateTime` from a  `String`.
 
-        Parameters:
+        Args:
+            s: The string.
             format_str: The format string.
             tz: The `TimeZone` to cast the result to.
             calendar: The Calendar to cast the result to.
 
-        Args:
-            s: The string.
-
         Returns:
             An Optional Self.
         """
-        var parsed = dt_str.strptime[format_str](s)
+
+        var zone = tz.value() if tz else Self._tz()
+        var parsed = dt_str.strptime(s, format_str)
         if not parsed:
             return None
-        var p = parsed.take()
+        var p = parsed.value()
         return Self(
             p.year,
             p.month,
@@ -1259,7 +1093,7 @@ struct DateTime[
             p.m_second,
             p.u_second,
             p.n_second,
-            tz,
+            zone,
             calendar,
         )
 
@@ -1288,6 +1122,7 @@ struct DateTime[
         Returns:
             An Optional Self.
         """
+
         try:
             var p = dt_str.from_iso[
                 iso, dst_storage, no_dst_storage, iana, pyzoneinfo, native

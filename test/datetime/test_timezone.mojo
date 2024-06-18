@@ -65,7 +65,6 @@ fn test_tz_iana_no_dst() raises:
 
 
 fn main() raises:
-    # TODO: more thorough tests
     test_tz_no_iana()
     test_tz_iana_dst()
     test_tz_iana_no_dst()

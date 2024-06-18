@@ -16,6 +16,8 @@ struct IsoFormat:
     """Available formats to parse from and to
     [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)."""
 
+    alias TZD_REGEX = "+|-[0-9]{2}:?[0-9]{2}"
+    alias TZD = "%z"
     alias YYYYMMDD = "%Y%m%d"
     """e.g. `19700101`"""
     alias YYYY_MM_DD = "%Y-%m-%d"
@@ -24,15 +26,16 @@ struct IsoFormat:
     """e.g. `000000`"""
     alias HH_MM_SS = "%H:%M:%S"
     """e.g. `00:00:00`"""
-    alias YYYYMMDDHHMMSS = "%Y%m%d" + "%H%M%S"
+    alias YYYYMMDDHHMMSS = Self.YYYYMMDD + Self.HHMMSS
     """e.g. `19700101000000`"""
-    alias YYYY_MM_DD___HH_MM_SS = "%Y-%m-%d" + " " + "%H:%M:%S"
+    alias YYYYMMDDHHMMSSTZD = Self.YYYYMMDD + Self.HHMMSS + Self.TZD
+    """e.g. `19700101000000+0000`"""
+    alias YYYY_MM_DD___HH_MM_SS = Self.YYYY_MM_DD + " " + Self.HH_MM_SS
     """e.g. `1970-01-01 00:00:00`"""
-    alias YYYY_MM_DD_T_HH_MM_SS = "%Y-%m-%d" + "T" + "%H:%M:%S"
+    alias YYYY_MM_DD_T_HH_MM_SS = Self.YYYY_MM_DD + "T" + Self.HH_MM_SS
     """e.g. `1970-01-01T00:00:00`"""
-    alias YYYY_MM_DD_T_HH_MM_SS_TZD = "%Y-%m-%d" + "T" + "%H:%M:%S" + "TZD"
+    alias YYYY_MM_DD_T_HH_MM_SS_TZD = Self.YYYY_MM_DD + "T" + Self.HH_MM_SS + Self.TZD
     """e.g. `1970-01-01T00:00:00+00:00`"""
-    alias TZD_REGEX = "+|-[0-9]{2}:?[0-9]{2}"
     var selected: StringLiteral
     """The selected IsoFormat."""
 
@@ -50,6 +53,7 @@ struct IsoFormat:
             or selected == self.HHMMSS
             or selected == self.HH_MM_SS
             or selected == self.YYYYMMDDHHMMSS
+            or selected == self.YYYYMMDDHHMMSSTZD
             or selected == self.YYYY_MM_DD___HH_MM_SS
             or selected == self.YYYY_MM_DD_T_HH_MM_SS
             or selected == self.YYYY_MM_DD_T_HH_MM_SS_TZD,
@@ -115,7 +119,7 @@ fn to_iso[
         hour: Hour.
         minute: Minute.
         second: Second.
-        tzd: Time Zone designation String.
+        tzd: Time Zone designation String (full format i.e. `+00:00`).
 
     Returns:
         String.
@@ -136,6 +140,8 @@ fn to_iso[
         return yyyy_mm_dd + " " + hh_mm_ss
     elif iso.selected == iso.YYYYMMDDHHMMSS:
         return s[0] + s[1] + s[2] + s[3] + s[4] + s[5]
+    elif iso.selected == iso.YYYYMMDDHHMMSSTZD:
+        return s[0] + s[1] + s[2] + s[3] + s[4] + s[5] + tzd[:3] + tzd[-2:]
     elif iso.selected == iso.YYYYMMDD:
         return s[0] + s[1] + s[2] + s[3]
     elif iso.selected == iso.HHMMSS:
@@ -205,6 +211,8 @@ fn from_iso[
     if iso.YYYYMMDD in iso.selected:
         result[0] = atol(s[:4])
         result[1] = atol(s[4:6])
+
+        @parameter
         if iso.selected == iso.YYYYMMDD:
             return result^
         result[2] = atol(s[6:8])
@@ -214,17 +222,19 @@ fn from_iso[
     elif iso.YYYY_MM_DD in iso.selected:
         result[0] = atol(s[:4])
         result[1] = atol(s[5:7])
+
+        @parameter
         if iso.selected == iso.YYYY_MM_DD:
             return result^
         result[2] = atol(s[8:10])
         result[3] = atol(s[11:13])
         result[4] = atol(s[14:16])
         result[5] = atol(s[17:19])
-    elif iso.HH_MM_SS == iso.selected:
+    elif iso.selected == iso.HH_MM_SS:
         result[3] = atol(s[:2])
         result[4] = atol(s[3:5])
         result[5] = atol(s[6:8])
-    elif iso.HHMMSS == iso.selected:
+    elif iso.selected == iso.HHMMSS:
         result[3] = atol(s[:2])
         result[4] = atol(s[2:4])
         result[5] = atol(s[4:6])
@@ -240,6 +250,17 @@ fn from_iso[
             m = atol(s[23:25])
         else:
             m = atol(s[22:24])
+        result[6] = tz.from_offset(result[0], result[1], result[2], h, m, sign)
+    elif iso.selected == iso.YYYYMMDDHHMMSSTZD:
+        var sign = 1
+        if s[14] == "-":
+            sign = -1
+        var h = atol(s[15:17])
+        var m = 0
+        if s[17] == ":":
+            m = atol(s[18:20])
+        else:
+            m = atol(s[17:19])
         result[6] = tz.from_offset(result[0], result[1], result[2], h, m, sign)
 
     return result^
@@ -258,92 +279,58 @@ struct _DateTime:
     var n_second: UInt16
 
 
-fn strptime[format_str: StringLiteral](s: String) -> Optional[_DateTime]:
+fn strptime(s: String, format_str: StringLiteral) -> Optional[_DateTime]:
     """Parses time from a `String`.
-
-    Parameters:
-        format_str: The chosen format.
 
     Args:
         s: The string.
+        format_str: The chosen format.
 
     Returns:
         An Optional tuple with the result.
     """
-    # TODO: native
-    # try:
-    #     from python import Python
 
-    #     var dt = Python.import_module("datetime")
-    #     var date = dt.datetime.strptime(s, format_str)
-    #     return _DateTime(
-    #         UInt16(date.year),
-    #         UInt8(date.month),
-    #         UInt8(date.day),
-    #         UInt8(date.hour),
-    #         UInt8(date.minute),
-    #         UInt8(date.second),
-    #         UInt16(0),
-    #         UInt16(0),
-    #         UInt16(0),
-    #     )
-    # except:
-    #     pass
-    _ = s
+    # TODO: native
+    try:
+        from python import Python
+
+        var dt = Python.import_module("datetime")
+        var date = dt.datetime.strptime(s, format_str)
+        return _DateTime(
+            UInt16(int(date.year)),
+            UInt8(int(date.month)),
+            UInt8(int(date.day)),
+            UInt8(int(date.hour)),
+            UInt8(int(date.minute)),
+            UInt8(int(date.second)),
+            UInt16(int(date.microsecond) // 1000),
+            UInt16(int(date.microsecond) % 1000),
+            UInt16(0),
+        )
+    except:
+        pass
     return None
 
 
 fn strftime[
-    format_str: StringLiteral
+    T1: Intable = Int,
+    T2: Intable = Int,
+    T3: Intable = Int,
+    T4: Intable = Int,
+    T5: Intable = Int,
+    T6: Intable = Int,
+    T7: Intable = Int,
+    T8: Intable = Int,
 ](
-    year: UInt16,
-    month: UInt8,
-    day: UInt8,
-    hour: UInt8,
-    minute: UInt8,
-    second: UInt8,
-) -> String:
-    """Formats time into a `String`.
-
-    Parameters:
-        format_str: The chosen format.
-
-    Args:
-        year: Year.
-        month: Month.
-        day: Day.
-        hour: Hour.
-        minute: Minute.
-        second: Second.
-
-    Returns:
-        String.
-
-    - TODO
-        - localization.
-    """
-    # TODO: native
-    # TODO: localization
-    # try:
-    #     from python import Python
-
-    #     var dt = Python.import_module("datetime")
-    #     var date = dt.datetime(year, month, day, hour, minute, second)
-    #     return date.strftime(format_str)
-    # except:
-    #     pass
-    _ = year, month, day, hour, minute, second
-    return ""
-
-
-fn strftime(
     format_str: String,
-    year: UInt16,
-    month: UInt8,
-    day: UInt8,
-    hour: UInt8,
-    minute: UInt8,
-    second: UInt8,
+    year: T1,
+    month: T2,
+    day: T3,
+    hour: T4,
+    minute: T5,
+    second: T6,
+    m_second: T7,
+    u_second: T8,
 ) -> String:
     """Formats time into a `String`.
 
@@ -355,22 +342,29 @@ fn strftime(
         hour: Hour.
         minute: Minute.
         second: Second.
+        m_second: Milisecond.
+        u_second: Microsecond.
 
     Returns:
         String.
-
-    - TODO
-        - localization.
     """
+
     # TODO: native
     # TODO: localization
-    # try:
-    #     from python import Python
+    try:
+        from python import Python
 
-    #     var dt = Python.import_module("datetime")
-    #     var date = dt.datetime(year, month, day, hour, minute, second)
-    #     return date.strftime(format_str)
-    # except:
-    #     pass
-    _ = format_str, year, month, day, hour, minute, second
+        var dt = Python.import_module("datetime")
+        var date = dt.datetime(
+            int(year),
+            int(month),
+            int(day),
+            int(hour),
+            int(minute),
+            int(second),
+            microsecond=(int(m_second) * 1000 + int(u_second)),
+        )
+        return str(date.strftime(format_str))
+    except:
+        pass
     return ""

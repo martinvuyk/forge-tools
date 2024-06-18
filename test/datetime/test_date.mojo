@@ -296,6 +296,32 @@ fn test_hash() raises:
     assert_true(ref1 == ref2)
 
 
+fn test_strftime() raises:
+    var fstr = "mojo: %Y🔥%m🤯%d"
+    alias dt = Date[iana=False, pyzoneinfo=False, native=False]
+    # FIXME: python issue https://github.com/python/cpython/issues/120713
+    # assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
+    assert_equal("mojo: 9🔥06🤯01", dt(9, 6, 1).strftime(fstr))
+    fstr = "%Y-%m-%d %H:%M:%S.%f"
+    assert_equal("2024-06-07 00:00:00.000000", dt(2024, 6, 7).strftime(fstr))
+
+
+fn test_strptime() raises:
+    var fstr = "mojo: %Y🔥%m🤯%d"
+    var vstr = "mojo: 0009🔥06🤯01"
+    alias dt = Date[iana=False, pyzoneinfo=False, native=False]
+    var ref1 = dt(9, 6, 1)
+    var parsed = dt.strptime(vstr, fstr)
+    assert_true(parsed)
+    assert_equal(ref1, parsed.value())
+    fstr = "%Y-%m-%d %H:%M:%S.%f"
+    vstr = "2024-06-07 09:09:09.009009"
+    ref1 = dt(2024, 6, 7)
+    parsed = dt.strptime(vstr, fstr)
+    assert_true(parsed)
+    assert_equal(ref1, parsed.value())
+
+
 fn main() raises:
     test_add()
     test_subtract()
@@ -304,3 +330,4 @@ fn main() raises:
     test_iso()
     test_time()
     test_hash()
+    test_strftime()

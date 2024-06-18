@@ -828,7 +828,7 @@ fn get_zoneinfo[
 
 
 fn offset_at(
-    owned with_dst: OptionalReg[ZoneDST],
+    with_dst: OptionalReg[ZoneDST],
     year: UInt16,
     month: UInt8,
     day: UInt8,

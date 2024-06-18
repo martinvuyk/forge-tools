@@ -100,11 +100,11 @@ struct Date[
         T1: _IntCollect = Int, T2: _IntCollect = Int, T3: _IntCollect = Int
     ](
         inout self,
-        owned year: Optional[T1] = None,
-        owned month: Optional[T2] = None,
-        owned day: Optional[T3] = None,
-        owned tz: Optional[Self._tz] = None,
-        owned calendar: Calendar = _calendar,
+        year: Optional[T1] = None,
+        month: Optional[T2] = None,
+        day: Optional[T3] = None,
+        tz: Optional[Self._tz] = None,
+        calendar: Calendar = _calendar,
     ):
         """Construct a `DateTime` from valid values.
 
@@ -120,21 +120,21 @@ struct Date[
             tz: Tz.
             calendar: Calendar.
         """
-        var zone = tz.value() if tz else Self._tz()
-        self.year = int(year.take()) if year else int(calendar.min_year)
-        self.month = int(month.take()) if month else int(calendar.min_month)
-        self.day = int(day.take()) if day else int(calendar.min_day)
-        self.tz = zone
+
+        self.year = int(year.value()) if year else int(calendar.min_year)
+        self.month = int(month.value()) if month else int(calendar.min_month)
+        self.day = int(day.value()) if day else int(calendar.min_day)
+        self.tz = tz.value() if tz else Self._tz()
         self.calendar = calendar
 
     fn replace(
         owned self,
         *,
-        owned year: Optional[UInt16] = None,
-        owned month: Optional[UInt8] = None,
-        owned day: Optional[UInt8] = None,
-        owned tz: Optional[Self._tz] = None,
-        owned calendar: Optional[Calendar] = None,
+        year: Optional[UInt16] = None,
+        month: Optional[UInt8] = None,
+        day: Optional[UInt8] = None,
+        tz: Optional[Self._tz] = None,
+        calendar: Optional[Calendar] = None,
     ) -> Self:
         """Replace with give value/s.
 
@@ -152,15 +152,15 @@ struct Date[
         """
         var new_self = self
         if year:
-            new_self.year = year.take()
+            new_self.year = year.value()
         if month:
-            new_self.month = month.take()
+            new_self.month = month.value()
         if day:
-            new_self.day = day.take()
+            new_self.day = day.value()
         if tz:
-            new_self.tz = tz.take()
+            new_self.tz = tz.value()
         if calendar:
-            new_self.calendar = calendar.take()
+            new_self.calendar = calendar.value()
         return new_self
 
     fn to_calendar(owned self, calendar: Calendar) -> Self:
@@ -697,22 +697,6 @@ struct Date[
         var s = time.now() // 1_000_000_000
         return Date.from_unix_epoch[False](s, zone).replace(calendar=calendar)
 
-    fn strftime[format_str: StringLiteral](self) -> String:
-        """Formats time into a `String`.
-
-        Parameters:
-            format_str: The chosen format.
-
-        Returns:
-            Self.
-
-        - TODO
-            - localization.
-        """
-        return dt_str.strftime[format_str](
-            self.year, self.month, self.day, 0, 0, 0
-        )
-
     fn strftime(self, fmt: String) -> String:
         """Formats time into a `String`.
 
@@ -721,11 +705,11 @@ struct Date[
 
         Returns:
             String.
-
-        - TODO
-            - localization.
         """
-        return dt_str.strftime(fmt, self.year, self.month, self.day, 0, 0, 0)
+
+        return dt_str.strftime(
+            fmt, self.year, self.month, self.day, 0, 0, 0, 0, 0
+        )
 
     # @always_inline("nodebug")
     fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
@@ -745,31 +729,31 @@ struct Date[
         )
 
     @staticmethod
-    @parameter
-    fn strptime[
+    fn strptime(
+        s: String,
         format_str: StringLiteral,
         tz: Optional[Self._tz] = None,
         calendar: Calendar = _calendar,
-    ](s: String) -> Optional[Self]:
+    ) -> Optional[Self]:
         """Parse a `Date` from a  `String`.
 
-        Parameters:
+        Args:
+            s: The string.
             format_str: The format string.
             tz: The `TimeZone` to cast the result to.
             calendar: The Calendar to cast the result to.
 
-        Args:
-            s: The string.
-
         Returns:
             An Optional Self.
         """
+
         var zone = tz.value() if tz else Self._tz()
-        var parsed = dt_str.strptime[format_str](s)
+        var parsed = dt_str.strptime(s, format_str)
         if not parsed:
             return None
-        var p = parsed.take()
-        return Self(p.year, p.month, p.day, zone, calendar)
+        var p = parsed.value()
+        var dt = Self(p.year, p.month, p.day, zone, calendar)
+        return dt^
 
     @staticmethod
     @parameter

@@ -268,7 +268,8 @@ struct TimeZone[
 
     @always_inline("nodebug")
     fn to_iso(self) -> String:
-        """Return the Offset's ISO8601 representation.
+        """Return the Offset's ISO8601 representation
+        (full format i.e. `+00:00`).
 
         Returns:
             String.
