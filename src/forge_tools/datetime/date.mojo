@@ -339,8 +339,6 @@ struct Date[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        var y = int(self.year) - years
-        var mon = int(self.month) - months
         var d = (
             int(self.day)
             - days
@@ -351,21 +349,6 @@ struct Date[
                 * int(self.calendar.max_typical_second + 1)
             )
         )
-
-        var minyear = int(self.calendar.min_year)
-        var maxyear = self.calendar.max_year
-        if y < minyear:
-            var delta = abs(y - minyear + 1)
-            self = self.replace(year=maxyear).subtract(years=delta)
-        else:
-            self.year = y
-        var minmonth = int(self.calendar.min_month)
-        var maxmonth = self.calendar.max_month
-        if mon < minmonth:
-            var delta = abs(mon - minmonth + 1)
-            self = self.replace(month=maxmonth).subtract(years=1, months=delta)
-        else:
-            self.month = mon
         var minday = int(self.calendar.min_day)
         if d < minday:
             self = self.subtract(months=1)
@@ -374,6 +357,23 @@ struct Date[
             self = self.replace(day=max_day).subtract(days=delta)
         else:
             self.day = d
+        var minmonth = int(self.calendar.min_month)
+        var maxmonth = self.calendar.max_month
+        var mon = int(self.month) - months
+        if mon < minmonth:
+            var delta = abs(mon - minmonth + 1)
+            self = self.replace(month=maxmonth).subtract(years=1, months=delta)
+        else:
+            self.month = mon
+        var minyear = int(self.calendar.min_year)
+        var maxyear = self.calendar.max_year
+        var y = int(self.year) - years
+        if y < minyear:
+            var delta = abs(y - minyear + 1)
+            self = self.replace(year=maxyear).subtract(years=delta)
+        else:
+            self.year = y
+        self = self.add(days=0)  #  to correct days and months
         return self^
 
     # @always_inline("nodebug")
@@ -453,22 +453,40 @@ struct Date[
         Returns:
             - day: Day of the week: [0, 6] (monday - sunday) (default).
         """
+
         return self.calendar.day_of_week(self.year, self.month, self.day)
 
+    # @always_inline("nodebug")
     fn day_of_year(self) -> UInt16:
         """Calculates the day of the year for a `Date`.
 
         Returns:
             - day: Day of the year: [1, 366] (for gregorian calendar).
         """
+
         return self.calendar.day_of_year(self.year, self.month, self.day)
 
-    fn leapsec_since_epoch(self) -> UInt32:
+    # @always_inline("nodebug")
+    fn day_of_month(self, day_of_year: Int) -> (UInt8, UInt8):
+        """Calculates the month, day of the month for a given day of the year.
+
+        Args:
+            day_of_year: The day of the year.
+
+        Returns:
+            - month: Month of the year: [1, 12] (for gregorian calendar).
+            - day: Day of the month: [1, 31] (for gregorian calendar).
+        """
+
+        return self.calendar.day_of_month(self.year, day_of_year)
+
+    fn leapsecs_since_epoch(self) -> UInt32:
         """Cumulative leap seconds since the calendar's epoch start.
 
         Returns:
             The amount.
         """
+
         var dt = self.to_utc()
         return dt.calendar.leapsecs_since_epoch(dt.year, dt.month, dt.day)
 
@@ -571,15 +589,6 @@ struct Date[
         return hash(self) < hash(other)
 
     # @always_inline("nodebug")
-    fn __invert__(self) -> UInt32:
-        """Invert.
-
-        Returns:
-            Self.
-        """
-        return ~hash(self)
-
-    # @always_inline("nodebug")
     fn __and__[T: Hashable](self, other: T) -> UInt32:
         """And.
 
@@ -663,7 +672,12 @@ struct Date[
         """
 
         var zone = tz.value() if tz else Self._tz()
-        return Self(tz=zone, calendar=UTCCalendar).add(seconds=seconds)
+        var dt = Self(tz=zone, calendar=UTCCalendar).add(seconds=seconds)
+
+        @parameter
+        if add_leap:
+            dt = dt.add(seconds=int(dt.leapsecs_since_epoch()))
+        return dt^
 
     @staticmethod
     fn now(
@@ -681,7 +695,7 @@ struct Date[
 
         var zone = tz.value() if tz else Self._tz()
         var s = time.now() // 1_000_000_000
-        return Date.from_unix_epoch(s, zone).replace(calendar=calendar)
+        return Date.from_unix_epoch[False](s, zone).replace(calendar=calendar)
 
     fn strftime[format_str: StringLiteral](self) -> String:
         """Formats time into a `String`.
@@ -822,6 +836,7 @@ struct Date[
         Returns:
             Self.
         """
+
         var zone = tz.value() if tz else Self._tz()
         var d = calendar.from_hash[_cal_hash](int(value))
         return Self(d[0], d[1], d[2], zone, calendar)

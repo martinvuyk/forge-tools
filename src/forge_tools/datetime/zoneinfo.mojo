@@ -44,7 +44,7 @@ struct Offset:
         self.minute = 0 if m == 0 else (30 if m == 1 else 45)
         self.buf = buf
 
-    fn __init__(inout self, values: Tuple[UInt8, UInt8, UInt8], /):
+    fn __init__(inout self, values: Tuple[UInt8, UInt8, Int8], /):
         """Construct an `Offset` from values.
 
         Args:
@@ -62,7 +62,7 @@ struct Offset:
 
         self = Self(values[0], values[1], values[2])
 
-    fn __init__(inout self, hour: UInt8, minute: UInt8, sign: UInt8):
+    fn __init__(inout self, hour: UInt8, minute: UInt8, sign: Int8):
         """Construct an `Offset` from values.
 
         Args:
@@ -284,9 +284,10 @@ struct ZoneDST:
 
 @value
 struct ZoneInfoFile32(CollectionElement):
-    """ZoneInfoFile to store Offset of tz with DST.
-    Zoneinfo that lives in a file. Smallest memory footprint
-    but only supports 256 timezones (there are ~ 418).
+    """ZoneInfo to store Offset of tz with DST, lives in a file. Smallest memory
+    footprint but only supports 512 timezones (there are ~ 418). The closer
+    to that number the more likely collisions in the hashing function might
+    happen.
     """
 
     var _file: Path
@@ -298,6 +299,10 @@ struct ZoneInfoFile32(CollectionElement):
         except:
             self._file = Path(".") / "zoneinfo_dump"
 
+    @staticmethod
+    fn hash(key: StringLiteral) -> UInt64:
+        return UInt64((hash(key) >> 48) % 512)
+
     fn add(inout self, key: StringLiteral, value: ZoneDST):
         """Add a value to the file.
 
@@ -305,15 +310,16 @@ struct ZoneInfoFile32(CollectionElement):
             key: The tz_str.
             value: The ZoneDST with the hash.
         """
+
         try:
             with open(self._file, "wb") as f:
-                _ = f.seek(hash(key) * 32)
+                _ = f.seek(Self.hash(key) * 4)
                 # FIXME: this is horrible
                 var items = List[UInt8](
-                    UInt8(value.buf[0]),
-                    UInt8(value.buf[1]),
-                    UInt8(value.buf[2]),
-                    UInt8(value.buf[3]),
+                    (value.buf >> 24).cast[DType.uint8](),
+                    (value.buf >> 16).cast[DType.uint8](),
+                    (value.buf >> 8).cast[DType.uint8](),
+                    (value.buf >> 0).cast[DType.uint8](),
                     0,
                 )
                 f.write(String(items))
@@ -331,16 +337,17 @@ struct ZoneInfoFile32(CollectionElement):
         Returns:
             An Optional `ZoneDST`.
         """
+
         try:
             var value: UInt32
             with open(self._file, "rb") as f:
-                _ = f.seek(hash(key) * 32)
+                _ = f.seek(Self.hash(key) * 4)
                 var bufs = f.read_bytes(4)
                 value = (
-                    (bufs[0].cast[DType.uint32]() << 24)
-                    | (bufs[1].cast[DType.uint32]() << 16)
-                    | (bufs[2].cast[DType.uint32]() << 8)
-                    | bufs[3].cast[DType.uint32]()
+                    (int(bufs[0]) << 24)
+                    | (int(bufs[1]) << 16)
+                    | (int(bufs[2]) << 8)
+                    | int(bufs[3])
                 )
             return ZoneDST(value)
         except:
@@ -360,9 +367,10 @@ struct ZoneInfoFile32(CollectionElement):
 
 @value
 struct ZoneInfoFile8(CollectionElement):
-    """ZoneInfoFile to store Offset of tz with no DST.
-    Zoneinfo that lives in a file. Smallest memory footprint
-    but only supports 256 timezones (there are ~ 418).
+    """ZoneInfo to store Offset of tz with no DST, lives in a file. Smallest
+    memory footprint but only supports 512 timezones (there are ~ 418). The
+    closer to that number the more likely collisions in the hashing function
+    might happen.
     """
 
     var _file: Path
@@ -372,7 +380,11 @@ struct ZoneInfoFile8(CollectionElement):
         try:
             self._file = cwd() / "zoneinfo_dump"
         except:
-            self._file = "./zoneinfo_dump"
+            self._file = Path(".") / "zoneinfo_dump"
+
+    @staticmethod
+    fn hash(key: StringLiteral) -> UInt64:
+        return UInt64((hash(key) >> 48) % 512)
 
     fn add(inout self, key: StringLiteral, value: Offset):
         """Add a value to the file.
@@ -381,10 +393,10 @@ struct ZoneInfoFile8(CollectionElement):
             key: The tz_str.
             value: The buffer with the hash.
         """
-        var index = hash(key)
+
         try:
             with open(self._file, "wb") as f:
-                _ = f.seek(index * 8)
+                _ = f.seek(Self.hash(key))
                 # FIXME: this is horrible
                 f.write(String(List[UInt8](value.buf, 0)))
         except:
@@ -401,13 +413,13 @@ struct ZoneInfoFile8(CollectionElement):
         Returns:
             An Optional `Offset`.
         """
-        var index = hash(key)
+
         try:
             var value: UInt8
             with open(self._file, "rb") as f:
-                _ = f.seek(index * 8)
+                _ = f.seek(Self.hash(key))
                 value = f.read_bytes(1)
-            return Offset(value)
+            return Offset(buf=value)
         except:
             return None
 
@@ -848,7 +860,7 @@ fn offset_at(
     var dst_start = items[0]
     var dst_end = items[1]
     var offset = items[2]
-    var sign: UInt8 = offset.sign
+    var sign: Int8 = offset.sign
     var m: UInt8 = offset.minute
     var dst_h = offset.hour + 1
     var std_m = m

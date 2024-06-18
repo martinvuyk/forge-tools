@@ -154,12 +154,10 @@ fn test_subtract() raises:
     assert_equal(result, sub_seconds)
 
     # test year and month subtract
-    # there will always be a difference of 1 day between this one and test_add()
-    # because of the leap day in february 2024
     result = date(2025, 1, 1, tz_0_, pycal) - date(2, 6, 31, tz_0_, pycal)
-    offset_0 = date(2022, 5, 31, tz_0_, unixcal)
-    offset_p_1 = date(2022, 5, 31, tz_1, unixcal)
-    offset_n_1 = date(2022, 5, 30, tz1_, unixcal)
+    offset_0 = date(2022, 6, 1, tz_0_, unixcal)
+    offset_p_1 = date(2022, 6, 1, tz_1, unixcal)
+    offset_n_1 = date(2022, 5, 31, tz1_, unixcal)
     sub_seconds = date(2025, 1, 1, tz_0_, unixcal).subtract(
         years=2, months=6, days=31
     )
@@ -228,8 +226,8 @@ fn test_bitwise() raises:
     assert_true((ref1 ^ date(1969, 12, 31, tz1_, pycal)) != 0)
     assert_true((ref1 ^ date(1970, 1, 2, tz_0_, pycal)) != 0)
     assert_true((ref1 | (date(1970, 1, 2, tz_0_, pycal) & 0)) == hash(ref1))
-    assert_true((hash(ref1) & ~ref1) == 0)
-    assert_true(~(hash(ref1) ^ ~ref1) == 0)
+    assert_true((hash(ref1) & ~hash(ref1)) == 0)
+    assert_true(~(hash(ref1) ^ ~hash(ref1)) == 0)
 
 
 fn test_iso() raises:

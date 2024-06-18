@@ -5,7 +5,12 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 from time import time
 
 from forge_tools.datetime.datetime import DateTime
-from forge_tools.datetime.calendar import Calendar, PythonCalendar, UTCCalendar
+from forge_tools.datetime.calendar import (
+    Calendar,
+    PythonCalendar,
+    UTCCalendar,
+    Gregorian,
+)
 from forge_tools.datetime.dt_str import IsoFormat
 
 
@@ -29,8 +34,10 @@ fn test_add() raises:
     var add_seconds = dt(2024, 2, 29, tz=tz_0_, calendar=unixcal).add(
         seconds=24 * 3600
     )
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == add_seconds)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, add_seconds)
 
     # test february not leapyear
     result = dt(2023, 2, 28, tz=tz_0_, calendar=pycal) + dt(
@@ -42,8 +49,10 @@ fn test_add() raises:
     add_seconds = dt(2023, 2, 28, tz=tz_0_, calendar=unixcal).add(
         seconds=24 * 3600
     )
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == add_seconds)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, add_seconds)
 
     # test normal month
     result = dt(2024, 5, 31, tz=tz_0_, calendar=pycal) + dt(
@@ -55,8 +64,10 @@ fn test_add() raises:
     add_seconds = dt(2024, 5, 31, tz=tz_0_, calendar=unixcal).add(
         seconds=24 * 3600
     )
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == add_seconds)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, add_seconds)
 
     # test december
     result = dt(2024, 12, 31, tz=tz_0_, calendar=pycal) + dt(
@@ -68,18 +79,21 @@ fn test_add() raises:
     add_seconds = dt(2024, 12, 31, tz=tz_0_, calendar=unixcal).add(
         seconds=24 * 3600
     )
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == add_seconds)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, add_seconds)
 
     # test year and month add
     result = dt(2022, 6, 1, tz=tz_0_, calendar=pycal) + dt(
-        3, 6, 31, tz=tz_0_, calendar=pycal
+        2, 6, 31, tz=tz_0_, calendar=pycal
     )
     offset_0 = dt(2025, 1, 1, tz=tz_0_, calendar=unixcal)
     offset_p_1 = dt(2025, 1, 1, hour=1, tz=tz_1, calendar=unixcal)
     offset_n_1 = dt(2024, 12, 31, hour=23, tz=tz1_, calendar=unixcal)
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
 
     # test positive overflow pycal
     result = dt(9999, 12, 31, tz=tz_0_, calendar=pycal) + dt(
@@ -91,8 +105,10 @@ fn test_add() raises:
     add_seconds = dt(9999, 12, 31, tz=tz_0_, calendar=pycal).add(
         seconds=24 * 3600
     )
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == add_seconds)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, add_seconds)
 
     # test positive overflow unixcal
     result = dt(9999, 12, 31, tz=tz_0_, calendar=unixcal) + dt(
@@ -104,8 +120,10 @@ fn test_add() raises:
     add_seconds = dt(9999, 12, 31, tz=tz_0_, calendar=unixcal).add(
         seconds=24 * 3600
     )
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == add_seconds)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, add_seconds)
 
 
 fn test_subtract() raises:
@@ -126,10 +144,12 @@ fn test_subtract() raises:
     var offset_p_1 = dt(2024, 2, 29, hour=1, tz=tz_1, calendar=unixcal)
     var offset_n_1 = dt(2024, 2, 28, hour=23, tz=tz1_, calendar=unixcal)
     var sub_seconds = dt(2024, 3, 1, tz=tz_0_, calendar=unixcal).subtract(
-        seconds=1
+        days=1
     )
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == sub_seconds)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, sub_seconds)
 
     # test february not leapyear
     result = dt(2023, 3, 1, tz=tz_0_, calendar=pycal) - dt(
@@ -138,9 +158,11 @@ fn test_subtract() raises:
     offset_0 = dt(2023, 2, 28, tz=tz_0_, calendar=unixcal)
     offset_p_1 = dt(2023, 2, 28, hour=1, tz=tz_1, calendar=unixcal)
     offset_n_1 = dt(2023, 2, 27, hour=23, tz=tz1_, calendar=unixcal)
-    sub_seconds = dt(2023, 3, 1, tz=tz_0_, calendar=unixcal).subtract(seconds=1)
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == sub_seconds)
+    sub_seconds = dt(2023, 3, 1, tz=tz_0_, calendar=unixcal).subtract(days=1)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, sub_seconds)
 
     # test normal month
     result = dt(2024, 6, 1, tz=tz_0_, calendar=pycal) - dt(
@@ -149,9 +171,11 @@ fn test_subtract() raises:
     offset_0 = dt(2024, 5, 31, tz=tz_0_, calendar=unixcal)
     offset_p_1 = dt(2024, 5, 31, hour=1, tz=tz_1, calendar=unixcal)
     offset_n_1 = dt(2024, 5, 30, hour=23, tz=tz1_, calendar=unixcal)
-    sub_seconds = dt(2024, 6, 1, tz=tz_0_, calendar=unixcal).subtract(seconds=1)
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == sub_seconds)
+    sub_seconds = dt(2024, 6, 1, tz=tz_0_, calendar=unixcal).subtract(days=1)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, sub_seconds)
 
     # test december
     result = dt(2025, 1, 1, tz=tz_0_, calendar=pycal) - dt(
@@ -160,19 +184,25 @@ fn test_subtract() raises:
     offset_0 = dt(2024, 12, 31, tz=tz_0_, calendar=unixcal)
     offset_p_1 = dt(2024, 12, 31, hour=1, tz=tz_1, calendar=unixcal)
     offset_n_1 = dt(2024, 12, 30, hour=23, tz=tz1_, calendar=unixcal)
-    sub_seconds = dt(2025, 1, 1, tz=tz_0_, calendar=unixcal).subtract(seconds=1)
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == sub_seconds)
+    sub_seconds = dt(2025, 1, 1, tz=tz_0_, calendar=unixcal).subtract(days=1)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, sub_seconds)
 
     # test year and month subtract
     result = dt(2025, 1, 1, tz=tz_0_, calendar=pycal) - dt(
-        3, 6, 31, tz=tz_0_, calendar=pycal
+        2, 6, 31, tz=tz_0_, calendar=pycal
     )
     offset_0 = dt(2022, 6, 1, tz=tz_0_, calendar=unixcal)
     offset_p_1 = dt(2022, 6, 1, hour=1, tz=tz_1, calendar=unixcal)
     offset_n_1 = dt(2022, 5, 31, hour=23, tz=tz1_, calendar=unixcal)
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1)
+    sub_seconds = dt(2025, 1, 1, tz=tz_0_, calendar=unixcal).subtract(
+        years=2, months=6, days=31
+    )
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
 
     # test negative overflow pycal
     result = dt(1, 1, 1, tz=tz_0_, calendar=pycal) - dt(
@@ -181,9 +211,11 @@ fn test_subtract() raises:
     offset_0 = dt(9999, 12, 31, tz=tz_0_, calendar=pycal)
     offset_p_1 = dt(9999, 12, 31, hour=1, tz=tz_1, calendar=pycal)
     offset_n_1 = dt(9999, 12, 30, hour=23, tz=tz1_, calendar=pycal)
-    sub_seconds = dt(1, 1, 1, tz=tz_0_, calendar=pycal).subtract(seconds=1)
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == sub_seconds)
+    sub_seconds = dt(1, 1, 1, tz=tz_0_, calendar=pycal).subtract(days=1)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, sub_seconds)
 
     # test negative overflow unixcal
     result = dt(1970, 1, 1, tz=tz_0_, calendar=unixcal) - dt(
@@ -192,9 +224,11 @@ fn test_subtract() raises:
     offset_0 = dt(9999, 12, 31, tz=tz_0_, calendar=unixcal)
     offset_p_1 = dt(9999, 12, 31, hour=1, tz=tz_1, calendar=unixcal)
     offset_n_1 = dt(9999, 12, 30, hour=23, tz=tz1_, calendar=unixcal)
-    sub_seconds = dt(1970, 1, 1, tz=tz_0_, calendar=unixcal).subtract(seconds=1)
-    assert_true(result == offset_0 and result == offset_p_1)
-    assert_true(result == offset_n_1 and result == sub_seconds)
+    sub_seconds = dt(1970, 1, 1, tz=tz_0_, calendar=unixcal).subtract(days=1)
+    assert_equal(result, offset_0)
+    assert_equal(result, offset_p_1)
+    assert_equal(result, offset_n_1)
+    assert_equal(result, sub_seconds)
 
 
 fn test_logic() raises:
@@ -209,11 +243,10 @@ fn test_logic() raises:
 
     var ref1 = dt(1970, 1, 1, tz=tz_0_, calendar=pycal)
     assert_true(ref1 == dt(1970, 1, 1, tz=tz_0_, calendar=unixcal))
-    assert_true(ref1 == dt(1970, 1, 1, tz=tz_1, calendar=unixcal))
-    assert_true(ref1 == dt(1969, 12, 31, tz=tz1_, calendar=pycal))
-
-    assert_true(ref1 < dt(1970, 1, 2, tz=tz_0_, calendar=pycal))
-    assert_true(ref1 <= dt(1970, 1, 2, tz=tz_0_, calendar=pycal))
+    assert_true(ref1 == dt(1970, 1, 1, 1, tz=tz_1, calendar=unixcal))
+    assert_true(ref1 == dt(1969, 12, 31, 23, tz=tz1_, calendar=pycal))
+    assert_true(ref1 < dt(1970, 1, 2, tz=tz_0_, calendar=unixcal))
+    assert_true(ref1 <= dt(1970, 1, 2, tz=tz_0_, calendar=unixcal))
     assert_true(ref1 > dt(1969, 12, 31, tz=tz_0_, calendar=pycal))
     assert_true(ref1 >= dt(1969, 12, 31, tz=tz_0_, calendar=pycal))
 
@@ -236,8 +269,8 @@ fn test_bitwise() raises:
     assert_true(
         (ref1 | (dt(1970, 1, 2, tz=tz_0_, calendar=pycal) & 0)) == hash(ref1)
     )
-    assert_true((hash(ref1) & ~ref1) == 0)
-    assert_true(~(hash(ref1) ^ ~ref1) == 0)
+    assert_true((hash(ref1) & ~hash(ref1)) == 0)
+    assert_true(~(hash(ref1) ^ ~hash(ref1)) == 0)
 
 
 fn test_iso() raises:
@@ -249,32 +282,34 @@ fn test_iso() raises:
     var ref1 = dt(2024, 6, 16, 18, 51, 20, tz=tz_0_, calendar=pycal)
     var iso_str = "2024-06-16T18:51:20+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
-    assert_true(ref1 == dt.from_iso[fmt1](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
 
     iso_str = "2024-06-16 18:51:20"
     alias fmt2 = IsoFormat(IsoFormat.YYYY_MM_DD___HH_MM_SS)
-    assert_true(ref1 == dt.from_iso[fmt2](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt2](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt2]())
 
     iso_str = "2024-06-16T18:51:20"
     alias fmt3 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS)
-    assert_true(ref1 == dt.from_iso[fmt3](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt3](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt3]())
 
     iso_str = "20240616185120"
     alias fmt4 = IsoFormat(IsoFormat.YYYYMMDDHHMMSS)
-    assert_true(ref1 == dt.from_iso[fmt4](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt4](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt4]())
 
+    alias customcal = Calendar(Gregorian(min_year=2024))
+    ref1 = dt(2024, 1, 1, 18, 51, 20, tz=tz_0_, calendar=pycal)
     iso_str = "18:51:20"
     alias fmt5 = IsoFormat(IsoFormat.HH_MM_SS)
-    assert_true(ref1 == dt.from_iso[fmt5, calendar=unixcal](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt5, calendar=customcal](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt5]())
 
     iso_str = "185120"
     alias fmt6 = IsoFormat(IsoFormat.HHMMSS)
-    assert_true(ref1 == dt.from_iso[fmt6, calendar=unixcal](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt6, calendar=customcal](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
@@ -294,15 +329,10 @@ fn test_hash() raises:
     alias TZ = dt._tz
     var tz_0_ = TZ("Etc/UTC", 0, 0)
     var ref1 = dt(1970, 1, 1, tz=tz_0_, calendar=pycal)
-    var data = hash(ref1)
-    var parsed = dt.from_hash(data)
-    assert_true(ref1 == parsed)
+    assert_equal(ref1, dt.from_hash(hash(ref1)))
     var ref2 = dt(1970, 1, 1, tz=tz_0_, calendar=unixcal)
-    var data2 = hash(ref2)
-    var parsed2 = dt.from_hash(data2)
-    assert_true(ref2 == parsed2)
-    # both should be the same
-    assert_true(ref1 == ref2)
+    assert_equal(ref2, dt.from_hash(hash(ref2)))
+    assert_equal(ref1, ref2)
 
 
 fn main() raises:

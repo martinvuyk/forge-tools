@@ -180,66 +180,6 @@ struct DateTime[
         self.tz = tz
         self.calendar = calendar
 
-    @staticmethod
-    fn _from_overflow(
-        years: Int = 0,
-        months: Int = 0,
-        days: Int = 0,
-        hours: Int = 0,
-        minutes: Int = 0,
-        seconds: Int = 0,
-        m_seconds: Int = 0,
-        u_seconds: Int = 0,
-        n_seconds: Int = 0,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from possibly overflowing values."""
-        var ns = Self._from_n_seconds(n_seconds, tz, calendar)
-        var us = Self._from_u_seconds(u_seconds, tz, calendar)
-        var ms = Self._from_m_seconds(m_seconds, tz, calendar)
-        var s = Self.from_seconds(seconds, tz, calendar)
-        var m = Self._from_minutes(minutes, tz, calendar)
-        var h = Self._from_hours(hours, tz, calendar)
-        var d = Self._from_days(days, tz, calendar)
-        var mon = Self._from_months(months, tz, calendar)
-        var y = Self._from_years(years, tz, calendar)
-
-        y.year = 0 if years == 0 else y.year
-
-        for dt in List(mon, d, h, m, s, ms, us, ns):
-            if dt[].year != calendar.min_year:
-                y.year += dt[].year
-        y.month = mon.month
-        for dt in List(d, h, m, s, ms, us, ns):
-            if dt[].month != calendar.min_month:
-                y.month += dt[].month
-        y.day = d.day
-        for dt in List(h, m, s, ms, us, ns):
-            if dt[].day != calendar.min_day:
-                y.day += dt[].day
-        y.hour = h.hour
-        for dt in List(m, s, ms, us, ns):
-            if dt[].hour != calendar.min_hour:
-                y.hour += dt[].hour
-        y.minute = m.minute
-        for dt in List(s, ms, us, ns):
-            if dt[].minute != calendar.min_minute:
-                y.minute += dt[].minute
-        y.second = s.second
-        for dt in List(ms, us, ns):
-            if dt[].second != calendar.min_second:
-                y.second += dt[].second
-        y.m_second = ms.m_second
-        for dt in List(us, ns):
-            if dt[].m_second != calendar.min_milisecond:
-                y.m_second += dt[].m_second
-        y.u_second = us.u_second
-        if ns.u_second != calendar.min_microsecond:
-            y.u_second += ns.u_second
-        y.n_second = ns.n_second
-        return y
-
     fn replace(
         owned self,
         *,
@@ -331,21 +271,26 @@ struct DateTime[
         Returns:
             Self.
         """
-        alias TZ_UTC = Self._tz()
+
+        var TZ_UTC = Self._tz()
         if self.tz == TZ_UTC:
             return self
-        var new_self = self
         var offset = self.tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
         var of_h = int(offset.hour)
         var of_m = int(offset.minute)
+        print(self.hour)
+        print(of_h, of_m)
         if offset.sign == -1:
-            new_self = self.add(hours=of_h, minutes=of_m)
+            print("adding")
+            self = self.add(hours=of_h, minutes=of_m)
         else:
-            new_self = self.subtract(hours=of_h, minutes=of_m)
-        new_self.tz = TZ_UTC
-        return new_self
+            print("subtracting")
+            self = self.subtract(hours=of_h, minutes=of_m)
+        print(self.hour)
+        self.tz = TZ_UTC
+        return self^
 
     fn from_utc(owned self, tz: Self._tz) -> Self:
         """Translate `TimeZone` from UTC. If `self.tz` is UTC
@@ -357,7 +302,8 @@ struct DateTime[
         Returns:
             Self.
         """
-        alias TZ_UTC = Self._tz()
+
+        var TZ_UTC = Self._tz()
         if tz == TZ_UTC:
             return self
         var offset = tz.offset_at(
@@ -405,6 +351,24 @@ struct DateTime[
         return self.calendar.seconds_since_epoch(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
+
+    fn delta_s(self, other: Self) -> UInt64:
+        """Calculates the difference in seconds between `self` and other.
+
+        Args:
+            other: Other.
+
+        Returns:
+            `self.seconds_since_epoch() - other.seconds_since_epoch()`.
+        """
+
+        var s = self
+        var o = other.replace(calendar=self.calendar)
+
+        if s.tz != o.tz:
+            s = s.to_utc()
+            o = o.to_utc()
+        return s.seconds_since_epoch() - o.seconds_since_epoch()
 
     fn delta_ns(self, other: Self) -> (UInt64, UInt64, UInt16, UInt8):
         """Calculates the nanoseconds for `self` and other, creating
@@ -479,72 +443,89 @@ struct DateTime[
             On overflow, the `DateTime` starts from the beginning of the
             calendar's epoch and keeps evaluating until valid.
         """
-        var dt = self._from_overflow(
-            int(self.year) + years,
-            int(self.month) + months,
-            int(self.day) + days,
-            int(self.hour) + hours,
-            int(self.minute) + minutes,
-            int(self.second) + seconds,
-            int(self.m_second) + m_seconds,
-            int(self.u_second) + u_seconds,
-            int(self.n_second) + n_seconds,
-            self.tz,
-            self.calendar,
+
+        var y = int(self.year) + years
+        var mon = int(self.month) + months
+        var d = int(self.day) + days
+        var h = int(self.hour) + hours
+        var mi = int(self.minute) + minutes
+        var s = int(self.second) + seconds
+        var ms = int(self.m_second) + m_seconds
+        var us = int(self.u_second) + u_seconds
+        var ns = int(self.n_second) + n_seconds
+
+        var minyear = self.calendar.min_year
+        var maxyear = int(self.calendar.max_year)
+        if y > maxyear:
+            var delta = y - (maxyear + 1)
+            self = self.replace(year=minyear).add(years=delta)
+        else:
+            self.year = y
+        var minmon = self.calendar.min_month
+        var maxmon = int(self.calendar.max_month)
+        if mon > maxmon:
+            var delta = mon - (maxmon + int(minmon))
+            self = self.replace(month=minmon).add(years=1, months=delta)
+        else:
+            self.month = mon
+        var minday = self.calendar.min_day
+        var maxday = int(self.calendar.max_days_in_month(self.year, self.month))
+        if d > maxday:
+            var delta = d - (maxday + int(minday))
+            self = self.replace(day=minday).add(months=1, days=delta)
+        else:
+            self.day = d
+        var minhour = self.calendar.min_hour
+        var maxhour = int(self.calendar.max_hour)
+        if h > maxhour:
+            var delta = h - (maxhour + int(minhour) + 1)
+            self = self.replace(hour=minhour).add(days=1, hours=delta)
+        else:
+            self.hour = h
+        var minmin = self.calendar.min_minute
+        var maxmin = int(self.calendar.max_minute)
+        if mi > maxmin:
+            var delta = mi - (maxmin + int(minmin) + 1)
+            self = self.replace(minute=minmin).add(hours=1, minutes=delta)
+        else:
+            self.minute = mi
+        var minsec = self.calendar.min_second
+        var maxsec = self.calendar.max_second(
+            self.year, self.month, self.day, self.hour, self.minute
         )
-        var minyear = dt.calendar.min_year
-        var maxyear = dt.calendar.max_year
-        if dt.year > maxyear:
-            dt = dt.replace(year=minyear).add(years=int(dt.year - maxyear))
-        var minmon = dt.calendar.min_month
-        var maxmon = dt.calendar.max_month
-        if dt.month > maxmon:
-            dt = dt.replace(month=minmon).add(
-                years=1, months=int(dt.month - maxmon)
+        if s > int(maxsec):
+            var delta = s - (int(maxsec) + int(minsec) + 1)
+            self = self.replace(second=minsec).add(minutes=1, seconds=delta)
+        else:
+            self.second = s
+        var minmsec = self.calendar.min_milisecond
+        var maxmsec = int(self.calendar.max_milisecond)
+        if ms > maxmsec:
+            var delta = ms - (maxmsec + int(minmsec) + 1)
+            self = self.replace(m_second=minmsec).add(
+                seconds=1, m_seconds=delta
             )
-        var minday = dt.calendar.min_day
-        var maxday = dt.calendar.max_days_in_month(dt.year, dt.month)
-        if dt.day > maxday:
-            dt = dt.replace(day=minday).add(months=1, days=int(dt.day - maxday))
-        var minhour = dt.calendar.min_hour
-        var maxhour = dt.calendar.max_hour
-        if dt.hour > maxhour:
-            dt = dt.replace(hour=minhour).add(
-                days=1, hours=int(dt.hour - maxhour)
+        else:
+            self.m_second = ms
+        var minusec = self.calendar.min_microsecond
+        var maxusec = int(self.calendar.max_microsecond)
+        if us > maxusec:
+            var delta = us - (maxusec + int(minusec) + 1)
+            self = self.replace(u_second=minusec).add(
+                m_seconds=1, u_seconds=delta
             )
-        var minmin = dt.calendar.min_minute
-        var maxmin = dt.calendar.max_minute
-        if dt.minute > maxmin:
-            dt = dt.replace(minute=minmin).add(
-                hours=1, minutes=int(dt.minute - maxmin)
+        else:
+            self.u_second = us
+        var minnsec = self.calendar.min_nanosecond
+        var maxnsec = int(self.calendar.max_nanosecond)
+        if ns > maxnsec:
+            var delta = ns - (maxnsec + int(minnsec) + 1)
+            self = self.replace(n_second=minnsec).add(
+                u_seconds=1, n_seconds=delta
             )
-        var minsec = dt.calendar.min_second
-        var maxsec = dt.calendar.max_second(
-            dt.year, dt.month, dt.day, dt.hour, dt.minute
-        )
-        if dt.second > maxsec:
-            dt = dt.replace(second=minsec).add(
-                minutes=1, seconds=int(dt.second - maxsec)
-            )
-        var minmsec = dt.calendar.min_milisecond
-        var maxmsec = dt.calendar.max_milisecond
-        if dt.m_second > maxmsec:
-            dt = dt.replace(m_second=minmsec).add(
-                seconds=1, m_seconds=int(dt.m_second - maxmsec)
-            )
-        var minusec = dt.calendar.min_microsecond
-        var maxusec = dt.calendar.max_microsecond
-        if dt.u_second > maxusec:
-            dt = dt.replace(u_second=minusec).add(
-                m_seconds=1, u_seconds=int(dt.u_second - maxusec)
-            )
-        var minnsec = dt.calendar.min_nanosecond
-        var maxnsec = dt.calendar.max_nanosecond
-        if dt.n_second > maxnsec:
-            dt = dt.replace(n_second=minnsec).add(
-                u_seconds=1, n_seconds=int(dt.n_second - maxnsec)
-            )
-        return dt
+        else:
+            self.n_second = ns
+        return self^
 
     fn subtract(
         owned self,
@@ -580,73 +561,90 @@ struct DateTime[
             On overflow, the `DateTime` goes to the end of the
             calendar's epoch and keeps evaluating until valid.
         """
-        var dt = self._from_overflow(
-            int(self.year) - years,
-            int(self.month) - months,
-            int(self.day) - days,
-            int(self.hour) - hours,
-            int(self.minute) - minutes,
-            int(self.second) - seconds,
-            int(self.m_second) - m_seconds,
-            int(self.u_second) - u_seconds,
-            int(self.n_second) - n_seconds,
-            self.tz,
-            self.calendar,
-        )
-        var minyear = dt.calendar.min_year
-        var maxyear = dt.calendar.max_year
-        if dt.year < minyear:
-            dt = dt.replace(year=maxyear).subtract(years=int(minyear - dt.year))
-        var minmonth = dt.calendar.min_month
-        var maxmonth = dt.calendar.max_month
-        if dt.month < minmonth:
-            dt = dt.replace(month=maxmonth).subtract(
-                years=1, months=int(minmonth - dt.month)
+
+        var ns = int(self.n_second) - n_seconds
+        var minnsec = int(self.calendar.min_nanosecond)
+        var maxnsec = self.calendar.max_nanosecond
+        if ns < minnsec:
+            var delta = abs(ns - minnsec + 1)
+            self = self.replace(n_second=maxnsec).subtract(
+                u_seconds=1, n_seconds=delta
             )
-        var minday = dt.calendar.min_day
-        if dt.day < minday:
-            dt = dt.subtract(months=1)
-            var prev_day = dt.calendar.max_days_in_month(dt.year, dt.month - 1)
-            dt = dt.replace(day=prev_day).subtract(days=int(minday - dt.day))
-        var minhour = dt.calendar.min_hour
-        var maxhour = dt.calendar.max_hour
-        if dt.hour < minhour:
-            dt = dt.replace(hour=maxhour).subtract(
-                days=1, hours=int(minhour - dt.hour)
+        else:
+            self.n_second = ns
+        var us = int(self.u_second) - u_seconds
+        var minusec = int(self.calendar.min_microsecond)
+        var maxusec = self.calendar.max_microsecond
+        if us < minusec:
+            var delta = abs(us - minusec + 1)
+            self = self.replace(u_second=maxusec).subtract(
+                m_seconds=1, u_seconds=delta
             )
-        var minmin = dt.calendar.min_minute
-        var maxmin = dt.calendar.max_minute
-        if dt.minute < minmin:
-            dt = dt.replace(minute=maxmin).subtract(
-                hours=1, minutes=int(minmin - dt.minute)
+        else:
+            self.u_second = us
+        var ms = int(self.m_second) - m_seconds
+        var minmsec = int(self.calendar.min_milisecond)
+        var maxmsec = self.calendar.max_milisecond
+        if ms < minmsec:
+            var delta = abs(ms - minmsec + 1)
+            self = self.replace(m_second=maxmsec).subtract(
+                seconds=1, m_seconds=delta
             )
-        var minsec = dt.calendar.min_second
-        if dt.second < minsec:
-            var sec = dt.calendar.max_second(
-                dt.year, dt.month, dt.day, dt.hour, dt.minute
+        else:
+            self.m_second = ms
+        var s = int(self.second) - seconds
+        var minsec = int(self.calendar.min_second)
+        if s < minsec:
+            var delta = abs(s - minsec + 1)
+            var sec = self.calendar.max_second(
+                self.year, self.month, self.day, self.hour, self.minute
             )
-            dt = dt.replace(second=sec).subtract(
-                minutes=1, seconds=int(minsec - dt.second)
-            )
-        var minmsec = dt.calendar.min_milisecond
-        var maxmsec = dt.calendar.max_milisecond
-        if dt.m_second < minmsec:
-            dt = dt.replace(m_second=maxmsec).subtract(
-                seconds=1, m_seconds=int(minmsec - dt.m_second)
-            )
-        var minusec = dt.calendar.min_microsecond
-        var maxusec = dt.calendar.max_microsecond
-        if dt.u_second < minusec:
-            dt = dt.replace(u_second=maxusec).subtract(
-                m_seconds=1, u_seconds=int(minusec - dt.u_second)
-            )
-        var minnsec = dt.calendar.min_nanosecond
-        var maxnsec = dt.calendar.max_nanosecond
-        if dt.n_second < minnsec:
-            dt = dt.replace(n_second=maxnsec).subtract(
-                u_seconds=1, n_seconds=int(minnsec - dt.n_second)
-            )
-        return dt
+            self = self.replace(second=sec).subtract(minutes=1, seconds=delta)
+        else:
+            self.second = s
+        var mi = int(self.minute) - minutes
+        var minmin = int(self.calendar.min_minute)
+        var maxmin = self.calendar.max_minute
+        if mi < minmin:
+            var delta = abs(mi - minmin + 1)
+            self = self.replace(minute=maxmin).subtract(hours=1, minutes=delta)
+        else:
+            self.minute = mi
+        var h = int(self.hour) - hours
+        var minhour = int(self.calendar.min_hour)
+        var maxhour = self.calendar.max_hour
+        if h < minhour:
+            var delta = abs(h - minhour + 1)
+            self = self.replace(hour=maxhour).subtract(days=1, hours=delta)
+        else:
+            self.hour = h
+        var d = int(self.day) - days
+        var minday = int(self.calendar.min_day)
+        if d < minday:
+            self = self.subtract(months=1)
+            var max_day = self.calendar.max_days_in_month(self.year, self.month)
+            var delta = abs(d - minday + 1)
+            self = self.replace(day=max_day).subtract(days=delta)
+        else:
+            self.day = d
+        var mon = int(self.month) - months
+        var minmonth = int(self.calendar.min_month)
+        var maxmonth = self.calendar.max_month
+        if mon < minmonth:
+            var delta = abs(mon - minmonth + 1)
+            self = self.replace(month=maxmonth).subtract(years=1, months=delta)
+        else:
+            self.month = mon
+        var y = int(self.year) - years
+        var minyear = int(self.calendar.min_year)
+        var maxyear = self.calendar.max_year
+        if y < minyear:
+            var delta = abs(y - minyear + 1)
+            self = self.replace(year=maxyear).subtract(years=delta)
+        else:
+            self.year = y
+        self = self.add(days=0)  #  to correct days and months
+        return self^
 
     # @always_inline("nodebug")
     fn add(owned self, other: Self) -> Self:
@@ -741,15 +739,32 @@ struct DateTime[
         Returns:
             - day: Day of the week: [0, 6] (monday - sunday) (default).
         """
+
         return self.calendar.day_of_week(self.year, self.month, self.day)
 
+    # @always_inline("nodebug")
     fn day_of_year(self) -> UInt16:
         """Calculates the day of the year for a `DateTime`.
 
         Returns:
             - day: Day of the year: [1, 366] (for gregorian calendar).
         """
+
         return self.calendar.day_of_year(self.year, self.month, self.day)
+
+    # @always_inline("nodebug")
+    fn day_of_month(self, day_of_year: Int) -> (UInt8, UInt8):
+        """Calculates the month, day of the month for a given day of the year.
+
+        Args:
+            day_of_year: The day of the year.
+
+        Returns:
+            - month: Month of the year: [1, 12] (for gregorian calendar).
+            - day: Day of the month: [1, 31] (for gregorian calendar).
+        """
+
+        return self.calendar.day_of_month(self.year, day_of_year)
 
     fn leapsecs_since_epoch(self) -> UInt32:
         """Cumulative leap seconds since the calendar's epoch start.
@@ -757,6 +772,7 @@ struct DateTime[
         Returns:
             The amount.
         """
+
         var dt = self.to_utc()
         return dt.calendar.leapsecs_since_epoch(dt.year, dt.month, dt.day)
 
@@ -867,15 +883,6 @@ struct DateTime[
         if self.tz != other.tz:
             return hash(self.to_utc()) < hash(other.to_utc())
         return hash(self) < hash(other)
-
-    # @always_inline("nodebug")
-    fn __invert__(self) -> UInt32:
-        """Invert.
-
-        Returns:
-            Self.
-        """
-        return ~hash(self)
 
     # @always_inline("nodebug")
     fn __and__[T: Hashable](self, other: T) -> UInt64:
@@ -1091,59 +1098,10 @@ struct DateTime[
         return dt
 
     @staticmethod
-    fn _from_m_seconds(
-        m_seconds: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from miliseconds."""
-        var ms = int(calendar.max_milisecond)
-        if m_seconds <= ms:
-            return Self(m_second=m_seconds, tz=tz, calendar=calendar)
-        var s = m_seconds // (ms + 1)
-        var rest = m_seconds % (ms + 1)
-        var dt = Self.from_seconds(s, tz, calendar)
-        dt.m_second = rest
-        return dt
-
-    @staticmethod
-    fn _from_u_seconds(
-        u_seconds: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from microseconds."""
-        var us = int(calendar.max_microsecond)
-        if u_seconds <= us:
-            return Self(u_second=u_seconds, tz=tz, calendar=calendar)
-        var ms = u_seconds // (us + 1)
-        var rest = u_seconds % (us + 1)
-        var dt = Self._from_m_seconds(ms, tz, calendar)
-        dt.u_second = rest
-        return dt
-
-    @staticmethod
-    # @always_inline("nodebug")
-    fn _from_n_seconds(
-        n_seconds: Int,
-        tz: Self._tz = Self._tz(),
-        calendar: Calendar = _calendar,
-    ) -> Self:
-        """Construct a `DateTime` from nanoseconds."""
-        var ns = int(calendar.max_nanosecond)
-        if n_seconds <= ns:
-            return Self(n_second=n_seconds, tz=tz, calendar=calendar)
-        var us = n_seconds // (ns + 1)
-        var rest = n_seconds % (ns + 1)
-        var dt = Self._from_u_seconds(us, tz, calendar)
-        dt.n_second = rest
-        return dt
-
-    @staticmethod
     # @always_inline("nodebug")
     fn from_unix_epoch[
         add_leap: Bool = False
-    ](seconds: Int, tz: Self._tz = Self._tz(),) -> Self:
+    ](seconds: Int, tz: Optional[Self._tz] = None) -> Self:
         """Construct a `DateTime` from the seconds since the Unix Epoch
         1970-01-01. Adding the cumulative leap seconds since 1972
         to the given date.
@@ -1159,12 +1117,19 @@ struct DateTime[
         Returns:
             Self.
         """
-        return Self.from_seconds[add_leap](seconds, tz=tz, calendar=UTCCalendar)
+
+        var zone = tz.value() if tz else Self._tz()
+        var dt = Self(tz=zone, calendar=UTCCalendar).add(seconds=seconds)
+
+        @parameter
+        if add_leap:
+            dt = dt.add(seconds=int(dt.leapsecs_since_epoch()))
+        return dt^
 
     @staticmethod
     # @always_inline("nodebug")
     fn now(
-        tz: Self._tz = Self._tz(),
+        tz: Optional[Self._tz] = None,
         calendar: Calendar = _calendar,
     ) -> Self:
         """Construct a datetime from `time.now()`.
@@ -1176,11 +1141,13 @@ struct DateTime[
         Returns:
             Self.
         """
+
+        var zone = tz.value() if tz else Self._tz()
         var ns = time.now()
         var us: UInt16 = ns // 1_000
         var ms: UInt16 = ns // 1_000_000
         var s = ns // 1_000_000_000
-        var dt = Self.from_unix_epoch(s, tz).replace(calendar=calendar)
+        var dt = Self.from_unix_epoch(s, zone).replace(calendar=calendar)
         return dt.replace(m_second=ms, u_second=us, n_second=UInt16(ns))
 
     # @always_inline("nodebug")
@@ -1351,7 +1318,7 @@ struct DateTime[
     # @always_inline("nodebug")
     fn from_hash(
         value: Int,
-        tz: Self._tz = Self._tz(),
+        tz: Optional[Self._tz] = None,
         calendar: Calendar = _calendar,
     ) -> Self:
         """Construct a `DateTime` from a hash made by it.
@@ -1365,8 +1332,10 @@ struct DateTime[
         Returns:
             Self.
         """
+
+        var zone = tz.value() if tz else Self._tz()
         var d = calendar.from_hash(value)
         var ns = calendar.min_nanosecond
         return Self(
-            d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], ns, tz, calendar
+            d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], ns, zone, calendar
         )

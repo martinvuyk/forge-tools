@@ -106,7 +106,10 @@ struct TimeZone[
         self._dst = dst_storage()
         self._no_dst = no_dst_storage()
         if not has_dst:
-            self._no_dst.add(tz_str, Offset(offset_h, offset_m, sign))
+            var s = -1 if sign == -1 and not (
+                offset_h == 0 and offset_m == 0
+            ) else 1
+            self._no_dst.add(tz_str, Offset(offset_h, offset_m, s))
 
         var z = zoneinfo
 
@@ -270,6 +273,7 @@ struct TimeZone[
         Returns:
             String.
         """
+
         var h: UInt8 = 0
         var m: UInt8 = 0
         var ss: UInt8 = 1
@@ -288,7 +292,7 @@ struct TimeZone[
                 m = d.minute
                 ss = d.sign
 
-        var sign = "+" if ss == 1 else "-"
+        var sign = "-" if ss == -1 and not (h == 0 and m == 0) else "+"
         var hh = str(h) if h > 9 else "0" + str(h)
         var mm = str(m) if m > 9 else "0" + str(m)
         return sign + hh + ":" + mm
