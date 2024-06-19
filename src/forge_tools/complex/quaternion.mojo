@@ -178,7 +178,7 @@ struct Quaternion[T: DType = DType.float64]:
         """Return the inverse of the Quaternion `q^-1`.
 
         Returns:
-            The conjugate.
+            The inverse.
         """
 
         if is_normalized:
@@ -214,6 +214,7 @@ struct Quaternion[T: DType = DType.float64]:
         Returns:
             The result.
         """
+
         alias sign0 = Self._vec_type(1, -1, -1, -1)
         alias sign1 = Self._vec_type(1, 1, 1, -1)
         alias sign2 = Self._vec_type(1, -1, 1, 1)
@@ -399,13 +400,15 @@ struct Quaternion[T: DType = DType.float64]:
         return (self.vec == other.vec).reduce_and()
 
     fn __str__(self) -> String:
-        var s: String = ""
+        var s: String = "["
 
         @parameter
         for i in range(8):
-            s += "," + str(self.vec[i])
+            if i > 0:
+                s += ", "
+            s += str(self.vec[i])
+
         s += "]"
-        s.unsafe_ptr()[0] = "["
         return s^
 
 
@@ -591,9 +594,12 @@ struct DualQuaternion[T: DType = DType.float64]:
             The result.
         """
 
-        var q = (self.vec * other.vec).slice[4]()
-        var d = (self.vec * other.vec.rotate_left[4]()).reduce_add[4]()
-        return Self(q.join(d))
+        alias Quat = Quaternion[T]
+        var a = Quat(self.vec.slice[4]())
+        var b = Quat(self.vec.slice[4, offset=4]())
+        var c = Quat(other.vec.slice[4]())
+        var d = Quat(other.vec.slice[4, offset=4]())
+        return Self((a * c).vec.join((a * d + b * c).vec))
 
     fn __imul__(inout self, other: Self):
         """Multiply self with other inplace.
@@ -629,6 +635,20 @@ struct DualQuaternion[T: DType = DType.float64]:
             The dual conjugate.
         """
         return Self(self.vec * Self._vec_type(1, 1, 1, 1, -1, -1, -1, -1))
+
+    fn inverse(self) -> Self:
+        """Return the inverse of the DualQuaternion `dq^-1`.
+
+        Notes:
+            This assumes the rotational quaternion is not zero.
+
+        Returns:
+            The inverse.
+        """
+
+        var qr = Quaternion[T](self.vec.slice[4]()).inverse()
+        var qd = Quaternion[T](self.vec.slice[4, offset=4]() * -1)
+        return Self(qr, qr * (qd * qr))
 
     fn __abs__(self) -> Self._scalar_type:
         """Get the magnitude of the DualQuaternion.
@@ -847,11 +867,13 @@ struct DualQuaternion[T: DType = DType.float64]:
         return (self.vec == other.vec).reduce_and()
 
     fn __str__(self) -> String:
-        var s: String = ""
+        var s: String = "["
 
         @parameter
         for i in range(8):
-            s += ", " + str(self.vec[i])
+            if i > 0:
+                s += ", "
+            s += str(self.vec[i])
+
         s += "]"
-        s.unsafe_ptr()[0] = "["
         return s^

@@ -424,7 +424,8 @@ struct DateTime[
         n_seconds: Int = 0,
     ) -> Self:
         """Recursively evaluated function to build a valid `DateTime`
-        according to its calendar.
+        according to its calendar. Values are added in BigEndian order i.e.
+        `years, months, ...` .
 
         Args:
             years: Years.
@@ -542,7 +543,8 @@ struct DateTime[
         n_seconds: Int = 0,
     ) -> Self:
         """Recursively evaluated function to build a valid `DateTime`
-        according to its calendar.
+        according to its calendar. Values are subtracted in LittleEndian order
+        i.e. `n_seconds, u_seconds, ...` .
 
         Args:
             years: Years.

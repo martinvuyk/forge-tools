@@ -1034,7 +1034,7 @@ struct Gregorian(_Calendarized):
         Returns:
             Bool.
         """
-        _ = self
+
         return Self.is_leapyear(year)
 
     fn is_leapsec(

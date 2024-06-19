@@ -263,7 +263,8 @@ struct Date[
         seconds: Int = 0,
     ) -> Self:
         """Recursively evaluated function to build a valid `Date`
-        according to its calendar.
+        according to its calendar. Values are added in BigEndian order i.e.
+        `years, months, ...` .
 
         Args:
             years: Amount of years to add.
@@ -323,7 +324,8 @@ struct Date[
         seconds: Int = 0,
     ) -> Self:
         """Recursively evaluated function to build a valid `Date`
-        according to its calendar.
+        according to its calendar. Values are subtracted in LittleEndian order
+        i.e. `seconds, days, ...` .
 
         Args:
             years: Amount of years to add.
