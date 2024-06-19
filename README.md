@@ -187,9 +187,7 @@ assert_equal(dt, offset_n_1)
 
 
 var fstr = "mojo: %Y🔥%m🤯%d"
-# FIXME: python issue https://github.com/python/cpython/issues/120713
-# assert_equal("mojo: 0009🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
-assert_equal("mojo: 9🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
+assert_equal("mojo: 0009🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
 fstr = "%Y-%m-%d %H:%M:%S.%f"
 var ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
 assert_equal("2024-09-09 09:09:09.009009", ref1.strftime(fstr))

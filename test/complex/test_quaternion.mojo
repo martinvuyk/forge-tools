@@ -21,11 +21,22 @@ fn test_quaternion_ops() raises:
         Quaternion(-24, 30, 12, 36).vec, (q3 * q1).vec, rtol=0.1
     )
     assert_almost_equal(
+        Quaternion(0.0925926, -0.0740741, -0.0555556, -0.037037).vec,
+        q3.inverse().vec,
+        rtol=0.1,
+    )
+    assert_almost_equal(
+        Quaternion(0.037037, -0.0555556, -0.0740741, -0.0925926).vec,
+        q1.inverse().vec,
+        rtol=0.1,
+    )
+    assert_almost_equal(
         Quaternion(0.8148, 0.2593, 0, 0.5185).vec, (q1 / q3).vec, rtol=0.1
     )
     assert_almost_equal(
         Quaternion(0.8148, -0.2593, 0, -0.5185).vec, (q3 / q1).vec, rtol=0.1
     )
+    # TODO
     # assert_almost_equal(..., q1**3)
     # assert_almost_equal(..., q1.exp())
     # assert_almost_equal(..., q1.ln())
@@ -34,6 +45,23 @@ fn test_quaternion_ops() raises:
 
 
 fn test_quaternion_matrix() raises:
+    # TODO
+    # var q1 = Quaternion(2, 3, 4, 5)
+    # assert_almost_equal(
+    #     List(
+    #         -14 / 27,
+    #         2 / 27,
+    #         23 / 27,
+    #         22 / 27,
+    #         -7 / 27,
+    #         14 / 27,
+    #         7 / 27,
+    #         26 / 27,
+    #         2 / 27,
+    #     ),
+    #     q1.to_matrix(),
+    #     rtol=0.1,
+    # )
     pass
 
 
@@ -63,14 +91,17 @@ fn test_dualquaternion_ops() raises:
         (q3 * q1).vec,
         rtol=0.1,
     )
+    # TODO
     # assert_almost_equal(..., q1**3)
 
 
 fn test_dualquaternion_matrix() raises:
+    # TODO
     pass
 
 
 fn test_dualquaternion_screw() raises:
+    # TODO
     pass
 
 

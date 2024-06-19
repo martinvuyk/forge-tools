@@ -304,12 +304,12 @@ fn test_iso() raises:
     ref1 = dt(2024, 1, 1, 18, 51, 20, tz=tz_0_, calendar=pycal)
     iso_str = "18:51:20"
     alias fmt5 = IsoFormat(IsoFormat.HH_MM_SS)
-    assert_equal(ref1, dt.from_iso[fmt5, calendar=customcal](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt5](iso_str, calendar=customcal).value())
     assert_equal(iso_str, ref1.to_iso[fmt5]())
 
     iso_str = "185120"
     alias fmt6 = IsoFormat(IsoFormat.HHMMSS)
-    assert_equal(ref1, dt.from_iso[fmt6, calendar=customcal](iso_str).value())
+    assert_equal(ref1, dt.from_iso[fmt6](iso_str, calendar=customcal).value())
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
@@ -336,11 +336,9 @@ fn test_hash() raises:
 
 
 fn test_strftime() raises:
-    var fstr = "mojo: %Y🔥%m🤯%d"
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
-    # FIXME: python issue https://github.com/python/cpython/issues/120713
-    # assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
-    assert_equal("mojo: 9🔥06🤯01", dt(9, 6, 1).strftime(fstr))
+    var fstr = "mojo: %Y🔥%m🤯%d"
+    assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
     fstr = "%Y-%m-%d %H:%M:%S.%f"
     var ref1 = dt(2024, 9, 9, 9, 9, 9, 9, 9)
     assert_equal("2024-09-09 09:09:09.009009", ref1.strftime(fstr))

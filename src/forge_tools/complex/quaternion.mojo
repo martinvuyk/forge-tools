@@ -174,6 +174,18 @@ struct Quaternion[T: DType = DType.float64]:
         """
         return Self(self.vec * Self._vec_type(1, -1, -1, -1))
 
+    fn inverse(self, is_normalized: Bool = False) -> Self:
+        """Return the inverse of the Quaternion `q^-1`.
+
+        Returns:
+            The conjugate.
+        """
+
+        if is_normalized:
+            return self.conjugate()
+        var qr_1 = self.conjugate()
+        return Self(qr_1.vec / ((self.vec**2).reduce_add()))
+
     fn __invert__(self) -> Self:
         """Return the conjugate of the Quaternion.
 
@@ -231,8 +243,7 @@ struct Quaternion[T: DType = DType.float64]:
             The result.
         """
 
-        var qr_1 = ~other
-        return self * Self(qr_1.vec / (self.vec**2).reduce_add())
+        return self * other.inverse()
 
     fn __itruediv__(inout self, other: Self):
         """Calculate the division of self with other inplace.

@@ -18,9 +18,9 @@ struct IsoFormat:
 
     alias TZD_REGEX = "+|-[0-9]{2}:?[0-9]{2}"
     alias TZD = "%z"
-    alias YYYYMMDD = "%Y%m%d"
+    alias YYYYMMDD = "%4Y%m%d"
     """e.g. `19700101`"""
-    alias YYYY_MM_DD = "%Y-%m-%d"
+    alias YYYY_MM_DD = "%4Y-%m-%d"
     """e.g. `1970-01-01`"""
     alias HHMMSS = "%H%M%S"
     """e.g. `000000`"""
@@ -364,7 +364,8 @@ fn strftime[
             int(second),
             microsecond=(int(m_second) * 1000 + int(u_second)),
         )
-        return str(date.strftime(format_str))
+        # FIXME: python issue https://github.com/python/cpython/issues/120713
+        return str(date.strftime(format_str.replace("%Y", "%4Y")))
     except:
         pass
     return ""
