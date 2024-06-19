@@ -7,7 +7,7 @@ source ./scripts/package-lib.sh
 ```
 The semi-compiled package will be under `./build/forge_tools.mojopkg`
 ## How to run tests
-test an entire directory or subdirectories or specific file
+test an entire directory or subdirectory or specific file
 ```bash
 source ./scripts/run-tests.sh test/
 ```
@@ -127,294 +127,84 @@ transformations and rigid body kinematics. Allocated on the
 stack with very efficient vectorized operations.
 
 ## datetime
-### calendar.mojo
-```mojo
-alias PythonCalendar = Calendar()
-"""The default Python proleptic Gregorian calendar, goes from [0001-01-01, 9999-12-31]."""
-alias UTCCalendar = Calendar(Gregorian(min_year=1970))
-"""The leap day and leap second aware UTC calendar, goes from [1970-01-01, 9999-12-31]."""
-alias UTCFastCal = Calendar(UTCFast())
-"""UTC calendar for the fast module. Leap day aware, goes from [1970-01-01, 9999-12-31]."""
-```
-#### CalendarHashes
-```mojo
-struct CalendarHashes:
-    """Hashing definitions. Up to microsecond resolution for
-    the 64bit hash. Each calendar implementation can still
-    override with its own definitions."""
-    ...
-```
-#### Calendar
-```mojo
-struct Calendar:
-    """`Calendar` interface."""
 
-    var max_year: UInt16
-    """Maximum value of years."""
-    var max_typical_days_in_year: UInt16
-    """Maximum typical value of days in a year (no leaps)."""
-    var max_possible_days_in_year: UInt16
-    """Maximum possible value of days in a year (with leaps)."""
-    var max_month: UInt8
-    """Maximum value of months in a year."""
-    var max_hour: UInt8
-    """Maximum value of hours in a day."""
-    var max_minute: UInt8
-    """Maximum value of minutes in an hour."""
-    var max_typical_second: UInt8
-    """Maximum typical value of seconds in a minute (no leaps)."""
-    var max_possible_second: UInt8
-    """Maximum possible value of seconds in a minute (with leaps)."""
-    var max_milisecond: UInt16
-    """Maximum value of miliseconds in a second."""
-    var max_microsecond: UInt16
-    """Maximum value of microseconds in a second."""
-    var max_nanosecond: UInt16
-    """Maximum value of nanoseconds in a second."""
-    var min_year: UInt16
-    """Default minimum year in the calendar."""
-    var min_month: UInt8
-    """Default minimum month."""
-    var min_day: UInt8
-    """Default minimum day."""
-    var min_hour: UInt8
-    """Default minimum hour."""
-    var min_minute: UInt8
-    """Default minimum minute."""
-    var min_second: UInt8
-    """Default minimum second."""
-    var min_milisecond: UInt16
-    """Default minimum milisecond."""
-    var min_microsecond: UInt16
-    """Default minimum microsecond."""
-    var min_nanosecond: UInt16
-    """Default minimum nanosecond."""
-    alias _monthdays = List[UInt8]()
-    """An array with the amount of days each month contains without 
-    leap values. It's assumed that `len(monthdays) == max_month`."""
-    var _implementation: Variant[Gregorian, UTCFast]
-    ...
-```
-
-### date.mojo
-#### Date
-Custom `Calendar` and `TimeZone` may be passed in.
-By default uses `PythonCalendar` which is a proleptic
-Gregorian calendar with its given epoch and max years:
-from [0001-01-01, 9999-12-31]. Default `TimeZone`
-is UTC.
-
-- Max Resolution:
-    - year: Up to year 65_536.
-    - month: Up to month 256.
-    - day: Up to day 256.
-    - hash: 32 bits.
-
-
-
-### datetime.mojo
-#### DateTime
-Custom `Calendar` and `TimeZone` may be passed in.
-By default, it uses `PythonCalendar` which is a Gregorian
-calendar with its given epoch and max year:
-[0001-01-01, 9999-12-31]. Default `TimeZone` is UTC.
-
-- Max Resolution:
-    - year: Up to year 65_536.
-    - month: Up to month 256.
-    - day: Up to day 256.
-    - hour: Up to hour 256.
-    - minute: Up to minute 256.
-    - second: Up to second 256.
-    - m_second: Up to m_second 65_536.
-    - u_second: Up to u_second 65_536.
-    - n_second: Up to n_second 65_536.
-    - hash: 64 bits.
-
-
-### dt_str.mojo
-`DateTime` and `Date` String parsing module.
-#### IsoFormat
-Available formats to parse from and to [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601).
-### fast.mojo
-Fast implementations of `DateTime` module. All assume no leap seconds.
-
-- `DateTime64`:
-    - This is a "normal" `DateTime` with milisecond resolution.
-- `DateTime32`:
-    - This is a "normal" `DateTime` with minute resolution.
-- `DateTime16`:
-    - This is a `DateTime` with hour resolution, it can be used as a 
-    year, dayofyear, hour representation.
-- `DateTime8`:
-    - This is a `DateTime` with hour resolution, it can be used as a 
-    dayofweek, hour representation.
+- `DateTime`
+    - A structure aware of TimeZone, Calendar, and leap days and seconds.
+    - Nanosecond resolution, though when using dunder methods (e.g. dt1 == dt2) 
+        it has only Microsecond resolution.
+- `Date`
+    - A structure aware of TimeZone, Calendar, and leap days and seconds.
+- `TimeZone`
+    - By default UTC, highly customizable and options for full or partial
+        IANA timezones support.
+- `DateTime64`, `DateTime32`, `DateTime16`, `DateTime8`
+    - Fast implementations of DateTime, no leap seconds or years,
+        and some have much lower resolutions but better performance.
 - Notes:
-    - The caveats of each implementation are better explained in 
-    each struct's docstrings.
+    - The caveats of each implementation are better explained in each struct's docstrings.
 
-### timezone.mojo
-#### TimeZone
+Examples:
+
 ```mojo
-struct TimeZone[
-    dst_storage: ZoneStorageDST = ZoneInfoMem32,
-    no_dst_storage: ZoneStorageNoDST = ZoneInfoMem8,
-    iana: Bool = True,
-    pyzoneinfo: Bool = True,
-    native: Bool = False,
-]:
-    """`TimeZone` struct. Because of a POSIX standard, if you set
-    the tz_str e.g. Etc/UTC-4 it means 4 hours east of UTC
-    which is UTC + 4 in numbers. That is:
-    `TimeZone("Etc/UTC-4", offset_h=4, offset_m=0, sign=1)`. If
-    `TimeZone[iana=True]("Etc/UTC-4")`, the correct offsets are
-    returned for the calculations, but the attributes offset_h,
-    offset_m and sign will remain the default 0, 0, 1 respectively.
+from testing import assert_equal, assert_true
+from forge_tools.datetime import DateTime, Calendar, IsoFormat
+from forge_tools.datetime.calendar import PythonCalendar, UTCCalendar
 
-    Parameters:
-        dst_storage: The type of storage to use for ZoneInfo
-            for zones with Dailight Saving Time. Default Memory.
-        no_dst_storage: The type of storage to use for ZoneInfo
-            for zones with no Dailight Saving Time. Default Memory.
-        iana: Whether timezones from the [IANA database](
-            http://www.iana.org/time-zones/repository/tz-link.html)
-            are used. It defaults to using all available timezones,
-            if getting them fails at compile time, it tries using
-            python's zoneinfo if pyzoneinfo is set to True, otherwise
-            it uses the offsets as is, no daylight saving or
-            special exceptions. [List of TZ identifiers](
-            https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
-        pyzoneinfo: Whether to use python's zoneinfo and
-            datetime to get full IANA support.
-        native: (fast, partial IANA support) Whether to use a native Dict
-            with the current timezones from the [List of TZ identifiers](
-            https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
-            at the time of compilation (for now they're hardcoded
-            at stdlib release time, in the future it should get them
-            from the OS). If it fails at compile time, it defaults to
-            using the given offsets when the timezone was constructed.
-    """
-    ...
-```
+alias DateT = DateTime[iana=False, pyzoneinfo=False, native=False]
+var dt = DateT(2024, 6, 18, 22, 14, 7)
+print(dt) # 2024-06-18 22:14:07+00:00 
+alias fstr = IsoFormat(IsoFormat.HH_MM_SS) 
+var iso_str = dt.to_iso[fstr]()
+var customcal = Calendar(2024)
+dt = DateT.from_iso[fstr](iso_str, calendar=customcal)
+print(dt) # 2024-01-01 22:14:07+00:00 
 
-### zoneinfo.mojo
-#### Offset
-```mojo
-struct Offset:
-    """Only supports hour offsets: [0, 15] and minute offsets
-    that are: {0, 30, 45}. Offset sign and minute are assumed
-    to be equal in DST and STD and DST adds 1 hour to STD hour,
-    unless 2 reserved bits are set which means the offset jumps 30
-    minutes or 2 hours from its STD time (this was added because
-    of literally [one small island](
-        https://en.wikipedia.org/wiki/Lord_Howe_Island)
-    and an [Antarctica research station](
-        https://es.wikipedia.org/wiki/Base_Troll ))."""
 
-    var hour: UInt8
-    """Hour: [0, 15]."""
-    var minute: UInt8
-    """Minute: {0, 30, 45}."""
-    var sign: UInt8
-    """Sign: {1, -1}. Positive means east of UTC."""
-    var buf: UInt8
-    """Buffer."""
-    ...
-```
-#### TzDT
-```mojo
-struct TzDT:
-    """`TzDT` stores the rules for DST start/end."""
+# TODO: current mojo limitation. Parametrized structs need to be bound to an
+# alias and used for interoperability
+# var customtz = TimeZone("my_str", 1, 0) 
+var tz_0 = DateT._tz("my_str", 0, 0)
+var tz_1 = DateT._tz("my_str", 1, 0)
+assert_equal(DateT(2024, 6, 18, 0, tz=tz_0), DateT(2024, 6, 18, 1, tz=tz_1))
 
-    var month: UInt8
-    """Month: Month: [1, 12]."""
-    var dow: UInt8
-    """Dow: Day of week: [0, 6] (monday - sunday)."""
-    var eomon: UInt8
-    """Eomon: End of month: {0, 1} Whether to count from the
-    beginning of the month or the end."""
-    var week: UInt8
-    """Week: {0, 1} If week=0 -> first week of the month,
-    if it's week=1 -> second week. In the case that
-    eomon=1, fw=0 -> last week of the month
-    and fw=1 -> second to last."""
-    var hour: UInt8
-    """Hour: {20, 21, 22, 23, 0, 1, 2, 3} Hour at which DST starts/ends."""
-    var buf: UInt16
-    """Buffer."""
-```
-#### ZoneStorageDST
-```mojo
-trait ZoneStorageDST(CollectionElement):
-    """Trait that defines ZoneInfo storage structs."""
 
-    fn __init__(inout self):
-        """Construct a `ZoneInfo`."""
-        ...
+# using python and unix calendar should have no difference in results
+alias pycal = PythonCalendar
+alias unixcal = UTCCalendar
+var tz_0_ = DateT._tz("Etc/UTC", 0, 0)
+tz_1 = DateT._tz("Etc/UTC-1", 1, 0)
+var tz1_ = DateT._tz("Etc/UTC+1", 1, 0, -1)
 
-    fn add(inout self, key: StringLiteral, value: ZoneDST):
-        """Add a value to `ZoneInfo`.
+dt = DateT(2022, 6, 1, tz=tz_0_, calendar=pycal) + DateT(
+    2, 6, 31, tz=tz_0_, calendar=pycal
+)
+offset_0 = DateT(2025, 1, 1, tz=tz_0_, calendar=unixcal)
+offset_p_1 = DateT(2025, 1, 1, hour=1, tz=tz_1, calendar=unixcal)
+offset_n_1 = DateT(2024, 12, 31, hour=23, tz=tz1_, calendar=unixcal)
+assert_equal(dt, offset_0)
+assert_equal(dt, offset_p_1)
+assert_equal(dt, offset_n_1)
 
-        Args:
-            key: The tz_str.
-            value: ZoneDST.
-        """
-        ...
 
-    fn get(self, key: StringLiteral) -> OptionalReg[ZoneDST]:
-        """Get value from `ZoneInfo`.
+var fstr = "mojo: %Y🔥%m🤯%d"
+# FIXME: python issue https://github.com/python/cpython/issues/120713
+# assert_equal("mojo: 0009🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
+assert_equal("mojo: 9🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
+fstr = "%Y-%m-%d %H:%M:%S.%f"
+var ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
+assert_equal("2024-09-09 09:09:09.009009", ref1.strftime(fstr))
 
-        Args:
-            key: The tz_str.
 
-        Returns:
-            An Optional `ZoneDST`.
-        """
-        ...
-```
-#### ZoneStorageNoDST
-```mojo
-trait ZoneStorageNoDST(CollectionElement):
-    """Trait that defines ZoneInfo storage structs."""
-
-    fn __init__(inout self):
-        """Construct a `ZoneInfo`."""
-        ...
-
-    fn add(inout self, key: StringLiteral, value: Offset):
-        """Add a value to `ZoneInfo`.
-
-        Args:
-            key: The tz_str.
-            value: Offset.
-        """
-        ...
-
-    fn get(self, key: StringLiteral) -> OptionalReg[Offset]:
-        """Get value from `ZoneInfo`.
-
-        Args:
-            key: The tz_str.
-
-        Returns:
-            An Optional `Offset`.
-        """
-        ...
-```
-#### ZoneInfo
-```mojo
-struct ZoneInfo[T: ZoneStorageDST, A: ZoneStorageNoDST]:
-    """ZoneInfo.
-
-    Parameters:
-        T: The type of storage for timezones with
-            Daylight Saving Time.
-        A: The type of storage for timezones with
-            no Daylight Saving Time.
-    """
-
-    var with_dst: T
-    """Zoneinfo for Zones with Daylight Saving Time."""
-    var with_no_dst: A
-    """Zoneinfo for Zones with no Daylight Saving Time."""
+fstr = "mojo: %Y🔥%m🤯%d"
+var vstr = "mojo: 0009🔥06🤯01"
+ref1 = DateT(9, 6, 1)
+var parsed = DateT.strptime(vstr, fstr)
+assert_true(parsed)
+assert_equal(ref1, parsed.value())
+fstr = "%Y-%m-%d %H:%M:%S.%f"
+vstr = "2024-09-09 09:09:09.009009"
+ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
+parsed = DateT.strptime(vstr, fstr)
+assert_true(parsed)
+assert_equal(ref1, parsed.value())
 ```

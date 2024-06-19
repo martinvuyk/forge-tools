@@ -14,11 +14,79 @@
         and some have much lower resolutions but better performance.
 - Notes:
     - The caveats of each implementation are better explained in each struct's docstrings.
+
+Examples:
+
+```mojo
+from testing import assert_equal, assert_true
+from forge_tools.datetime import DateTime, Calendar, IsoFormat
+from forge_tools.datetime.calendar import PythonCalendar, UTCCalendar
+
+alias DateT = DateTime[iana=False, pyzoneinfo=False, native=False]
+var dt = DateT(2024, 6, 18, 22, 14, 7)
+print(dt) # 2024-06-18 22:14:07+00:00 
+alias fstr = IsoFormat(IsoFormat.HH_MM_SS) 
+var iso_str = dt.to_iso[fstr]()
+var customcal = Calendar(2024)
+dt = DateT.from_iso[fstr](iso_str, calendar=customcal)
+print(dt) # 2024-01-01 22:14:07+00:00 
+
+
+# TODO: current mojo limitation. Parametrized structs need to be bound to an
+# alias and used for interoperability
+# var customtz = TimeZone("my_str", 1, 0) 
+var tz_0 = DateT._tz("my_str", 0, 0)
+var tz_1 = DateT._tz("my_str", 1, 0)
+assert_equal(DateT(2024, 6, 18, 0, tz=tz_0), DateT(2024, 6, 18, 1, tz=tz_1))
+
+
+# using python and unix calendar should have no difference in results
+alias pycal = PythonCalendar
+alias unixcal = UTCCalendar
+var tz_0_ = DateT._tz("Etc/UTC", 0, 0)
+tz_1 = DateT._tz("Etc/UTC-1", 1, 0)
+var tz1_ = DateT._tz("Etc/UTC+1", 1, 0, -1)
+
+dt = DateT(2022, 6, 1, tz=tz_0_, calendar=pycal) + DateT(
+    2, 6, 31, tz=tz_0_, calendar=pycal
+)
+offset_0 = DateT(2025, 1, 1, tz=tz_0_, calendar=unixcal)
+offset_p_1 = DateT(2025, 1, 1, hour=1, tz=tz_1, calendar=unixcal)
+offset_n_1 = DateT(2024, 12, 31, hour=23, tz=tz1_, calendar=unixcal)
+assert_equal(dt, offset_0)
+assert_equal(dt, offset_p_1)
+assert_equal(dt, offset_n_1)
+
+
+var fstr = "mojo: %Y🔥%m🤯%d"
+# FIXME: python issue https://github.com/python/cpython/issues/120713
+# assert_equal("mojo: 0009🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
+assert_equal("mojo: 9🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
+fstr = "%Y-%m-%d %H:%M:%S.%f"
+var ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
+assert_equal("2024-09-09 09:09:09.009009", ref1.strftime(fstr))
+
+
+fstr = "mojo: %Y🔥%m🤯%d"
+var vstr = "mojo: 0009🔥06🤯01"
+ref1 = DateT(9, 6, 1)
+var parsed = DateT.strptime(vstr, fstr)
+assert_true(parsed)
+assert_equal(ref1, parsed.value())
+fstr = "%Y-%m-%d %H:%M:%S.%f"
+vstr = "2024-09-09 09:09:09.009009"
+ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
+parsed = DateT.strptime(vstr, fstr)
+assert_true(parsed)
+assert_equal(ref1, parsed.value())
+```
+.
 """
 
-from .zoneinfo import get_zoneinfo
-from .timezone import TimeZone
-from .dt_str import IsoFormat
-from .datetime import DateTime
+from .calendar import Calendar
 from .date import Date
+from .datetime import DateTime
+from .dt_str import IsoFormat
 from .fast import DateTime64, DateTime32, DateTime16, DateTime8
+from .timezone import TimeZone
+from .zoneinfo import get_zoneinfo

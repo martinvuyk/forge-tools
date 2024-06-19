@@ -230,7 +230,9 @@ struct Quaternion[T: DType = DType.float64]:
         Returns:
             The result.
         """
-        return self * ~other
+
+        var qr_1 = ~other
+        return self * Self(qr_1.vec / (self.vec**2).reduce_add())
 
     fn __itruediv__(inout self, other: Self):
         """Calculate the division of self with other inplace.
@@ -384,6 +386,16 @@ struct Quaternion[T: DType = DType.float64]:
             The result.
         """
         return (self.vec == other.vec).reduce_and()
+
+    fn __str__(self) -> String:
+        var s: String = ""
+
+        @parameter
+        for i in range(8):
+            s += "," + str(self.vec[i])
+        s += "]"
+        s.unsafe_ptr()[0] = "["
+        return s^
 
 
 # ===----------------------------------------------------------------------===#
@@ -822,3 +834,13 @@ struct DualQuaternion[T: DType = DType.float64]:
             The result.
         """
         return (self.vec == other.vec).reduce_and()
+
+    fn __str__(self) -> String:
+        var s: String = ""
+
+        @parameter
+        for i in range(8):
+            s += ", " + str(self.vec[i])
+        s += "]"
+        s.unsafe_ptr()[0] = "["
+        return s^

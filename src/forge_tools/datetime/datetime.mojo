@@ -256,6 +256,7 @@ struct DateTime[
         Returns:
             Self.
         """
+
         var year = self.year
         var tmpcal = self.calendar.from_year(year)
         self.calendar = tmpcal
@@ -404,7 +405,7 @@ struct DateTime[
                 year -= _max_delta
                 overflow += _max_delta
 
-        var cal = Calendar.from_year(year)
+        var cal = self.calendar.from_year(year)
         var self_ns = s.replace(calendar=cal).n_seconds_since_epoch()
         var other_ns = o.replace(calendar=cal).n_seconds_since_epoch()
         return self_ns, other_ns, overflow, sign
@@ -1100,24 +1101,24 @@ struct DateTime[
     @staticmethod
     # @always_inline("nodebug")
     fn from_iso[
-        iso: dt_str.IsoFormat = dt_str.IsoFormat(),
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
-    ](s: String) -> Optional[Self]:
+        iso: dt_str.IsoFormat = dt_str.IsoFormat()
+    ](
+        s: String, tz: Optional[Self._tz] = None, calendar: Calendar = _calendar
+    ) -> Optional[Self]:
         """Construct a datetime from an
         [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
         `String`.
 
         Parameters:
             iso: The IsoFormat to parse.
-            tz: Optional timezone to transform the result into
-                (taking into account that the format may return with a `TimeZone`).
-            calendar: The calendar to which the result will belong.
 
         Args:
             s: The `String` to parse; it's assumed that it is properly formatted
                 i.e. no leading whitespaces or anything different to the selected
                 IsoFormat.
+            tz: Optional timezone to transform the result into
+                (taking into account that the format may return with a `TimeZone`).
+            calendar: The calendar to which the result will belong.
 
         Returns:
             An Optional Self.

@@ -20,6 +20,12 @@ from collections.optional import Optional
 from .calendar import UTCFastCal, CalendarHashes
 import .dt_str
 
+alias _cal = UTCFastCal
+alias _cal_h64 = CalendarHashes(CalendarHashes.UINT64)
+alias _cal_h32 = CalendarHashes(CalendarHashes.UINT32)
+alias _cal_h16 = CalendarHashes(CalendarHashes.UINT16)
+alias _cal_h8 = CalendarHashes(CalendarHashes.UINT8)
+
 
 trait _IntCollect(Intable, CollectionElement):
     ...
@@ -57,8 +63,6 @@ struct DateTime64(Hashable, Stringable):
     """Miliseconds since epoch."""
     var hash: UInt64
     """Hash."""
-    alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(CalendarHashes.UINT64)
 
     fn __init__(inout self, m_seconds: UInt64, hash_val: UInt64):
         """Construct a DateTime64.
@@ -113,20 +117,16 @@ struct DateTime64(Hashable, Stringable):
             hash_val: Hash_val.
         """
 
-        var y = int(year.take()) if year else int(self._calendar.min_year)
-        var mon = int(month.take()) if month else int(self._calendar.min_month)
-        var d = int(day.take()) if day else int(self._calendar.min_day)
-        var h = int(hour.take()) if hour else int(self._calendar.min_hour)
-        var m = int(minute.take()) if minute else int(self._calendar.min_minute)
-        var s = int(second.take()) if second else int(self._calendar.min_second)
-        var ms = int(m_second.take()) if m_second else int(
-            self._calendar.min_milisecond
-        )
-        self.m_seconds = self._calendar.m_seconds_since_epoch(
-            y, mon, d, h, m, s, ms
-        )
+        var y = int(year.take()) if year else int(_cal.min_year)
+        var mon = int(month.take()) if month else int(_cal.min_month)
+        var d = int(day.take()) if day else int(_cal.min_day)
+        var h = int(hour.take()) if hour else int(_cal.min_hour)
+        var m = int(minute.take()) if minute else int(_cal.min_minute)
+        var s = int(second.take()) if second else int(_cal.min_second)
+        var ms = int(m_second.take()) if m_second else int(_cal.min_milisecond)
+        self.m_seconds = _cal.m_seconds_since_epoch(y, mon, d, h, m, s, ms)
         self.hash = int(hash_val.take()) if hash_val else int(
-            self._calendar.hash[self._cal_h](y, mon, d, h, m, s, ms)
+            _cal.hash[_cal_h64](y, mon, d, h, m, s, ms)
         )
 
     # @always_inline("nodebug")
@@ -143,33 +143,32 @@ struct DateTime64(Hashable, Stringable):
         @parameter
         if name == "year":
             return (
-                self.hash >> (self._cal_h.shift_64_y - self._cal_h.shift_64_ms)
-            ) & self._cal_h.mask_64_y
+                self.hash >> (_cal_h64.shift_64_y - _cal_h64.shift_64_ms)
+            ) & _cal_h64.mask_64_y
         elif name == "month":
             return (
-                self.hash
-                >> (self._cal_h.shift_64_mon - self._cal_h.shift_64_ms)
-            ) & self._cal_h.mask_64_mon
+                self.hash >> (_cal_h64.shift_64_mon - _cal_h64.shift_64_ms)
+            ) & _cal_h64.mask_64_mon
         elif name == "day":
             return (
-                self.hash >> (self._cal_h.shift_64_d - self._cal_h.shift_64_ms)
-            ) & self._cal_h.mask_64_d
+                self.hash >> (_cal_h64.shift_64_d - _cal_h64.shift_64_ms)
+            ) & _cal_h64.mask_64_d
         elif name == "hour":
             return (
-                self.hash >> (self._cal_h.shift_64_h - self._cal_h.shift_64_ms)
-            ) & self._cal_h.mask_64_h
+                self.hash >> (_cal_h64.shift_64_h - _cal_h64.shift_64_ms)
+            ) & _cal_h64.mask_64_h
         elif name == "minute":
             return (
-                self.hash >> (self._cal_h.shift_64_m - self._cal_h.shift_64_ms)
-            ) & self._cal_h.mask_64_m
+                self.hash >> (_cal_h64.shift_64_m - _cal_h64.shift_64_ms)
+            ) & _cal_h64.mask_64_m
         elif name == "second":
             return (
-                self.hash >> (self._cal_h.shift_64_s - self._cal_h.shift_64_ms)
-            ) & self._cal_h.mask_64_s
+                self.hash >> (_cal_h64.shift_64_s - _cal_h64.shift_64_ms)
+            ) & _cal_h64.mask_64_s
         elif name == "m_second":
             return (
-                self.hash >> (self._cal_h.shift_64_ms - self._cal_h.shift_64_ms)
-            ) & self._cal_h.mask_64_ms
+                self.hash >> (_cal_h64.shift_64_ms - _cal_h64.shift_64_ms)
+            ) & _cal_h64.mask_64_ms
         else:
             constrained[False, "that attr does not exist"]()
             return 0
@@ -201,24 +200,22 @@ struct DateTime64(Hashable, Stringable):
             Self.
         """
         var mask: UInt64 = 0b0
-        alias offset = Self._cal_h.shift_64_ms
+        alias offset = _cal_h64.shift_64_ms
         if year:
-            mask |= self._cal_h.mask_64_y << (self._cal_h.shift_64_y - offset)
+            mask |= _cal_h64.mask_64_y << (_cal_h64.shift_64_y - offset)
         if month:
-            mask |= self._cal_h.mask_64_mon << (
-                self._cal_h.shift_64_mon - offset
-            )
+            mask |= _cal_h64.mask_64_mon << (_cal_h64.shift_64_mon - offset)
         if day:
-            mask |= self._cal_h.mask_64_d << (self._cal_h.shift_64_d - offset)
+            mask |= _cal_h64.mask_64_d << (_cal_h64.shift_64_d - offset)
         if hour:
-            mask |= self._cal_h.mask_64_h << (self._cal_h.shift_64_h - offset)
+            mask |= _cal_h64.mask_64_h << (_cal_h64.shift_64_h - offset)
         if minute:
-            mask |= self._cal_h.mask_64_m << (self._cal_h.shift_64_m - offset)
+            mask |= _cal_h64.mask_64_m << (_cal_h64.shift_64_m - offset)
         if second:
-            mask |= self._cal_h.mask_64_s << (self._cal_h.shift_64_s - offset)
+            mask |= _cal_h64.mask_64_s << (_cal_h64.shift_64_s - offset)
         if m_second:
-            mask |= self._cal_h.mask_64_ms << (self._cal_h.shift_64_ms - offset)
-        var h = self._calendar.hash[self._cal_h](
+            mask |= _cal_h64.mask_64_ms << (_cal_h64.shift_64_ms - offset)
+        var h = _cal.hash[_cal_h64](
             year.or_else(0),
             month.or_else(0),
             day.or_else(0),
@@ -551,7 +548,7 @@ struct DateTime64(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        var d = self._calendar.from_hash[Self._cal_h](int(self.hash))
+        var d = _cal.from_hash[_cal_h64](int(self.hash))
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -594,7 +591,7 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             Self.
         """
-        var d = Self._calendar.from_hash[Self._cal_h](int(value))
+        var d = _cal.from_hash[_cal_h64](int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], d[5], d[6], hash_val=value)
 
 
@@ -627,8 +624,6 @@ struct DateTime32(Hashable, Stringable):
     """Minutes since epoch."""
     var hash: UInt32
     """Hash."""
-    alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(CalendarHashes.UINT32)
 
     fn __init__(inout self, minutes: UInt32, hash_val: UInt32):
         """Construct a DateTime32.
@@ -678,19 +673,17 @@ struct DateTime32(Hashable, Stringable):
             minute: Minute.
             hash_val: Hash_val.
         """
-        var y = int(year.take()) if year else int(self._calendar.min_year)
-        var mon = int(month.take()) if month else int(self._calendar.min_month)
-        var d = int(day.take()) if day else int(self._calendar.min_day)
-        var h = int(hour.take()) if hour else int(self._calendar.min_hour)
-        var m = int(minute.take()) if minute else int(self._calendar.min_minute)
+        var y = int(year.take()) if year else int(_cal.min_year)
+        var mon = int(month.take()) if month else int(_cal.min_month)
+        var d = int(day.take()) if day else int(_cal.min_day)
+        var h = int(hour.take()) if hour else int(_cal.min_hour)
+        var m = int(minute.take()) if minute else int(_cal.min_minute)
         self.minutes = (
-            self._calendar.seconds_since_epoch(
-                y, mon, d, h, m, int(self._calendar.min_second)
-            )
+            _cal.seconds_since_epoch(y, mon, d, h, m, int(_cal.min_second))
             // 60
         ).cast[DType.uint32]()
         self.hash = int(hash_val.take()) if hash_val else int(
-            self._calendar.hash[self._cal_h](y, mon, d, h, m)
+            _cal.hash[_cal_h32](y, mon, d, h, m)
         )
 
     # @always_inline("nodebug")
@@ -706,17 +699,15 @@ struct DateTime32(Hashable, Stringable):
 
         @parameter
         if name == "year":
-            return (self.hash >> self._cal_h.shift_32_y) & self._cal_h.mask_32_y
+            return (self.hash >> _cal_h32.shift_32_y) & _cal_h32.mask_32_y
         elif name == "month":
-            return (
-                self.hash >> self._cal_h.shift_32_mon
-            ) & self._cal_h.mask_32_mon
+            return (self.hash >> _cal_h32.shift_32_mon) & _cal_h32.mask_32_mon
         elif name == "day":
-            return (self.hash >> self._cal_h.shift_32_d) & self._cal_h.mask_32_d
+            return (self.hash >> _cal_h32.shift_32_d) & _cal_h32.mask_32_d
         elif name == "hour":
-            return (self.hash >> self._cal_h.shift_32_h) & self._cal_h.mask_32_h
+            return (self.hash >> _cal_h32.shift_32_h) & _cal_h32.mask_32_h
         elif name == "minute":
-            return (self.hash >> self._cal_h.shift_32_m) & self._cal_h.mask_32_m
+            return (self.hash >> _cal_h32.shift_32_m) & _cal_h32.mask_32_m
         else:
             constrained[False, "that attr does not exist"]()
             return 0
@@ -755,16 +746,16 @@ struct DateTime32(Hashable, Stringable):
 
         var mask: UInt32 = 0b0
         if year:
-            mask |= self._cal_h.mask_32_y << self._cal_h.shift_32_y
+            mask |= _cal_h32.mask_32_y << _cal_h32.shift_32_y
         if month:
-            mask |= self._cal_h.mask_32_mon << self._cal_h.shift_32_mon
+            mask |= _cal_h32.mask_32_mon << _cal_h32.shift_32_mon
         if day:
-            mask |= self._cal_h.mask_32_d << self._cal_h.shift_32_d
+            mask |= _cal_h32.mask_32_d << _cal_h32.shift_32_d
         if hour:
-            mask |= self._cal_h.mask_32_h << self._cal_h.shift_32_h
+            mask |= _cal_h32.mask_32_h << _cal_h32.shift_32_h
         if minute:
-            mask |= self._cal_h.mask_32_m << self._cal_h.shift_32_m
-        var h = self._calendar.hash[self._cal_h](
+            mask |= _cal_h32.mask_32_m << _cal_h32.shift_32_m
+        var h = _cal.hash[_cal_h32](
             year.or_else(0),
             month.or_else(0),
             day.or_else(0),
@@ -1071,7 +1062,7 @@ struct DateTime32(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        var d = self._calendar.from_hash[Self._cal_h](int(self.hash))
+        var d = _cal.from_hash[_cal_h32](int(self.hash))
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -1114,7 +1105,7 @@ struct DateTime32(Hashable, Stringable):
         Returns:
             Self.
         """
-        var d = Self._calendar.from_hash[Self._cal_h](int(value))
+        var d = _cal.from_hash[_cal_h32](int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], value)
 
 
@@ -1146,8 +1137,6 @@ struct DateTime16(Hashable, Stringable):
     """Hours since epoch."""
     var hash: UInt16
     """Hash."""
-    alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(CalendarHashes.UINT16)
 
     fn __init__(inout self, hours: UInt16, hash_val: UInt16):
         """Construct a DateTime16.
@@ -1189,19 +1178,17 @@ struct DateTime16(Hashable, Stringable):
             hour: Hour.
             hash_val: Hash_val.
         """
-        var y = int(year.take()) if year else int(self._calendar.min_year)
-        var mon = int(month.take()) if month else int(self._calendar.min_month)
-        var d = int(day.take()) if day else int(self._calendar.min_day)
-        var h = int(hour.take()) if hour else int(self._calendar.min_hour)
-        var m = int(self._calendar.min_minute)
-        var s = int(self._calendar.min_second)
+        var y = int(year.take()) if year else int(_cal.min_year)
+        var mon = int(month.take()) if month else int(_cal.min_month)
+        var d = int(day.take()) if day else int(_cal.min_day)
+        var h = int(hour.take()) if hour else int(_cal.min_hour)
+        var m = int(_cal.min_minute)
+        var s = int(_cal.min_second)
         self.hours = int(
-            self._calendar.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
+            _cal.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         )
         self.hash = int(hash_val.take()) if hash_val else int(
-            self._calendar.hash[self._cal_h](
-                y - self._calendar.min_year, mon, d, h, m, s
-            )
+            _cal.hash[_cal_h16](y - _cal.min_year, mon, d, h, m, s)
         )
 
     # @always_inline("nodebug")
@@ -1218,12 +1205,12 @@ struct DateTime16(Hashable, Stringable):
         @parameter
         if name == "year":
             return (
-                self.hash >> self._cal_h.shift_16_y
-            ) & self._cal_h.mask_16_y + self._calendar.min_year
+                self.hash >> _cal_h16.shift_16_y
+            ) & _cal_h16.mask_16_y + _cal.min_year
         elif name == "day":
-            return (self.hash >> self._cal_h.shift_16_d) & self._cal_h.mask_16_d
+            return (self.hash >> _cal_h16.shift_16_d) & _cal_h16.mask_16_d
         elif name == "hour":
-            return (self.hash >> self._cal_h.shift_16_h) & self._cal_h.mask_16_h
+            return (self.hash >> _cal_h16.shift_16_h) & _cal_h16.mask_16_h
         else:
             constrained[False, "that attribute does not exist"]()
             return 0
@@ -1249,13 +1236,13 @@ struct DateTime16(Hashable, Stringable):
 
         var mask: UInt16 = 0b0
         if year:
-            mask |= self._cal_h.mask_16_d << self._cal_h.shift_16_d
+            mask |= _cal_h16.mask_16_d << _cal_h16.shift_16_d
         if day:
-            mask |= self._cal_h.mask_16_d << self._cal_h.shift_16_d
+            mask |= _cal_h16.mask_16_d << _cal_h16.shift_16_d
         if hour:
-            mask |= self._cal_h.mask_16_h << self._cal_h.shift_16_h
-        var h = self._calendar.hash[self._cal_h](
-            (year.value() - self._calendar.min_year if year else 0),
+            mask |= _cal_h16.mask_16_h << _cal_h16.shift_16_h
+        var h = _cal.hash[_cal_h16](
+            (year.value() - _cal.min_year if year else 0),
             day.or_else(0),
             hour.or_else(0),
         )
@@ -1560,8 +1547,8 @@ struct DateTime16(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        var d = self._calendar.from_hash[Self._cal_h](int(self.hash))
-        var y = d[0] + Self._calendar.min_year
+        var d = _cal.from_hash[_cal_h16](int(self.hash))
+        var y = d[0] + _cal.min_year
         return dt_str.to_iso[iso](y, d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -1604,8 +1591,8 @@ struct DateTime16(Hashable, Stringable):
         Returns:
             Self.
         """
-        var d = Self._calendar.from_hash[Self._cal_h](int(value))
-        var y = d[0] + Self._calendar.min_year
+        var d = _cal.from_hash[_cal_h16](int(value))
+        var y = d[0] + _cal.min_year
         return Self(year=y, month=d[1], day=d[2], hour=d[3], hash_val=value)
 
 
@@ -1636,8 +1623,6 @@ struct DateTime8(Hashable, Stringable):
     """Hours since epoch."""
     var hash: UInt8
     """Hash."""
-    alias _calendar = UTCFastCal
-    alias _cal_h = CalendarHashes(CalendarHashes.UINT8)
 
     fn __init__(inout self, hours: UInt8, hash_val: UInt8):
         """Construct a DateTime8.
@@ -1679,17 +1664,17 @@ struct DateTime8(Hashable, Stringable):
             hour: Hour.
             hash_val: Hash_val.
         """
-        var y = int(year.take()) if year else int(self._calendar.min_year)
-        var mon = int(month.take()) if month else int(self._calendar.min_month)
-        var d = int(day.take()) if day else int(self._calendar.min_day)
-        var h = int(hour.take()) if hour else int(self._calendar.min_hour)
-        var m = int(self._calendar.min_minute)
-        var s = int(self._calendar.min_second)
+        var y = int(year.take()) if year else int(_cal.min_year)
+        var mon = int(month.take()) if month else int(_cal.min_month)
+        var d = int(day.take()) if day else int(_cal.min_day)
+        var h = int(hour.take()) if hour else int(_cal.min_hour)
+        var m = int(_cal.min_minute)
+        var s = int(_cal.min_second)
         self.hours = (
-            self._calendar.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
+            _cal.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         ).cast[DType.uint8]()
         self.hash = int(hash_val.take()) if hash_val else int(
-            self._calendar.hash[self._cal_h](y, mon, d, h, m, s)
+            _cal.hash[_cal_h8](y, mon, d, h, m, s)
         )
 
     # @always_inline("nodebug")
@@ -1705,9 +1690,9 @@ struct DateTime8(Hashable, Stringable):
 
         @parameter
         if name == "day":
-            return (self.hash >> self._cal_h.shift_8_d) & self._cal_h.mask_8_d
+            return (self.hash >> _cal_h8.shift_8_d) & _cal_h8.mask_8_d
         elif name == "hour":
-            return (self.hash >> self._cal_h.shift_8_h) & self._cal_h.mask_8_h
+            return (self.hash >> _cal_h8.shift_8_h) & _cal_h8.mask_8_h
         else:
             constrained[False, "that attr does not exist"]()
             return 0
@@ -1731,10 +1716,10 @@ struct DateTime8(Hashable, Stringable):
 
         var mask: UInt8 = 0b0
         if day:
-            mask |= self._cal_h.mask_8_d << self._cal_h.shift_8_d
+            mask |= _cal_h8.mask_8_d << _cal_h8.shift_8_d
         if hour:
-            mask |= self._cal_h.mask_8_h << self._cal_h.shift_8_h
-        var h = self._calendar.hash[self._cal_h](
+            mask |= _cal_h8.mask_8_h << _cal_h8.shift_8_h
+        var h = _cal.hash[_cal_h8](
             0,
             day.or_else(0),
             hour.or_else(0),
@@ -2057,12 +2042,13 @@ struct DateTime8(Hashable, Stringable):
 
         Args:
             s: The `String` to parse; it's assumed that it is properly formatted
-                i.e. no leading whitespaces or anything different to the selected
-                IsoFormat.
+                i.e. no leading whitespaces or anything different to the
+                selected IsoFormat.
 
         Returns:
             An Optional[Self].
         """
+
         try:
             var p = dt_str.from_iso[
                 iso, iana=False, pyzoneinfo=False, native=False
@@ -2083,5 +2069,6 @@ struct DateTime8(Hashable, Stringable):
         Returns:
             Self.
         """
-        var d = Self._calendar.from_hash[Self._cal_h](int(value))
+
+        var d = _cal.from_hash[_cal_h8](int(value))
         return Self(day=int(d[2]), hash_val=value).add(hours=int(d[3]))

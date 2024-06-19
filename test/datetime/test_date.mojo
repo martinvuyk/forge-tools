@@ -10,7 +10,7 @@ from forge_tools.datetime.dt_str import IsoFormat
 
 
 fn test_add() raises:
-    # using python and unix calendar there should have no difference in results
+    # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
@@ -100,7 +100,7 @@ fn test_add() raises:
 
 
 fn test_subtract() raises:
-    # using python and unix calendar there should have no difference in results
+    # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
@@ -190,7 +190,7 @@ fn test_subtract() raises:
 
 
 fn test_logic() raises:
-    # using python and unix calendar there should have no difference in results
+    # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
@@ -211,7 +211,7 @@ fn test_logic() raises:
 
 
 fn test_bitwise() raises:
-    # using python and unix calendar there should have no difference in results
+    # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
@@ -231,7 +231,7 @@ fn test_bitwise() raises:
 
 
 fn test_iso() raises:
-    # using python and unix calendar there should have no difference in results
+    # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]

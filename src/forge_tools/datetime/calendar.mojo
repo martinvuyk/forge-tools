@@ -119,6 +119,12 @@ struct CalendarHashes:
 # TODO: once traits with attributes and impl are ready Calendar will replace
 # a bunch of this file
 trait _Calendarized:
+    fn __init__(inout self, *, min_year: UInt16 = 1, max_year: UInt16 = 9999):
+        ...
+
+    fn from_year(self, year: UInt16) -> Self:
+        ...
+
     fn is_leapyear(self, year: UInt16) -> Bool:
         ...
 
@@ -137,6 +143,9 @@ trait _Calendarized:
         ...
 
     fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
+        ...
+
+    fn day_of_month(self, year: UInt16, day_of_year: UInt16) -> (UInt8, UInt8):
         ...
 
     fn max_second(
@@ -195,10 +204,6 @@ trait _Calendarized:
         u_second: UInt16,
         n_second: UInt16,
     ) -> UInt64:
-        ...
-
-    @staticmethod
-    fn from_year(year: UInt16) -> Self:
         ...
 
     fn hash[
@@ -271,6 +276,27 @@ struct Calendar:
     leap values. It's assumed that `len(monthdays) == max_month`."""
     var _implementation: Variant[Gregorian, UTCFast]
 
+    fn __init__[
+        T: Variant[Gregorian, UTCFast] = Gregorian
+    ](inout self, min_year: UInt16):
+        """Get a Calendar with min_year=year.
+
+        Parameters:
+            T: The type of Calendar.
+
+        Args:
+            min_year: Calendar year start.
+        """
+
+        @parameter
+        if T.isa[Gregorian]():
+            self = Self(Gregorian(min_year=min_year))
+        elif T.isa[UTCFast]():
+            self = Self(UTCFast(min_year=min_year))
+        else:
+            constrained[False, "that implementation isn't valid"]()
+            self = Self()
+
     fn __init__(
         inout self, owned impl: Variant[Gregorian, UTCFast] = Gregorian()
     ):
@@ -326,6 +352,15 @@ struct Calendar:
             self.min_microsecond = imp.min_microsecond
             self.min_nanosecond = imp.min_nanosecond
             self._implementation = imp
+
+    fn from_year(self, year: UInt16) -> Self:
+        if self._implementation.isa[Gregorian]():
+            return Self(Gregorian(min_year=year))
+        elif self._implementation.isa[UTCFast]():
+            return Self(UTCFast(min_year=year))
+        else:
+            constrained[False, "that implementation isn't valid"]()
+            return Self()
 
     @always_inline("nodebug")
     fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
@@ -712,48 +747,6 @@ struct Calendar:
             return 0
 
     @always_inline("nodebug")
-    fn from_year(self, year: UInt16) -> Self:
-        """Get a Calendar with min_year=year.
-
-        Args:
-            year: The year.
-
-        Returns:
-            Self.
-        """
-
-        if self._implementation.isa[Gregorian]():
-            return Calendar.from_year[Gregorian](year)
-        elif self._implementation.isa[UTCFast]():
-            return Calendar.from_year[UTCFast](year)
-        else:
-            return 0
-
-    @staticmethod
-    @always_inline("nodebug")
-    fn from_year[
-        T: Variant[Gregorian, UTCFast] = Gregorian
-    ](year: UInt16) -> Self:
-        """Get a Calendar with min_year=year.
-
-        Parameters:
-            T: The type of Calendar.
-
-        Args:
-            year: The year.
-
-        Returns:
-            Self.
-        """
-
-        @parameter
-        if T.isa[Gregorian]():
-            return Self(Gregorian().from_year(year))
-        elif T.isa[UTCFast]():
-            return Self(UTCFast().from_year(year))
-        return Self()
-
-    @always_inline("nodebug")
     fn hash[
         cal_hash: CalendarHashes = CalendarHashes()
     ](
@@ -902,17 +895,20 @@ struct Gregorian(_Calendarized):
     fn __init__(
         inout self,
         *,
-        max_year: UInt16 = 9999,
         min_year: UInt16 = 1,
+        max_year: UInt16 = 9999,
     ):
         """Construct a `Gregorian` Calendar from values.
 
         Args:
-            max_year: Max year (epoch end).
             min_year: Min year (epoch start).
+            max_year: Max year (epoch end).
         """
         self.max_year = max_year
         self.min_year = min_year
+
+    fn from_year(self, year: UInt16) -> Self:
+        return Self(min_year=year)
 
     fn monthrange(self, year: UInt16, month: UInt8) -> (UInt8, UInt8):
         """Returns day of the week for the first day of the month and number of
@@ -1384,20 +1380,6 @@ struct Gregorian(_Calendarized):
 
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
-    @staticmethod
-    @always_inline("nodebug")
-    fn from_year(year: UInt16) -> Self:
-        """Get a Calendar with min_year=year.
-
-        Args:
-            year: The year.
-
-        Returns:
-            Self.
-        """
-
-        return Self(min_year=year)
-
 
 @value
 # @register_passable("trivial")
@@ -1455,16 +1437,19 @@ struct UTCFast(_Calendarized):
     )
 
     fn __init__(
-        inout self, *, max_year: UInt16 = 9999, min_year: UInt16 = 1970
+        inout self, *, min_year: UInt16 = 1970, max_year: UInt16 = 9999
     ):
         """Construct a `UTCFast` Calendar from values.
 
         Args:
-            max_year: Max year (epoch end).
             min_year: Min year (epoch start).
+            max_year: Max year (epoch end).
         """
         self.max_year = max_year
         self.min_year = min_year
+
+    fn from_year(self, year: UInt16) -> Self:
+        return Self(min_year=year)
 
     fn monthrange(self, year: UInt16, month: UInt8) -> (UInt8, UInt8):
         """Returns day of the week for the first day of the month and number of
@@ -1942,17 +1927,3 @@ struct UTCFast(_Calendarized):
         """
 
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
-
-    @staticmethod
-    @always_inline("nodebug")
-    fn from_year(year: UInt16) -> Self:
-        """Get a Calendar with min_year=year.
-
-        Args:
-            year: The year.
-
-        Returns:
-            Self.
-        """
-
-        return Self(min_year=year)
