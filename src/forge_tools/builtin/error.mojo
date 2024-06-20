@@ -231,6 +231,7 @@ struct Error2[T: StringLiteral](Stringable, Boolable):
     """This type represents a parametric Error."""
 
     alias type = T
+    """The type of Error."""
     var message: String
     """The Error message."""
 
@@ -262,7 +263,7 @@ struct Error2[T: StringLiteral](Stringable, Boolable):
         return str(self)
 
     fn __eq__[A: StringLiteral](self, other: Error2[A]) -> Bool:
-        """Whether the Errors have the same type and message.
+        """Whether the Errors have the same message.
 
         Args:
             other: The Error to compare to.
@@ -271,20 +272,17 @@ struct Error2[T: StringLiteral](Stringable, Boolable):
             The comparison.
         """
 
-        @parameter
-        if T == A:
-            return self.message == other.message
-        else:
-            return False
+        return self.message == other.message
 
-    fn __eq__(self, other: String) -> Bool:
-        """Whether the Error message is equal to the string.
+    fn __eq__(self, value: StringLiteral) -> Bool:
+        """Whether the Error message is set and type is equal to the
+        StringLiteral.
 
         Args:
-            other: The String to compare to.
+            value: The StringLiteral to compare to.
 
         Returns:
-            The comparison.
+            The Result.
         """
 
-        return str(self) == other
+        return bool(self) and self.type == value

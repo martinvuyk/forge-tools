@@ -530,14 +530,14 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
 
     fn do_something(i: Int) -> Result2[Int, "IndexError"]:
         if i < 0:
-            return None, Error2["IndexError"]("index out of bounds :" + str(i))
+            return None, Error2["IndexError"]("index out of bounds: " + str(i))
         return 1
 
     fn do_some_other_thing() -> Result2[String, "OtherError"]:
         var a = do_something(-1)
         if a.err:
             return a # error message gets transferred
-        return ""
+        return "success"
     ```
     """
 

@@ -119,12 +119,17 @@ A register-passable `ResultReg` type.
 #### Result2
 A parametric `Result2` type.
 
-This struct `Result2` contains a value. It only works with trivial register
-passable types at the moment.
+uses:
+```mojo
+struct Error2[T: StringLiteral](Stringable, Boolable):
+    """This type represents a parametric Error."""
 
-Parameters:
-    T: The type of value stored in the `Result2`.
-    E: The type of Error stored in the `Result2`.
+    alias type = T
+    """The type of Error."""
+    var message: String
+    """The Error message."""
+    ...
+```
 
 Examples:
 
@@ -134,14 +139,46 @@ from forge_tools.builtin.error import Error2
 
 fn do_something(i: Int) -> Result2[Int, "IndexError"]:
     if i < 0:
-        return None, Error2["IndexError"]("index out of bounds :" + str(i))
+        return None, Error2["IndexError"]("index out of bounds: " + str(i))
     return 1
 
 fn do_some_other_thing() -> Result2[String, "OtherError"]:
     var a = do_something(-1)
     if a.err:
         return a # error message gets transferred
+    return "success"
 ```
+
+It would be nice to have:
+```mojo
+struct Result2[T: CollectionElement, *Errs: StringLiteral](Boolable):
+    alias _type = Variant[NoneType, T]
+    var _value: Self._type
+    alias _err_type = Variant[
+        VariadicListUnpack[
+            VariadicListEmbed[Error2[_], VariadicListUnpack[Errs]]
+        ]
+    ]
+    var err: Self._err_type
+    """The Error inside the `Result`."""
+    ...
+```
+that way:
+```mojo
+fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
+    ...
+
+fn do_some_other_thing() -> Result2[String, "OtherError"]:
+    var a = do_something(-1)
+    if a.err == "OtherError": # returns bool(err) and err.type == value
+        return a # error gets transferred
+    elif a.err == "IndexError":
+        return a # error message gets transferred
+    elif a.err: # some undefined error after an API change
+        return a
+    return "success"
+```
+
 
 ## complex
 ### quaternion.mojo
