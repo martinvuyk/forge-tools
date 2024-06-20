@@ -183,7 +183,8 @@ struct Date[
 
     fn to_utc(owned self) -> Self:
         """Returns a new instance of `Self` transformed to UTC. If
-        `self.tz` is UTC it returns early.
+        `self.tz` is UTC it returns early. All dates are assumed to be at
+        midday with respect to UTC (UTC is at 12:00 and add/subtract offset).
 
         Returns:
             Self with tz casted to UTC.
