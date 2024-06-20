@@ -536,9 +536,11 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
     fn do_some_other_thing() -> Result2[String, "OtherError"]:
         var a = do_something(-1)
         if a.err:
-            return a # error message gets transferred
+            print(a.err) # IndexError: index out of bounds: -1
+            return a # error message ("index out of bounds: -1") gets transferred
         return "success"
     ```
+    .
     """
 
     alias _type = Variant[NoneType, T]
