@@ -99,7 +99,7 @@ A Result with an Error can also be retuned early:
 
 ```mojo
 fn func_that_can_err[A: CollectionElement]() -> Result[A]:
-    ...
+    return Error("failed")
 
 fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T]:
     var result: Result[A] = func_that_can_err[A]()
@@ -115,6 +115,33 @@ fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T
 ```
 #### ResultReg
 A register-passable `ResultReg` type.
+
+#### Result2
+A parametric `Result2` type.
+
+This struct `Result2` contains a value. It only works with trivial register
+passable types at the moment.
+
+Parameters:
+    T: The type of value stored in the `Result2`.
+    E: The type of Error stored in the `Result2`.
+
+Examples:
+
+```mojo
+from forge_tools.collections.result import Result2
+from forge_tools.builtin.error import Error2
+
+fn do_something(i: Int) -> Result2[Int, "IndexError"]:
+    if i < 0:
+        return None, Error2["IndexError"]("index out of bounds :" + str(i))
+    return 1
+
+fn do_some_other_thing() -> Result2[String, "OtherError"]:
+    var a = do_something(-1)
+    if a.err:
+        return a # error message gets transferred
+```
 
 ## complex
 ### quaternion.mojo

@@ -224,3 +224,67 @@ struct ErrorReg(Stringable, Boolable):
             The comparison.
         """
         return str(self) == other
+
+
+@value
+struct Error2[T: StringLiteral](Stringable, Boolable):
+    """This type represents a parametric Error."""
+
+    alias type = T
+    var message: String
+    """The Error message."""
+
+    @always_inline("nodebug")
+    fn __bool__(self) -> Bool:
+        """Returns True if the Error is set and false otherwise.
+
+        Returns:
+          True if the Error object contains a message and False otherwise.
+        """
+        return self.message
+
+    @always_inline("nodebug")
+    fn __str__(self) -> String:
+        """Converts the Error to string representation.
+
+        Returns:
+            A String of the Error message.
+        """
+        return self.type + ": " + self.message
+
+    @always_inline("nodebug")
+    fn __repr__(self) -> String:
+        """Converts the Error to printable representation.
+
+        Returns:
+            A printable representation of the Error message.
+        """
+        return str(self)
+
+    fn __eq__[A: StringLiteral](self, other: Error2[A]) -> Bool:
+        """Whether the Errors have the same type and message.
+
+        Args:
+            other: The Error to compare to.
+
+        Returns:
+            The comparison.
+        """
+
+        @parameter
+        if T == A:
+            return self.message == other.message
+        else:
+            return False
+
+    fn __eq__(self, other: String) -> Bool:
+        """Whether the Error message is equal to the string.
+
+        Args:
+            other: The String to compare to.
+
+        Returns:
+            The comparison.
+        """
+
+        return str(self) == other

@@ -134,7 +134,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 
     ```mojo
     fn func_that_can_err[A: CollectionElement]() -> Result[A]:
-        ...
+        return Error("failed")
 
     fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T]:
         var result: Result[A] = func_that_can_err[A]()
@@ -504,3 +504,257 @@ struct ResultReg[T: AnyTrivialRegType](Boolable):
             True if the `ResultReg` has a value and False otherwise.
         """
         return __mlir_op.`kgen.variant.is`[index = Int(0).value](self._value)
+
+
+# ===----------------------------------------------------------------------===#
+# Result2
+# ===----------------------------------------------------------------------===#
+
+from forge_tools.builtin.error import Error2
+
+
+@value
+struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
+    """A parametric `Result2` type. A type modeling a value which may or may not
+    be present. With an Error in the case of failure.
+
+    Parameters:
+        T: The type of value stored in the `Result2`.
+        E: The type of Error stored in the `Result2`.
+
+    Examples:
+
+    ```mojo
+    from forge_tools.collections.result import Result2
+    from forge_tools.builtin.error import Error2
+
+    fn do_something(i: Int) -> Result2[Int, "IndexError"]:
+        if i < 0:
+            return None, Error2["IndexError"]("index out of bounds :" + str(i))
+        return 1
+
+    fn do_some_other_thing() -> Result2[String, "OtherError"]:
+        var a = do_something(-1)
+        if a.err:
+            return a # error message gets transferred
+        return ""
+    ```
+    """
+
+    alias _type = Variant[NoneType, T]
+    var _value: Self._type
+    alias _err_type = Error2[E]
+    var err: Self._err_type
+    """The Error inside the `Result`."""
+
+    @always_inline("nodebug")
+    fn __init__(
+        inout self,
+        value: NoneType = None,
+        err: Self._err_type = Self._err_type("Result value was not set"),
+        /,
+    ):
+        """Create an empty `Result` with an `Error`.
+
+        Args:
+            value: Must be exactly `None`.
+            err: The `Error`.
+        """
+        self = Self(err=err)
+
+    @always_inline("nodebug")
+    fn __init__(inout self, value: Tuple[NoneType, Self._err_type], /):
+        """Create an empty `Result` with an `Error`.
+
+        Args:
+            value: Must be exactly (`None`, `Error`).
+        """
+        self = Self(err=value[1])
+
+    @always_inline("nodebug")
+    fn __init__[A: CollectionElement](inout self, owned other: Result2[A, E]):
+        """Create a `Result` by transferring another `Result`'s Error.
+
+        Parameters:
+            A: The type of the value contained in other.
+
+        Args:
+            other: The other `Result`.
+        """
+        self = Self(err=other.err)
+
+    @always_inline("nodebug")
+    fn __init__[
+        A: CollectionElement, B: StringLiteral
+    ](inout self, owned other: Result2[A, B]):
+        """Create a `Result` by transferring another `Result`'s Error message.
+
+        Parameters:
+            A: The type of the value contained in other.
+            B: The type of the Error contained in other.
+
+        Args:
+            other: The other `Result`.
+        """
+        self = Self(err=Self._err_type(other.err.message))
+
+    @always_inline("nodebug")
+    fn __init__(inout self, owned value: T):
+        """Create a `Result` containing a value.
+
+        Args:
+            value: The value to store in the `Result`.
+        """
+        self._value = Self._type(value^)
+        self.err = Self._err_type("")
+
+    @always_inline("nodebug")
+    fn __init__(inout self, *, err: Self._err_type):
+        """Create an empty `Result`.
+
+        Args:
+            err: Must be an `Error`.
+        """
+        self._value = Self._type(None)
+        self.err = err
+
+    @always_inline
+    fn value(ref [_]self) -> ref [__lifetime_of(self)] T:
+        """Retrieve a reference to the value of the `Result`.
+
+        This check to see if the `Result` contains a value.
+        If you call this without first verifying the `Result` with __bool__()
+        eg. by `if my_result:` or without otherwise knowing that it contains a
+        value (for instance with `or_else`), the program will abort
+
+        Returns:
+            A reference to the contained data of the `Result` as a Reference[T].
+        """
+        if not self:
+            abort(".value() on empty `Result`")
+
+        return self.unsafe_value()
+
+    @always_inline
+    fn unsafe_value(
+        ref [_]self,
+    ) -> ref [__lifetime_of(self)] T:
+        """Unsafely retrieve a reference to the value of the `Result`.
+
+        This doesn't check to see if the `Result` contains a value.
+        If you call this without first verifying the `Result` with __bool__()
+        eg. by `if my_result:` or without otherwise knowing that it contains a
+        value (for instance with `or_else`), you'll get garbage unsafe data out.
+
+        Returns:
+            A reference to the contained data of the `Result` as a Reference[T].
+        """
+        debug_assert(self, ".value() on empty Result")
+        return self._value[T]
+
+    @always_inline
+    fn _value_copy(self) -> T:
+        """Unsafely retrieve the value out of the `Result`.
+
+        Note: only used for Results when used in a parameter context
+        due to compiler bugs.  In general, prefer using the public `Result.value()`
+        function that returns a `Reference[T]`.
+        """
+
+        debug_assert(self, ".value() on empty Result")
+        return self._value[T]
+
+    fn take(inout self) -> T:
+        """Move the value out of the `Result`.
+
+        The caller takes ownership over the new value, which is moved
+        out of the `Result`, and the `Result` is left in an empty state.
+
+        This check to see if the `Result` contains a value.
+        If you call this without first verifying the `Result` with __bool__()
+        eg. by `if my_result:` or without otherwise knowing that it contains a
+        value (for instance with `or_else`), you'll get garbage unsafe data out.
+
+        Returns:
+            The contained data of the `Result` as an owned T value.
+        """
+        if not self:
+            abort(".take() on empty `Result`")
+        return self.unsafe_take()
+
+    fn unsafe_take(inout self) -> T:
+        """Unsafely move the value out of the `Result`.
+
+        The caller takes ownership over the new value, which is moved
+        out of the `Result`, and the `Result` is left in an empty state.
+
+        This check to see if the `Result` contains a value.
+        If you call this without first verifying the `Result` with __bool__()
+        eg. by `if my_option:` or without otherwise knowing that it contains a
+        value (for instance with `or_else`), the program will abort!
+
+        Returns:
+            The contained data of the option as an owned T value.
+        """
+        debug_assert(self, ".unsafe_take() on empty Result")
+        return self._value.unsafe_take[T]()
+
+    fn or_else(self, default: T) -> T:
+        """Return the underlying value contained in the `Result` or a default
+        value if the `Result`'s underlying value is not present.
+
+        Args:
+            default: The new value to use if no value was present.
+
+        Returns:
+            The underlying value contained in the Result or a default value.
+        """
+        if self:
+            return self._value[T]
+        return default
+
+    @always_inline("nodebug")
+    fn __is__(self, other: NoneType) -> Bool:
+        """Return `True` if the `Result` has no value.
+
+        It allows you to use the following syntax: `if my_result is None:`
+
+        Args:
+            other: The value to compare to (None).
+
+        Returns:
+            True if the `Result` has no value and False otherwise.
+        """
+        return not self
+
+    @always_inline("nodebug")
+    fn __isnot__(self, other: NoneType) -> Bool:
+        """Return `True` if the `Result` has a value.
+
+        It allows you to use the following syntax: `if my_result is not None:`.
+
+        Args:
+            other: The value to compare to (None).
+
+        Returns:
+            True if the `Result` has a value and False otherwise.
+        """
+        return self
+
+    @always_inline("nodebug")
+    fn __bool__(self) -> Bool:
+        """Return true if the `Result` has a value.
+
+        Returns:
+            True if the `Result` has a value and False otherwise.
+        """
+        return not self._value.isa[NoneType]()
+
+    @always_inline("nodebug")
+    fn __invert__(self) -> Bool:
+        """Return False if the `Result` has a value.
+
+        Returns:
+            False if the `Result` has a value and True otherwise.
+        """
+        return not self
