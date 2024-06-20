@@ -314,7 +314,7 @@ struct ZoneInfoFile32(CollectionElement):
         try:
             with open(self._file, "wb") as f:
                 _ = f.seek(Self.hash(key) * 4)
-                # FIXME: this is horrible
+                # FIXME: this is ugly
                 var items = List[UInt8](
                     (value.buf >> 24).cast[DType.uint8](),
                     (value.buf >> 16).cast[DType.uint8](),
@@ -397,7 +397,7 @@ struct ZoneInfoFile8(CollectionElement):
         try:
             with open(self._file, "wb") as f:
                 _ = f.seek(Self.hash(key))
-                # FIXME: this is horrible
+                # FIXME: this is ugly
                 f.write(String(List[UInt8](value.buf, 0)))
         except:
             # TODO: propper logging

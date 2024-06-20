@@ -24,12 +24,12 @@ from forge_tools.datetime.calendar import PythonCalendar, UTCCalendar
 
 alias DateT = DateTime[iana=False, pyzoneinfo=False, native=False]
 var dt = DateT(2024, 6, 18, 22, 14, 7)
-print(dt) # 2024-06-18 22:14:07+00:00 
+print(dt) # 2024-06-18T22:14:07+00:00 
 alias fstr = IsoFormat(IsoFormat.HH_MM_SS) 
 var iso_str = dt.to_iso[fstr]()
 var customcal = Calendar(2024)
 dt = DateT.from_iso[fstr](iso_str, calendar=customcal)
-print(dt) # 2024-01-01 22:14:07+00:00 
+print(dt) # 2024-01-01T22:14:07+00:00 
 
 
 # TODO: current mojo limitation. Parametrized structs need to be bound to an

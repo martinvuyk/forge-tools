@@ -717,7 +717,7 @@ struct Date[
     fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
         compliant formatted`String` e.g. `IsoFormat.YYYY_MM_DD` ->
-         `1970-01-01` . The `Date` is first converted to UTC.
+         `1970-01-01` .
 
         Parameters:
             iso: The IsoFormat.

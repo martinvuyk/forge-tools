@@ -138,8 +138,8 @@ stack with very efficient vectorized operations.
     - By default UTC, highly customizable and options for full or partial
         IANA timezones support.
 - `DateTime64`, `DateTime32`, `DateTime16`, `DateTime8`
-    - Fast implementations of DateTime, no leap seconds or years,
-        and some have much lower resolutions but better performance.
+    - Fast implementations of DateTime, no leap seconds, and some have much
+        lower resolutions but better performance.
 - Notes:
     - The caveats of each implementation are better explained in each struct's docstrings.
 
@@ -152,12 +152,12 @@ from forge_tools.datetime.calendar import PythonCalendar, UTCCalendar
 
 alias DateT = DateTime[iana=False, pyzoneinfo=False, native=False]
 var dt = DateT(2024, 6, 18, 22, 14, 7)
-print(dt) # 2024-06-18 22:14:07+00:00 
+print(dt) # 2024-06-18T22:14:07+00:00 
 alias fstr = IsoFormat(IsoFormat.HH_MM_SS) 
 var iso_str = dt.to_iso[fstr]()
 var customcal = Calendar(2024)
 dt = DateT.from_iso[fstr](iso_str, calendar=customcal)
-print(dt) # 2024-01-01 22:14:07+00:00 
+print(dt) # 2024-01-01T22:14:07+00:00 
 
 
 # TODO: current mojo limitation. Parametrized structs need to be bound to an
