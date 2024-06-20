@@ -193,13 +193,7 @@ struct Date[
         if self.tz == TZ_UTC:
             return self^
         var offset = self.tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
-        var midday = self.calendar.max_hour - self.calendar.min_hour
-        var beyond_day = (
-            midday
-            + offset.hour
-            + offset.minute / self.calendar.max_typical_second
-            > self.calendar.max_hour
-        )
+        var beyond_day = 12 + offset.hour + offset.minute / 60 > 24
         if beyond_day and offset.sign == -1:
             self = self.add(days=1)
         elif beyond_day and offset.sign == 1:
