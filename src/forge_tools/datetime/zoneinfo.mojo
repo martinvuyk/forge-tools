@@ -134,6 +134,32 @@ struct Offset:
             self.sign = 1
             self.buf = 1 << 7
 
+    fn to_iso(self) -> String:
+        """Return the Offset's ISO8601 representation
+        (full format i.e. `+00:00`).
+
+        Returns:
+            The string of self.
+        """
+
+        var h = self.hour
+        var m = self.minute
+
+        var sign = "-" if self.sign == -1 and not (h == 0 and m == 0) else "+"
+        var hh = str(h) if h > 9 else "0" + str(h)
+        var mm = str(m) if m > 9 else "0" + str(m)
+        return sign + hh + ":" + mm
+
+    fn __str__(self) -> String:
+        """Return the Offset's ISO8601 representation
+        (full format i.e. `+00:00`).
+
+        Returns:
+            The string of self.
+        """
+
+        return self.to_iso()
+
     fn __eq__(self, other: Self) -> Bool:
         """Whether the given Offset is equal to self.
 
@@ -189,17 +215,16 @@ struct TzDT:
                 and fw=1 -> second to last.
             hour: {20, 21, 22, 23, 0, 1, 2, 3} Hour at which DST starts/ends.
         """
-        var h: UInt16 = 0
-        var i = 0
-        for item in List(20, 21, 22, 23, 0, 1, 2, 3):
-            if hour == item[]:
-                h = i
-                break
-            i += 1
-        var mon = month.cast[DType.uint16]()
-        var d = dow.cast[DType.uint16]()
-        var eo = eomon.cast[DType.uint16]()
-        var w = week.cast[DType.uint16]()
+
+        var mon = int(month - 1)
+        var d = int(dow)
+        var eo = int(eomon)
+        var w = int(week)
+
+        alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
+        alias indices = SIMD[DType.uint8, 8](0, 1, 2, 3, 4, 5, 6, 7)
+        var result = (hours == hour).cast[DType.uint8]() * indices
+        var h = int(result.reduce_max())
 
         self.month = month
         self.dow = dow
@@ -215,12 +240,21 @@ struct TzDT:
             buf: The hash.
         """
 
-        self.month = (buf >> 8) & 0b1111
-        self.dow = (buf >> 5) & 0b111
-        self.eomon = (buf >> 4) & 0b1
-        self.week = (buf >> 3) & 0b1
-        self.hour = buf & 0b111
+        self.month = ((buf >> 8).cast[DType.uint8]() & 0b1111) + 1
+        self.dow = ((buf >> 5) & 0b111).cast[DType.uint8]()
+        self.eomon = ((buf >> 4) & 0b1).cast[DType.uint8]()
+        self.week = ((buf >> 3) & 0b1).cast[DType.uint8]()
+        alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
+        self.hour = hours[int(buf & 0b111)]
         self.buf = buf
+
+    fn __str__(self) -> String:
+        """Stringify self.
+
+        Returns:
+            The string of self.
+        """
+        return str(bin(self.buf))
 
     @always_inline("nodebug")
     fn __eq__(self, other: Self) -> Bool:
@@ -275,10 +309,13 @@ struct ZoneDST:
             - dst_end: TzDT hash (12 bits in a UInt16 buffer).
             - offset: Offset hash (8 bits in a UInt16 buffer).
         """
+
+        alias b12 = 0b1111_1111_1111
+        alias b8 = 0b1111_1111
         return (
-            TzDT(((self.buf >> 20) & 0b11_1111_1111).cast[DType.uint16]()),
-            TzDT(((self.buf >> 8) & 0b11_1111_1111).cast[DType.uint16]()),
-            Offset((self.buf & 0b1111_1111).cast[DType.uint8]()),
+            TzDT(buf=((self.buf >> 20) & b12).cast[DType.uint16]()),
+            TzDT(buf=((self.buf >> 8) & b12).cast[DType.uint16]()),
+            Offset(buf=(self.buf & b8).cast[DType.uint8]()),
         )
 
 

@@ -373,6 +373,7 @@ fn test_array_span() raises:
 fn test_array_boolable() raises:
     assert_true(Array[DType.int8, 1](1))
     assert_false(Array[DType.int8, 1]())
+    assert_false(Array[DType.int8, 256]())
 
 
 fn test_constructor_from_pointer() raises:

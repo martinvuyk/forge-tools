@@ -17,12 +17,12 @@ from forge_tools.collections import Array
 alias Arr = Array[DType.uint8, 3]
 var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
-print((a - b).sum()) # prints 0
-print(a.avg()) # prints 2
-print(a * b) # dot product: 14
-print(a.cross(b)) # cross product: Array(0, 0, 0)
-print(2 in a) # prints True
-print(a.index(2).value() if a.index(2) else -1) # prints 1
+print((a - b).sum()) # 0
+print(a.avg()) # 2
+print(a * b) # dot product, prints: 14
+print(a.cross(b)) # cross product, prints: [0, 0, 0]
+print(2 in a) # True
+print(a.index(2).or_else(-1)) # 1
 print((Arr(2, 2, 2) % 2).sum()) # 0
 print((Arr(2, 2, 2) // 2).sum()) # 3
 print((Arr(2, 2, 2) ** 2).sum()) # 12
@@ -105,10 +105,10 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
     var b = Arr(1, 2, 3)
     print((a - b).sum()) # 0
     print(a.avg()) # 2
-    print(a * b) # dot product: 14
-    print(a.cross(b)) # cross product: Array(0, 0, 0)
+    print(a * b) # dot product, prints: 14
+    print(a.cross(b)) # cross product, prints: [0, 0, 0]
     print(2 in a) # True
-    print(a.index(2).value() if a.index(2) else -1) # 1
+    print(a.index(2).or_else(-1)) # 1
     print((Arr(2, 2, 2) % 2).sum()) # 0
     print((Arr(2, 2, 2) // 2).sum()) # 3
     print((Arr(2, 2, 2) ** 2).sum()) # 12
@@ -530,7 +530,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         value: Self._scalar_type,
         start: Int = 0,
         stop: Int = -1,
-    ) -> OptionalReg[Int]:
+    ) -> Optional[Int]:
         """
         Returns the index of the first occurrence of a value in an Array
         restricted by the range given the start and stop bounds.
@@ -538,7 +538,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         ```mojo
         from forge_tools.collections import Array
         var item = Array[DType.uint8, 3](1, 2, 3).index(2)
-        print(item.value() if item else -1) # prints `1`
+        print(item.or_else(-1)) # prints `1`
         ```
 
         Args:

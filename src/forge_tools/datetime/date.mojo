@@ -731,8 +731,9 @@ struct Date[
             String.
         """
 
+        var offset = self.tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
         return dt_str.to_iso[iso](
-            self.year, self.month, self.day, 0, 0, 0, self.tz.to_iso()
+            self.year, self.month, self.day, 0, 0, 0, offset.to_iso()
         )
 
     @staticmethod

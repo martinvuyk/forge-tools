@@ -1051,6 +1051,9 @@ struct DateTime[
             String.
         """
 
+        var offset = self.tz.offset_at(
+            self.year, self.month, self.day, self.hour, self.minute, self.second
+        )
         return dt_str.to_iso[iso](
             self.year,
             self.month,
@@ -1058,7 +1061,7 @@ struct DateTime[
             self.hour,
             self.minute,
             self.second,
-            self.tz.to_iso(),
+            offset.to_iso(),
         )
 
     @staticmethod

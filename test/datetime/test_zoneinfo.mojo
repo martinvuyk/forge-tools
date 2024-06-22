@@ -19,7 +19,7 @@ from forge_tools.datetime.zoneinfo import (
 
 
 fn test_offset() raises:
-    var minutes = List[UInt8](0, 30, 45)
+    alias minutes = SIMD[DType.uint8, 4](0, 30, 45, 0)
     for k in range(2):
         var sign = 1 if k == 0 else -1
         for j in range(3):
@@ -28,16 +28,55 @@ fn test_offset() raises:
                 assert_equal(of.hour, i)
                 assert_equal(of.minute, minutes[j])
                 assert_equal(of.sign, sign)
+                of = Offset(buf=of.buf)
+                assert_equal(of.hour, i)
+                assert_equal(of.minute, minutes[j])
+                assert_equal(of.sign, sign)
 
 
 fn test_tzdst() raises:
-    # TODO
-    pass
+    alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
+    for month in range(1, 13):
+        for dow in range(2):
+            for eomon in range(2):
+                for week in range(2):
+                    for hour in range(8):
+                        var tzdt = TzDT(month, dow, eomon, week, hours[hour])
+                        assert_equal(tzdt.month, month)
+                        assert_equal(tzdt.dow, dow)
+                        assert_equal(tzdt.eomon, eomon)
+                        assert_equal(tzdt.week, week)
+                        assert_equal(tzdt.hour, hours[hour])
+                        tzdt = TzDT(buf=tzdt.buf)
+                        assert_equal(tzdt.month, month)
+                        assert_equal(tzdt.dow, dow)
+                        assert_equal(tzdt.eomon, eomon)
+                        assert_equal(tzdt.week, week)
+                        assert_equal(tzdt.hour, hours[hour])
 
 
 fn test_zonedst() raises:
-    # TODO
-    pass
+    alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
+    alias minutes = SIMD[DType.uint8, 4](0, 30, 45, 0)
+    for month in range(1, 13):
+        for dow in range(2):
+            for eomon in range(2):
+                for week in range(2):
+                    for hour in range(8):
+                        for k in range(2):
+                            var sign = 1 if k == 0 else -1
+                            for j in range(3):
+                                for i in range(16):
+                                    var tzdt = TzDT(
+                                        month, dow, eomon, week, hours[hour]
+                                    )
+                                    var of = Offset(i, minutes[j], sign)
+                                    var parsed = ZoneDST(
+                                        tzdt, tzdt, of
+                                    ).from_hash()
+                                    assert_equal(tzdt.buf, parsed[0].buf)
+                                    assert_equal(tzdt.buf, parsed[1].buf)
+                                    assert_equal(of.buf, parsed[2].buf)
 
 
 fn test_zoneinfomem32() raises:

@@ -266,38 +266,6 @@ struct TimeZone[
         """
         return self.tz_str != other.tz_str
 
-    @always_inline("nodebug")
-    fn to_iso(self) -> String:
-        """Return the Offset's ISO8601 representation
-        (full format i.e. `+00:00`).
-
-        Returns:
-            String.
-        """
-
-        var h: UInt8 = 0
-        var m: UInt8 = 0
-        var ss: UInt8 = 1
-        if self.has_dst:
-            var data = self._dst.get(self.tz_str)
-            if data:
-                var d = data.value().from_hash()[2]
-                h = d.hour
-                m = d.minute
-                ss = d.sign
-        else:
-            var data = self._no_dst.get(self.tz_str)
-            if data:
-                var d = data.value()
-                h = d.hour
-                m = d.minute
-                ss = d.sign
-
-        var sign = "-" if ss == -1 and not (h == 0 and m == 0) else "+"
-        var hh = str(h) if h > 9 else "0" + str(h)
-        var mm = str(m) if m > 9 else "0" + str(m)
-        return sign + hh + ":" + mm
-
     @staticmethod
     fn from_offset(
         year: UInt16,
