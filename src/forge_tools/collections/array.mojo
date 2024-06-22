@@ -114,19 +114,19 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
     print((Arr(2, 2, 2) ** 2).sum()) # 12
     ```
 
-    Constraints:
-        Maximum capacity is 256.
-
-    Notes:
-        Setting Array items directly doesn't update self.capacity_left,
-            methods like append(), extend(), concat(), etc. do.
-
     Parameters:
         T: The type of the elements in the Array.
         capacity: The number of elements that the Array can hold.
             Should be a power of two, otherwise space on the SIMD vector
             is wasted and many functions become slower as they have
             to mask the extra dimensions.
+
+    Constraints:
+        Maximum capacity is 256.
+
+    Notes:
+        Setting Array items directly doesn't update self.capacity_left,
+            methods like append(), extend(), concat(), etc. do.
     """
 
     alias _vec_type = SIMD[T, _closest_upper_pow_2(capacity)]
@@ -377,16 +377,13 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
 
         var size_mask = SIMD[DType.bool, Self._vec_type.size](False)
-        var size = len(self)
 
         @parameter
         fn closure[simd_width: Int](i: Int):
-            size_mask[i] = i < size
+            size_mask[i] = True
 
-        # FIXME will this work?
-        vectorize[closure, simdwidthof[T]()](capacity)
-
-        return ((self.vec == value).cast[DType.bool]() & size_mask).reduce_or()
+        vectorize[closure, simdwidthof[T]()](len(self))
+        return ((self.vec == value) & size_mask).reduce_or()
 
     @always_inline
     fn __bool__(self) -> Bool:
@@ -420,22 +417,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
     fn __str__(self) -> String:
         """Returns a string representation of an `Array`.
 
-        Note that since we can't condition methods on a trait yet,
-        the way to call this method is a bit special. Here is an example below:
+        Returns:
+            A string representation of the array.
+
+        Examples:
 
         ```mojo
         from forge_tools.collections import Array
         var my_array = Array[DType.uint8, 3](1, 2, 3)
         print(str(my_array))
         ```
-
-        When the compiler supports conditional methods, then a simple `str(my_array)` will
-        be enough.
-
-        The elements' type must implement the `__str__()` for this to work.
-
-        Returns:
-            A string representation of the array.
+        .
         """
         # we do a rough estimation of the number of chars that we'll see
         # in the final string, we assume that str(x) will be at least one char.
@@ -453,26 +445,22 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             if i < len(self) - 1:
                 result += ", "
         result += "]"
-        return result
+        return result^
 
     fn __repr__(self) -> String:
         """Returns a string representation of an `Array`.
-        Note that since we can't condition methods on a trait yet,
-        the way to call this method is a bit special. Here is an example below:
+
+        Returns:
+            A string representation of the array.
+
+        Examples:
 
         ```mojo
         from forge_tools.collections import Array
         var my_array = Array[DType.uint8, 3](1, 2, 3)
         print(repr(my_array))
         ```
-
-        When the compiler supports conditional methods, then a simple `repr(my_array)` will
-        be enough.
-
-        The elements' type must implement the `__repr__()` for this to work.
-
-        Returns:
-            A string representation of the array.
+        .
         """
         return str(self)
 
@@ -531,15 +519,8 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         start: Int = 0,
         stop: Int = -1,
     ) -> Optional[Int]:
-        """
-        Returns the index of the first occurrence of a value in an Array
+        """Returns the index of the first occurrence of a value in an Array
         restricted by the range given the start and stop bounds.
-
-        ```mojo
-        from forge_tools.collections import Array
-        var item = Array[DType.uint8, 3](1, 2, 3).index(2)
-        print(item.or_else(-1)) # prints `1`
-        ```
 
         Args:
             value: The value to search for.
@@ -550,6 +531,15 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Returns:
             The Optional index of the first occurrence of the value in the Array.
+
+        Examples:
+
+        ```mojo
+        from forge_tools.collections import Array
+        var item = Array[DType.uint8, 3](1, 2, 3).index(2)
+        print(item.or_else(-1)) # prints `1`
+        ```
+        .
         """
 
         var size = len(self)
@@ -575,6 +565,26 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             if s[i]:
                 return i
         return None
+
+    fn remove(inout self, value: Int):
+        """Remove the first occurrence of value from the array.
+
+        Args:
+            value: The value.
+        """
+        var idx = self.index(value)
+        if idx:
+            _ = self.pop(idx.value())
+
+    fn reverse(inout self):
+        """Reverse the order of the items in the array."""
+
+        var vec = Self._vec_type()
+        var idx = 0
+        for item in self.__reversed__():
+            vec[idx] = item
+            idx += 1
+        self.vec = vec
 
     @always_inline
     fn __getitem__(self, span: Slice) -> Self:
@@ -637,20 +647,21 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
     fn count(self, value: Self._scalar_type) -> Int:
         """Counts the number of occurrences of a value in the Array.
-        Note that since we can't condition methods on a trait yet,
-        the way to call this method is a bit special. Here is an example below.
-
-        ```mojo
-        from forge_tools.collections import Array
-        var my_array = Array[DType.uint8, 3](1, 2, 3)
-        print(my_array.count(1)) # 1
-        ```
 
         Args:
             value: The value to count.
 
         Returns:
             The number of occurrences of the value in the Array.
+
+        Examples:
+
+        ```mojo
+        from forge_tools.collections import Array
+        var my_array = Array[DType.uint8, 3](1, 2, 3)
+        print(my_array.count(1)) # 1
+        ```
+        .
         """
 
         var null_amnt: UInt8 = 0
