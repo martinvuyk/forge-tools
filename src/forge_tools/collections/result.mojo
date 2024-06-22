@@ -25,7 +25,6 @@ And if more information about the returned Error is wanted it is available.
 
 ```mojo
 from forge_tools.collections import Result
-from forge_tools.builtin.error import Error as Err
 var a = Result(1)
 var b = Result[Int](err=Error("something went wrong"))
 var c = Result[Int](None, Error("error 1"))
@@ -110,7 +109,6 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 
     ```mojo
     from forge_tools.collections import Result
-    from forge_tools.builtin.error import Error as Err
     var a = Result(1)
     var b = Result[Int](err=Error("something went wrong"))
     var c = Result[Int](None, Error("error 1"))
