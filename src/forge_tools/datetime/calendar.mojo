@@ -119,7 +119,14 @@ struct CalendarHashes:
 # TODO: once traits with attributes and impl are ready Calendar will replace
 # a bunch of this file
 trait _Calendarized:
-    fn __init__(inout self, *, min_year: UInt16 = 1, max_year: UInt16 = 9999):
+    fn __init__(
+        inout self,
+        *,
+        min_year: UInt16,
+        min_month: UInt8,
+        min_day: UInt8,
+        max_year: UInt16,
+    ):
         ...
 
     fn from_year(self, year: UInt16) -> Self:
@@ -278,7 +285,7 @@ struct Calendar:
 
     fn __init__[
         T: Variant[Gregorian, UTCFast] = Gregorian
-    ](inout self, min_year: UInt16):
+    ](inout self, min_year: UInt16, min_month: UInt8 = 1, min_day: UInt8 = 1):
         """Get a Calendar with min_year=year.
 
         Parameters:
@@ -286,13 +293,21 @@ struct Calendar:
 
         Args:
             min_year: Calendar year start.
+            min_month: Calendar month start.
+            min_day: Calendar day start.
         """
 
         @parameter
         if T.isa[Gregorian]():
-            self = Self(Gregorian(min_year=min_year))
+            self = Self(
+                Gregorian(
+                    min_year=min_year, min_month=min_month, min_day=min_day
+                )
+            )
         elif T.isa[UTCFast]():
-            self = Self(UTCFast(min_year=min_year))
+            self = Self(
+                UTCFast(min_year=min_year, min_month=min_month, min_day=min_day)
+            )
         else:
             constrained[False, "that implementation isn't valid"]()
             self = Self()
@@ -866,9 +881,9 @@ struct Gregorian(_Calendarized):
     """Maximum value of nanoseconds in a second."""
     var min_year: UInt16
     """Default minimum year in the calendar."""
-    alias min_month: UInt8 = 1
+    var min_month: UInt8
     """Default minimum month."""
-    alias min_day: UInt8 = 1
+    var min_day: UInt8
     """Default minimum day."""
     alias min_hour: UInt8 = 0
     """Default minimum hour."""
@@ -896,15 +911,21 @@ struct Gregorian(_Calendarized):
         inout self,
         *,
         min_year: UInt16 = 1,
+        min_month: UInt8 = 1,
+        min_day: UInt8 = 1,
         max_year: UInt16 = 9999,
     ):
         """Construct a `Gregorian` Calendar from values.
 
         Args:
             min_year: Min year (epoch start).
+            min_month: Min month (epoch start).
+            min_day: Min day (epoch start).
             max_year: Max year (epoch end).
         """
         self.max_year = max_year
+        self.min_month = min_month
+        self.min_day = min_day
         self.min_year = min_year
 
     fn from_year(self, year: UInt16) -> Self:
@@ -1410,9 +1431,9 @@ struct UTCFast(_Calendarized):
     """Maximum value of nanoseconds in a second."""
     var min_year: UInt16
     """Default minimum year in the calendar."""
-    alias min_month: UInt8 = 1
+    var min_month: UInt8
     """Default minimum month."""
-    alias min_day: UInt8 = 1
+    var min_day: UInt8
     """Default minimum day."""
     alias min_hour: UInt8 = 0
     """Default minimum hour."""
@@ -1437,15 +1458,24 @@ struct UTCFast(_Calendarized):
     )
 
     fn __init__(
-        inout self, *, min_year: UInt16 = 1970, max_year: UInt16 = 9999
+        inout self,
+        *,
+        min_year: UInt16 = 1970,
+        min_month: UInt8 = 1,
+        min_day: UInt8 = 1,
+        max_year: UInt16 = 9999,
     ):
         """Construct a `UTCFast` Calendar from values.
 
         Args:
             min_year: Min year (epoch start).
+            min_month: Min month (epoch start).
+            min_day: Min day (epoch start).
             max_year: Max year (epoch end).
         """
         self.max_year = max_year
+        self.min_month = min_month
+        self.min_day = min_day
         self.min_year = min_year
 
     fn from_year(self, year: UInt16) -> Self:
@@ -1927,3 +1957,5 @@ struct UTCFast(_Calendarized):
         """
 
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+
