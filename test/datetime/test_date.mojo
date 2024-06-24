@@ -261,12 +261,12 @@ fn test_iso() raises:
 
     iso_str = "00:00:00"
     alias fmt5 = IsoFormat(IsoFormat.HH_MM_SS)
-    assert_equal(ref1, date.from_iso[fmt5, calendar=unixcal](iso_str).value())
+    assert_equal(ref1, date.from_iso[fmt5](iso_str, calendar=unixcal).value())
     assert_equal(iso_str, ref1.to_iso[fmt5]())
 
     iso_str = "000000"
     alias fmt6 = IsoFormat(IsoFormat.HHMMSS)
-    assert_equal(ref1, date.from_iso[fmt6, calendar=unixcal](iso_str).value())
+    assert_equal(ref1, date.from_iso[fmt6](iso_str, calendar=unixcal).value())
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
