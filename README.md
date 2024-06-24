@@ -183,12 +183,81 @@ fn do_some_other_thing() -> Result2[String, "OtherError"]:
 ## complex
 ### quaternion.mojo
 #### Quaternion
-Quaternion, a structure often used to represent rotations.
-Allocated on the stack with very efficient vectorized operations.
+```mojo
+struct Quaternion[T: DType = DType.float64]:
+    """Quaternion, a structure often used to represent rotations.
+    Allocated on the stack with very efficient vectorized operations.
+
+    Parameters:
+        T: The type of the elements in the Quaternion, must be a
+            floating point type.
+    """
+
+    alias _vec_type = SIMD[T, 4]
+    alias _scalar_type = Scalar[T]
+    var vec: Self._vec_type
+    """The underlying SIMD vector."""
+
+    ...
+
+    fn __mul__(self, other: Self) -> Self:
+        """Calculate the Hamilton product of self with other.
+
+        Args:
+            other: The other Quaternion.
+
+        Returns:
+            The result.
+        """
+
+        alias sign0 = Self._vec_type(1, -1, -1, -1)
+        alias sign1 = Self._vec_type(1, 1, 1, -1)
+        alias sign2 = Self._vec_type(1, -1, 1, 1)
+        alias sign3 = Self._vec_type(1, 1, -1, 1)
+        var rev = other.vec.shuffle[3, 2, 1, 0]()
+        var w = self.dot(other.vec * sign0)
+        var i = self.dot(rev.rotate_right[2]() * sign1)
+        var j = self.dot(other.vec.rotate_right[2]() * sign2)
+        var k = self.dot(rev * sign3)
+        return Self(w, i, j, k)
+```
+
 #### DualQuaternion
-DualQuaternion, a structure nascently used to represent 3D
-transformations and rigid body kinematics. Allocated on the
-stack with very efficient vectorized operations.
+```mojo
+struct DualQuaternion[T: DType = DType.float64]:
+    """DualQuaternion, a structure nascently used to represent 3D
+    transformations and rigid body kinematics. Allocated on the
+    stack with very efficient vectorized operations.
+
+    Parameters:
+        T: The type of the elements in the DualQuaternion, must be a
+            floating point type.
+    """
+
+    alias _vec_type = SIMD[T, 8]
+    alias _scalar_type = Scalar[T]
+    var vec: Self._vec_type
+    """The underlying SIMD vector."""
+
+    ...
+
+    fn __mul__(self, other: Self) -> Self:
+        """Multiply self with other.
+
+        Args:
+            other: The other DualQuaternion.
+
+        Returns:
+            The result.
+        """
+
+        alias Quat = Quaternion[T]
+        var a = Quat(self.vec.slice[4]())
+        var b = Quat(self.vec.slice[4, offset=4]())
+        var c = Quat(other.vec.slice[4]())
+        var d = Quat(other.vec.slice[4, offset=4]())
+        return Self((a * c).vec.join((a * d + b * c).vec))
+```
 
 ## datetime
 
