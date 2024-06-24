@@ -1294,26 +1294,25 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             var y1 = other.vec.rotate_left[1]()
             var vec1 = x1.join(y1)
             return Self(vec0.reduce_mul[size]() - vec1.reduce_mul[size]())
+        elif capacity == 3:
+            var s = self.vec.shuffle[3, 0, 2, 1]()
+            var o = other.vec.shuffle[3, 1, 0, 2]()
+            return Self(s.fma(o, -(s * other.vec).shuffle[3, 0, 2, 1]()))
         else:
             var s_vec_l = self.vec
             var o_vec_l = other.vec
 
             @parameter
-            for i in range(capacity, size):
-                s_vec_l[i] = self.vec[i - capacity]
-                o_vec_l[i] = other.vec[i - capacity]
+            for i in range(2):
+                s_vec_l[capacity + i] = self.vec[i]
+                o_vec_l[capacity + i] = other.vec[i]
 
-            var x0 = s_vec_l.rotate_left[1]()
-            var y1 = o_vec_l.rotate_left[1]()
+            var x0 = s_vec_l.shift_left[1]()
+            var y1 = o_vec_l.shift_left[1]()
 
-            @parameter
-            if capacity == 3:
-                s_vec_l[0] = s_vec_l[1]
-                o_vec_l[0] = o_vec_l[1]
-
-            var y0 = o_vec_l.rotate_left[2]()
+            var y0 = o_vec_l.shift_left[2]()
             var vec0 = x0.join(y0)
-            var x1 = s_vec_l.rotate_left[2]()
+            var x1 = s_vec_l.shift_left[2]()
             var vec1 = x1.join(y1)
             return Self(vec0.reduce_mul[size]() - vec1.reduce_mul[size]())
 
@@ -1328,8 +1327,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         fn closure[simd_width: Int](i: Int):
             self.vec[i] = func(self.vec[i])
 
-        # FIXME will this work?
-        vectorize[closure, simdwidthof[T]()](Self._vec_type.size)
+        vectorize[closure, simdwidthof[T]()](len(self))
 
     fn map(
         owned self, func: fn (Self._scalar_type) -> Self._scalar_type
