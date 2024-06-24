@@ -41,8 +41,9 @@ var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
 print((a - b).sum()) # 0
 print(a.avg()) # 2
-print(a * b) # dot product, prints: 14
-print(a.cross(b)) # cross product, prints: [0, 0, 0]
+print(a * b) # [1, 4, 9]
+print(a.dot(b)) # 14
+print(a.cross(b)) # [0, 0, 0]
 print(2 in a) # True
 print(a.index(2).or_else(-1)) # 1
 print((Arr(2, 2, 2) % 2).sum()) # 0

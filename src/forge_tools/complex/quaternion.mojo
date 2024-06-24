@@ -194,6 +194,7 @@ struct Quaternion[T: DType = DType.float64]:
         """
         return self.conjugate()
 
+    @always_inline("nodebug")
     fn dot(self, other: Self) -> Self._scalar_type:
         """Calculate the dot product of self with other.
 

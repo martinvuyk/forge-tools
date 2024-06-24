@@ -19,8 +19,9 @@ var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
 print((a - b).sum()) # 0
 print(a.avg()) # 2
-print(a * b) # dot product, prints: 14
-print(a.cross(b)) # cross product, prints: [0, 0, 0]
+print(a * b) # [1, 4, 9]
+print(a.dot(b)) # 14
+print(a.cross(b)) # [0, 0, 0]
 print(2 in a) # True
 print(a.index(2).or_else(-1)) # 1
 print((Arr(2, 2, 2) % 2).sum()) # 0
@@ -105,8 +106,9 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
     var b = Arr(1, 2, 3)
     print((a - b).sum()) # 0
     print(a.avg()) # 2
-    print(a * b) # dot product, prints: 14
-    print(a.cross(b)) # cross product, prints: [0, 0, 0]
+    print(a * b) # [1, 4, 9]
+    print(a.dot(b)) # 14
+    print(a.cross(b)) # [0, 0, 0]
     print(2 in a) # True
     print(a.index(2).or_else(-1)) # 1
     print((Arr(2, 2, 2) % 2).sum()) # 0
@@ -854,14 +856,12 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return (self.vec * other.vec).reduce_add()
 
-    @always_inline("nodebug")
     @staticmethod
     fn _mask_vec(inout vec: Self._vec_type, value: Int = 0):
         @parameter
         for i in range(Self._vec_type.size - capacity):
             vec[capacity + i] = value
 
-    @always_inline("nodebug")
     @staticmethod
     fn _build_vec(value: Self._scalar_type) -> Self._vec_type:
         var vec = Self._vec_type(value)
@@ -869,8 +869,8 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         return vec
 
     @always_inline("nodebug")
-    fn __mul__(self, other: Self) -> Self._scalar_type:
-        """Calculates the dot product between two Arrays.
+    fn __mul__(self, other: Self) -> Self:
+        """Calculates the elementwise multiplication between two Arrays.
 
         Args:
             other: The other Array.
@@ -878,12 +878,20 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return self.dot(other)
+        return Self(self.vec * other.vec)
+
+    @always_inline("nodebug")
+    fn __imul__(inout self, other: Self):
+        """Calculates the elementwise multiplication between two Arrays inplace.
+
+        Args:
+            other: The other Array.
+        """
+        self.vec *= other.vec
 
     @always_inline("nodebug")
     fn __mul__(self, value: Self._scalar_type) -> Self:
-        """Calculates the elementwise multiplication
-        of the given value.
+        """Calculates the elementwise multiplication by the given value.
 
         Args:
             value: The value.
@@ -895,8 +903,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
     @always_inline("nodebug")
     fn __imul__(inout self, owned value: Self._scalar_type):
-        """Calculates the elementwise multiplication
-        of the given value inplace.
+        """Calculates the elementwise multiplication by the given value inplace.
 
         Args:
             value: The value.
@@ -1182,6 +1189,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         self.vec = self._vec_type(0)
         self.capacity_left = capacity
 
+    @always_inline("nodebug")
     fn __eq__(self, other: Self) -> Bool:
         """Whether self is equal to other.
 
@@ -1193,6 +1201,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return self.vec == other.vec
 
+    @always_inline("nodebug")
     fn __ne__(self, other: Self) -> Bool:
         """Whether self is unequal to other.
 
@@ -1204,6 +1213,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return self.vec != other.vec
 
+    @always_inline("nodebug")
     fn __gt__(self, other: Self) -> Bool:
         """Whether self is greater than other.
 
@@ -1215,6 +1225,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return self.vec > other.vec
 
+    @always_inline("nodebug")
     fn __ge__(self, other: Self) -> Bool:
         """Whether self is greater than or equal to other.
 
@@ -1226,6 +1237,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return self.vec >= other.vec
 
+    @always_inline("nodebug")
     fn __lt__(self, other: Self) -> Bool:
         """Whether self is less than other.
 
@@ -1237,6 +1249,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return self.vec < other.vec
 
+    @always_inline("nodebug")
     fn __le__(self, other: Self) -> Bool:
         """Whether self is less than or equal to other.
 
@@ -1258,7 +1271,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return (self * other) / (self.__abs__() * other.__abs__())
+        return (self.dot(other)) / (self.__abs__() * other.__abs__())
 
     @always_inline("nodebug")
     fn theta(self, other: Self) -> Float64:
@@ -1273,7 +1286,6 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         return acos(self.cos(other))
 
-    @always_inline("nodebug")
     fn cross(self, other: Self) -> Self:
         """Calculates the cross product between two Arrays.
 
