@@ -1119,10 +1119,10 @@ struct DateTime[
 
         Args:
             s: The `String` to parse; it's assumed that it is properly formatted
-                i.e. no leading whitespaces or anything different to the selected
-                IsoFormat.
-            tz: Optional timezone to transform the result into
-                (taking into account that the format may return with a `TimeZone`).
+                i.e. no leading whitespaces or anything different to the
+                selected IsoFormat.
+            tz: Optional timezone to transform the result into (taking into
+                account that the format may return with a `TimeZone`).
             calendar: The calendar to which the result will belong.
 
         Returns:
