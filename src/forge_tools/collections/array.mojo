@@ -367,7 +367,6 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return _ArrayIter[forward=False](len(self), self)
 
-    @always_inline
     fn __contains__(self, value: Self._scalar_type) -> Bool:
         """Verify if a given value is present in the Array.
 
@@ -384,7 +383,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         fn closure[simd_width: Int](i: Int):
             size_mask[i] = True
 
-        vectorize[closure, simdwidthof[T]()](len(self))
+        vectorize[closure, simdwidthof[DType.bool]()](len(self))
         return ((self.vec == value) & size_mask).reduce_or()
 
     @always_inline
@@ -1341,10 +1340,15 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         vectorize[closure, simdwidthof[T]()](len(self))
 
-    fn map(
-        owned self, func: fn (Self._scalar_type) -> Self._scalar_type
-    ) -> Self:
+    fn map[
+        D: DType
+    ](owned self, func: fn (Self._scalar_type) -> Scalar[D]) -> Array[
+        D, capacity
+    ]:
         """Apply a function to the Array and return it.
+
+        Parameters:
+            D: The Dtype of the map return.
 
         Args:
             func: The function to apply.
@@ -1353,8 +1357,14 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             The altered Array.
         """
 
-        self.apply(func)
-        return self
+        var res = SIMD[D, Self._vec_type.size]()
+
+        @parameter
+        fn closure[simd_width: Int](i: Int):
+            res[i] = func(self.vec[i])
+
+        vectorize[closure, simdwidthof[T]()](len(self))
+        return res
 
     fn filter(owned self, func: fn (Self._scalar_type) -> Bool) -> Self:
         """Filter the Array and return it.
