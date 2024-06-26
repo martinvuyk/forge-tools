@@ -1,6 +1,12 @@
 # RUN: %mojo %s
 
-from testing import assert_equal, assert_false, assert_true, assert_raises
+from testing import (
+    assert_equal,
+    assert_false,
+    assert_true,
+    assert_raises,
+    assert_almost_equal,
+)
 
 from forge_tools.collections.array import Array
 
@@ -524,43 +530,171 @@ fn test_array_broadcast_ops() raises:
 
 
 fn test_min() raises:
-    # TODO
-    pass
+    var arr1 = Array[DType.uint8, 53](
+        1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
+    )
+    assert_equal(arr1.min(), 1)
+    var arr2 = Array[DType.float64, 53](
+        1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
+    )
+    assert_equal(arr2.min(), 1)
 
 
 fn test_max() raises:
-    # TODO
-    pass
+    var arr1 = Array[DType.uint8, 53](
+        1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
+    )
+    assert_equal(arr1.max(), 19)
+    var arr2 = Array[DType.float64, 53](
+        1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
+    )
+    assert_equal(arr2.max(), 19)
 
 
 fn test_dot() raises:
-    # TODO
-    pass
+    var arr1 = Array[DType.uint8, 53](
+        1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
+    )
+    assert_equal(arr1.dot[DType.uint64](arr1), 2832)
+    var arr2 = Array[DType.float64, 53](
+        1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
+    )
+    assert_equal(arr2.dot(arr2), 2832)
+    var arr3 = Array[DType.uint64, 53](
+        1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
+    )
+    assert_equal(arr3.dot(arr3), 2832)
 
 
 fn test_array_add() raises:
-    # TODO
-    pass
+    fn test[T: DType]() raises:
+        var arr = Array[T, 53](
+            1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
+        )
+        assert_true((arr + arr == arr * 2).reduce_and())
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn test_array_sub() raises:
-    # TODO
-    pass
+    fn test[T: DType]() raises:
+        var arr = Array[T, 53](
+            1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
+        )
+        assert_equal((arr - arr).sum(), 0)
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn test_cos() raises:
-    # TODO
-    pass
+    fn test[T: DType]() raises:
+        var arr0 = Array[T, 3](0, 0, 1)
+        assert_almost_equal(arr0.cos(arr0), 1, rtol=0.1)
+        var arr1 = Array[T, 3](0, 1, 0)
+        assert_almost_equal(arr0.cos(arr1), 0, rtol=0.1)
+        arr1 = Array[T, 3](1, 0, 0)
+        assert_almost_equal(arr0.cos(arr1), 0, rtol=0.1)
+        if T.is_signed():
+            arr1 = Array[T, 3](0, 0, -1)
+            assert_almost_equal(arr0.cos(arr1), -1, rtol=0.1)
+            arr1 = Array[T, 3](0, -1, 0)
+            assert_almost_equal(arr0.cos(arr1), 0, rtol=0.1)
+            arr1 = Array[T, 3](-1, 0, 0)
+            assert_almost_equal(arr0.cos(arr1), 0, rtol=0.1)
+        var arr2 = Array[T, 4](0, 0, 0, 1)
+        assert_almost_equal(arr2.cos(arr2), 1, rtol=0.1)
+        var arr3 = Array[T, 4](0, 0, 1, 0)
+        assert_almost_equal(arr2.cos(arr3), 0, rtol=0.1)
+        arr3 = Array[T, 4](0, 1, 0, 0)
+        assert_almost_equal(arr2.cos(arr3), 0, rtol=0.1)
+        arr3 = Array[T, 4](1, 0, 0, 0)
+        assert_almost_equal(arr2.cos(arr3), 0, rtol=0.1)
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn test_theta() raises:
-    # TODO
-    pass
+    from math import pi
+
+    fn test[T: DType]() raises:
+        print(T)
+        var arr0 = Array[T, 3](0, 0, 1)
+        assert_almost_equal(arr0.theta(arr0), 0, rtol=0.1)
+        var arr1 = Array[T, 3](0, 1, 0)
+        assert_almost_equal(arr0.theta(arr1), pi / 2, rtol=0.1)
+        arr1 = Array[T, 3](1, 0, 0)
+        assert_almost_equal(arr0.theta(arr1), pi / 2, rtol=0.1)
+        var arr2 = Array[T, 4](0, 0, 0, 1)
+        assert_almost_equal(arr2.theta(arr2), 0, rtol=0.1)
+        var arr3 = Array[T, 4](0, 0, 1, 0)
+        assert_almost_equal(arr2.theta(arr3), pi / 2, rtol=0.1)
+        arr3 = Array[T, 4](0, 1, 0, 0)
+        assert_almost_equal(arr2.theta(arr3), pi / 2, rtol=0.1)
+        arr3 = Array[T, 4](1, 0, 0, 0)
+        assert_almost_equal(arr2.theta(arr3), pi / 2, rtol=0.1)
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn test_cross() raises:
-    # TODO
-    pass
+    fn test[T: DType]() raises:
+        alias Arr = Array[T, 3]
+        var arr0 = Arr(1, 2, 3)
+        assert_true((arr0.cross(arr0) == Arr(0, 0, 0)).reduce_and())
+        var arr1 = Arr(3, 2, 1)
+        assert_true((arr0.cross(arr1) == Arr(-4, 8, -4)).reduce_and())
+        arr1 = Arr(1, 0, 0)
+        assert_true((arr0.cross(arr1) == Arr(0, 3, -2)).reduce_and())
+        var arr2 = Array[T, 4](1, 2, 3, 4)
+        assert_true((arr2.cross(arr2) == Array[T, 4](0, 0, 0, 0)).reduce_and())
+
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn test_apply() raises:
@@ -572,6 +706,10 @@ fn test_reversed() raises:
     # TODO
     pass
 
+
+fn test_map() raises:
+    # TODO
+    pass
 
 fn test_filter() raises:
     # TODO
@@ -612,4 +750,5 @@ fn main() raises:
     test_cross()
     test_apply()
     test_reversed()
+    test_map()
     test_filter()
