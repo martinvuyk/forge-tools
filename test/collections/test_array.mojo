@@ -481,10 +481,27 @@ fn test_array_concat() raises:
 
 
 fn test_array_contains() raises:
-    var x = Array[DType.int8, 21](1, 2, 3)
-    assert_false(0 in x)
-    assert_true(1 in x)
-    assert_false(4 in x)
+    fn test[T: DType]() raises:
+        var x = Array[T, 21](1, 2, 3)
+        assert_false(0 in x)
+        assert_true(1 in x)
+        assert_false(4 in x)
+        var y = Array[T, 3, True](1, 2, 3)
+        assert_false(0 in y)
+        assert_true(1 in y)
+        assert_false(4 in y)
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn test_indexing() raises:

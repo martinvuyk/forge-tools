@@ -179,7 +179,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             methods like append(), extend(), concat(), etc. do.
     """
 
-    alias _vec_type = SIMD[T, _closest_upper_pow_2(capacity)]
+    alias _simd_size = _closest_upper_pow_2(capacity)
+    alias _vec_type = SIMD[T, Self._simd_size]
     var vec: Self._vec_type
     """The underlying SIMD vector."""
     alias _scalar_type = Scalar[T]
@@ -591,12 +592,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Args:
             i: The index for the value.
             value: The value to insert.
-
-        Constraints:
-            The Array can't be static.
         """
 
-        constrained[not static, "The Array can't be static."]()
         debug_assert(
             abs(i) < capacity or i == -1 * capacity, "insert index out of range"
         )
@@ -1699,8 +1696,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         var res = Array[T, capacity, False]()
         var vec = self.map(func)
+
         @parameter
         if static:
+
             @parameter
             for i in range(capacity):
                 if vec[i]:

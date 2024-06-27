@@ -9,7 +9,12 @@ The semi-compiled package will be under `./build/forge_tools.mojopkg`
 ## How to run tests
 test an entire directory or subdirectory or specific file
 ```bash
-source ./scripts/run-tests.sh test/
+source ./scripts/test.sh test/
+```
+## How to run benchmarks
+test an entire directory or subdirectory or specific file
+```bash
+source ./scripts/benchmark.sh benchmarks/
 ```
 
 # Packages
