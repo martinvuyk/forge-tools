@@ -784,7 +784,7 @@ fn test_map() raises:
 
 
 fn test_filter() raises:
-    fn func[T: DType](x: Scalar[T]) -> Bool:
+    fn func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
         return x < 11
 
     fn test[T: DType]() raises:

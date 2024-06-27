@@ -60,7 +60,7 @@ fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
     return a < 3
 print(a.map(mapfunc)) # [False, True, True]
 
-fn filterfunc(a: UInt8) -> Bool:
+fn filterfunc(a: UInt8) -> Scalar[DType.bool]:
     return a < 3
 print(a.filter(filterfunc)) # [2, 1]
 
@@ -69,7 +69,7 @@ fn applyfunc(a: UInt8) -> UInt8:
 a.apply(applyfunc)
 print(a) # [6, 4, 2]
 
-print(a.concat(a.reversed() // 2)) # [6, 4, 2, 3, 2, 1]
+print(a.concat(a.reversed() // 2)) # [6, 4, 2, 1, 2, 3]
 ```
 ### result.mojo
 ### Result

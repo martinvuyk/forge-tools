@@ -38,7 +38,7 @@ fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
     return a < 3
 print(a.map(mapfunc)) # [False, True, True]
 
-fn filterfunc(a: UInt8) -> Bool:
+fn filterfunc(a: UInt8) -> Scalar[DType.bool]:
     return a < 3
 print(a.filter(filterfunc)) # [2, 1]
 
@@ -47,7 +47,7 @@ fn applyfunc(a: UInt8) -> UInt8:
 a.apply(applyfunc)
 print(a) # [6, 4, 2]
 
-print(a.concat(a.reversed() // 2)) # [6, 4, 2, 3, 2, 1]
+print(a.concat(a.reversed() // 2)) # [6, 4, 2, 1, 2, 3]
 ```
 """
 
@@ -151,7 +151,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return a < 3
     print(a.map(mapfunc)) # [False, True, True]
 
-    fn filterfunc(a: UInt8) -> Bool:
+    fn filterfunc(a: UInt8) -> Scalar[DType.bool]:
         return a < 3
     print(a.filter(filterfunc)) # [2, 1]
 
@@ -160,7 +160,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     a.apply(applyfunc)
     print(a) # [6, 4, 2]
 
-    print(a.concat(a.reversed() // 2)) # [6, 4, 2, 3, 2, 1]
+    print(a.concat(a.reversed() // 2)) # [6, 4, 2, 1, 2, 3]
     ```
 
     Parameters:
@@ -506,7 +506,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """Checks whether the Array has any elements or not.
 
         Returns:
-            `False` if the Array is empty, `True` if there is at least one element.
+            `False` if the Array is empty, `True` if there is at least one
+                element.
         """
         return len(self) > 0
 
@@ -521,7 +522,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             cap: The capacity of the other Array.
 
         Args:
-            other: Array whose elements will be combined with the elements of self.
+            other: Array whose elements will be combined with the elements of
+                self.
 
         Returns:
             The newly created Array.
@@ -558,7 +560,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         var result = String(string_buffer^)
         result += "["
         for i in range(len(self)):
-            result += str(self[i])
+            result += str(self.vec[i])
             if i < len(self) - 1:
                 result += ", "
         result += "]"
@@ -904,14 +906,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     @always_inline
     fn unsafe_get(self, idx: Int) -> Self._scalar_type:
         """Get a copy of an element of self without checking index bounds.
-        Users should consider using `__getitem__` instead of this method as it is unsafe.
-        If an index is out of bounds, this method will not abort, it will be considered
-        undefined behavior.
+        Users should consider using `__getitem__` instead of this method as it
+        is unsafe. If an index is out of bounds, this method will not abort, it
+        will be considered undefined behavior.
 
-        Note that there is no wraparound for negative indices, caution is advised.
-        Using negative indices is considered undefined behavior.
-        Never use `my_array.unsafe_get(-1)` to get the last element of the Array. It will
-        not work. Instead, do `my_array.unsafe_get(len(my_array) - 1)`.
+        Note that there is no wraparound for negative indices, caution is
+        advised. Using negative indices is considered undefined behavior. Never
+        use `my_array.unsafe_get(-1)` to get the last element of the Array. It
+        will not work. Instead, do `my_array.unsafe_get(len(my_array) - 1)`.
 
         Args:
             idx: The index of the element to get.
@@ -924,14 +926,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     @always_inline
     fn unsafe_set(inout self, idx: Int, value: Self._scalar_type):
         """Set a copy to an element of self without checking index bounds.
-        Users should consider using `__setitem__` instead of this method as it is unsafe.
-        If an index is out of bounds, this method will not abort, it will be considered
-        undefined behavior. Does not update `self.capacity_left`.
+        Users should consider using `__setitem__` instead of this method as it
+        is unsafe. If an index is out of bounds, this method will not abort, it
+        will be considered undefined behavior. Does not update
+        `self.capacity_left`.
 
-        Note that there is no wraparound for negative indices, caution is advised.
-        Using negative indices is considered undefined behavior.
-        Never use `my_array.unsafe_set(-1)` to set the last element of the Array. It will
-        not work. Instead, do `my_array.unsafe_set(len(my_array) - 1)`.
+        Note that there is no wraparound for negative indices, caution is
+        advised. Using negative indices is considered undefined behavior. Never
+        use `my_array.unsafe_set(-1)` to set the last element of the Array. It
+        will not work. Instead, do `my_array.unsafe_set(len(my_array) - 1)`.
 
         Args:
             idx: The index to set the element.
@@ -1606,13 +1609,21 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             return a * 2
         arr.apply(applyfunc)
         print(arr) # [6, 4, 2]
+        %# from testing import assert_equal
+        %# assert_equal(str(arr), "[6, 4, 2]")
         ```
         .
         """
 
-        # FIXME: can't vectorize for some reason
-        for i in range(len(self)):
+        @parameter
+        fn closure[simd_width: Int](i: Int):
             self.vec[i] = func(self.vec[i])
+
+        @parameter
+        if static:
+            vectorize[closure, 1, size=capacity, unroll_factor=capacity]()
+        else:
+            vectorize[closure, 1](len(self))
 
     fn map[
         D: DType
@@ -1633,9 +1644,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Examples:
         ```mojo
         from forge_tools.collections.array import Array
+
         fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
             return a < 3
-        print(Array[DType.uint8, 3](3, 2, 1).map(mapfunc)) # [False, True, True]
+
+        var arr = Array[DType.uint8, 3](3, 2, 1)
+        print(arr.map(mapfunc)) # [False, True, True]
+        %# from testing import assert_equal
+        %# assert_equal(str(arr.map(mapfunc)), "[False, True, True]")
         ```
         .
         """
@@ -1648,14 +1664,16 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if static:
-            vectorize[closure, simdwidthof[D](), size=capacity]()
+            vectorize[
+                closure, simdwidthof[D](), size=capacity, unroll_factor=capacity
+            ]()
             return Array[D, capacity, static](res)
         else:
             vectorize[closure, simdwidthof[D]()](len(self))
             return Array[D, capacity, static](res, length=len(self))
 
     fn filter(
-        owned self, func: fn (Self._scalar_type) -> Bool
+        owned self, func: fn (Self._scalar_type) -> Scalar[DType.bool]
     ) -> Array[T, capacity, False]:
         """Filter the Array and return it.
 
@@ -1668,16 +1686,27 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Examples:
         ```mojo
         from forge_tools.collections.array import Array
-        fn filterfunc(a: UInt8) -> Bool:
+        fn filterfunc(a: UInt8) -> Scalar[DType.bool]:
             return a < 3
-        print(Array[DType.uint8, 3](3, 2, 1).filter(filterfunc)) # [2, 1]
+
+        var arr = Array[DType.uint8, 3](3, 2, 1)
+        print(arr.filter(filterfunc)) # [2, 1]
+        %# from testing import assert_equal
+        %# assert_equal(str(arr.filter(filterfunc)), "[2, 1]")
         ```
         .
         """
 
         var res = Array[T, capacity, False]()
-        for i in range(len(self)):
-            var value = self.vec[i]
-            if func(value):
-                res.append(value)
+        var vec = self.map(func)
+        @parameter
+        if static:
+            @parameter
+            for i in range(capacity):
+                if vec[i]:
+                    res.append(self.vec[i])
+        else:
+            for i in range(len(self)):
+                if vec[i]:
+                    res.append(self.vec[i])
         return res
