@@ -240,10 +240,14 @@ fn test_array_index() raises:
     var test_array_a = Array[DType.int8, 5](10, 20, 30, 40, 50)
 
     # Basic Functionality Tests
+    assert_true(test_array_a.index(10))
     assert_equal(test_array_a.index(10).value(), 0)
+    assert_true(test_array_a.index(30))
     assert_equal(test_array_a.index(30).value(), 2)
+    assert_true(test_array_a.index(50))
     assert_equal(test_array_a.index(50).value(), 4)
     assert_false(test_array_a.index(60))
+    assert_false(Array[DType.int8, 53](10, 20, 30, 40, 50).index(0))
     # Tests With Start Parameter
     assert_equal(test_array_a.index(30, start=1).value(), 2)
     assert_equal(test_array_a.index(30, start=-4).value(), 2)
@@ -257,12 +261,12 @@ fn test_array_index() raises:
     assert_false(test_array_a.index(30, start=1, stop=2))
     assert_false(test_array_a.index(30, start=3, stop=1))
     # Tests With End Parameter Only
-    assert_equal(test_array_a.index(30, stop=3).value(), 2)
-    assert_equal(test_array_a.index(30, stop=-2).value(), 2)
-    assert_equal(test_array_a.index(30, stop=1000).value(), 2)
-    assert_false(test_array_a.index(30, stop=1))
-    assert_false(test_array_a.index(30, stop=2))
-    assert_false(test_array_a.index(60, stop=50))
+    assert_equal(test_array_a.index(30, start=0, stop=3).value(), 2)
+    assert_equal(test_array_a.index(30, start=0, stop=-2).value(), 2)
+    assert_equal(test_array_a.index(30, start=0, stop=1000).value(), 2)
+    assert_false(test_array_a.index(30, start=0, stop=1))
+    assert_false(test_array_a.index(30, start=0, stop=2))
+    assert_false(test_array_a.index(60, start=0, stop=50))
     # Edge Cases and Special Conditions
     assert_equal(test_array_a.index(10, start=-5, stop=-1).value(), 0)
     assert_equal(test_array_a.index(10, start=0, stop=50).value(), 0)
@@ -678,15 +682,17 @@ fn test_theta() raises:
 
 fn test_cross() raises:
     fn test[T: DType]() raises:
-        alias Arr = Array[T, 3]
+        alias Arr = Array[T, 3, True]
         var arr0 = Arr(1, 2, 3)
         assert_true((arr0.cross(arr0) == Arr(0, 0, 0)).reduce_and())
         var arr1 = Arr(3, 2, 1)
         assert_true((arr0.cross(arr1) == Arr(-4, 8, -4)).reduce_and())
         arr1 = Arr(1, 0, 0)
         assert_true((arr0.cross(arr1) == Arr(0, 3, -2)).reduce_and())
-        var arr2 = Array[T, 4](1, 2, 3, 4)
-        assert_true((arr2.cross(arr2) == Array[T, 4](0, 0, 0, 0)).reduce_and())
+        var arr2 = Array[T, 4, True](1, 2, 3, 4)
+        assert_true(
+            (arr2.cross(arr2) == Array[T, 4, True](0, 0, 0, 0)).reduce_and()
+        )
 
     test[DType.int8]()
     test[DType.int16]()
@@ -697,23 +703,108 @@ fn test_cross() raises:
     test[DType.float64]()
 
 
+fn test_reverse() raises:
+    fn test[T: DType]() raises:
+        var arr = Array[T, 53](
+            1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
+        )
+        var arr2 = Array[T, 53](
+            18, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1
+        )
+        arr.reverse()
+        assert_true((arr == arr2).reduce_and())
+        var arr3 = Array[T, 20, True](
+            1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
+        )
+        var arr4 = Array[T, 20, True](
+            18, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1
+        )
+        arr3.reverse()
+        assert_true((arr3 == arr4).reduce_and())
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
+
+
 fn test_apply() raises:
-    # TODO
-    pass
+    fn mult[T: DType](x: Scalar[T]) -> Scalar[T]:
+        return x * Scalar[T](2)
 
+    fn test[T: DType]() raises:
+        var arr = Array[T, 53](
+            1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
+        )
+        var twice = arr * 2
+        arr.apply(mult[T])
+        assert_true((arr == twice).reduce_and())
 
-fn test_reversed() raises:
-    # TODO
-    pass
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn test_map() raises:
-    # TODO
-    pass
+    fn func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
+        return x == 1
+
+    fn test[T: DType]() raises:
+        var arr = Array[T, 53](
+            1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
+        )
+        assert_true((arr.map(func[T]) == (arr.vec == 1)).reduce_and())
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
+
 
 fn test_filter() raises:
-    # TODO
-    pass
+    fn func[T: DType](x: Scalar[T]) -> Bool:
+        return x < 11
+
+    fn test[T: DType]() raises:
+        var arr = Array[T, 53](
+            1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
+        )
+        var arr2 = Array[T, 53](1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        assert_true((arr.filter(func[T]) == arr2).reduce_and())
+
+    test[DType.uint8]()
+    test[DType.uint16]()
+    test[DType.uint32]()
+    test[DType.uint64]()
+    test[DType.int8]()
+    test[DType.int16]()
+    test[DType.int32]()
+    test[DType.int64]()
+    test[DType.float16]()
+    test[DType.float32]()
+    test[DType.float64]()
 
 
 fn main() raises:
@@ -749,6 +840,6 @@ fn main() raises:
     test_theta()
     test_cross()
     test_apply()
-    test_reversed()
+    test_reverse()
     test_map()
     test_filter()

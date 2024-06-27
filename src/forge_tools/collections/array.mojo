@@ -14,19 +14,40 @@ Examples:
 
 ```mojo
 from forge_tools.collections import Array
-alias Arr = Array[DType.uint8, 3]
+alias Arr = Array[DType.uint8, 3, True]
 var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
+print(a.max()) # 3
+print(a.min()) # 1
 print((a - b).sum()) # 0
 print(a.avg()) # 2
 print(a * b) # [1, 4, 9]
-print(a.dot(b)) # 14
-print(a.cross(b)) # [0, 0, 0]
 print(2 in a) # True
 print(a.index(2).or_else(-1)) # 1
 print((Arr(2, 2, 2) % 2).sum()) # 0
 print((Arr(2, 2, 2) // 2).sum()) # 3
 print((Arr(2, 2, 2) ** 2).sum()) # 12
+print(a.dot(b)) # 14
+print(a.cross(b)) # [0, 0, 0]
+print(a.cos(b)) # 1
+print(a.theta(b)) # 0
+a.reverse()
+print(a) # [3, 2, 1]
+
+fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
+    return a < 3
+print(a.map(mapfunc)) # [False, True, True]
+
+fn filterfunc(a: UInt8) -> Bool:
+    return a < 3
+print(a.filter(filterfunc)) # [2, 1]
+
+fn applyfunc(a: UInt8) -> UInt8:
+    return a * 2
+a.apply(applyfunc)
+print(a) # [6, 4, 2]
+
+print(a.concat(a.reversed() // 2)) # [6, 4, 2, 3, 2, 1]
 ```
 """
 
@@ -39,17 +60,20 @@ from algorithm import vectorize
 
 
 @value
-struct _ArrayIter[T: DType, capacity: Int, forward: Bool = True](Sized):
+struct _ArrayIter[
+    T: DType, capacity: Int, static: Bool = False, forward: Bool = True
+](Sized):
     """Iterator for Array.
 
     Parameters:
         T: The type of the elements in the Array.
         capacity: The maximum number of elements that the Array can hold.
+        static: Whether the Array always holds `capacity` amount of items.
         forward: The iteration direction. `False` is backwards.
     """
 
     var index: Int
-    var src: Array[T, capacity]
+    var src: Array[T, capacity, static]
 
     fn __iter__(self) -> Self:
         return self
@@ -86,7 +110,9 @@ fn _closest_upper_pow_2(val: Int) -> Int:
 
 
 @register_passable("trivial")
-struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
+struct Array[T: DType, capacity: Int, static: Bool = False](
+    CollectionElement, Sized, Boolable
+):
     """An Array allocated on the stack with a capacity known at compile
     time.
 
@@ -101,19 +127,40 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
     ```mojo
     from forge_tools.collections import Array
-    alias Arr = Array[DType.uint8, 3]
+    alias Arr = Array[DType.uint8, 3, True]
     var a = Arr(1, 2, 3)
     var b = Arr(1, 2, 3)
+    print(a.max()) # 3
+    print(a.min()) # 1
     print((a - b).sum()) # 0
     print(a.avg()) # 2
     print(a * b) # [1, 4, 9]
-    print(a.dot(b)) # 14
-    print(a.cross(b)) # [0, 0, 0]
     print(2 in a) # True
     print(a.index(2).or_else(-1)) # 1
     print((Arr(2, 2, 2) % 2).sum()) # 0
     print((Arr(2, 2, 2) // 2).sum()) # 3
     print((Arr(2, 2, 2) ** 2).sum()) # 12
+    print(a.dot(b)) # 14
+    print(a.cross(b)) # [0, 0, 0]
+    print(a.cos(b)) # 1
+    print(a.theta(b)) # 0
+    a.reverse()
+    print(a) # [3, 2, 1]
+
+    fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
+        return a < 3
+    print(a.map(mapfunc)) # [False, True, True]
+
+    fn filterfunc(a: UInt8) -> Bool:
+        return a < 3
+    print(a.filter(filterfunc)) # [2, 1]
+
+    fn applyfunc(a: UInt8) -> UInt8:
+        return a * 2
+    a.apply(applyfunc)
+    print(a) # [6, 4, 2]
+
+    print(a.concat(a.reversed() // 2)) # [6, 4, 2, 3, 2, 1]
     ```
 
     Parameters:
@@ -122,6 +169,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             Should be a power of two, otherwise space on the SIMD vector
             is wasted and many functions become slower as they have
             to mask the extra dimensions.
+        static: Whether the Array always holds `capacity` amount of items.
 
     Constraints:
         Maximum capacity is 256.
@@ -147,8 +195,13 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
-        self.vec = Self._vec_type()
-        self.capacity_left = capacity
+        self.vec = Self._vec_type(0)
+
+        @parameter
+        if static:
+            self.capacity_left = 0
+        else:
+            self.capacity_left = capacity
 
     @always_inline
     fn __init__(inout self, *, fill: Self._scalar_type):
@@ -164,6 +217,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         self.vec = Self._vec_type(fill)
+        Self._mask_vec_capacity_delta(self.vec)
         self.capacity_left = 0
 
     # TODO: Avoid copying elements in once owned varargs
@@ -179,60 +233,72 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
+
         # TODO: capacity should be statically determined from
         # this constructor
-        self = Self()
-        for value in values:
-            self.append(value)
+        @parameter
+        if static:
+            if len(values) != capacity:
+                abort("Static sized Arrays must have capacity amount of items.")
+            self.vec = Self._vec_type(0)
 
-    fn __init__[cap: Int](inout self, owned values: SIMD[T, cap]):
+            @parameter
+            for i in range(capacity):
+                self.vec[i] = values[i]
+            self.capacity_left = 0
+        else:
+            self.vec = Self._vec_type(0)
+            self.capacity_left = capacity
+            for i in range(len(values)):
+                self.vec[i] = values[i]
+                self.capacity_left -= 1
+
+    fn __init__[
+        size: Int
+    ](
+        inout self,
+        owned values: SIMD[T, size],
+        length: Int = min(size, capacity),
+    ):
         """Constructs an Array from the given values.
 
         Parameters:
-            cap: The capacity of the SIMD vector.
+            size: The size of the SIMD vector.
 
         Args:
             values: The values to populate the Array with.
+            length: The amount of items to populate the Array with.
 
         Constraints:
             Maximum capacity is 256.
         """
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
-        self.vec = Self._vec_type(0)
-        var size = min(cap, capacity)
 
-        for i in range(size):
-            self.vec[i] = values[i]
+        @parameter
+        if static and size == Self._vec_type.size:
+            self.vec = rebind[Self._vec_type](values)
+            self.capacity_left = 0
+        elif static:
+            self.vec = Self._vec_type(0)
 
-        self.capacity_left = capacity - size
-
-        # FIXME
-        # alias delta = Self._vec_type.size - cap
-
-        # @parameter
-        # if delta == 0:
-        #     self.vec = values
-        # elif delta < 0:
-        #     self.vec = values.slice[Self._vec_type.size]()
-        # else:
-        #     self.vec = Self._vec_type()
-
-        #     @parameter
-        #     for i in range(cap):
-        #         self.vec[i] = values[i]
-
-        # @parameter
-        # if capacity != Self._vec_type.size and cap < capacity:
-        #     self.capacity_left = capacity - cap
-        # elif delta > 0:
-        #     self.capacity_left = delta
-        # else:
-        #     self.capacity_left = 0
+            @parameter
+            for i in range(min(size, capacity)):
+                self.vec[i] = values[i]
+            self.capacity_left = 0
+        elif size == Self._vec_type.size:
+            self.vec = rebind[Self._vec_type](values)
+            self.capacity_left = capacity - length
+            self._mask_vec_size[0]()
+        else:
+            self.vec = Self._vec_type(0)
+            for i in range(length):
+                self.vec[i] = values[i]
+            self.capacity_left = capacity - length
 
     fn __init__[
         D: DType = T, cap: Int = capacity
-    ](inout self, owned existing: Array[D, cap]):
+    ](inout self, owned existing: Array[D, cap, static]):
         """Constructs an Array from an existing Array.
 
         Parameters:
@@ -249,16 +315,35 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         constrained[capacity <= 256, "Maximum capacity is 256."]()
 
         @parameter
-        if D == T:
-            self = Self(rebind[SIMD[T, existing._vec_type.size]](existing.vec))
-        else:
-            self = Self(existing.vec.cast[T]())
-
-        @parameter
-        if capacity - cap > 0:
-            self.capacity_left = existing.capacity_left + capacity - cap
-        else:
+        if D == T and existing._vec_type.size == Self._vec_type.size:
+            self.vec = rebind[Self._vec_type](existing.vec)
             self.capacity_left = 0
+
+            @parameter
+            if capacity != existing.capacity:
+                Self._mask_vec_capacity_delta[0](self.vec)
+        elif existing._vec_type.size == Self._vec_type.size:
+            self.vec = existing.vec.cast[T]()
+
+            @parameter
+            if capacity != existing.capacity:
+                Self._mask_vec_capacity_delta[0](self.vec)
+            self.capacity_left = 0
+        else:
+            self.vec = Self._vec_type(0)
+
+            @parameter
+            for i in range(min(existing._vec_type.size, Self._vec_type.size)):
+                self.vec[i] = existing.vec[i]
+
+            @parameter
+            if existing.capacity > capacity:
+                Self._mask_vec_capacity_delta[0](self.vec)
+                self.capacity_left = 0
+            elif existing.capacity < capacity:
+                self.capacity_left = capacity - existing.capacity
+            else:
+                self.capacity_left = 0
 
     fn __init__(
         inout self,
@@ -278,11 +363,15 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         var s = min(capacity, length)
-        self.vec = Self._vec_type()
-        # FIXME: is there no faster way?
-        for i in range(s):
+        self.vec = Self._vec_type(0)
+        for i in range(s):  # FIXME: is there no faster way?
             self.vec[i] = unsafe_pointer[i]
-        self.capacity_left = capacity - s
+
+        @parameter
+        if static:
+            self.capacity_left = 0
+        else:
+            self.capacity_left = capacity - s
 
     fn __init__(inout self, existing: List[Self._scalar_type]):
         """Constructs an Array from an existing List.
@@ -324,8 +413,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
     @always_inline
     fn __len__(self) -> Int:
-        """Returns the length of the Array."""
-        return int(capacity - self.capacity_left)
+        """Returns the length of the Array.
+
+        Returns:
+            The length.
+        """
+
+        @parameter
+        if static:
+            return capacity
+        else:
+            return int(capacity - self.capacity_left)
 
     @always_inline
     fn append(inout self, owned value: Self._scalar_type):
@@ -334,7 +432,12 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Args:
             value: The value to append.
+
+        Constaints:
+            Array can't be static.
         """
+
+        constrained[not static, "Array can't be static."]()
         if self.capacity_left == 0:
             self.unsafe_set(capacity - 1, value)
             return
@@ -342,7 +445,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         self.capacity_left -= 1
 
     @always_inline
-    fn append[cap: Int](inout self, other: Array[T, cap]):
+    fn append[cap: Int](inout self, other: Array[T, cap, static]):
         """Appends the values of another Array up to Self.capacity.
 
         Parameters:
@@ -350,14 +453,18 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Args:
             other: The Array to append.
+
+        Constraints:
+            Array can't be static.
         """
 
+        constrained[not static, "Array can't be static."]()
         for i in range(min(self.capacity_left, len(other))):
             self.append(other[i])
 
     fn __iter__(
         self,
-    ) -> _ArrayIter[T, capacity]:
+    ) -> _ArrayIter[T, capacity, static]:
         """Iterate over elements of the Array, returning immutable references.
 
         Returns:
@@ -367,13 +474,13 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
     fn __reversed__(
         self,
-    ) -> _ArrayIter[T, capacity, False]:
+    ) -> _ArrayIter[T, capacity, static, False]:
         """Iterate backwards over the Array, returning immutable references.
 
         Returns:
             A reversed iterator of immutable references to the Array elements.
         """
-        return _ArrayIter[forward=False](len(self), self)
+        return _ArrayIter[static=static, forward=False](len(self), self)
 
     fn __contains__(self, value: Self._scalar_type) -> Bool:
         """Verify if a given value is present in the Array.
@@ -403,10 +510,11 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return len(self) > 0
 
-    @always_inline("nodebug")
     fn concat[
         cap: Int
-    ](owned self, owned other: Array[T, cap]) -> Array[T, capacity + cap]:
+    ](owned self, owned other: Array[T, cap, static]) -> Array[
+        T, capacity + cap, False
+    ]:
         """Concatenates self with other and returns the result as a new Array.
 
         Parameters:
@@ -419,8 +527,9 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             The newly created Array.
         """
 
-        var arr = Array[T, capacity + cap](self)
-        arr.append(other)
+        alias Arr = Array[T, capacity + cap, False]
+        var arr = Arr(self.vec, length=len(self))
+        arr.append(Arr(other.vec, length=len(other)))
         return arr
 
     fn __str__(self) -> String:
@@ -480,7 +589,12 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Args:
             i: The index for the value.
             value: The value to insert.
+
+        Constraints:
+            The Array can't be static.
         """
+
+        constrained[not static, "The Array can't be static."]()
         debug_assert(
             abs(i) < capacity or i == -1 * capacity, "insert index out of range"
         )
@@ -504,8 +618,12 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Returns:
             The popped value.
+
+        Constraints:
+            The Array can't be static.
         """
 
+        constrained[not static, "The Array can't be static."]()
         var size = len(self)
         debug_assert(abs(i) < size or i == -1 * size, "pop index out of range")
         var norm_idx = min(i, size - 1) if i > -1 else max(0, size + i)
@@ -519,10 +637,60 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             self.vec[offset] = self.vec[offset + 1]
         return val
 
+    fn index(self, value: Self._scalar_type) -> Optional[Int]:
+        """Returns the index of the first occurrence of a value in an Array.
+
+        Args:
+            value: The value to search for.
+
+        Returns:
+            The Optional index of the first occurrence of the value in the
+                Array.
+
+        Examples:
+
+        ```mojo
+        from forge_tools.collections import Array
+        var item = Array[DType.uint8, 3](1, 2, 3).index(2)
+        print(item.or_else(-1)) # prints `1`
+        ```
+        .
+        """
+
+        fn from_range[simd_size: Int]() -> SIMD[DType.uint8, simd_size]:
+            var vec = SIMD[DType.uint8, simd_size]()
+            var idx = 0
+
+            @parameter
+            for i in range(simd_size - 1, -1, -1):
+                vec[idx] = i
+                idx += 1
+            return vec
+
+        alias indices = from_range[Self._vec_type.size]()
+        var idx = (
+            (self.vec == value).cast[DType.uint8]() * indices
+        ).reduce_max()
+        var res = Self._vec_type.size - int(idx)
+
+        @parameter
+        if capacity == 1:
+            if idx == 0:
+                return None
+
+        @parameter
+        if not static:
+            if res > capacity - int(self.capacity_left):
+                return None
+        else:
+            if res > capacity:
+                return None
+        return res - 1
+
     fn index(
         self,
         value: Self._scalar_type,
-        start: Int = 0,
+        start: Int,
         stop: Int = -1,
     ) -> Optional[Int]:
         """Returns the index of the first occurrence of a value in an Array
@@ -530,19 +698,19 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Args:
             value: The value to search for.
-            start: The starting index of the search, treated as a slice index
-                (defaults to 0).
+            start: The starting index of the search, treated as a slice index.
             stop: The ending index of the search, treated as a slice index
                 (defaults to the end of the Array).
 
         Returns:
-            The Optional index of the first occurrence of the value in the Array.
+            The Optional index of the first occurrence of the value in the
+                Array.
 
         Examples:
 
         ```mojo
         from forge_tools.collections import Array
-        var item = Array[DType.uint8, 3](1, 2, 3).index(2)
+        var item = Array[DType.uint8, 3](1, 2, 3).index(2, start=1)
         print(item.or_else(-1)) # prints `1`
         ```
         .
@@ -566,7 +734,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         )
         if start == stop_norm:  # FIXME
             return None
-        var s = ~(self.vec ^ Self._vec_type(value)).cast[DType.bool]()
+        var s = (self.vec == Self._vec_type(value))
         for i in range(start_norm, stop_norm):
             if s[i]:
                 return i
@@ -583,15 +751,52 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             _ = self.pop(idx.value())
 
     fn reverse(inout self):
-        """Reverse the order of the items in the array."""
+        """Reverse the order of the items in the array inplace."""
 
-        # FIXME: this can be much faster using SIMD shuffle
-        var vec = Self._vec_type()
-        var idx = 0
-        for item in self.__reversed__():
-            vec[idx] = item
-            idx += 1
-        self.vec = vec
+        fn from_range[simd_size: Int]() -> StaticIntTuple[simd_size]:
+            var values = StaticIntTuple[simd_size]()
+            var idx = 0
+
+            @parameter
+            for i in range(capacity - 1, -1, -1):
+                values[idx] = i
+                idx += 1
+
+            @parameter
+            for i in range(capacity, simd_size):
+                values[i] = i
+            return values
+
+        var vec = self.vec.shuffle[from_range[Self._vec_type.size]()]()
+
+        @parameter
+        if static:
+            self.vec = vec
+            return
+        else:
+            pass
+        if self.capacity_left == 0:
+            self.vec = vec
+        elif self.capacity_left == 1:
+            self.vec = vec.shift_left[1]()
+        elif self.capacity_left == 2:
+            self.vec = vec.shift_left[2]()
+        elif self.capacity_left == 3:
+            self.vec = vec.shift_left[3]()
+        elif self.capacity_left == 4:
+            self.vec = vec.shift_left[4]()
+        else:
+            for i in range(len(self)):
+                self.vec[i] = vec[capacity - len(self) + i]
+
+    fn reversed(owned self) -> Self:
+        """Get the reversed Array.
+
+        Returns:
+            The reversed Array.
+        """
+        self.reverse()
+        return self
 
     @always_inline
     fn __getitem__(self, span: Slice) -> Self:
@@ -772,11 +977,11 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         @parameter
         if T.is_floating_point():
-            arr._mask_vec_size(Self._scalar_type.MAX)
+            arr._mask_vec_size[Self._scalar_type.MAX]()
         elif T.is_integral():
-            arr._mask_vec_size(~Self._scalar_type(0))
+            arr._mask_vec_size[~Self._scalar_type(0)]()
         else:
-            arr._mask_vec_size(1)
+            arr._mask_vec_size[1]()
         return arr.vec.reduce_min()
 
     @always_inline("nodebug")
@@ -789,7 +994,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         return self.vec.reduce_max()
 
     @always_inline("nodebug")
-    fn min[cap: Int = capacity](self, other: Array[T, cap]) -> Self:
+    fn min[cap: Int = capacity](self, other: Array[T, cap, static]) -> Self:
         """Computes the elementwise minimum between the two Arrays.
 
         Parameters:
@@ -817,10 +1022,10 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         @parameter
         if capacity != Self._vec_type.size:
             Self._mask_vec_capacity_delta(vec)
-        return vec
+        return Self(vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
-    fn max[cap: Int = capacity](self, other: Array[T, cap]) -> Self:
+    fn max[cap: Int = capacity](self, other: Array[T, cap, static]) -> Self:
         """Computes the elementwise maximum between the two Arrays.
 
         Parameters:
@@ -834,15 +1039,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
                 i is max(self[i], other[i]).
         """
         alias delta = Self.capacity - other.capacity
+        var vec: Self._vec_type
 
         @parameter
         if delta == 0:
-            return self.vec.max(rebind[Self._vec_type](other.vec))
+            vec = self.vec.max(rebind[Self._vec_type](other.vec))
         elif delta > 0:
             var o = Self(other)
-            return self.vec.max(o.vec)
+            vec = self.vec.max(o.vec)
         else:
-            return self.vec.max(other.vec.slice[Self._vec_type.size]())
+            vec = self.vec.max(other.vec.slice[Self._vec_type.size]())
+        return Self(vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn dot[D: DType = T](self, other: Self) -> Scalar[D]:
@@ -865,20 +1072,24 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             return (self.vec.cast[D]() * other.vec.cast[D]()).reduce_add()
 
     @staticmethod
-    fn _mask_vec_capacity_delta(
-        inout vec: Self._vec_type, value: Self._scalar_type = 0
-    ):
+    fn _mask_vec_capacity_delta[
+        value: Self._scalar_type = 0
+    ](inout vec: Self._vec_type):
         @parameter
         for i in range(Self._vec_type.size - capacity):
             vec[capacity + i] = value
 
-    fn _mask_vec_size(inout self, value: Self._scalar_type = 0):
-        for i in range(len(self), capacity):
-            self.vec[i] = value
-        Self._mask_vec_capacity_delta(self.vec, value)
+    fn _mask_vec_size[value: Self._scalar_type = 0](inout self):
+        @parameter
+        if static:
+            Self._mask_vec_capacity_delta[value](self.vec)
+        else:
+            for i in range(len(self), capacity):
+                self.vec[i] = value
+            Self._mask_vec_capacity_delta[value](self.vec)
 
     @staticmethod
-    fn _build_vec(value: Self._scalar_type) -> Self._vec_type:
+    fn _build_vec[value: Self._scalar_type]() -> Self._vec_type:
         var vec = Self._vec_type(value)
         Self._mask_vec_capacity_delta(vec)
         return vec
@@ -893,7 +1104,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return Self(self.vec * other.vec)
+        return Self(self.vec * other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn __imul__(inout self, other: Self):
@@ -914,7 +1125,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             A new Array with the values.
         """
-        return self.vec * Self._build_vec(value)
+        return Self(self.vec * value, length=len(self))
 
     @always_inline("nodebug")
     fn __imul__(inout self, owned value: Self._scalar_type):
@@ -923,12 +1134,11 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Args:
             value: The value.
         """
-        self.vec *= Self._build_vec(value)
+        self.vec *= value
 
     @always_inline("nodebug")
     fn __truediv__(self, value: Self._scalar_type) -> Self:
-        """Calculates the elementwise division
-        of the given value.
+        """Calculates the elementwise division by the given value.
 
         Args:
             value: The value.
@@ -937,35 +1147,25 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             A new Array with the values.
         """
 
-        @parameter
-        if Self._vec_type.size == capacity:
-            return self.vec / Self._vec_type(value)
-        else:
-            var vec = Self._vec_type(value)
-            Self._mask_vec_capacity_delta(vec, 1)
-            return self.vec / vec
+        if value == 0:
+            abort("division by 0")
+        return Self(self.vec / Self._vec_type(value), length=len(self))
 
     @always_inline("nodebug")
     fn __itruediv__(inout self, owned value: Self._scalar_type):
-        """Calculates the elementwise division
-        of the given value inplace.
+        """Calculates the elementwise division by the given value inplace.
 
         Args:
             value: The value.
         """
 
-        @parameter
-        if Self._vec_type.size == capacity:
-            self.vec /= Self._vec_type(value)
-        else:
-            var vec = Self._vec_type(value)
-            Self._mask_vec_capacity_delta(vec, 1)
-            self.vec /= vec
+        if value == 0:
+            abort("division by 0")
+        self.vec /= Self._vec_type(value)
 
     @always_inline("nodebug")
     fn __floordiv__(self, value: Self._scalar_type) -> Self:
-        """Calculates the elementwise floordiv
-        of the given value.
+        """Calculates the elementwise floordiv of the given value.
 
         Args:
             value: The value.
@@ -973,36 +1173,25 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             A new Array with the values.
         """
-
-        @parameter
-        if Self._vec_type.size == capacity:
-            return self.vec // Self._vec_type(value)
-        else:
-            var vec = Self._vec_type(value)
-            Self._mask_vec_capacity_delta(vec, 1)
-            return self.vec // vec
+        if value == 0:
+            abort("division by 0")
+        return Self(self.vec // Self._vec_type(value), length=len(self))
 
     @always_inline("nodebug")
     fn __ifloordiv__(inout self, owned value: Self._scalar_type):
-        """Calculates the elementwise floordiv
-        of the given value inplace.
+        """Calculates the elementwise floordiv of the given value inplace.
 
         Args:
             value: The value.
         """
 
-        @parameter
-        if Self._vec_type.size == capacity:
-            self.vec //= Self._vec_type(value)
-        else:
-            var vec = Self._vec_type(value)
-            Self._mask_vec_capacity_delta(vec, 1)
-            self.vec //= vec
+        if value == 0:
+            abort("division by 0")
+        self.vec //= Self._vec_type(value)
 
     @always_inline("nodebug")
     fn __mod__(self, value: Self._scalar_type) -> Self:
-        """Calculates the elementwise mod
-        of the given value.
+        """Calculates the elementwise mod of the given value.
 
         Args:
             value: The value.
@@ -1011,53 +1200,42 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             A new Array with the values.
         """
 
-        @parameter
-        if Self._vec_type.size == capacity:
-            return self.vec % Self._vec_type(value)
-        else:
-            var vec = Self._vec_type(value)
-            Self._mask_vec_capacity_delta(vec, 1)
-            return self.vec % vec
+        if value == 0:
+            abort("modulo by 0")
+        return Self(self.vec % Self._vec_type(value), length=len(self))
 
     @always_inline("nodebug")
     fn __imod__(inout self, owned value: Self._scalar_type):
-        """Calculates the elementwise mod
-        of the given value inplace.
+        """Calculates the elementwise mod of the given value inplace.
 
         Args:
             value: The value.
         """
 
-        @parameter
-        if Self._vec_type.size == capacity:
-            self.vec %= Self._vec_type(value)
-        else:
-            var vec = Self._vec_type(value)
-            Self._mask_vec_capacity_delta(vec, 1)
-            self.vec %= vec
+        if value == 0:
+            abort("modulo by 0")
+        self.vec %= Self._vec_type(value)
 
     @always_inline("nodebug")
-    fn __pow__(self, value: Self._scalar_type) -> Self:
-        """Calculates the elementwise pow
-        of the given value.
+    fn __pow__(self, exp: Int) -> Self:
+        """Calculates the elementwise pow of the given exponent.
 
         Args:
-            value: The value.
+            exp: The exponent.
 
         Returns:
             A new Array with the values.
         """
-        return Self(self.vec**value)
+        return Self(self.vec**exp, length=len(self))
 
     @always_inline("nodebug")
-    fn __ipow__(inout self, owned value: Self._scalar_type):
-        """Calculates the elementwise pow
-        of the given value inplace.
+    fn __ipow__(inout self, exp: Int):
+        """Calculates the elementwise pow of the given exponent inplace.
 
         Args:
-            value: The value.
+            exp: The exponent.
         """
-        self.vec **= int(value)  # FIXME will we support float exp?
+        self.vec **= exp
 
     @always_inline("nodebug")
     fn __abs__(self) -> Int:
@@ -1080,7 +1258,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             A new Array where each element at position i is self[i] + other[i].
         """
 
-        return Self(self.vec + other.vec)
+        return Self(self.vec + other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn __add__(self, value: Self._scalar_type) -> Self:
@@ -1092,9 +1270,8 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             A new Array containing the result.
         """
-        var arr = Self(Self._vec_type(value))
-        arr._mask_vec_size(0)
-        return Self(self.vec + arr.vec)
+        var arr = Self(Self._vec_type(value), length=len(self))
+        return Self(self.vec + arr.vec, length=len(self))
 
     @always_inline
     fn __sub__(self, other: Self) -> Self:
@@ -1106,7 +1283,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             A new Array where each element at position i is self[i] - other[i].
         """
-        return Self(self.vec - other.vec)
+        return Self(self.vec - other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn __sub__(self, value: Self._scalar_type) -> Self:
@@ -1118,9 +1295,8 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             A new Array containing the result.
         """
-        var arr = Self(Self._vec_type(value))
-        arr._mask_vec_size(0)
-        return Self(self.vec - arr.vec)
+        var arr = Self(Self._vec_type(value), length=len(self))
+        return Self(self.vec - arr.vec, length=len(self))
 
     @always_inline("nodebug")
     fn __iadd__(inout self, owned other: Self):
@@ -1139,8 +1315,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Args:
             value: The value to broadcast.
         """
-        var arr = Self(Self._vec_type(value))
-        arr._mask_vec_size(0)
+        var arr = Self(Self._vec_type(value), length=len(self))
         self.vec += arr.vec
 
     @always_inline("nodebug")
@@ -1160,8 +1335,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Args:
             value: The value to broadcast.
         """
-        var arr = Self(Self._vec_type(value))
-        arr._mask_vec_size(0)
+        var arr = Self(Self._vec_type(value), length=len(self))
         self.vec -= arr.vec
 
     fn clear(inout self):
@@ -1170,7 +1344,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         self.capacity_left = capacity
 
     @always_inline("nodebug")
-    fn __eq__(self, other: Self) -> Array[DType.bool, capacity]:
+    fn __eq__(self, other: Self) -> Array[DType.bool, capacity, static]:
         """Whether self is equal to other.
 
         Args:
@@ -1179,10 +1353,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return self.vec == other.vec
+
+        @parameter
+        if static:
+            return Array[DType.bool, capacity, static](self.vec == other.vec)
+        else:
+            return Array[DType.bool, capacity, static](
+                self.vec == other.vec, length=max(len(self), len(other))
+            )
 
     @always_inline("nodebug")
-    fn __ne__(self, other: Self) -> Array[DType.bool, capacity]:
+    fn __ne__(self, other: Self) -> Array[DType.bool, capacity, static]:
         """Whether self is unequal to other.
 
         Args:
@@ -1191,10 +1372,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return self.vec != other.vec
+
+        @parameter
+        if static:
+            return Array[DType.bool, capacity, static](self.vec != other.vec)
+        else:
+            return Array[DType.bool, capacity, static](
+                self.vec != other.vec, length=max(len(self), len(other))
+            )
 
     @always_inline("nodebug")
-    fn __gt__(self, other: Self) -> Array[DType.bool, capacity]:
+    fn __gt__(self, other: Self) -> Array[DType.bool, capacity, static]:
         """Whether self is greater than other.
 
         Args:
@@ -1203,10 +1391,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return self.vec > other.vec
+
+        @parameter
+        if static:
+            return Array[DType.bool, capacity, static](self.vec > other.vec)
+        else:
+            return Array[DType.bool, capacity, static](
+                self.vec > other.vec, length=max(len(self), len(other))
+            )
 
     @always_inline("nodebug")
-    fn __ge__(self, other: Self) -> Array[DType.bool, capacity]:
+    fn __ge__(self, other: Self) -> Array[DType.bool, capacity, static]:
         """Whether self is greater than or equal to other.
 
         Args:
@@ -1215,10 +1410,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return self.vec >= other.vec
+
+        @parameter
+        if static:
+            return Array[DType.bool, capacity, static](self.vec >= other.vec)
+        else:
+            return Array[DType.bool, capacity, static](
+                self.vec >= other.vec, length=max(len(self), len(other))
+            )
 
     @always_inline("nodebug")
-    fn __lt__(self, other: Self) -> Array[DType.bool, capacity]:
+    fn __lt__(self, other: Self) -> Array[DType.bool, capacity, static]:
         """Whether self is less than other.
 
         Args:
@@ -1227,10 +1429,17 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return self.vec < other.vec
+
+        @parameter
+        if static:
+            return Array[DType.bool, capacity, static](self.vec < other.vec)
+        else:
+            return Array[DType.bool, capacity, static](
+                self.vec < other.vec, length=max(len(self), len(other))
+            )
 
     @always_inline("nodebug")
-    fn __le__(self, other: Self) -> Array[DType.bool, capacity]:
+    fn __le__(self, other: Self) -> Array[DType.bool, capacity, static]:
         """Whether self is less than or equal to other.
 
         Args:
@@ -1239,7 +1448,14 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         Returns:
             The result.
         """
-        return self.vec <= other.vec
+
+        @parameter
+        if static:
+            return Array[DType.bool, capacity, static](self.vec <= other.vec)
+        else:
+            return Array[DType.bool, capacity, static](
+                self.vec <= other.vec, length=max(len(self), len(other))
+            )
 
     fn reduce_mul(self) -> Self._scalar_type:
         """Reduces the Array using the `mul` operator.
@@ -1248,7 +1464,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             The reduced Array.
         """
         var arr = self
-        arr._mask_vec_size(1)
+        arr._mask_vec_size[1]()
 
         @parameter
         if T == DType.bool:
@@ -1265,11 +1481,11 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         @parameter
         if T.is_floating_point():
-            arr._mask_vec_size(Self._scalar_type.MAX)
+            arr._mask_vec_size[Self._scalar_type.MAX]()
         elif T.is_integral():
-            arr._mask_vec_size(~Self._scalar_type(0))
+            arr._mask_vec_size[~Self._scalar_type(0)]()
         else:
-            arr._mask_vec_size(1)
+            arr._mask_vec_size[1]()
         return arr.vec.reduce_and()
 
     fn reduce_or(self) -> Self._scalar_type:
@@ -1279,7 +1495,7 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             The reduced Array.
         """
         var arr = self
-        arr._mask_vec_size(0)
+        arr._mask_vec_size[0]()
         return arr.vec.reduce_or()
 
     @always_inline("nodebug")
@@ -1325,7 +1541,9 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
         """
         return acos(self.cos(other))
 
-    fn cross(self, other: Self) -> Self:
+    fn cross(
+        self: Array[T, capacity, True], other: Array[T, capacity, True]
+    ) -> Array[T, capacity, True]:
         """Calculates the cross product between two Arrays.
 
         Args:
@@ -1336,24 +1554,26 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Constraints:
             Array can't be unsigned.
+            Array must be static.
         """
 
         constrained[not T.is_unsigned(), "Array can't be unsigned."]()
+        constrained[static, "Array must be static."]()
         alias size = Self._vec_type.size
 
         @parameter
-        if capacity == size:
+        if capacity == 3:
+            var s = self.vec.shuffle[1, 2, 0, 3]()
+            var o = other.vec.shuffle[2, 0, 1, 3]()
+            return s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
+        elif capacity == size:
             var x0 = self.vec.rotate_left[1]()
             var y0 = other.vec.rotate_left[2]()
             var vec0 = x0.join(y0)
             var x1 = self.vec.rotate_left[2]()
             var y1 = other.vec.rotate_left[1]()
             var vec1 = x1.join(y1)
-            return Self(vec0.reduce_mul[size]() - vec1.reduce_mul[size]())
-        elif capacity == 3:
-            var s = self.vec.shuffle[1, 2, 0, 3]()
-            var o = other.vec.shuffle[2, 0, 1, 3]()
-            return Self(s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]()))
+            return vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
         else:
             var s_vec_l = self.vec
             var o_vec_l = other.vec
@@ -1370,25 +1590,34 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
             var vec0 = x0.join(y0)
             var x1 = s_vec_l.shift_left[2]()
             var vec1 = x1.join(y1)
-            return Self(vec0.reduce_mul[size]() - vec1.reduce_mul[size]())
+            return vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
 
     fn apply(inout self, func: fn (Self._scalar_type) -> Self._scalar_type):
         """Apply a function to the Array inplace.
 
         Args:
             func: The function to apply.
+
+        Examples:
+        ```mojo
+        from forge_tools.collections.array import Array
+        var arr = Array[DType.uint8, 3](3, 2, 1)
+        fn applyfunc(a: UInt8) -> UInt8:
+            return a * 2
+        arr.apply(applyfunc)
+        print(arr) # [6, 4, 2]
+        ```
+        .
         """
 
-        @parameter
-        fn closure[simd_width: Int](i: Int):
+        # FIXME: can't vectorize for some reason
+        for i in range(len(self)):
             self.vec[i] = func(self.vec[i])
-
-        vectorize[closure, simdwidthof[T]()](len(self))
 
     fn map[
         D: DType
     ](owned self, func: fn (Self._scalar_type) -> Scalar[D]) -> Array[
-        D, capacity
+        D, capacity, static
     ]:
         """Apply a function to the Array and return it.
 
@@ -1400,18 +1629,34 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Returns:
             The altered Array.
+
+        Examples:
+        ```mojo
+        from forge_tools.collections.array import Array
+        fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
+            return a < 3
+        print(Array[DType.uint8, 3](3, 2, 1).map(mapfunc)) # [False, True, True]
+        ```
+        .
         """
 
-        var res = SIMD[D, Self._vec_type.size]()
+        var res = SIMD[D, Self._vec_type.size](0)
 
         @parameter
         fn closure[simd_width: Int](i: Int):
             res[i] = func(self.vec[i])
 
-        vectorize[closure, simdwidthof[D]()](len(self))
-        return res
+        @parameter
+        if static:
+            vectorize[closure, simdwidthof[D](), size=capacity]()
+            return Array[D, capacity, static](res)
+        else:
+            vectorize[closure, simdwidthof[D]()](len(self))
+            return Array[D, capacity, static](res, length=len(self))
 
-    fn filter(owned self, func: fn (Self._scalar_type) -> Bool) -> Self:
+    fn filter(
+        owned self, func: fn (Self._scalar_type) -> Bool
+    ) -> Array[T, capacity, False]:
         """Filter the Array and return it.
 
         Args:
@@ -1419,9 +1664,18 @@ struct Array[T: DType, capacity: Int](CollectionElement, Sized, Boolable):
 
         Returns:
             The filtered Array.
+
+        Examples:
+        ```mojo
+        from forge_tools.collections.array import Array
+        fn filterfunc(a: UInt8) -> Bool:
+            return a < 3
+        print(Array[DType.uint8, 3](3, 2, 1).filter(filterfunc)) # [2, 1]
+        ```
+        .
         """
 
-        var res = Self()
+        var res = Array[T, capacity, False]()
         for i in range(len(self)):
             var value = self.vec[i]
             if func(value):

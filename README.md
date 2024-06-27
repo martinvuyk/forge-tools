@@ -39,16 +39,37 @@ from forge_tools.collections import Array
 alias Arr = Array[DType.uint8, 3]
 var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
+print(a.max()) # 3
+print(a.min()) # 1
 print((a - b).sum()) # 0
 print(a.avg()) # 2
 print(a * b) # [1, 4, 9]
-print(a.dot(b)) # 14
-print(a.cross(b)) # [0, 0, 0]
 print(2 in a) # True
 print(a.index(2).or_else(-1)) # 1
 print((Arr(2, 2, 2) % 2).sum()) # 0
 print((Arr(2, 2, 2) // 2).sum()) # 3
 print((Arr(2, 2, 2) ** 2).sum()) # 12
+print(a.dot(b)) # 14
+print(a.cross(b)) # [0, 0, 0]
+print(a.cos(b)) # 1
+print(a.theta(b)) # 0
+a.reverse()
+print(a) # [3, 2, 1]
+
+fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
+    return a < 3
+print(a.map(mapfunc)) # [False, True, True]
+
+fn filterfunc(a: UInt8) -> Bool:
+    return a < 3
+print(a.filter(filterfunc)) # [2, 1]
+
+fn applyfunc(a: UInt8) -> UInt8:
+    return a * 2
+a.apply(applyfunc)
+print(a) # [6, 4, 2]
+
+print(a.concat(a.reversed() // 2)) # [6, 4, 2, 3, 2, 1]
 ```
 ### result.mojo
 ### Result
