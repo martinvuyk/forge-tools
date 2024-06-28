@@ -949,17 +949,23 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec[idx] = value
 
     @always_inline("nodebug")
-    fn sum(self) -> Self._scalar_type:
+    fn sum[D: DType = T](self) -> Self._scalar_type:
         """Calculates the sum of all elements.
+
+        Parameters:
+            D: The DType to cast to before reducing to avoid overflow.
 
         Returns:
             The result.
         """
 
         @parameter
-        if T == DType.bool:
+        if D == DType.bool:
             return self.vec.cast[DType.uint8]().reduce_add()
-        return self.vec.reduce_add()
+        elif D != T:
+            return self.vec.cast[D]().reduce_add()
+        else:
+            return self.vec.reduce_add()
 
     @always_inline("nodebug")
     fn avg(self) -> Self._scalar_type:

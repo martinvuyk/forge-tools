@@ -7,12 +7,12 @@ source ./scripts/package-lib.sh
 ```
 The semi-compiled package will be under `./build/forge_tools.mojopkg`
 ## How to run tests
-test an entire directory or subdirectory or specific file
+Test an entire directory or subdirectory or specific file
 ```bash
 source ./scripts/test.sh test/
 ```
 ## How to run benchmarks
-test an entire directory or subdirectory or specific file (sequentially)
+Run an entire directory or subdirectory or specific file (sequentially)
 ```bash
 source ./scripts/benchmark.sh benchmarks/
 ```
@@ -41,7 +41,7 @@ Examples:
 
 ```mojo
 from forge_tools.collections import Array
-alias Arr = Array[DType.uint8, 3]
+alias Arr = Array[DType.uint8, 3, True]
 var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
 print(a.max()) # 3
