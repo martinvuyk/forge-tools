@@ -1131,7 +1131,12 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             The result.
         """
-        return Self(self.vec * other.vec, length=max(len(self), len(other)))
+
+        @parameter
+        if static:
+            return Self(self.vec * other.vec)
+        else:
+            return Self(self.vec * other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn __imul__(inout self, other: Self):
@@ -1152,7 +1157,12 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             A new Array with the values.
         """
-        return Self(self.vec * value, length=len(self))
+
+        @parameter
+        if static:
+            return Self(self.vec * value)
+        else:
+            return Self(self.vec * value, length=len(self))
 
     @always_inline("nodebug")
     fn __imul__(inout self, owned value: Self._scalar):
