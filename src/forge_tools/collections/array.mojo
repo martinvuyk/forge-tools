@@ -183,7 +183,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     alias _vec_type = SIMD[T, Self._simd_size]
     var vec: Self._vec_type
     """The underlying SIMD vector."""
-    alias _scalar_type = Scalar[T]
+    alias _scalar = Scalar[T]
     var capacity_left: UInt8
     """The current capacity left."""
     # TODO: should be per system
@@ -208,7 +208,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             self.capacity_left = capacity
 
     @always_inline
-    fn __init__(inout self, *, fill: Self._scalar_type):
+    fn __init__(inout self, *, fill: Self._scalar):
         """Constructs an Array by filling it with the
         given value. Sets the capacity_left var to 0.
 
@@ -226,7 +226,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     # TODO: Avoid copying elements in once owned varargs
     # allow transfers.
-    fn __init__(inout self, *values: Self._scalar_type):
+    fn __init__(inout self, *values: Self._scalar):
         """Constructs an Array from the given values.
 
         Args:
@@ -352,7 +352,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     fn __init__(
         inout self,
         *,
-        unsafe_pointer: UnsafePointer[Self._scalar_type],
+        unsafe_pointer: UnsafePointer[Self._scalar],
         length: Int,
     ):
         """Constructs an Array from a pointer and its length.
@@ -377,7 +377,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         else:
             self.capacity_left = capacity - s
 
-    fn __init__(inout self, existing: List[Self._scalar_type]):
+    fn __init__(inout self, existing: List[Self._scalar]):
         """Constructs an Array from an existing List.
 
         Args:
@@ -391,7 +391,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self = Self(unsafe_pointer=existing.unsafe_ptr(), length=len(existing))
         _ = existing
 
-    fn __init__[size: Int](inout self, owned existing: List[Self._scalar_type]):
+    fn __init__[size: Int](inout self, owned existing: List[Self._scalar]):
         """Constructs an Array from an existing List.
 
         Parameters:
@@ -430,7 +430,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             return int(capacity - self.capacity_left)
 
     @always_inline
-    fn append(inout self, owned value: Self._scalar_type):
+    fn append(inout self, owned value: Self._scalar):
         """Appends a value to the Array. If full, sets
         the last element to the given value.
 
@@ -486,7 +486,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
         return _ArrayIter[static=static, forward=False](len(self), self)
 
-    fn __contains__(self, value: Self._scalar_type) -> Bool:
+    fn __contains__(self, value: Self._scalar) -> Bool:
         """Verify if a given value is present in the Array.
 
         Args:
@@ -592,7 +592,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return str(self)
 
     @always_inline
-    fn insert(inout self, i: Int, owned value: Self._scalar_type):
+    fn insert(inout self, i: Int, owned value: Self._scalar):
         """Inserts a value to the Array at the given index.
         `a.insert(len(a), value)` is equivalent to `a.append(value)`.
 
@@ -616,7 +616,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 self.capacity_left - 1, capacity - (norm_idx + 1)
             )
 
-    fn pop(inout self, i: Int = -1) -> Self._scalar_type:
+    fn pop(inout self, i: Int = -1) -> Self._scalar:
         """Pops a value from the Array at the given index.
 
         Args:
@@ -643,7 +643,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             self.vec[offset] = self.vec[offset + 1]
         return val
 
-    fn index(self, value: Self._scalar_type) -> Optional[Int]:
+    fn index(self, value: Self._scalar) -> Optional[Int]:
         """Returns the index of the first occurrence of a value in an Array.
 
         Args:
@@ -695,7 +695,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     fn index(
         self,
-        value: Self._scalar_type,
+        value: Self._scalar,
         start: Int,
         stop: Int = -1,
     ) -> Optional[Int]:
@@ -834,7 +834,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         return res
 
-    fn __setitem__(inout self, idx: Int, owned value: Self._scalar_type):
+    fn __setitem__(inout self, idx: Int, owned value: Self._scalar):
         """Sets an Array element at the given index. This will
         not update self.capacity_left.
 
@@ -852,7 +852,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec[norm_idx] = value
 
     @always_inline
-    fn __getitem__(self, idx: Int) -> Self._scalar_type:
+    fn __getitem__(self, idx: Int) -> Self._scalar:
         """Gets a copy of the element at the given index.
 
         Args:
@@ -867,7 +867,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         var norm_idx = idx if idx > -1 else max(0, size + idx)
         return self.vec[norm_idx]
 
-    fn count(self, value: Self._scalar_type) -> Int:
+    fn count(self, value: Self._scalar) -> Int:
         """Counts the number of occurrences of a value in the Array.
 
         Args:
@@ -907,10 +907,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     #     Returns:
     #         The UnsafePointer to the SIMD vector.
     #     """
-    #     return UnsafePointer[Self._scalar_type].address_of(self.vec)
+    #     return UnsafePointer[Self._scalar].address_of(self.vec)
 
     @always_inline
-    fn unsafe_get(self, idx: Int) -> Self._scalar_type:
+    fn unsafe_get(self, idx: Int) -> Self._scalar:
         """Get a copy of an element of self without checking index bounds.
         Users should consider using `__getitem__` instead of this method as it
         is unsafe. If an index is out of bounds, this method will not abort, it
@@ -930,7 +930,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return self.vec[idx]
 
     @always_inline
-    fn unsafe_set(inout self, idx: Int, value: Self._scalar_type):
+    fn unsafe_set(inout self, idx: Int, value: Self._scalar):
         """Set a copy to an element of self without checking index bounds.
         Users should consider using `__setitem__` instead of this method as it
         is unsafe. If an index is out of bounds, this method will not abort, it
@@ -949,7 +949,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec[idx] = value
 
     @always_inline("nodebug")
-    fn sum[D: DType = T](self) -> Self._scalar_type:
+    fn sum[D: DType = T](self) -> Self._scalar:
         """Calculates the sum of all elements.
 
         Parameters:
@@ -968,8 +968,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             return self.vec.reduce_add()
 
     @always_inline("nodebug")
-    fn avg(self) -> Self._scalar_type:
+    fn avg[D: DType = T](self) -> Self._scalar:
         """Calculates the average of all elements.
+
+        Parameters:
+            D: The DType to cast to before reducing to avoid overflow.
 
         Returns:
             The result.
@@ -977,11 +980,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if T == DType.bool:
-            return round(self.sum() / len(self))
-        return self.sum() / len(self)
+            return round(self.sum[D]() / len(self))
+        return self.sum[D]() / len(self)
 
     @always_inline("nodebug")
-    fn min(self) -> Self._scalar_type:
+    fn min(self) -> Self._scalar:
         """Calculates the minimum of all elements.
 
         Returns:
@@ -992,15 +995,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if T.is_floating_point():
-            Self._mask_vec_size[T, Self._scalar_type.MAX](vec, len(self))
+            Self._mask_vec_size[T, Self._scalar.MAX](vec, len(self))
         elif T.is_integral():
-            Self._mask_vec_size[T, ~Self._scalar_type(0)](vec, len(self))
+            Self._mask_vec_size[T, ~Self._scalar(0)](vec, len(self))
         else:
             Self._mask_vec_size[T, 1](vec, len(self))
         return vec.reduce_min()
 
     @always_inline("nodebug")
-    fn max(self) -> Self._scalar_type:
+    fn max(self) -> Self._scalar:
         """Calculates the maximum of all elements.
 
         Returns:
@@ -1140,7 +1143,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec *= other.vec
 
     @always_inline("nodebug")
-    fn __mul__(self, value: Self._scalar_type) -> Self:
+    fn __mul__(self, value: Self._scalar) -> Self:
         """Calculates the elementwise multiplication by the given value.
 
         Args:
@@ -1152,7 +1155,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return Self(self.vec * value, length=len(self))
 
     @always_inline("nodebug")
-    fn __imul__(inout self, owned value: Self._scalar_type):
+    fn __imul__(inout self, owned value: Self._scalar):
         """Calculates the elementwise multiplication by the given value inplace.
 
         Args:
@@ -1161,7 +1164,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec *= value
 
     @always_inline("nodebug")
-    fn __truediv__(self, value: Self._scalar_type) -> Self:
+    fn __truediv__(self, value: Self._scalar) -> Self:
         """Calculates the elementwise division by the given value.
 
         Args:
@@ -1176,7 +1179,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return Self(self.vec / Self._vec_type(value), length=len(self))
 
     @always_inline("nodebug")
-    fn __itruediv__(inout self, owned value: Self._scalar_type):
+    fn __itruediv__(inout self, owned value: Self._scalar):
         """Calculates the elementwise division by the given value inplace.
 
         Args:
@@ -1188,7 +1191,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec /= Self._vec_type(value)
 
     @always_inline("nodebug")
-    fn __floordiv__(self, value: Self._scalar_type) -> Self:
+    fn __floordiv__(self, value: Self._scalar) -> Self:
         """Calculates the elementwise floordiv of the given value.
 
         Args:
@@ -1202,7 +1205,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return Self(self.vec // Self._vec_type(value), length=len(self))
 
     @always_inline("nodebug")
-    fn __ifloordiv__(inout self, owned value: Self._scalar_type):
+    fn __ifloordiv__(inout self, owned value: Self._scalar):
         """Calculates the elementwise floordiv of the given value inplace.
 
         Args:
@@ -1214,7 +1217,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec //= Self._vec_type(value)
 
     @always_inline("nodebug")
-    fn __mod__(self, value: Self._scalar_type) -> Self:
+    fn __mod__(self, value: Self._scalar) -> Self:
         """Calculates the elementwise mod of the given value.
 
         Args:
@@ -1229,7 +1232,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return Self(self.vec % Self._vec_type(value), length=len(self))
 
     @always_inline("nodebug")
-    fn __imod__(inout self, owned value: Self._scalar_type):
+    fn __imod__(inout self, owned value: Self._scalar):
         """Calculates the elementwise mod of the given value inplace.
 
         Args:
@@ -1289,7 +1292,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             return Self(self.vec + other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
-    fn __add__(self, value: Self._scalar_type) -> Self:
+    fn __add__(self, value: Self._scalar) -> Self:
         """Computes the elementwise addition of the value.
 
         Args:
@@ -1326,7 +1329,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             return Self(self.vec - other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
-    fn __sub__(self, value: Self._scalar_type) -> Self:
+    fn __sub__(self, value: Self._scalar) -> Self:
         """Computes the elementwise subtraction of the value.
 
         Args:
@@ -1356,7 +1359,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec += other.vec
 
     @always_inline("nodebug")
-    fn __iadd__(inout self, owned value: Self._scalar_type):
+    fn __iadd__(inout self, owned value: Self._scalar):
         """Computes the elementwise addition of the value.
 
         Args:
@@ -1383,7 +1386,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec -= other.vec
 
     @always_inline("nodebug")
-    fn __isub__(inout self, owned value: Self._scalar_type):
+    fn __isub__(inout self, owned value: Self._scalar):
         """Computes the elementwise subtraction of the value.
 
         Args:
@@ -1518,7 +1521,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 self.vec <= other.vec, length=max(len(self), len(other))
             )
 
-    fn reduce_mul(self) -> Self._scalar_type:
+    fn reduce_mul(self) -> Self._scalar:
         """Reduces the Array using the `mul` operator.
 
         Returns:
@@ -1532,7 +1535,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             return vec.reduce_and()
         return vec.reduce_mul()
 
-    fn reduce_and(self) -> Self._scalar_type:
+    fn reduce_and(self) -> Self._scalar:
         """Reduces the Array using the bitwise `&` operator.
 
         Returns:
@@ -1542,14 +1545,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if T.is_floating_point():
-            Self._mask_vec_size[T, Self._scalar_type.MAX](vec, len(self))
+            Self._mask_vec_size[T, Self._scalar.MAX](vec, len(self))
         elif T.is_integral():
-            Self._mask_vec_size[T, ~Self._scalar_type(0)](vec, len(self))
+            Self._mask_vec_size[T, ~Self._scalar(0)](vec, len(self))
         else:
             Self._mask_vec_size[T, 1](vec, len(self))
         return vec.reduce_and()
 
-    fn reduce_or(self) -> Self._scalar_type:
+    fn reduce_or(self) -> Self._scalar:
         """Reduces the Array using the bitwise `|` operator.
 
         Returns:
@@ -1653,7 +1656,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     fn map[
         D: DType
-    ](owned self, func: fn (Self._scalar_type) -> Scalar[D]) -> Array[
+    ](owned self, func: fn (Self._scalar) -> Scalar[D]) -> Array[
         D, capacity, static
     ]:
         """Apply a function to the Array and return it.
@@ -1704,7 +1707,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         else:
             return Array[D, capacity, static](res, length=len(self))
 
-    fn apply(inout self, func: fn (Self._scalar_type) -> Self._scalar_type):
+    fn apply(inout self, func: fn (Self._scalar) -> Self._scalar):
         """Apply a function to the Array inplace.
 
         Args:
@@ -1737,7 +1740,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 self.vec[i] = func(self.vec[i])
 
     fn filter(
-        owned self, func: fn (Self._scalar_type) -> Scalar[DType.bool]
+        owned self, func: fn (Self._scalar) -> Scalar[DType.bool]
     ) -> Array[T, capacity, False]:
         """Filter the Array and return it.
 
