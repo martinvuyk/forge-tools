@@ -292,8 +292,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             self.capacity_left = 0
         elif size == Self._simd_size:
             self.vec = rebind[Self._vec_type](values)
+            Self._mask_vec_size(self.vec, length)
             self.capacity_left = capacity - length
-            self._mask_vec_size[0]()
         else:
             self.vec = Self._vec_type(0)
             for i in range(length):
@@ -500,9 +500,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         if Self.fits_in_page_size:
             if value != 0:
                 return (self.vec == value).reduce_or()
-            var arr = self
-            arr._mask_vec_size[1]()
-            return (arr.vec == value).reduce_or()
+            var vec = self.vec
+            Self._mask_vec_size[T, 1](vec, len(self))
+            return (vec == value).reduce_or()
         else:
             for i in range(len(self)):
                 if self.vec[i] == value:
@@ -893,10 +893,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         @parameter
         if capacity != Self._simd_size:
             var same = (self.vec == value).cast[DType.uint8]()
-            var mask = Self._vec_type(~Self._scalar_type(0))
-            Self._mask_vec_capacity_delta(mask)
-            var count = (same & mask.cast[DType.uint8]()).reduce_add()
-            return int(count - null_amnt)
+            Self._mask_vec_capacity_delta(same)
+            return int(same.reduce_add() - null_amnt)
         else:
             var count = (self.vec == value).cast[DType.uint8]().reduce_add()
             return int(count - null_amnt)
@@ -960,7 +958,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if T == DType.bool:
-            return self.vec.cast[DType.uint64]().reduce_add()
+            return self.vec.cast[DType.uint8]().reduce_add()
         return self.vec.reduce_add()
 
     @always_inline("nodebug")
@@ -984,16 +982,16 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             The result.
         """
 
-        var arr = self
+        var vec = self.vec
 
         @parameter
         if T.is_floating_point():
-            arr._mask_vec_size[Self._scalar_type.MAX]()
+            Self._mask_vec_size[T, Self._scalar_type.MAX](vec, len(self))
         elif T.is_integral():
-            arr._mask_vec_size[~Self._scalar_type(0)]()
+            Self._mask_vec_size[T, ~Self._scalar_type(0)](vec, len(self))
         else:
-            arr._mask_vec_size[1]()
-        return arr.vec.reduce_min()
+            Self._mask_vec_size[T, 1](vec, len(self))
+        return vec.reduce_min()
 
     @always_inline("nodebug")
     fn max(self) -> Self._scalar_type:
@@ -1031,9 +1029,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             vec = self.vec.min(other.vec.slice[Self._simd_size]())
 
         @parameter
-        if capacity != Self._simd_size:
-            Self._mask_vec_capacity_delta(vec)
-        return Self(vec, length=max(len(self), len(other)))
+        if static:
+            return Self(vec)
+        else:
+            return Self(vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn max[cap: Int = capacity](self, other: Array[T, cap, static]) -> Self:
@@ -1060,14 +1059,23 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             vec = self.vec.max(o.vec)
         else:
             vec = self.vec.max(other.vec.slice[Self._simd_size]())
-        return Self(vec, length=max(len(self), len(other)))
+
+        @parameter
+        if static:
+            return Self(vec)
+        else:
+            return Self(vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
-    fn dot[D: DType = T](self, other: Self) -> Scalar[D]:
+    fn dot[
+        D: DType = T, cast_before_mult: Bool = True
+    ](self, other: Self) -> Scalar[D]:
         """Calculates the dot product between two Arrays.
 
         Parameters:
-            D: The DType to cast to before calculating to avoid overflow.
+            D: The DType to cast to before reducing to avoid overflow.
+            cast_before_mult: Whether the vectors are casted before they are
+                multiplied.
 
         Args:
             other: The other Array.
@@ -1079,8 +1087,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         @parameter
         if D == T:
             return rebind[Scalar[D]]((self.vec * other.vec).reduce_add())
-        else:
+        elif cast_before_mult:
             return (self.vec.cast[D]() * other.vec.cast[D]()).reduce_add()
+        else:
+            return (self.vec * other.vec).cast[D]().reduce_add()
 
     @staticmethod
     fn _mask_vec_capacity_delta[
@@ -1090,20 +1100,17 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         for i in range(Self._simd_size - capacity):
             vec[capacity + i] = value
 
-    fn _mask_vec_size[value: Self._scalar_type = 0](inout self):
+    @staticmethod
+    fn _mask_vec_size[
+        D: DType = T, value: Scalar[D] = 0
+    ](inout vec: SIMD[D, Self._simd_size], length: Int = capacity):
         @parameter
         if static:
-            Self._mask_vec_capacity_delta[value=value](self.vec)
+            Self._mask_vec_capacity_delta[value=value](vec)
         else:
-            for i in range(len(self), capacity):
-                self.vec[i] = value
-            Self._mask_vec_capacity_delta[value=value](self.vec)
-
-    @staticmethod
-    fn _build_vec[value: Self._scalar_type]() -> Self._vec_type:
-        var vec = Self._vec_type(value)
-        Self._mask_vec_capacity_delta(vec)
-        return vec
+            for i in range(length, capacity):
+                vec[i] = value
+            Self._mask_vec_capacity_delta[value=value](vec)
 
     @always_inline("nodebug")
     fn __mul__(self, other: Self) -> Self:
@@ -1511,13 +1518,13 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             The reduced Array.
         """
-        var arr = self
-        arr._mask_vec_size[1]()
+        var vec = self.vec
+        Self._mask_vec_size[T, 1](vec, len(self))
 
         @parameter
         if T == DType.bool:
-            return arr.vec.reduce_and()
-        return arr.vec.reduce_mul()
+            return vec.reduce_and()
+        return vec.reduce_mul()
 
     fn reduce_and(self) -> Self._scalar_type:
         """Reduces the Array using the bitwise `&` operator.
@@ -1525,16 +1532,16 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             The reduced Array.
         """
-        var arr = self
+        var vec = self.vec
 
         @parameter
         if T.is_floating_point():
-            arr._mask_vec_size[Self._scalar_type.MAX]()
+            Self._mask_vec_size[T, Self._scalar_type.MAX](vec, len(self))
         elif T.is_integral():
-            arr._mask_vec_size[~Self._scalar_type(0)]()
+            Self._mask_vec_size[T, ~Self._scalar_type(0)](vec, len(self))
         else:
-            arr._mask_vec_size[1]()
-        return arr.vec.reduce_and()
+            Self._mask_vec_size[T, 1](vec, len(self))
+        return vec.reduce_and()
 
     fn reduce_or(self) -> Self._scalar_type:
         """Reduces the Array using the bitwise `|` operator.
@@ -1542,9 +1549,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             The reduced Array.
         """
-        var arr = self
-        arr._mask_vec_size[0]()
-        return arr.vec.reduce_or()
+        return self.vec.reduce_or()
 
     @always_inline("nodebug")
     fn cos(self, other: Self) -> Float64:

@@ -12,7 +12,7 @@ test an entire directory or subdirectory or specific file
 source ./scripts/test.sh test/
 ```
 ## How to run benchmarks
-test an entire directory or subdirectory or specific file
+test an entire directory or subdirectory or specific file (sequentially)
 ```bash
 source ./scripts/benchmark.sh benchmarks/
 ```
