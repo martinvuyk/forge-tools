@@ -186,6 +186,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     alias _scalar_type = Scalar[T]
     var capacity_left: UInt8
     """The current capacity left."""
+    # TODO: should be per system
+    alias fits_in_page_size = capacity * T.bitwidth() <= 64 * 64
+    """Whether the Array fits in the system's page size."""
 
     @always_inline
     fn __init__(inout self):
@@ -277,7 +280,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         constrained[capacity <= 256, "Maximum capacity is 256."]()
 
         @parameter
-        if static and size == Self._vec_type.size:
+        if static and size == Self._simd_size:
             self.vec = rebind[Self._vec_type](values)
             self.capacity_left = 0
         elif static:
@@ -287,7 +290,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             for i in range(min(size, capacity)):
                 self.vec[i] = values[i]
             self.capacity_left = 0
-        elif size == Self._vec_type.size:
+        elif size == Self._simd_size:
             self.vec = rebind[Self._vec_type](values)
             self.capacity_left = capacity - length
             self._mask_vec_size[0]()
@@ -316,30 +319,30 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         constrained[capacity <= 256, "Maximum capacity is 256."]()
 
         @parameter
-        if D == T and existing._vec_type.size == Self._vec_type.size:
+        if D == T and existing._vec_type.size == Self._simd_size:
             self.vec = rebind[Self._vec_type](existing.vec)
             self.capacity_left = 0
 
             @parameter
             if capacity != existing.capacity:
-                Self._mask_vec_capacity_delta[0](self.vec)
-        elif existing._vec_type.size == Self._vec_type.size:
+                Self._mask_vec_capacity_delta(self.vec)
+        elif existing._vec_type.size == Self._simd_size:
             self.vec = existing.vec.cast[T]()
 
             @parameter
             if capacity != existing.capacity:
-                Self._mask_vec_capacity_delta[0](self.vec)
+                Self._mask_vec_capacity_delta(self.vec)
             self.capacity_left = 0
         else:
             self.vec = Self._vec_type(0)
 
             @parameter
-            for i in range(min(existing._vec_type.size, Self._vec_type.size)):
+            for i in range(min(existing._vec_type.size, Self._simd_size)):
                 self.vec[i] = existing.vec[i]
 
             @parameter
             if existing.capacity > capacity:
-                Self._mask_vec_capacity_delta[0](self.vec)
+                Self._mask_vec_capacity_delta(self.vec)
                 self.capacity_left = 0
             elif existing.capacity < capacity:
                 self.capacity_left = capacity - existing.capacity
@@ -405,7 +408,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         constrained[
-            capacity == Self._vec_type.size,
+            capacity == Self._simd_size,
             "Array capacity must be power of 2.",
         ]()
         constrained[size == capacity, "Size must be == capacity."]()
@@ -493,14 +496,18 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             True if the value is contained in the Array, False otherwise.
         """
 
-        var size_mask = SIMD[DType.bool, Self._vec_type.size](False)
-
         @parameter
-        fn closure[simd_width: Int](i: Int):
-            size_mask[i] = True
-
-        vectorize[closure, simdwidthof[DType.bool]()](len(self))
-        return ((self.vec == value) & size_mask).reduce_or()
+        if Self.fits_in_page_size:
+            if value != 0:
+                return (self.vec == value).reduce_or()
+            var arr = self
+            arr._mask_vec_size[1]()
+            return (arr.vec == value).reduce_or()
+        else:
+            for i in range(len(self)):
+                if self.vec[i] == value:
+                    return True
+            return False
 
     @always_inline
     fn __bool__(self) -> Bool:
@@ -666,11 +673,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 idx += 1
             return vec
 
-        alias indices = from_range[Self._vec_type.size]()
+        alias indices = from_range[Self._simd_size]()
         var idx = (
             (self.vec == value).cast[DType.uint8]() * indices
         ).reduce_max()
-        var res = Self._vec_type.size - int(idx)
+        var res = Self._simd_size - int(idx)
 
         @parameter
         if capacity == 1:
@@ -752,6 +759,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     fn reverse(inout self):
         """Reverse the order of the items in the array inplace."""
 
+        # @parameter
+        # if not Self.fits_in_page_size:
+        #     # TODO: pointer?
+
         fn from_range[simd_size: Int]() -> StaticIntTuple[simd_size]:
             var values = StaticIntTuple[simd_size]()
             var idx = 0
@@ -766,7 +777,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 values[i] = i
             return values
 
-        var vec = self.vec.shuffle[from_range[Self._vec_type.size]()]()
+        var vec = self.vec.shuffle[from_range[Self._simd_size]()]()
 
         @parameter
         if static:
@@ -880,7 +891,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             null_amnt = self.capacity_left
 
         @parameter
-        if capacity != Self._vec_type.size:
+        if capacity != Self._simd_size:
             var same = (self.vec == value).cast[DType.uint8]()
             var mask = Self._vec_type(~Self._scalar_type(0))
             Self._mask_vec_capacity_delta(mask)
@@ -1017,10 +1028,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             var o = Self(other)
             vec = self.vec.min(o.vec)
         else:
-            vec = self.vec.min(other.vec.slice[Self._vec_type.size]())
+            vec = self.vec.min(other.vec.slice[Self._simd_size]())
 
         @parameter
-        if capacity != Self._vec_type.size:
+        if capacity != Self._simd_size:
             Self._mask_vec_capacity_delta(vec)
         return Self(vec, length=max(len(self), len(other)))
 
@@ -1048,7 +1059,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             var o = Self(other)
             vec = self.vec.max(o.vec)
         else:
-            vec = self.vec.max(other.vec.slice[Self._vec_type.size]())
+            vec = self.vec.max(other.vec.slice[Self._simd_size]())
         return Self(vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
@@ -1073,20 +1084,20 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     @staticmethod
     fn _mask_vec_capacity_delta[
-        value: Self._scalar_type = 0
-    ](inout vec: Self._vec_type):
+        D: DType = T, value: Scalar[D] = 0
+    ](inout vec: SIMD[D, Self._simd_size]):
         @parameter
-        for i in range(Self._vec_type.size - capacity):
+        for i in range(Self._simd_size - capacity):
             vec[capacity + i] = value
 
     fn _mask_vec_size[value: Self._scalar_type = 0](inout self):
         @parameter
         if static:
-            Self._mask_vec_capacity_delta[value](self.vec)
+            Self._mask_vec_capacity_delta[value=value](self.vec)
         else:
             for i in range(len(self), capacity):
                 self.vec[i] = value
-            Self._mask_vec_capacity_delta[value](self.vec)
+            Self._mask_vec_capacity_delta[value=value](self.vec)
 
     @staticmethod
     fn _build_vec[value: Self._scalar_type]() -> Self._vec_type:
@@ -1258,7 +1269,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             A new Array where each element at position i is self[i] + other[i].
         """
 
-        return Self(self.vec + other.vec, length=max(len(self), len(other)))
+        @parameter
+        if static:
+            return Self(self.vec + other.vec)
+        else:
+            return Self(self.vec + other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn __add__(self, value: Self._scalar_type) -> Self:
@@ -1270,8 +1285,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             A new Array containing the result.
         """
-        var arr = Self(Self._vec_type(value), length=len(self))
-        return Self(self.vec + arr.vec, length=len(self))
+
+        @parameter
+        if static:
+            var vec = Self._vec_type(value)
+            Self._mask_vec_capacity_delta(vec)
+            return Self(self.vec + vec)
+        else:
+            var arr = Self(Self._vec_type(value), length=len(self))
+            return Self(self.vec + arr.vec, length=len(self))
 
     @always_inline
     fn __sub__(self, other: Self) -> Self:
@@ -1283,7 +1305,12 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             A new Array where each element at position i is self[i] - other[i].
         """
-        return Self(self.vec - other.vec, length=max(len(self), len(other)))
+
+        @parameter
+        if static:
+            return Self(self.vec - other.vec)
+        else:
+            return Self(self.vec - other.vec, length=max(len(self), len(other)))
 
     @always_inline("nodebug")
     fn __sub__(self, value: Self._scalar_type) -> Self:
@@ -1295,8 +1322,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             A new Array containing the result.
         """
-        var arr = Self(Self._vec_type(value), length=len(self))
-        return Self(self.vec - arr.vec, length=len(self))
+
+        @parameter
+        if static:
+            var vec = Self._vec_type(value)
+            Self._mask_vec_capacity_delta(vec)
+            return Self(self.vec - vec)
+        else:
+            var arr = Self(Self._vec_type(value), length=len(self))
+            return Self(self.vec - arr.vec, length=len(self))
 
     @always_inline("nodebug")
     fn __iadd__(inout self, owned other: Self):
@@ -1315,8 +1349,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Args:
             value: The value to broadcast.
         """
-        var arr = Self(Self._vec_type(value), length=len(self))
-        self.vec += arr.vec
+
+        @parameter
+        if static:
+            var vec = Self._vec_type(value)
+            Self._mask_vec_capacity_delta(vec)
+            self.vec += vec
+        else:
+            var arr = Self(Self._vec_type(value), length=len(self))
+            self.vec += arr.vec
 
     @always_inline("nodebug")
     fn __isub__(inout self, owned other: Self):
@@ -1335,8 +1376,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Args:
             value: The value to broadcast.
         """
-        var arr = Self(Self._vec_type(value), length=len(self))
-        self.vec -= arr.vec
+
+        @parameter
+        if static:
+            var vec = Self._vec_type(value)
+            Self._mask_vec_capacity_delta(vec)
+            self.vec -= vec
+        else:
+            var arr = Self(Self._vec_type(value), length=len(self))
+            self.vec -= arr.vec
 
     fn clear(inout self):
         """Zeroes the Array."""
@@ -1559,7 +1607,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         constrained[not T.is_unsigned(), "Array can't be unsigned."]()
         constrained[static, "Array must be static."]()
-        alias size = Self._vec_type.size
+        alias size = Self._simd_size
 
         @parameter
         if capacity == 3:
@@ -1592,36 +1640,6 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             var vec1 = x1.join(y1)
             return vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
 
-    fn apply(inout self, func: fn (Self._scalar_type) -> Self._scalar_type):
-        """Apply a function to the Array inplace.
-
-        Args:
-            func: The function to apply.
-
-        Examples:
-        ```mojo
-        from forge_tools.collections.array import Array
-        var arr = Array[DType.uint8, 3](3, 2, 1)
-        fn applyfunc(a: UInt8) -> UInt8:
-            return a * 2
-        arr.apply(applyfunc)
-        print(arr) # [6, 4, 2]
-        %# from testing import assert_equal
-        %# assert_equal(str(arr), "[6, 4, 2]")
-        ```
-        .
-        """
-
-        @parameter
-        fn closure[simd_width: Int](i: Int):
-            self.vec[i] = func(self.vec[i])
-
-        @parameter
-        if static:
-            vectorize[closure, 1, size=capacity, unroll_factor=capacity]()
-        else:
-            vectorize[closure, 1](len(self))
-
     fn map[
         D: DType
     ](owned self, func: fn (Self._scalar_type) -> Scalar[D]) -> Array[
@@ -1653,21 +1671,59 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         .
         """
 
-        var res = SIMD[D, Self._vec_type.size](0)
+        alias amnt = Self._simd_size
+        var res = SIMD[D, amnt](0)
 
         @parameter
-        fn closure[simd_width: Int](i: Int):
-            res[i] = func(self.vec[i])
+        if Self.fits_in_page_size:
+
+            @parameter
+            fn closure[simd_width: Int](i: Int):
+                res[i] = func(self.vec[i])
+
+            vectorize[closure, 1, size=capacity, unroll_factor=amnt]()
+
+        else:
+            for i in range(len(self)):
+                res[i] = func(self.vec[i])
 
         @parameter
         if static:
-            vectorize[
-                closure, simdwidthof[D](), size=capacity, unroll_factor=capacity
-            ]()
             return Array[D, capacity, static](res)
         else:
-            vectorize[closure, simdwidthof[D]()](len(self))
             return Array[D, capacity, static](res, length=len(self))
+
+    fn apply(inout self, func: fn (Self._scalar_type) -> Self._scalar_type):
+        """Apply a function to the Array inplace.
+
+        Args:
+            func: The function to apply.
+
+        Examples:
+        ```mojo
+        from forge_tools.collections.array import Array
+        var arr = Array[DType.uint8, 3](3, 2, 1)
+        fn applyfunc(a: UInt8) -> UInt8:
+            return a * 2
+        arr.apply(applyfunc)
+        print(arr) # [6, 4, 2]
+        %# from testing import assert_equal
+        %# assert_equal(str(arr), "[6, 4, 2]")
+        ```
+        .
+        """
+
+        @parameter
+        if Self.fits_in_page_size:
+            self = self.map(func)
+        elif static:
+
+            @parameter
+            for i in range(capacity):
+                self.vec[i] = func(self.vec[i])
+        else:
+            for i in range(len(self)):
+                self.vec[i] = func(self.vec[i])
 
     fn filter(
         owned self, func: fn (Self._scalar_type) -> Scalar[DType.bool]
@@ -1695,17 +1751,22 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         var res = Array[T, capacity, False]()
-        var vec = self.map(func)
+        var idx = 0
 
         @parameter
-        if static:
+        if Self.fits_in_page_size:
+            var vec = self.map(func)
 
             @parameter
             for i in range(capacity):
                 if vec[i]:
-                    res.append(self.vec[i])
+                    res.vec[idx] = self.vec[i]
+                    idx += 1
         else:
             for i in range(len(self)):
-                if vec[i]:
-                    res.append(self.vec[i])
+                if func(self.vec[i]):
+                    res.vec[idx] = self.vec[i]
+                    idx += 1
+
+        res.capacity_left = capacity - (idx + 1)
         return res

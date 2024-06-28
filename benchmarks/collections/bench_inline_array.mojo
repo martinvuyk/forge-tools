@@ -7,14 +7,16 @@ from benchmark import (
     keep,
     run,
 )
-from random import seed, random_float64
+from random import seed, random_float64, random_float64
 
 
 # ===----------------------------------------------------------------------===#
 # Benchmark Data
 # ===----------------------------------------------------------------------===#
-fn make_list[capacity: Int, T: DType = DType.int64]() -> List[Scalar[T]]:
-    var a = List[Scalar[T]](capacity=capacity)
+fn make_inlinearray[
+    capacity: Int, T: DType = DType.int64
+]() -> InlineArray[Scalar[T], capacity]:
+    var a = InlineArray[Scalar[T], capacity](unsafe_uninitialized=True)
     for i in range(0, capacity):
 
         @parameter
@@ -28,44 +30,48 @@ fn make_list[capacity: Int, T: DType = DType.int64]() -> List[Scalar[T]]:
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list init
+# Benchmark inlinearray init
 # ===----------------------------------------------------------------------===#
 
 
 @parameter
-fn bench_list_init[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_init[capacity: Int](inout b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn():
-        var res = List[Int64](capacity=capacity)
-        keep(res)
+        var res = InlineArray[Int64, capacity](0)
+        keep(res._array)
 
     b.iter[call_fn]()
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list Insert
+# Benchmark inlinearray Insert
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_insert[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_insert[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
         for i in range(0, capacity):
-            items.insert(i, random.random_si64(0, capacity).value)
+            var previous = random.random_si64(0, capacity)
+            for i in range(i, capacity):
+                var tmp = items[i]
+                items[i] = previous
+                previous = tmp
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list Lookup
+# Benchmark inlinearray Lookup
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_lookup[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_lookup[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     @always_inline
     @parameter
@@ -79,15 +85,15 @@ fn bench_list_lookup[capacity: Int](inout b: Bencher) raises:
             keep(res)
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list contains
+# Benchmark inlinearray contains
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_contains[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_contains[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     @always_inline
     @parameter
@@ -101,15 +107,15 @@ fn bench_list_contains[capacity: Int](inout b: Bencher) raises:
             keep(res)
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list count
+# Benchmark inlinearray count
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_count[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_count[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     @always_inline
     @parameter
@@ -122,15 +128,15 @@ fn bench_list_count[capacity: Int](inout b: Bencher) raises:
             keep(res)
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list sum
+# Benchmark inlinearray sum
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_sum[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_sum[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     @always_inline
     @parameter
@@ -141,15 +147,15 @@ fn bench_list_sum[capacity: Int](inout b: Bencher) raises:
         keep(res)
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list filter
+# Benchmark inlinearray filter
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_filter[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_filter[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     fn filterfn(a: Int64) -> Scalar[DType.bool]:
         return a < (capacity // 2)
@@ -157,24 +163,24 @@ fn bench_list_filter[capacity: Int](inout b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn() raises:
-        var res = List[Int64](capacity=capacity)
+        var res = InlineArray[Int64, capacity](unsafe_uninitialized=True)
         var amnt = 0
         for i in range(len(items)):
             if filterfn(items[i]):
                 res[amnt] = items[i]
                 amnt += 1
-        keep(res)
+        keep(res._array)
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list apply
+# Benchmark inlinearray apply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_apply[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_apply[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     fn applyfn(a: Int64) -> Scalar[DType.int64]:
         return a * 2
@@ -186,50 +192,55 @@ fn bench_list_apply[capacity: Int](inout b: Bencher) raises:
             items[i] = applyfn(items[i])
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list multiply
+# Benchmark inlinearray multiply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_multiply[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity]()
+fn bench_inlinearray_multiply[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
+        var res = InlineArray[Int64, capacity](unsafe_uninitialized=True)
         for i in range(len(items)):
-            items[i] = items[i] * 2
+            res[i] = items[i] * 2
+        items = res
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list reverse
+# Benchmark inlinearray reverse
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_reverse[capacity: Int](inout b: Bencher) raises:
-    var items = make_list[capacity, DType.uint8]()
+fn bench_inlinearray_reverse[capacity: Int](inout b: Bencher) raises:
+    var items = make_inlinearray[capacity, DType.uint8]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
         for _ in range(1_000):
-            items.reverse()
+            for i in range(len(items)):
+                var tmp = items[i]
+                items[i] = items[len(items) - (i + 1)]
+                items[len(items) - (i + 1)] = tmp
 
     b.iter[call_fn]()
-    keep(items)
+    keep(items._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list dot
+# Benchmark inlinearray dot
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_dot[capacity: Int](inout b: Bencher) raises:
-    var arr1 = make_list[capacity, DType.float64]()
-    var arr2 = make_list[capacity, DType.float64]()
+fn bench_inlinearray_dot[capacity: Int](inout b: Bencher) raises:
+    var arr1 = make_inlinearray[capacity, T = DType.float64]()
+    var arr2 = make_inlinearray[capacity, T = DType.float64]()
 
     @always_inline
     @parameter
@@ -241,41 +252,36 @@ fn bench_list_dot[capacity: Int](inout b: Bencher) raises:
             keep(res)
 
     b.iter[call_fn]()
-    keep(arr1)
-    keep(arr2)
+    keep(arr1._array)
+    keep(arr2._array)
 
 
 # ===----------------------------------------------------------------------===#
-# Benchmark list cross
+# Benchmark inlinearray cross
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_cross(inout b: Bencher) raises:
-    var arr1 = List[Float64](capacity=3)
-    arr1[0] = random_float64(0, 500)
-    arr1[1] = random_float64(0, 500)
-    arr1[2] = random_float64(0, 500)
-    var arr2 = List[Float64](capacity=3)
-    arr2[0] = random_float64(0, 500)
-    arr2[1] = random_float64(0, 500)
-    arr2[2] = random_float64(0, 500)
+fn bench_inlinearray_cross(inout b: Bencher) raises:
+    var arr1 = InlineArray[Float64, 3](
+        random_float64(0, 500), random_float64(0, 500), random_float64(0, 500)
+    )
+    var arr2 = InlineArray[Float64, 3](
+        random_float64(0, 500), random_float64(0, 500), random_float64(0, 500)
+    )
 
     @always_inline
     @parameter
     fn call_fn() raises:
         for _ in range(1_000):
-            var res = List[Float64](
-                arr1.unsafe_get(1) * arr2.unsafe_get(2)
-                - arr1.unsafe_get(2) * arr2.unsafe_get(1),
-                arr1.unsafe_get(2) * arr2.unsafe_get(0)
-                - arr1.unsafe_get(0) * arr2.unsafe_get(2),
-                arr1.unsafe_get(0) * arr2.unsafe_get(1)
-                - arr1.unsafe_get(1) * arr2.unsafe_get(0),
+            var res = InlineArray[Float64, 3](
+                arr1[1] * arr2[2] - arr1[2] * arr2[1],
+                arr1[2] * arr2[0] - arr1[0] * arr2[2],
+                arr1[0] * arr2[1] - arr1[1] * arr2[0],
             )
-            keep(res)
+            keep(res._array)
 
     b.iter[call_fn]()
-    keep(arr1)
-    keep(arr2)
+    keep(arr1._array)
+    keep(arr2._array)
 
 
 # ===----------------------------------------------------------------------===#
@@ -289,40 +295,42 @@ def main():
     @parameter
     for i in range(7):
         alias size = sizes.get[i, Int]()
-        # m.bench_function[bench_list_init[size]](
-        #     BenchId("bench_list_init[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_init[size]](
+        #     BenchId("bench_inlinearray_init[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_insert[size]](
-        #     BenchId("bench_list_insert[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_insert[size]](
+        #     BenchId("bench_inlinearray_insert[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_lookup[size]](
-        #     BenchId("bench_list_lookup[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_lookup[size]](
+        #     BenchId("bench_inlinearray_lookup[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_contains[size]](
-        #     BenchId("bench_list_contains[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_contains[size]](
+        #     BenchId("bench_inlinearray_contains[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_count[size]](
-        #     BenchId("bench_list_count[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_count[size]](
+        #     BenchId("bench_inlinearray_count[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_sum[size]](
-        #     BenchId("bench_list_sum[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_sum[size]](
+        #     BenchId("bench_inlinearray_sum[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_filter[size]](
-        #     BenchId("bench_list_filter[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_filter[size]](
+        #     BenchId("bench_inlinearray_filter[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_apply[size]](
-        #     BenchId("bench_list_apply[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_apply[size]](
+        #     BenchId("bench_inlinearray_apply[" + str(size) + "]")
         # )
-        # m.bench_function[bench_list_multiply[size]](
-        #     BenchId("bench_list_multiply[" + str(size) + "]")
+        # m.bench_function[bench_inlinearray_multiply[size]](
+        #     BenchId("bench_inlinearray_multiply[" + str(size) + "]")
         # )
-        m.bench_function[bench_list_reverse[size]](
-            BenchId("bench_list_reverse[" + str(size) + "]")
+        m.bench_function[bench_inlinearray_reverse[size]](
+            BenchId("bench_inlinearray_reverse[" + str(size) + "]")
         )
-        m.bench_function[bench_list_dot[size]](
-            BenchId("bench_list_dot[" + str(size) + "]")
+        m.bench_function[bench_inlinearray_dot[size]](
+            BenchId("bench_inlinearray_dot[" + str(size) + "]")
         )
-        m.bench_function[bench_list_cross](BenchId("bench_list_cross"))
+        m.bench_function[bench_inlinearray_cross](
+            BenchId("bench_inlinearray_cross")
+        )
     print("")
     var values = Dict[String, List[Float64]]()
     for i in m.info_vec:
