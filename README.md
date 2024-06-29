@@ -214,7 +214,7 @@ fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
 
 fn do_some_other_thing() -> Result2[String, "OtherError"]:
     var a = do_something(-1)
-    if a.err == "OtherError": # returns bool(err) and err.type == value
+    if a.err == "OtherError":
         return a # error gets transferred
     elif a.err == "IndexError":
         return a # error message gets transferred
