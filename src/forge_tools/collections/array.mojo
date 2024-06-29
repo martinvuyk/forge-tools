@@ -148,15 +148,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     a.reverse()
     print(a) # [3, 2, 1]
 
-    fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
+    fn mapfunc(a: Int8) -> Scalar[DType.bool]:
         return a < 3
     print(a.map(mapfunc)) # [False, True, True]
 
-    fn filterfunc(a: UInt8) -> Scalar[DType.bool]:
+    fn filterfunc(a: Int8) -> Scalar[DType.bool]:
         return a < 3
     print(a.filter(filterfunc)) # [2, 1]
 
-    fn applyfunc(a: UInt8) -> UInt8:
+    fn applyfunc(a: Int8) -> Int8:
         return a * 2
     a.apply(applyfunc)
     print(a) # [6, 4, 2]
@@ -1694,10 +1694,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         ```mojo
         from forge_tools.collections.array import Array
 
-        fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
+        fn mapfunc(a: Int8) -> Scalar[DType.bool]:
             return a < 3
 
-        var arr = Array[DType.uint8, 3](3, 2, 1)
+        var arr = Array[DType.int8, 3](3, 2, 1)
         print(arr.map(mapfunc)) # [False, True, True]
         %# from testing import assert_equal
         %# assert_equal(str(arr.map(mapfunc)), "[False, True, True]")
@@ -1736,8 +1736,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Examples:
         ```mojo
         from forge_tools.collections.array import Array
-        var arr = Array[DType.uint8, 3](3, 2, 1)
-        fn applyfunc(a: UInt8) -> UInt8:
+        var arr = Array[DType.int8, 3](3, 2, 1)
+        fn applyfunc(a: Int8) -> Int8:
             return a * 2
         arr.apply(applyfunc)
         print(arr) # [6, 4, 2]
@@ -1773,10 +1773,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Examples:
         ```mojo
         from forge_tools.collections.array import Array
-        fn filterfunc(a: UInt8) -> Scalar[DType.bool]:
+        fn filterfunc(a: Int8) -> Scalar[DType.bool]:
             return a < 3
 
-        var arr = Array[DType.uint8, 3](3, 2, 1)
+        var arr = Array[DType.int8, 3](3, 2, 1)
         print(arr.filter(filterfunc)) # [2, 1]
         %# from testing import assert_equal
         %# assert_equal(str(arr.filter(filterfunc)), "[2, 1]")

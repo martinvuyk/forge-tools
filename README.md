@@ -61,15 +61,15 @@ print(a.theta(b)) # 0
 a.reverse()
 print(a) # [3, 2, 1]
 
-fn mapfunc(a: UInt8) -> Scalar[DType.bool]:
+fn mapfunc(a: Int8) -> Scalar[DType.bool]:
     return a < 3
 print(a.map(mapfunc)) # [False, True, True]
 
-fn filterfunc(a: UInt8) -> Scalar[DType.bool]:
+fn filterfunc(a: Int8) -> Scalar[DType.bool]:
     return a < 3
 print(a.filter(filterfunc)) # [2, 1]
 
-fn applyfunc(a: UInt8) -> UInt8:
+fn applyfunc(a: Int8) -> Int8:
     return a * 2
 a.apply(applyfunc)
 print(a) # [6, 4, 2]
