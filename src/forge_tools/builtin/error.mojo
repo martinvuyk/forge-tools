@@ -83,11 +83,11 @@ struct ErrorReg(Stringable, Boolable):
 
 
 @value
-struct Error2[T: StringLiteral](Stringable, Boolable):
+struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
     """This type represents a parametric Error."""
 
-    alias type = T
-    """The type of Error."""
+    alias kind = T
+    """The kind of Error."""
     var message: String
     """The Error message."""
 
@@ -105,9 +105,9 @@ struct Error2[T: StringLiteral](Stringable, Boolable):
         """Converts the Error to string representation.
 
         Returns:
-            A String of the Error message.
+            A String of the Error kind and message.
         """
-        return self.type + ": " + self.message
+        return self.kind + ": " + self.message
 
     @always_inline("nodebug")
     fn __repr__(self) -> String:
@@ -131,8 +131,8 @@ struct Error2[T: StringLiteral](Stringable, Boolable):
         return self.message == other.message
 
     fn __eq__(self, value: StringLiteral) -> Bool:
-        """Whether the Error message is set and type is equal to the
-        StringLiteral.
+        """Whether the Error message is set and self.kind is equal to the
+        StringLiteral. Error kind "AnyError" matches with all errors.
 
         Args:
             value: The StringLiteral to compare to.
@@ -141,4 +141,4 @@ struct Error2[T: StringLiteral](Stringable, Boolable):
             The Result.
         """
 
-        return bool(self) and self.type == value
+        return bool(self) and (self.kind == value or value == "AnyError")

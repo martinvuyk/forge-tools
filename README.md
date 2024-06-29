@@ -148,14 +148,26 @@ A parametric `Result2` type.
 
 uses:
 ```mojo
-struct Error2[T: StringLiteral](Stringable, Boolable):
+struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
     """This type represents a parametric Error."""
 
-    alias type = T
-    """The type of Error."""
+    alias kind = T
+    """The kind of Error."""
     var message: String
     """The Error message."""
-    ...
+      ...
+    fn __eq__(self, value: StringLiteral) -> Bool:
+        """Whether the Error message is set and self.kind is equal to the
+        StringLiteral. Error kind "AnyError" matches with all errors.
+
+        Args:
+            value: The StringLiteral to compare to.
+
+        Returns:
+            The Result.
+        """
+
+        return bool(self) and (self.kind == value or value == "AnyError")
 ```
 
 Examples:
@@ -176,18 +188,24 @@ fn do_some_other_thing() -> Result2[String, "OtherError"]:
         return a # error message ("index out of bounds: -1") gets transferred
     return "success"
 ```
-
-It would be nice to have:
+This could be expanded upon:
 ```mojo
-struct Result2[T: CollectionElement, *Errs: StringLiteral](Boolable):
+struct Result2[
+    T: CollectionElement,
+    E1: StringLiteral = "AnyError",
+    E2: StringLiteral = "AnyError",
+    E3: StringLiteral = "AnyError",
+    E4: StringLiteral = "AnyError",
+](Boolable):
     alias _type = Variant[NoneType, T]
     var _value: Self._type
     alias _err_type = Variant[
-        VariadicListUnpack[VariadicListEmbed[Error2[_], Errs]]
+        Error2["AnyError"],
+        Error2[E1],
+        Error2[E2],
+        Error2[E3],
+        Error2[E4],
     ]
-    var err: Self._err_type
-    """The Error inside the `Result`."""
-    ...
 ```
 that way:
 ```mojo
@@ -204,6 +222,44 @@ fn do_some_other_thing() -> Result2[String, "OtherError"]:
         return a
     return "success"
 ```
+
+
+It would be nice to have:
+```mojo
+struct Result2[T: CollectionElement, *Errs: StringLiteral](Boolable):
+    alias _type = Variant[NoneType, T]
+    var _value: Self._type
+    alias _err_type = Variant[
+        Error2["UndefinedError"],
+        VariadicListUnpack[VariadicListEmbed[Error2[_], Errs]]
+    ]
+    var err: Self._err_type
+    """The Error inside the `Result`."""
+    ...
+```
+
+
+Another idea on the interop with raising functions
+```mojo
+fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
+    ...
+
+# what the developer sees
+fn do_some_other_thing() raises -> String:
+    var a = do_something(-1) # a is unwrapped and can be used as value
+    return "success"
+
+# what is added
+fn do_some_other_thing() -> Result[String]:
+    var res = do_something(-1)
+    if res.err:
+        return res
+    var a = res.value()
+    return "success"
+
+```
+
+
 
 
 ## complex
