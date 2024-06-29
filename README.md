@@ -41,7 +41,7 @@ Examples:
 
 ```mojo
 from forge_tools.collections import Array
-alias Arr = Array[DType.uint8, 3]
+alias Arr = Array[DType.int8, 3]
 var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
 print(a.max()) # 3
