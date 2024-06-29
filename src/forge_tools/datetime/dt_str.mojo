@@ -365,6 +365,7 @@ fn strftime[
             microsecond=(int(m_second) * 1000 + int(u_second)),
         )
         # FIXME: python issue https://github.com/python/cpython/issues/120713
+        # remove after EOL of 3.11 (2027-10)
         return str(date.strftime(format_str.replace("%Y", "%4Y")))
     except:
         pass

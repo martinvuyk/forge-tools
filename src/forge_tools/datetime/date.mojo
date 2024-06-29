@@ -651,7 +651,7 @@ struct Date[
 
     # @always_inline("nodebug")
     fn __str__(self) -> String:
-        """str.
+        """Str.
 
         Returns:
             String.

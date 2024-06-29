@@ -14,7 +14,7 @@ Examples:
 
 ```mojo
 from forge_tools.collections import Array
-alias Arr = Array[DType.uint8, 3, True]
+alias Arr = Array[DType.uint8, 3]
 var a = Arr(1, 2, 3)
 var b = Arr(1, 2, 3)
 print(a.max()) # 3
@@ -53,6 +53,7 @@ print(a.concat(a.reversed() // 2)) # [6, 4, 2, 1, 2, 3]
 
 from math import sqrt, acos, sin
 from algorithm import vectorize
+from sys import info
 
 # ===----------------------------------------------------------------------===#
 # Array
@@ -127,7 +128,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     ```mojo
     from forge_tools.collections import Array
-    alias Arr = Array[DType.uint8, 3, True]
+    alias Arr = Array[DType.uint8, 3]
     var a = Arr(1, 2, 3)
     var b = Arr(1, 2, 3)
     print(a.max()) # 3
@@ -186,9 +187,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     alias _scalar = Scalar[T]
     var capacity_left: UInt8
     """The current capacity left."""
-    # TODO: should be per system
-    alias fits_in_page_size = capacity * T.bitwidth() <= 64 * 64
-    """Whether the Array fits in the system's page size."""
+    # TODO: need a method to get this from info, rule of thumb for now
+    alias _fits_in_l2_cache = Self._simd_size * T.bitwidth() <= (
+        info.simdbitwidth() * 32
+    )
+    """Whether the Array fits in the total CPU L2 cache."""
 
     @always_inline
     fn __init__(inout self):
@@ -497,7 +500,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         @parameter
-        if Self.fits_in_page_size:
+        if Self._fits_in_l2_cache:
             if value != 0:
                 return (self.vec == value).reduce_or()
             var vec = self.vec
@@ -552,7 +555,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         ```mojo
         from forge_tools.collections import Array
-        print(str(Array[DType.uint8, 3](1, 2, 3)))
+        print(str(Array[DType.uint8, 3](1, 2, 3))) # [1, 2, 3]
+        %# from testing import assert_equal
+        %# assert_equal(str(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
         ```
         .
         """
@@ -585,7 +590,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         ```mojo
         from forge_tools.collections import Array
         var my_array = Array[DType.uint8, 3](1, 2, 3)
-        print(repr(my_array))
+        print(repr(my_array)) # [1, 2, 3]
+        %# from testing import assert_equal
+        %# assert_equal(str(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
         ```
         .
         """
@@ -760,7 +767,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """Reverse the order of the items in the array inplace."""
 
         # @parameter
-        # if not Self.fits_in_page_size:
+        # if not Self._fits_in_l2_cache:
         #     # TODO: pointer?
 
         fn from_range[simd_size: Int]() -> StaticIntTuple[simd_size]:
@@ -1626,18 +1633,21 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         Constraints:
             Array can't be unsigned.
-            Array must be static.
         """
 
         constrained[not T.is_unsigned(), "Array can't be unsigned."]()
-        constrained[static, "Array must be static."]()
         alias size = Self._simd_size
 
         @parameter
         if capacity == 3:
             var s = self.vec.shuffle[1, 2, 0, 3]()
             var o = other.vec.shuffle[2, 0, 1, 3]()
-            return s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
+
+            @parameter
+            if T.is_floating_point() and info.simdbitwidth() >= 512:
+                return s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
+            else:
+                return s * o - (s * other.vec).shuffle[1, 2, 0, 3]()
         elif capacity == size:
             var x0 = self.vec.rotate_left[1]()
             var y0 = other.vec.rotate_left[2]()
@@ -1699,7 +1709,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         var res = SIMD[D, amnt](0)
 
         @parameter
-        if Self.fits_in_page_size:
+        if Self._fits_in_l2_cache:
 
             @parameter
             fn closure[simd_width: Int](i: Int):
@@ -1738,7 +1748,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         @parameter
-        if Self.fits_in_page_size:
+        if Self._fits_in_l2_cache:
             self = self.map(func)
         elif static:
 
@@ -1778,7 +1788,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         var idx = 0
 
         @parameter
-        if Self.fits_in_page_size:
+        if Self._fits_in_l2_cache:
             var vec = self.map(func)
 
             @parameter

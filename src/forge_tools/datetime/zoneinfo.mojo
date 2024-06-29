@@ -455,7 +455,7 @@ struct ZoneInfoFile8(CollectionElement):
             var value: UInt8
             with open(self._file, "rb") as f:
                 _ = f.seek(Self.hash(key))
-                value = f.read_bytes(1)
+                value = f.read_bytes(1)[0]
             return Offset(buf=value)
         except:
             return None

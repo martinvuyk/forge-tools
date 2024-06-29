@@ -246,7 +246,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             A reference to the contained data of the `Result` as a Reference[T].
         """
-        debug_assert(self, ".value() on empty Result")
+        debug_assert(bool(self), ".value() on empty Result")
         return self._value[T]
 
     @always_inline
@@ -258,7 +258,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         function that returns a `Reference[T]`.
         """
 
-        debug_assert(self, ".value() on empty Result")
+        debug_assert(bool(self), ".value() on empty Result")
         return self._value[T]
 
     fn take(inout self) -> T:
@@ -293,7 +293,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             The contained data of the option as an owned T value.
         """
-        debug_assert(self, ".unsafe_take() on empty Result")
+        debug_assert(bool(self), ".unsafe_take() on empty Result")
         return self._value.unsafe_take[T]()
 
     fn or_else(self, default: T) -> T:
@@ -336,7 +336,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             True if the `Result` has a value and False otherwise.
         """
-        return self
+        return bool(self)
 
     @always_inline("nodebug")
     fn __bool__(self) -> Bool:
@@ -492,7 +492,7 @@ struct ResultReg[T: AnyTrivialRegType](Boolable):
         Returns:
             True if the Result has a value and False otherwise.
         """
-        return self
+        return bool(self)
 
     @always_inline("nodebug")
     fn __bool__(self) -> Bool:
@@ -649,7 +649,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         Returns:
             A reference to the contained data of the `Result` as a Reference[T].
         """
-        debug_assert(self, ".value() on empty Result")
+        debug_assert(bool(self), ".value() on empty Result")
         return self._value[T]
 
     @always_inline
@@ -661,7 +661,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         function that returns a `Reference[T]`.
         """
 
-        debug_assert(self, ".value() on empty Result")
+        debug_assert(bool(self), ".value() on empty Result")
         return self._value[T]
 
     fn take(inout self) -> T:
@@ -696,7 +696,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         Returns:
             The contained data of the option as an owned T value.
         """
-        debug_assert(self, ".unsafe_take() on empty Result")
+        debug_assert(bool(self), ".unsafe_take() on empty Result")
         return self._value.unsafe_take[T]()
 
     fn or_else(self, default: T) -> T:
@@ -739,7 +739,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         Returns:
             True if the `Result` has a value and False otherwise.
         """
-        return self
+        return bool(self)
 
     @always_inline("nodebug")
     fn __bool__(self) -> Bool:

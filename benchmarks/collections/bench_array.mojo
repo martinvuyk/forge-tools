@@ -60,7 +60,7 @@ fn bench_array_insert[capacity: Int, static: Bool](inout b: Bencher) raises:
             arr.insert(i, random.random_si64(0, capacity).value)
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -75,10 +75,10 @@ fn bench_array_lookup[capacity: Int, static: Bool](inout b: Bencher) raises:
     fn call_fn() raises:
         for i in range(0, capacity):
             var res = arr.index(i)
-            keep(res)
+            keep(res._value._impl)
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -96,7 +96,7 @@ fn bench_array_contains[capacity: Int, static: Bool](inout b: Bencher) raises:
             keep(res)
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -114,7 +114,7 @@ fn bench_array_count[capacity: Int, static: Bool](inout b: Bencher) raises:
             keep(res)
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -131,7 +131,7 @@ fn bench_array_sum[capacity: Int](inout b: Bencher) raises:
         keep(res)
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -151,7 +151,7 @@ fn bench_array_filter[capacity: Int, static: Bool](inout b: Bencher) raises:
         keep(res)
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -162,7 +162,9 @@ fn bench_array_apply[capacity: Int, static: Bool](inout b: Bencher) raises:
     var arr = make_array[capacity, static]()
 
     fn applyfn(a: Int64) -> Scalar[DType.int64]:
-        return a * 2
+        if a < Int64.MAX_FINITE // 2:
+            return a * 2
+        return a
 
     @always_inline
     @parameter
@@ -170,7 +172,7 @@ fn bench_array_apply[capacity: Int, static: Bool](inout b: Bencher) raises:
         arr.apply(applyfn)
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -186,7 +188,7 @@ fn bench_array_multiply[capacity: Int](inout b: Bencher) raises:
         arr *= 2
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -203,7 +205,7 @@ fn bench_array_reverse[capacity: Int](inout b: Bencher) raises:
             arr.reverse()
 
     b.iter[call_fn]()
-    keep(arr)
+    keep(arr.vec.value)
 
 
 # ===----------------------------------------------------------------------===#
@@ -261,62 +263,62 @@ def main():
     @parameter
     for i in range(7):
         alias size = sizes.get[i, Int]()
-        # m.bench_function[bench_array_init[size, False]](
-        #     BenchId("bench_array_init[" + str(size) + "]")
+        m.bench_function[bench_array_init[size, False]](
+            BenchId("bench_array_init[" + str(size) + "]")
+        )
+        # FIXME: for some reason, static does not appear faster in these benchmarks
+        # m.bench_function[bench_array_init[size, True]](
+        #     BenchId("bench_array_init_static[" + str(size) + "]")
         # )
-        # # FIXME: for some reason, static does not appear faster in these benchmarks
-        # # m.bench_function[bench_array_init[size, True]](
-        # #     BenchId("bench_array_init_static[" + str(size) + "]")
-        # # )
         # m.bench_function[bench_array_insert[size, False]](
         #     BenchId("bench_array_insert[" + str(size) + "]")
         # )
-        # # m.bench_function[bench_array_insert[size, True]](
-        # #     BenchId("bench_array_insert_static[" + str(size) + "]")
-        # # )
-        # m.bench_function[bench_array_lookup[size, False]](
-        #     BenchId("bench_array_lookup[" + str(size) + "]")
+        # m.bench_function[bench_array_insert[size, True]](
+        #     BenchId("bench_array_insert_static[" + str(size) + "]")
         # )
-        # # m.bench_function[bench_array_lookup[size, True]](
-        # #     BenchId("bench_array_lookup_static[" + str(size) + "]")
-        # # )
-        # m.bench_function[bench_array_contains[size, False]](
-        #     BenchId("bench_array_contains[" + str(size) + "]")
+        m.bench_function[bench_array_lookup[size, False]](
+            BenchId("bench_array_lookup[" + str(size) + "]")
+        )
+        # m.bench_function[bench_array_lookup[size, True]](
+        #     BenchId("bench_array_lookup_static[" + str(size) + "]")
         # )
-        # # m.bench_function[bench_array_contains[size, True]](
-        # #     BenchId("bench_array_contains_static[" + str(size) + "]")
-        # # )
-        # m.bench_function[bench_array_count[size, False]](
-        #     BenchId("bench_array_count[" + str(size) + "]")
+        m.bench_function[bench_array_contains[size, False]](
+            BenchId("bench_array_contains[" + str(size) + "]")
+        )
+        # m.bench_function[bench_array_contains[size, True]](
+        #     BenchId("bench_array_contains_static[" + str(size) + "]")
         # )
-        # # m.bench_function[bench_array_count[size, True]](
-        # #     BenchId("bench_array_count_static[" + str(size) + "]")
-        # # )
+        m.bench_function[bench_array_count[size, False]](
+            BenchId("bench_array_count[" + str(size) + "]")
+        )
+        # m.bench_function[bench_array_count[size, True]](
+        #     BenchId("bench_array_count_static[" + str(size) + "]")
+        # )
         # m.bench_function[bench_array_sum[size]](
         #     BenchId("bench_array_sum[" + str(size) + "]")
         # )
         # m.bench_function[bench_array_filter[size, False]](
         #     BenchId("bench_array_filter[" + str(size) + "]")
         # )
-        # # m.bench_function[bench_array_filter[size, True]](
-        # #     BenchId("bench_array_filter_static[" + str(size) + "]")
-        # # )
+        # m.bench_function[bench_array_filter[size, True]](
+        #     BenchId("bench_array_filter_static[" + str(size) + "]")
+        # )
         # m.bench_function[bench_array_apply[size, True]](
         #     BenchId("bench_array_apply[" + str(size) + "]")
         # )
-        # # m.bench_function[bench_array_apply[size, True]](
-        # #     BenchId("bench_array_apply_static[" + str(size) + "]")
-        # # )
+        # m.bench_function[bench_array_apply[size, True]](
+        #     BenchId("bench_array_apply_static[" + str(size) + "]")
+        # )
         # m.bench_function[bench_array_multiply[size]](
         #     BenchId("bench_array_multiply[" + str(size) + "]")
         # )
-        m.bench_function[bench_array_reverse[size]](
-            BenchId("bench_array_reverse[" + str(size) + "]")
-        )
-        m.bench_function[bench_array_dot[size]](
-            BenchId("bench_array_dot[" + str(size) + "]")
-        )
-        m.bench_function[bench_array_cross](BenchId("bench_array_cross"))
+        # m.bench_function[bench_array_reverse[size]](
+        #     BenchId("bench_array_reverse[" + str(size) + "]")
+        # )
+        # m.bench_function[bench_array_dot[size]](
+        #     BenchId("bench_array_dot[" + str(size) + "]")
+        # )
+        # m.bench_function[bench_array_cross](BenchId("bench_array_cross"))
 
     print("")
     var values = Dict[String, List[Float64]]()
