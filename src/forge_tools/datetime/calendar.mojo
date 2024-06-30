@@ -280,7 +280,7 @@ struct Calendar:
     """Default minimum nanosecond."""
     alias _monthdays = List[UInt8]()
     """An array with the amount of days each month contains without 
-    leap values. It's assumed that `len(monthdays) == max_month`."""
+    leap values. It's assumed that `len(monthdays) == max_month + 1`."""
     var _implementation: Variant[Gregorian, UTCFast]
 
     fn __init__[
@@ -1957,5 +1957,3 @@ struct UTCFast(_Calendarized):
         """
 
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
-
-

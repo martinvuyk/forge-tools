@@ -218,7 +218,7 @@ fn do_some_other_thing() -> Result2[String, "OtherError"]:
         return a # error gets transferred
     elif a.err == "IndexError":
         return a # error message gets transferred
-    elif a.err: # some undefined error after an API change
+    elif a.err: # some unknow error after an API change
         return a
     return "success"
 ```
@@ -230,7 +230,7 @@ struct Result2[T: CollectionElement, *Errs: StringLiteral](Boolable):
     alias _type = Variant[NoneType, T]
     var _value: Self._type
     alias _err_type = Variant[
-        Error2["UndefinedError"],
+        Error2["AnyError"],
         VariadicListUnpack[VariadicListEmbed[Error2[_], Errs]]
     ]
     var err: Self._err_type
@@ -256,7 +256,6 @@ fn do_some_other_thing() -> Result[String]:
         return res
     var a = res.value()
     return "success"
-
 ```
 
 
