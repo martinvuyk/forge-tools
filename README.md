@@ -71,10 +71,10 @@ print(a.filter(filterfunc)) # [2, 1]
 
 fn applyfunc(a: Int8) -> Int8:
     return a * 2
-a.apply(applyfunc)
-print(a) # [6, 4, 2]
+a.apply(applyfunc, where=filterfunc)
+print(a) # [3, 4, 2]
 
-print(a.concat(a.reversed() // 2)) # [6, 4, 2, 1, 2, 3]
+print(a.concat(a.reversed() // 2)) # [3, 4, 2, 1, 2, 1]
 ```
 ### result.mojo
 ### Result

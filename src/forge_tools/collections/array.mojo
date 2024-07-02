@@ -44,10 +44,10 @@ print(a.filter(filterfunc)) # [2, 1]
 
 fn applyfunc(a: UInt8) -> UInt8:
     return a * 2
-a.apply(applyfunc)
-print(a) # [6, 4, 2]
+a.apply(applyfunc, where=filterfunc)
+print(a) # [3, 4, 2]
 
-print(a.concat(a.reversed() // 2)) # [6, 4, 2, 1, 2, 3]
+print(a.concat(a.reversed() // 2)) # [3, 4, 2, 1, 2, 1]
 ```
 """
 
@@ -159,10 +159,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     fn applyfunc(a: Int8) -> Int8:
         return a * 2
-    a.apply(applyfunc)
-    print(a) # [6, 4, 2]
+    a.apply(applyfunc, where=filterfunc)
+    print(a) # [3, 4, 2]
 
-    print(a.concat(a.reversed() // 2)) # [6, 4, 2, 1, 2, 3]
+    print(a.concat(a.reversed() // 2)) # [3, 4, 2, 1, 2, 1]
     ```
 
     Parameters:
@@ -1802,7 +1802,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             res.capacity_left = capacity - len(self)
         return res
 
-    fn apply(inout self, func: fn (Self._scalar) -> Self._scalar):
+    fn apply(
+        inout self,
+        func: fn (Self._scalar) -> Self._scalar,
+    ):
         """Apply a function to the Array inplace.
 
         Args:
@@ -1823,6 +1826,46 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         self = self.map(func)
+
+    fn apply(
+        inout self,
+        func: fn (Self._scalar) -> Self._scalar,
+        *,
+        where: fn (Self._scalar) -> Scalar[DType.bool],
+    ):
+        """Apply a function to the Array inplace where condition is True.
+
+        Args:
+            func: The function to apply.
+            where: The condition to apply the function.
+
+        Notes:
+            The function gets applied to all values before masking. So division
+            or modulo by 0 would still fail even if condition where False.
+
+        Examples:
+        ```mojo
+        from forge_tools.collections.array import Array
+        var arr = Array[DType.int8, 3](3, 2, 1)
+
+        fn filterfunc(a: Int8) -> Scalar[DType.bool]:
+            return a < 3
+
+        fn applyfunc(a: Int8) -> Int8:
+            return a * 2
+
+        arr.apply(applyfunc, where=filterfunc)
+        print(arr) # [3, 4, 2]
+        %# from testing import assert_equal
+        %# assert_equal(str(arr), "[3, 4, 2]")
+        ```
+        .
+        """
+
+        var res1 = self.map(func).vec
+        var res2 = self.map(where).vec
+        self.vec *= (~res2).cast[T]()
+        self.vec += res1 * (res2).cast[T]()
 
     fn filter(
         owned self, func: fn (Self._scalar) -> Scalar[DType.bool]
