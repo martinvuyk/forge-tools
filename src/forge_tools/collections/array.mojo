@@ -799,6 +799,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         Args:
             value: The value.
+
+        Constraints:
+            The Array can't be static.
         """
         var idx = self.index(value)
         if idx:
@@ -948,7 +951,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             An UnsafePointer to a copy of the SIMD vector.
         """
         var ptr = DTypePointer[T].alloc(Self.simd_size)
-        ptr.simd_strided_store[Self.simd_size](self.vec, 1)
+        alias size = Self._slice_simd_size
+
+        @parameter
+        for i in range(Self.simd_size // size):
+            ptr.offset(i * size).simd_strided_store[size](
+                self.vec.slice[size, offset = i * size](), 1
+            )
+
         return UnsafePointer[Self._scalar](ptr.address.address)
 
     @always_inline
@@ -1748,16 +1758,24 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if D != T:
-            var arr = InlineArray[Scalar[D], Self.simd_size](fill=0)
-            var res_p = arr.unsafe_ptr()
+            # FIXME: experimental
+            var res_p = DTypePointer[D].alloc(Self.simd_size)
+            alias size = Self._slice_simd_size
+
+            for i in range(len(self), Self.simd_size):
+                res_p[i] = Scalar[D](0)
             var s_p = self.unsafe_ptr()
+
             for i in range(len(self)):
                 res_p[i] = func(s_p[i])
 
             var res = Array[D, capacity, static](
-                unsafe_pointer=res_p, length=len(self), unsafe_simd_size=True
+                unsafe_pointer=UnsafePointer(res_p.address.address),
+                length=len(self),
+                unsafe_simd_size=True,
             )
-            _ = arr
+            res_p.free()
+            s_p.free()
             return res
 
         var res = Array[D, capacity, static](fill=0)
@@ -1831,8 +1849,12 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         .
         """
 
-        var arr = InlineArray[Self._scalar, Self.simd_size](fill=0)
-        var res_p = arr.unsafe_ptr()
+        var res_p = DTypePointer[T].alloc(Self.simd_size)
+        alias size = Self._slice_simd_size
+
+        @parameter
+        for i in range(Self.simd_size // size):
+            res_p.offset(i * size).simd_strided_store[size](SIMD[T, size](0), 1)
         var s_p = self.unsafe_ptr()
         var idx = 0
         for i in range(len(self)):
@@ -1842,7 +1864,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 idx += 1
 
         var res = Array[T, capacity, False](
-            unsafe_pointer=res_p, length=(idx + 1), unsafe_simd_size=True
+            unsafe_pointer=UnsafePointer(res_p.address.address),
+            length=(idx + 1),
+            unsafe_simd_size=True,
         )
-        _ = arr
+        res_p.free()
+        s_p.free()
         return res
