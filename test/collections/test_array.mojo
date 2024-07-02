@@ -55,7 +55,7 @@ fn test_array() raises:
     array.clear()
     assert_equal(0, len(array))
     for i in range(5):
-        assert_equal(0, array[i])
+        assert_equal(0, array.vec[i])
 
     var arr = Array[DType.int8, 5]()
 
@@ -175,30 +175,23 @@ fn test_array_variadic_constructor() raises:
 
 
 fn test_array_insert() raises:
-    #
-    # Test the list [1, 2, 3] created with insert
-    #
+    var v1 = Array[DType.int8, 4](0, 0, 0, 0)
+    v1.insert(0, 4)
+    v1.insert(0, 3)
+    v1.insert(0, 2)
+    v1.insert(0, 1)
 
-    var v1 = Array[DType.int8, 3]()
-    v1.insert(len(v1), 1)
-    v1.insert(1, 2)
-    v1.insert(len(v1), 3)
+    assert_equal(v1.vec[0], 1)
+    assert_equal(v1.vec[1], 2)
+    assert_equal(v1.vec[2], 3)
+    assert_equal(v1.vec[3], 4)
 
-    assert_equal(len(v1), 3)
-    assert_equal(v1[0], 1)
-    assert_equal(v1[1], 2)
-    assert_equal(v1[2], 3)
-
-    #
-    # Test the list [1, 2, 3, 4, 5] created with negative and positive index
-    #
-
-    var v2 = Array[DType.int8, 5]()
-    v2.insert(-1729, 2)
-    v2.insert(len(v2), 3)
-    v2.insert(len(v2), 5)
+    var v2 = Array[DType.int8, 5, True]()
     v2.insert(-5, 1)
+    v2.insert(-4, 2)
+    v2.insert(-3, 3)
     v2.insert(-2, 4)
+    v2.insert(-1, 5)
 
     assert_equal(len(v2), 5)
     assert_equal(v2[0], 1)
@@ -206,34 +199,6 @@ fn test_array_insert() raises:
     assert_equal(v2[2], 3)
     assert_equal(v2[3], 4)
     assert_equal(v2[4], 5)
-
-    #
-    # Test the list [1, 2, 3, 4] created with negative index
-    #
-
-    var v3 = Array[DType.int8, 4]()
-    v3.insert(-11, 4)
-    v3.insert(-13, 3)
-    v3.insert(-17, 2)
-    v3.insert(-19, 1)
-
-    assert_equal(len(v3), 4)
-    assert_equal(v3[0], 1)
-    assert_equal(v3[1], 2)
-    assert_equal(v3[2], 3)
-    assert_equal(v3[3], 4)
-
-    #
-    # Test the list [1, 2, 3, 4, 5, 6, 7, 8] created with insert
-    #
-
-    var v4 = Array[DType.int8, 8]()
-    for i in range(4):
-        v4.insert(0, 4 - i)
-        v4.insert(len(v4), 4 + i + 1)
-
-    for i in range(len(v4)):
-        assert_equal(v4[i], i + 1)
 
 
 fn test_array_index() raises:
@@ -251,29 +216,47 @@ fn test_array_index() raises:
     # Tests With Start Parameter
     assert_equal(test_array_a.index(30, start=1).value(), 2)
     assert_equal(test_array_a.index(30, start=-4).value(), 2)
-    assert_equal(test_array_a.index(30, start=-1000).value(), 2)
+    assert_equal(test_array_a.index(30, start=-5).value(), 2)
     assert_false(test_array_a.index(30, start=3))
-    assert_false(test_array_a.index(30, start=5))
+    assert_false(test_array_a.index(30, start=4))
     # Tests With Start and End Parameters
-    assert_equal(test_array_a.index(30, start=1, stop=3).value(), 2)
-    assert_equal(test_array_a.index(30, start=-4, stop=-2).value(), 2)
-    assert_equal(test_array_a.index(30, start=-1000, stop=1000).value(), 2)
-    assert_false(test_array_a.index(30, start=1, stop=2))
+    var idx = test_array_a.index(30, start=1, stop=3)
+    assert_true(idx)
+    assert_equal(idx.value(), 2)
+    idx = test_array_a.index(30, start=-4, stop=-2)
+    assert_true(idx)
+    assert_equal(idx.value(), 2)
+    idx = test_array_a.index(30, start=-5, stop=4)
+    assert_true(idx)
+    assert_equal(idx.value(), 2)
+    assert_false(test_array_a.index(30, start=0, stop=1))
     assert_false(test_array_a.index(30, start=3, stop=1))
     # Tests With End Parameter Only
-    assert_equal(test_array_a.index(30, start=0, stop=3).value(), 2)
-    assert_equal(test_array_a.index(30, start=0, stop=-2).value(), 2)
-    assert_equal(test_array_a.index(30, start=0, stop=1000).value(), 2)
+    idx = test_array_a.index(30, start=0, stop=3)
+    assert_true(idx)
+    assert_equal(idx.value(), 2)
+    idx = test_array_a.index(30, start=0, stop=-2)
+    assert_true(idx)
+    assert_equal(idx.value(), 2)
+    idx = test_array_a.index(30, start=0, stop=4)
+    assert_true(idx)
+    assert_equal(idx.value(), 2)
     assert_false(test_array_a.index(30, start=0, stop=1))
-    assert_false(test_array_a.index(30, start=0, stop=2))
-    assert_false(test_array_a.index(60, start=0, stop=50))
-    # Edge Cases and Special Conditions
-    assert_equal(test_array_a.index(10, start=-5, stop=-1).value(), 0)
-    assert_equal(test_array_a.index(10, start=0, stop=50).value(), 0)
-    assert_equal(test_array_a.index(50, start=-5, stop=-1).value(), 4)
-    assert_equal(test_array_a.index(50, start=0, stop=-1).value(), 4)
+    assert_false(test_array_a.index(60, start=0, stop=4))
+    # Edge Cases and Special Conditions, how python does it
+    assert_true(test_array_a.index(50, start=0, stop=5))
+    assert_true(test_array_a.index(50, start=-5, stop=5))
+    assert_true(test_array_a.index(50, start=0, stop=6))
+    assert_true(test_array_a.index(50, start=-5, stop=6))
+    assert_false(test_array_a.index(50, start=0, stop=-1))
+    assert_false(test_array_a.index(50, start=-5, stop=-1))
+    assert_false(test_array_a.index(50, start=0, stop=4))
+    assert_false(test_array_a.index(50, start=-5, stop=4))
+    idx = test_array_a.index(10, start=0, stop=4)
+    assert_true(idx)
+    assert_equal(idx.value(), 0)
     assert_false(test_array_a.index(10, start=-4, stop=-1))
-    assert_false(test_array_a.index(10, start=5, stop=50))
+    assert_false(test_array_a.index(10, start=4, stop=4))
     assert_false(Array[DType.int8, 1]().index(10))
     # # Test empty slice
     assert_false(test_array_a.index(10, start=1, stop=1))
@@ -383,7 +366,8 @@ fn test_array_span() raises:
 fn test_array_boolable() raises:
     assert_true(Array[DType.int8, 1](1))
     assert_false(Array[DType.int8, 1]())
-    assert_false(Array[DType.int8, 256]())
+    assert_false(Array[DType.int8, 255]())
+    assert_true(Array[DType.int8, 256](1))
 
 
 fn test_constructor_from_pointer() raises:
@@ -786,6 +770,8 @@ fn test_map() raises:
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
         assert_true((arr.map(func[T]) == (arr.vec == 1)).reduce_and())
+        var arr3 = Array[T, 256](fill=1)
+        assert_true((arr3.map(func[T]) == (arr3.vec == 1)).reduce_and())
 
     test[DType.uint8]()
     test[DType.uint16]()
@@ -809,7 +795,10 @@ fn test_filter() raises:
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
         var arr2 = Array[T, 53](1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        print(arr.filter(func[T]).vec)
         assert_true((arr.filter(func[T]) == arr2).reduce_and())
+        var arr3 = Array[T, 256](fill=1)
+        assert_true((arr3.filter(func[T]) == arr3).reduce_and())
 
     test[DType.uint8]()
     test[DType.uint16]()

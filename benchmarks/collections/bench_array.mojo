@@ -18,14 +18,14 @@ from forge_tools.collections import Array
 fn make_array[
     capacity: Int, static: Bool, T: DType = DType.int64
 ]() -> Array[T, capacity, static]:
-    var a = Array[T, capacity, static]()
+    var a = Array[T, capacity, static](fill=0)
     for i in range(0, capacity):
 
         @parameter
         if T == DType.int64:
-            a[i] = rebind[Scalar[T]](random.random_si64(0, capacity))
+            a.vec[i] = rebind[Scalar[T]](random.random_si64(0, capacity))
         elif T == DType.float64:
-            a[i] = rebind[Scalar[T]](random.random_float64(0, capacity))
+            a.vec[i] = rebind[Scalar[T]](random.random_float64(0, capacity))
     a.capacity_left = 0
     return a
 
@@ -40,7 +40,7 @@ fn bench_array_init[capacity: Int, static: Bool](inout b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn():
-        var res = Array[DType.int64, capacity, static]()
+        var res = Array[DType.int64, capacity, static](fill=0)
         keep(res)
 
     b.iter[call_fn]()
@@ -263,9 +263,9 @@ def main():
     @parameter
     for i in range(7):
         alias size = sizes.get[i, Int]()
-        m.bench_function[bench_array_init[size, False]](
-            BenchId("bench_array_init[" + str(size) + "]")
-        )
+        # m.bench_function[bench_array_init[size, False]](
+        #     BenchId("bench_array_init[" + str(size) + "]")
+        # )
         # FIXME: for some reason, static does not appear faster in these benchmarks
         # m.bench_function[bench_array_init[size, True]](
         #     BenchId("bench_array_init_static[" + str(size) + "]")
@@ -276,42 +276,42 @@ def main():
         # m.bench_function[bench_array_insert[size, True]](
         #     BenchId("bench_array_insert_static[" + str(size) + "]")
         # )
-        m.bench_function[bench_array_lookup[size, False]](
-            BenchId("bench_array_lookup[" + str(size) + "]")
-        )
+        # m.bench_function[bench_array_lookup[size, False]](
+        #     BenchId("bench_array_lookup[" + str(size) + "]")
+        # )
         # m.bench_function[bench_array_lookup[size, True]](
         #     BenchId("bench_array_lookup_static[" + str(size) + "]")
         # )
-        m.bench_function[bench_array_contains[size, False]](
-            BenchId("bench_array_contains[" + str(size) + "]")
-        )
+        # m.bench_function[bench_array_contains[size, False]](
+        #     BenchId("bench_array_contains[" + str(size) + "]")
+        # )
         # m.bench_function[bench_array_contains[size, True]](
         #     BenchId("bench_array_contains_static[" + str(size) + "]")
         # )
-        m.bench_function[bench_array_count[size, False]](
-            BenchId("bench_array_count[" + str(size) + "]")
-        )
+        # m.bench_function[bench_array_count[size, False]](
+        #     BenchId("bench_array_count[" + str(size) + "]")
+        # )
         # m.bench_function[bench_array_count[size, True]](
         #     BenchId("bench_array_count_static[" + str(size) + "]")
         # )
-        # m.bench_function[bench_array_sum[size]](
-        #     BenchId("bench_array_sum[" + str(size) + "]")
-        # )
-        # m.bench_function[bench_array_filter[size, False]](
-        #     BenchId("bench_array_filter[" + str(size) + "]")
-        # )
+        m.bench_function[bench_array_sum[size]](
+            BenchId("bench_array_sum[" + str(size) + "]")
+        )
+        m.bench_function[bench_array_filter[size, False]](
+            BenchId("bench_array_filter[" + str(size) + "]")
+        )
         # m.bench_function[bench_array_filter[size, True]](
         #     BenchId("bench_array_filter_static[" + str(size) + "]")
         # )
-        # m.bench_function[bench_array_apply[size, True]](
-        #     BenchId("bench_array_apply[" + str(size) + "]")
-        # )
+        m.bench_function[bench_array_apply[size, True]](
+            BenchId("bench_array_apply[" + str(size) + "]")
+        )
         # m.bench_function[bench_array_apply[size, True]](
         #     BenchId("bench_array_apply_static[" + str(size) + "]")
         # )
-        # m.bench_function[bench_array_multiply[size]](
-        #     BenchId("bench_array_multiply[" + str(size) + "]")
-        # )
+        m.bench_function[bench_array_multiply[size]](
+            BenchId("bench_array_multiply[" + str(size) + "]")
+        )
         # m.bench_function[bench_array_reverse[size]](
         #     BenchId("bench_array_reverse[" + str(size) + "]")
         # )

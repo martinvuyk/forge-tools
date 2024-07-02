@@ -34,8 +34,3 @@
 - 5k times cross product (Float64)
 
 ![](./benchmarks_array_list_inlinearray_vector_ops.png)
-
-
-#### Subtle differences between Array and List
-
-![](./benchmarks_array_list_subtle_diff.png)
