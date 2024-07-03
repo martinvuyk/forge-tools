@@ -49,6 +49,7 @@ print(a) # [3, 4, 2]
 
 print(a.concat(a.reversed() // 2)) # [3, 4, 2, 1, 2, 1]
 ```
+.
 """
 
 from math import sqrt, acos, sin
