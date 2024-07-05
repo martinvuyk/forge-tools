@@ -21,8 +21,7 @@ source ./scripts/benchmark.sh benchmarks/
 
 ## builtin
 ### error.mojo
-#### ErrorReg
-This type represents a register-passable Error.
+Error2: This type represents a parametric Error.
 
 ## collections
 ### array.mojo
@@ -140,8 +139,6 @@ fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T
     ...
     return final_result
 ```
-#### ResultReg
-A register-passable `ResultReg` type.
 
 #### Result2
 A parametric `Result2` type.
