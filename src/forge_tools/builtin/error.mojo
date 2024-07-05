@@ -1,5 +1,5 @@
 # ===----------------------------------------------------------------------=== #
-# Copyright (c) 2024, Modular Inc. All rights reserved.
+# Copyright (c) 2024, Martin Vuyk Loperena
 #
 # Licensed under the Apache License v2.0 with LLVM Exceptions:
 # https://llvm.org/LICENSE.txt
@@ -10,76 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===----------------------------------------------------------------------=== #
-"""Implements the Error class.
-
-These are Mojo built-ins, so you don't need to import them.
-"""
-
-from sys import alignof, sizeof
-
-from memory.memory import _free
-from memory import memcmp, memcpy, UnsafePointer
+"""Implements the Error2 type."""
 
 # ===----------------------------------------------------------------------===#
 # Error
 # ===----------------------------------------------------------------------===#
-
-
-@register_passable("trivial")
-struct ErrorReg(Stringable, Boolable):
-    """This type represents a register-passable Error."""
-
-    var data: StringLiteral
-    """The string data."""
-
-    @always_inline("nodebug")
-    fn __init__(inout self):
-        """Default constructor."""
-        self.data = ""
-
-    @always_inline("nodebug")
-    fn __init__(inout self, value: StringLiteral):
-        """Construct an ErrorReg object with a given string literal.
-
-        Args:
-            value: The ErrorReg message.
-        """
-        self.data = value
-
-    fn __bool__(self) -> Bool:
-        """Returns True if the ErrorReg is set and false otherwise.
-
-        Returns:
-          True if the ErrorReg object contains a value and False otherwise.
-        """
-        return bool(self.data)
-
-    fn __str__(self) -> String:
-        """Converts the ErrorReg to string representation.
-
-        Returns:
-            A String of the ErrorReg message.
-        """
-        return self.data
-
-    fn __repr__(self) -> String:
-        """Converts the ErrorReg to printable representation.
-
-        Returns:
-            A printable representation of the ErrorReg message.
-        """
-        return str(self)
-
-    fn __eq__(self, other: String) -> Bool:
-        """Whether the Error message is equal to the string.
-
-        Args:
-            other: The String to compare to.
-
-        Returns:
-            The comparison.
-        """
-        return str(self) == other
 
 
 @value
