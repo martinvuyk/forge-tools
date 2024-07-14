@@ -235,9 +235,18 @@ struct Result2[T: CollectionElement, *Errs: StringLiteral](Boolable):
     ...
 ```
 
-
-Another idea on the interop with raising functions
+#### On the interop with raising functions
+Idea 1: new dunder method that gets automatically executed when the type gets
+assigned to a variable inside a raising context.
+This way there is no type that gets special treatment from the compiler.
 ```mojo
+struct Result2:
+    ...
+    fn __unwrap__(self) raises -> T:
+        if self.err:
+            raise self.err
+        return self.value()
+
 fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
     ...
 
@@ -247,15 +256,48 @@ fn do_some_other_thing() raises -> String:
     return "success"
 
 # what is added
-fn do_some_other_thing() -> Result[String]:
-    var res = do_something(-1)
-    if res.err:
-        return res
-    var a = res.value()
+fn do_some_other_thing() raises -> String:
+    var a = do_something(-1).__unwrap__()
     return "success"
 ```
 
+Idea 2: Less magic, but results will not have the same "feel" as raising Errors.
+Very likely fragmentation in API development standards.
+```mojo
+struct Result2:
+    ...
+    fn unwrap(self) raises -> T:
+        if self.err:
+            raise self.err
+        return self.value()
 
+    @staticmethod
+    fn wrap[
+        *A: AnyType,
+        K: StringLiteral = E1,
+        err: Error2[K] = Error2[E1],
+    ](
+        func: fn (A) raises -> T,
+        args: A,
+    ) -> Self:
+        try:
+            return Self(func(*args))
+        except Error as e:
+            return Self(err=err(e))
+
+
+fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
+    ...
+
+# what the developer sees
+fn do_some_other_thing() raises -> String:
+    var a = do_something(-1).unwrap()
+    return "success"
+
+# can call raising functions and they get turned into a Result
+fn do_some_other_thing_2() -> Result[String]:
+    return Result[String].wrap(do_some_other_thing)
+```
 
 
 ## complex
