@@ -3,18 +3,18 @@ Tools to extend the functionality of the Mojo standard library. Hopefully they w
 
 ## How to Install
 ```bash
-source ./scripts/package-lib.sh
+source ./scripts/package-lib.sh || true
 ```
 The semi-compiled package will be under `./build/forge_tools.mojopkg`
 ## How to run tests
 Test an entire directory or subdirectory or specific file
 ```bash
-source ./scripts/test.sh test/
+source ./scripts/test.sh test/ || true
 ```
 ## How to run benchmarks
 Run an entire directory or subdirectory or specific file (sequentially)
 ```bash
-source ./scripts/benchmark.sh benchmarks/
+source ./scripts/benchmark.sh benchmarks/ || true
 ```
 
 # Packages

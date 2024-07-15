@@ -78,7 +78,6 @@ fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T
 """
 
 from utils import Variant
-from forge_tools.builtin.error import ErrorReg
 
 
 # ===----------------------------------------------------------------------===#
