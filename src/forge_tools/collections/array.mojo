@@ -68,6 +68,7 @@ from math import sqrt, acos, sin
 from algorithm import vectorize
 from sys import info
 from collections._index_normalization import normalize_index
+from benchmark import clobber_memory
 
 # ===----------------------------------------------------------------------===#
 # Array
@@ -480,8 +481,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     @always_inline
     fn append(inout self, owned value: Self._scalar):
-        """Appends a value to the Array. If full, sets
-        the last element to the given value.
+        """Appends a value to the Array. If full, it's a no-op.
 
         Args:
             value: The value to append.
@@ -492,7 +492,6 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         constrained[not static, "Array can't be static."]()
         if self.capacity_left == 0:
-            self.vec[capacity - 1] = value
             return
         self.vec[len(self)] = value
         self.capacity_left -= 1

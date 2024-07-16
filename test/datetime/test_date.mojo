@@ -299,7 +299,6 @@ fn test_hash() raises:
 fn test_strftime() raises:
     var fstr = "mojo: %Y🔥%m🤯%d"
     alias dt = Date[iana=False, pyzoneinfo=False, native=False]
-    # FIXME: python issue https://github.com/python/cpython/issues/120713
     assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
     fstr = "%Y-%m-%d %H:%M:%S.%f"
     assert_equal("2024-06-07 00:00:00.000000", dt(2024, 6, 7).strftime(fstr))

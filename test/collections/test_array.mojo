@@ -49,7 +49,7 @@ fn test_array() raises:
         array.append(i)
 
     assert_equal(5, len(array))
-    assert_equal(9, array[-1])
+    assert_equal(7, array[-1])
 
     # clearing zeroes the array
     array.clear()
@@ -130,7 +130,11 @@ fn test_array_to_bool_conversion() raises:
     assert_false(Array[DType.int8, 2]())
     assert_true(Array[DType.int8, 2](0))
     assert_true(Array[DType.int8, 2](0, 1))
+    assert_true(Array[DType.int8, 1](1))
     assert_true(Array[DType.int8, 2](1))
+    assert_false(Array[DType.int8, 1]())
+    assert_false(Array[DType.int8, 255]())
+    assert_true(Array[DType.int8, 256](1))
 
 
 fn test_array_pop() raises:
@@ -363,13 +367,6 @@ fn test_array_span() raises:
     assert_equal(len(es), 3)
 
 
-fn test_array_boolable() raises:
-    assert_true(Array[DType.int8, 1](1))
-    assert_false(Array[DType.int8, 1]())
-    assert_false(Array[DType.int8, 255]())
-    assert_true(Array[DType.int8, 256](1))
-
-
 fn test_constructor_from_pointer() raises:
     var new_pointer = UnsafePointer[Int8].alloc(5)
     new_pointer[0] = 0
@@ -414,17 +411,8 @@ fn test_constructor_from_other_list_through_pointer() raises:
 fn test_array_to_string() raises:
     var my_array = Array[DType.int8, 3](1, 2, 3)
     assert_equal(str(my_array), "[1, 2, 3]")
-
-    # TODO: need bin func for StringLiteral
-    # var a = bin("a")
-    # var b = bin("b")
-    # var c = bin("c")
-    # var foo = bin("foo")
-
-    # var my_array4 = Array[UInt64]("a", "b", "c", "foo")
-    # assert_equal(
-    #     str(my_array4), "['" + a + "', '" + b + "', '" + c + "', '" + foo + " ']"
-    # )
+    var my_array4 = Array[DType.uint64, 10](0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+    assert_equal(str(my_array4), "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]")
 
 
 fn test_array_count() raises:
@@ -441,7 +429,6 @@ fn test_array_count() raises:
 fn test_array_concat() raises:
     var a = Array[DType.int8, 6](1, 2, 3)
     var b = Array[DType.int8, 3](4, 5, 6)
-    # TODO: once lazy evaluation issue is solved
     assert_equal(len(a), 3)
     a.append(b)
     assert_equal(len(a), 6)
@@ -652,7 +639,6 @@ fn test_theta() raises:
     from math import pi
 
     fn test[T: DType]() raises:
-        print(T)
         var arr0 = Array[T, 3](0, 0, 1)
         assert_almost_equal(arr0.theta(arr0), 0, rtol=0.1)
         var arr1 = Array[T, 3](0, 1, 0)
@@ -795,7 +781,6 @@ fn test_filter() raises:
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
         var arr2 = Array[T, 53](1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-        print(arr.filter(func[T]).vec)
         assert_true((arr.filter(func[T]) == arr2).reduce_and())
         var arr3 = Array[T, 256](fill=1)
         assert_true((arr3.filter(func[T]) == arr3).reduce_and())
@@ -826,7 +811,6 @@ fn main() raises:
     test_array_iter()
     test_array_iter_not_mutable()
     test_array_span()
-    test_array_boolable()
     test_constructor_from_pointer()
     test_constructor_from_other_list()
     test_constructor_from_other_list_through_pointer()
