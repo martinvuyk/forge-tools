@@ -25,7 +25,8 @@ https://tigerbeetle.com/blog/a-friendly-abstraction-over-iouring-and-kqueue) ?
             - Can we keep mostly the same API as Python's but make it async ?
     - How do we deal with external C library dependencies like [liburing](\
     https://github.com/axboe/liburing) if we decide to use it ?
-        - Do we wait for everything to be implemented in Mojo ?
+        - Do we wait for everything to be implemented in Mojo ? 
+        ([io_uring project](https://github.com/dmitry-salin/io_uring))
     - How portable is an async completion model for WASI and microcontrollers
     (FreeRTOS & others) ?
         - How do we deal with other platforms without async IO in the kernel ?
@@ -38,6 +39,6 @@ https://tigerbeetle.com/blog/a-friendly-abstraction-over-iouring-and-kqueue) ?
 on what is currently supported for each.
 3. Make sync APIs first with async wrappers, progresively develop async infra.
     1. Make sync TCP work for Linux as a starting point.
-    2. Develop TCP for other platforms.
+    2. Develop sync TCP for other platforms.
     3. Start making things really async under the hood.
     4. Develop other protocols.
