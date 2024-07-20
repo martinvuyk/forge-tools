@@ -2,13 +2,11 @@
 
 
 @value
-struct _UnixSocket[
+struct _WASISocket[
     sock_family: StringLiteral,  # TODO: change once we have enums
     sock_type: StringLiteral,
     sock_protocol: StringLiteral,
 ]:
-    """Generic POSIX compliant socket implementation."""
-
     fn __init__(inout self) raises:
         """Create a new socket object."""
         return None

@@ -44,22 +44,22 @@ from ._windows import _WindowsSocket
 # TODO enum
 struct SockFamily:
     alias IF_NET = "IF_NET"
-    alias IF_NET6 = "IF_NET6"
+    alias IF_NET6 = "IF_NET6"  # TODO: implement
     # TODO the rest
 
 
 # TODO enum
 struct SockType:
     alias SOCK_STREAM = "SOCK_STREAM"
-    alias SOCK_DGRAM = "SOCK_DGRAM"
-    alias SOCK_RAW = "SOCK_RAW"
+    alias SOCK_DGRAM = "SOCK_DGRAM"  # TODO: implement
+    alias SOCK_RAW = "SOCK_RAW"  # TODO: implement
     # TODO the rest
 
 
 # TODO enum
 struct SockProtocol:
     alias TCP = "TCP"
-    alias UDP = "UDP"
+    alias UDP = "UDP"  # TODO: implement
     # TODO the rest
 
 
@@ -68,9 +68,11 @@ struct SockPlatform:
     alias LINUX = "LINUX"
     alias APPLE = "APPLE"  # TODO: implement instead of sending to generic UNIX
     alias BSD = "BSD"  # TODO: implement instead of sending to generic UNIX
-    alias UNIX = "UNIX"
+    alias FREERTOS = "FREERTOS"  # TODO: implement instead of sending to generic UNIX
+    alias WASI = "WASI"  # TODO: implement
+    alias UNIX = "UNIX"  # TODO: implement
     """Generic POSIX compliant OS."""
-    alias WINDOWS = "WINDOWS"
+    alias WINDOWS = "WINDOWS"  # TODO: implement
     # TODO the rest
 
 
