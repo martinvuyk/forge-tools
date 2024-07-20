@@ -205,22 +205,25 @@ struct SockPlatform:
 #         """Create a pair of new socket objects."""
 #         ...
 
+#     fn getfd(self) -> Arc[FileDescriptor]:
+#         """Get an ARC reference to the Socket's FileDescriptor.
+#
+#         Returns:
+#             The ARC pointer to the FileDescriptor.
+#         """
+#         ...
+
 #     @staticmethod
 #     async fn fromfd(fd: FileDescriptor) -> Optional[Self]:
 #         """Create a socket object from an open file descriptor."""
 #         ...
 
-#     async fn send_fds(self) -> Optional[Bool]:
+#     async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
 #         """Send file descriptor to the socket."""
 #         ...
 
-#     async fn recv_fds(self) -> Optional[String]:
+#     async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
 #         """Receive file descriptors from the socket."""
-#         ...
-
-#     async fn fromshare(self) -> Optional[Self]:
-#         """Create a socket object from data received from socket.share().
-#         """
 #         ...
 
 #     async fn gethostname(self) -> Optional[String]:
@@ -284,7 +287,7 @@ fn _get_current_platform() -> StringLiteral:
 
 @value
 struct Socket[
-    sock_family: SockFamily = SockFamily.AF_INET,  # TODO: change once we have enums
+    sock_family: SockFamily = SockFamily.AF_INET,
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
     sock_platform: SockPlatform = _get_current_platform(),
@@ -340,19 +343,6 @@ struct Socket[
         """
         return self^
 
-    fn close(owned self) raises:
-        """Closes the Socket."""
-        ...  # TODO: implement
-
-    fn __del__(owned self):
-        """Closes the Socket."""
-        try:
-            # TODO: maybe follow Python's lead and reference count and only if
-            # this is the last ref close it ?
-            self.close()
-        except:
-            pass
-
     async fn socketpair(self) raises -> Self:
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function.
@@ -367,8 +357,21 @@ struct Socket[
         constrained[False, "Platform not supported yet."]()
         return None
 
+    fn getfd(self) -> Arc[FileDescriptor]:
+        """Get an ARC reference to the Socket's FileDescriptor.
+
+        Returns:
+            The ARC pointer to the FileDescriptor.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return Self(await Self._linux_s.getfd())
+        constrained[False, "Platform not supported yet."]()
+        return None
+
     @staticmethod
-    async fn fromfd(fd: FileDescriptor) -> Optional[Self]:
+    async fn fromfd(fd: Arc[FileDescriptor]) -> Optional[Self]:
         """Create a socket object from an open file descriptor.
 
         Returns:
@@ -381,11 +384,11 @@ struct Socket[
         constrained[False, "Platform not supported yet."]()
         return None
 
-    async fn send_fds(self, fds: FileDescriptor) -> Bool:
+    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
         """Send file descriptors to the socket.
 
         Args:
-            fds: FileDescriptors, currently only 1.
+            fds: FileDescriptors.
 
         Returns:
             True on success, False otherwise.
@@ -393,24 +396,25 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].send_fds()
+            return await self._impl.unsafe_get[Self._linux_s]()[].send_fds(fds)
         constrained[False, "Platform not supported yet."]()
         return False
 
-    async fn recv_fds(self, maxfds: Int) -> Optional[Int]:
-        """Receive up to maxfds file descriptors returning the message
-        data and a list containing the descriptors.
+    async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
+        """Receive up to maxfds file descriptors.
 
         Args:
             maxfds: The maximum amount of file descriptors.
 
         Returns:
-            The file descriptors, currently only 1 value of 1 fd.
+            The file descriptors.
         """
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].recv_fds()
+            return await self._impl.unsafe_get[Self._linux_s]()[].recv_fds(
+                maxfds
+            )
         constrained[False, "Platform not supported yet."]()
         return None
 
@@ -584,7 +588,6 @@ struct Socket[
 
     #     Examples:
     #     ```mojo
-    #     from sys import info
     #     from forge_tools.socket import Socket
 
     #     def main():
@@ -673,7 +676,6 @@ struct Socket[
 
         Examples:
         ```mojo
-        from sys import info
         from forge_tools.socket import Socket
 
 

@@ -19,21 +19,41 @@ struct _WASISocket[
         """Create a new socket object."""
         raise Error("Failed to create socket.")
 
+    fn close(owned self) raises:
+        """Closes the Socket."""
+        ...  # TODO: implement
+
+    fn __del__(owned self):
+        """Closes the Socket."""
+        try:
+            # TODO: use ARC to only close the last ref to the socket
+            self.close()
+        except:
+            pass
+
     async fn socketpair(self) raises -> Self:
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
         raise Error("Failed to create socket.")
+
+    fn getfd(self) -> Arc[FileDescriptor]:
+        """Get an ARC reference to the Socket's FileDescriptor.
+
+        Returns:
+            The ARC pointer to the FileDescriptor.
+        """
+        return None
 
     @staticmethod
     async fn fromfd(fd: FileDescriptor) -> Optional[Self]:
         """Create a socket object from an open file descriptor."""
         return None
 
-    async fn send_fds(self) -> Bool:
+    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
         """Send file descriptor to the socket."""
         return False
 
-    async fn recv_fds(self) -> Optional[Int]:
+    async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
         """Receive file descriptors from the socket."""
         return 0
 
