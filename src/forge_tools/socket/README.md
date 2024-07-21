@@ -16,11 +16,11 @@ allowing lower level control if desired for other protocols ?
 - Should we even develop a syncronous poll model like Python's?
 - Is it worth it using [io_uring](https://kernel.dk/io_uring.pdf) (Linux),
 [kqueue](https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2) (Unix),
-[IOCP](\
+[IOCP](
 https://learn.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports)
 (Windows) ?
     - How much would we need to deviate from Python's APIs ?
-        - Do we setup a unified async API like [Tigerbeetle's](\
+        - Do we setup a unified async API like [Tigerbeetle's](
 https://tigerbeetle.com/blog/a-friendly-abstraction-over-iouring-and-kqueue) ?
             - Can we keep mostly the same API as Python's but make it async ?
     - How do we deal with external C library dependencies like [liburing](\
