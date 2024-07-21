@@ -20,4 +20,11 @@ async def main():
 .
 """
 # TODO: better docs and show examples.
-from .socket import Socket, SockFamily, SockType, SockProtocol, SockPlatform
+from .socket import (
+    Socket,
+    SockFamily,
+    SockType,
+    SockProtocol,
+    SockPlatform,
+    SockAddr,
+)

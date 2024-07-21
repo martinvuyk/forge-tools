@@ -232,19 +232,19 @@ trait _SocketInterface:
         ...
 
     @staticmethod
-    fn gethostbyname(name: String) -> Optional[Address]:
+    fn gethostbyname(name: String) -> Optional[SockAddr]:
         """Map a hostname to its Address."""
         ...
 
     @staticmethod
-    fn gethostbyaddr(address: Address) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr) -> Optional[String]:
         """Map an Address to DNS info."""
         ...
 
     @staticmethod
     fn getservbyname(
         name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[Address]:
+    ) -> Optional[SockAddr]:
         """Map a service name and a protocol name to a port number."""
         ...
 
@@ -256,7 +256,7 @@ trait _SocketInterface:
         """Set the default timeout value."""
         ...
 
-    async fn accept(self) -> (Self, Address):
+    async fn accept(self) -> (Self, SockAddr):
         """Return a new socket representing the connection, and the address of
         the client.
         """
@@ -264,9 +264,9 @@ trait _SocketInterface:
 
     @staticmethod
     fn create_connection(
-        address: Address,
+        address: SockAddr,
         timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: Optional[Address] = None,
+        source_address: Optional[SockAddr] = None,
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -276,7 +276,7 @@ trait _SocketInterface:
 
     @staticmethod
     fn create_server(
-        address: Address,
+        address: SockAddr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -311,6 +311,39 @@ struct Socket[
         sock_type: The socket type e.g. `SockType.SOCK_STREAM`.
         sock_protocol: The socket protocol e.g. `SockProtocol.TCP`.
         sock_platform: The socket platform e.g. `SockPlatform.LINUX`.
+
+    Examples:
+
+    ```mojo
+    from forge_tools.socket import Socket
+
+
+    async def main():
+        with Socket.create_server(("0.0.0.0", 8000)) as server:
+            while True:
+                conn, addr = await server.accept()
+                ...  # handle new connection
+
+            # TODO: once we have async generators:
+            # async for conn, addr in server:
+            #     ...  # handle new connection
+    ```
+
+    In the future something like this should be possible:
+    ```mojo
+    from multiprocessing import Pool
+    from forge_tools.socket import Socket, SockAddr
+
+
+    async fn handler(conn: Socket, addr: SockAddr):
+        ...
+
+    async def main():
+        with Socket.create_server(("0.0.0.0", 8000)) as server:
+            with Pool() as pool:
+                _ = await pool.starmap(handler, server)
+    ```
+    .
     """
 
     alias _linux_s = _LinuxSocket[sock_family, sock_type, sock_protocol]
@@ -354,6 +387,10 @@ struct Socket[
             The instance of self.
         """
         return self^
+
+    fn __exit__(owned self):
+        """Exit the context."""
+        _ = self^
 
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
@@ -431,7 +468,7 @@ struct Socket[
         return ""
 
     @staticmethod
-    fn gethostbyname(name: String) -> Optional[Address]:
+    fn gethostbyname(name: String) -> Optional[SockAddr]:
         """Map a hostname to its Address.
 
         Returns:
@@ -445,7 +482,7 @@ struct Socket[
         return None
 
     @staticmethod
-    fn gethostbyaddr(address: Address) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr) -> Optional[String]:
         """Map an Address to DNS info.
 
         Returns:
@@ -461,7 +498,7 @@ struct Socket[
     @staticmethod
     fn getservbyname(
         name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[Address]:
+    ) -> Optional[SockAddr]:
         """Map a service name and a protocol name to a port number.
 
         Returns:
@@ -599,7 +636,7 @@ struct Socket[
 
     #     ...
 
-    async fn accept(self) -> (Self, Address):
+    async fn accept(self) -> (Self, SockAddr):
         """Return a new socket representing the connection, and the address of
         the client.
 
@@ -612,9 +649,9 @@ struct Socket[
 
     @staticmethod
     fn create_connection(
-        address: Address,
+        address: SockAddr,
         timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: Optional[Address] = None,
+        source_address: Optional[SockAddr] = None,
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -647,7 +684,7 @@ struct Socket[
 
     @staticmethod
     fn create_server(
-        address: Address,
+        address: SockAddr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -702,7 +739,7 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.create_server(
-                address,
+                SockAddr,
                 backlog=backlog,
                 reuse_port=reuse_port,
                 dualstack_ipv6=dualstack_ipv6,
@@ -712,11 +749,11 @@ struct Socket[
 
 
 @value
-struct Address:
-    """Address."""
+struct SockAddr:
+    """Socket Address."""
 
     var ip: String
-    """Ip."""
+    """IP."""
     var port: Int
     """Port."""
 
@@ -805,13 +842,13 @@ struct SockTimeUnits:
 struct SockTimeout:
     """SockTimeout."""
 
-    var time: UInt
-    """Time. Unsigned integer to enforce setting a timeout."""
+    var time: Int
+    """Time."""
     var unit: SockTimeUnits
     """Unit."""
 
     fn __init__(
-        inout self, value: UInt, unit: SockTimeUnits = SockTimeUnits.MINUTES
+        inout self, value: Int, unit: SockTimeUnits = SockTimeUnits.MINUTES
     ):
         """Construct a SockTimeout.
 

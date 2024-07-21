@@ -3,7 +3,7 @@ from .socket import (
     SockFamily,
     SockType,
     SockProtocol,
-    Address,
+    SockAddr,
     SockTimeout,
     _DEFAULT_SOCKET_TIMEOUT,
 )
@@ -58,19 +58,19 @@ struct _AppleSocket[
         return None
 
     @staticmethod
-    fn gethostbyname(name: String) -> Optional[Address]:
+    fn gethostbyname(name: String) -> Optional[SockAddr]:
         """Map a hostname to its Address."""
         return None
 
     @staticmethod
-    fn gethostbyaddr(address: Address) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr) -> Optional[String]:
         """Map an Address to DNS info."""
         return None
 
     @staticmethod
     fn getservbyname(
         name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[Address]:
+    ) -> Optional[SockAddr]:
         """Map a service name and a protocol name to a port number."""
         return None
 
@@ -82,7 +82,7 @@ struct _AppleSocket[
         """Set the default timeout value."""
         return False
 
-    async fn accept(self) -> (Self, Address):
+    async fn accept(self) -> (Self, SockAddr):
         """Return a new socket representing the connection, and the address of
         the client.
         """
@@ -90,9 +90,9 @@ struct _AppleSocket[
 
     @staticmethod
     fn create_connection(
-        address: Address,
+        address: SockAddr,
         timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: Optional[Address] = None,
+        source_address: Optional[SockAddr] = None,
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -102,7 +102,7 @@ struct _AppleSocket[
 
     @staticmethod
     fn create_server(
-        address: Address,
+        address: SockAddr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
