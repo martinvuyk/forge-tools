@@ -192,86 +192,98 @@ struct SockPlatform:
         return self._selected == value
 
 
-# trait _SocketInterface:
-#     """Interface for Sockets. in function docstrings means not available
-#     on all platforms!.
-#     """
+trait _SocketInterface:
+    """Interface for Sockets."""
 
-#     fn __init__(inout self) raises:
-#         """Create a new socket object."""
-#         ...
+    # var fd: Arc[FileDescriptor]
+    # """The Socket's `Arc[FileDescriptor]`."""
 
-#     async fn socketpair(self) raises -> Self:
-#         """Create a pair of new socket objects."""
-#         ...
+    fn __init__(inout self) raises:
+        """Create a new socket object."""
+        ...
 
-#     fn getfd(self) -> Arc[FileDescriptor]:
-#         """Get an ARC reference to the Socket's FileDescriptor.
-#
-#         Returns:
-#             The ARC pointer to the FileDescriptor.
-#         """
-#         ...
+    fn close(owned self) raises:
+        """Closes the Socket."""
+        ...
 
-#     @staticmethod
-#     async fn fromfd(fd: FileDescriptor) -> Optional[Self]:
-#         """Create a socket object from an open file descriptor."""
-#         ...
+    fn __del__(owned self):
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
+        ...
 
-#     async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
-#         """Send file descriptor to the socket."""
-#         ...
+    @staticmethod
+    async fn socketpair() raises -> (Self, Self):
+        """Create a pair of socket objects from the sockets returned by the
+        platform `socketpair()` function."""
+        ...
 
-#     async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
-#         """Receive file descriptors from the socket."""
-#         ...
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+        """Send file descriptor to the socket."""
+        ...
 
-#     async fn gethostname(self) -> Optional[String]:
-#         """Return the current hostname."""
-#         ...
+    async fn recv_fds(self, maxfds: Int) -> Optional[List[Arc[FileDescriptor]]]:
+        """Receive file descriptors from the socket."""
+        ...
 
-#     fn gethostbyname(self) -> Optional[String]:
-#         """Map a hostname to its Address."""
-#         ...
+    @staticmethod
+    fn gethostname() -> Optional[String]:
+        """Return the current hostname."""
+        ...
 
-#     fn gethostbyaddr(self) -> Optional[String]:
-#         """Map an Address to DNS info."""
-#         ...
+    @staticmethod
+    fn gethostbyname(name: String) -> Optional[Address]:
+        """Map a hostname to its Address."""
+        ...
 
-#     fn getservbyname(self) -> Optional[String]:
-#         """Map a service name and a protocol name to a port number."""
-#         ...
+    @staticmethod
+    fn gethostbyaddr(address: Address) -> Optional[String]:
+        """Map an Address to DNS info."""
+        ...
 
-#     fn getdefaulttimeout(self) -> Optional[Float64]:
-#         """Get the default timeout value."""
-#         ...
+    @staticmethod
+    fn getservbyname(
+        name: String, proto: SockProtocol = SockProtocol.TCP
+    ) -> Optional[Address]:
+        """Map a service name and a protocol name to a port number."""
+        ...
 
-#     fn setdefaulttimeout(self, value: Float64) -> Optional[Bool]:
-#         """Set the default timeout value."""
-#         ...
+    fn getdefaulttimeout(self) -> Optional[SockTimeout]:
+        """Get the default timeout value."""
+        ...
 
-#     @staticmethod
-#     fn create_connection(
-#         address: Address,
-#         timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-#         source_address: Optional[Address] = None,
-#         *,
-#         all_errors: Bool = False,
-#     ) raises -> Self:
-#         """Connects to an address, with an optional timeout and
-#         optional source address."""
-#        ...
+    fn setdefaulttimeout(self, value: SockTimeout) -> Bool:
+        """Set the default timeout value."""
+        ...
 
-#     @staticmethod
-#     fn create_server(
-#         address: Address,
-#         *,
-#         backlog: Optional[Int] = None,
-#         reuse_port: Bool = False,
-#         dualstack_ipv6: Bool = False,
-#     ) raises -> Self:
-#         """Create a TCP socket and bind it to a specified address."""
-#         ...
+    async fn accept(self) -> (Self, Address):
+        """Return a new socket representing the connection, and the address of
+        the client.
+        """
+        ...
+
+    @staticmethod
+    fn create_connection(
+        address: Address,
+        timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
+        source_address: Optional[Address] = None,
+        *,
+        all_errors: Bool = False,
+    ) raises -> Self:
+        """Connects to an address, with an optional timeout and
+        optional source address."""
+        ...
+
+    @staticmethod
+    fn create_server(
+        address: Address,
+        *,
+        backlog: Optional[Int] = None,
+        reuse_port: Bool = False,
+        dualstack_ipv6: Bool = False,
+    ) raises -> Self:
+        """Create a TCP socket and bind it to a specified address."""
+        ...
 
 
 fn _get_current_platform() -> StringLiteral:
@@ -291,7 +303,7 @@ struct Socket[
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
     sock_platform: SockPlatform = _get_current_platform(),
-]:
+](CollectionElement):
     """Struct for using Sockets.
 
     Parameters:
@@ -343,7 +355,8 @@ struct Socket[
         """
         return self^
 
-    async fn socketpair(self) raises -> Self:
+    @staticmethod
+    async fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function.
 
@@ -353,11 +366,11 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].socketpair()
+            return await Self._linux_s.socketpair()
         constrained[False, "Platform not supported yet."]()
-        return None
+        return Self(), Self()
 
-    fn getfd(self) -> Arc[FileDescriptor]:
+    fn get_fd(self) -> Arc[FileDescriptor]:
         """Get an ARC reference to the Socket's FileDescriptor.
 
         Returns:
@@ -366,25 +379,11 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self(await Self._linux_s.getfd())
+            return Self._linux_s.fd
         constrained[False, "Platform not supported yet."]()
-        return None
+        return FileDescriptor(2)
 
-    @staticmethod
-    async fn fromfd(fd: Arc[FileDescriptor]) -> Optional[Self]:
-        """Create a socket object from an open file descriptor.
-
-        Returns:
-            The result.
-        """
-
-        @parameter
-        if sock_platform is SockPlatform.LINUX:
-            return Self(await Self._linux_s.fromfd(fd))
-        constrained[False, "Platform not supported yet."]()
-        return None
-
-    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket.
 
         Args:
@@ -418,7 +417,7 @@ struct Socket[
         constrained[False, "Platform not supported yet."]()
         return None
 
-    fn gethostname(self) -> Optional[String]:
+    fn gethostname(self) -> String:
         """Return the current hostname.
 
         Returns:
@@ -429,7 +428,7 @@ struct Socket[
         if sock_platform is SockPlatform.LINUX:
             return self._impl.unsafe_get[Self._linux_s]()[].gethostname()
         constrained[False, "Platform not supported yet."]()
-        return None
+        return ""
 
     @staticmethod
     fn gethostbyname(name: String) -> Optional[Address]:
@@ -590,7 +589,7 @@ struct Socket[
     #     ```mojo
     #     from forge_tools.socket import Socket
 
-    #     def main():
+    #     async def main():
     #         with Socket.create_server(("0.0.0.0", 8000)) as server:
     #             async for conn, addr in server:
     #                 ...  # handle new connection
@@ -679,7 +678,7 @@ struct Socket[
         from forge_tools.socket import Socket
 
 
-        def main():
+        async def main():
             with Socket.create_server(("0.0.0.0", 8000)) as server:
                 while True:
                     conn, addr = await server.accept()

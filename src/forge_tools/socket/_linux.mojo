@@ -1,11 +1,11 @@
 from .socket import (
+    _SocketInterface,
     SockFamily,
     SockType,
     SockProtocol,
     Address,
     SockTimeout,
     _DEFAULT_SOCKET_TIMEOUT,
-    # _SocketInterface,
 )
 
 
@@ -14,9 +14,16 @@ struct _LinuxSocket[
     sock_family: SockFamily,  # TODO: change once we have enums
     sock_type: SockType,
     sock_protocol: SockProtocol,
-]:
+](_SocketInterface):
+    var fd: Arc[FileDescriptor]
+    """The Socket's `Arc[FileDescriptor]`."""
+
     fn __init__(inout self) raises:
         """Create a new socket object."""
+        raise Error("Failed to create socket.")
+
+    fn __init__(inout self, fd: Arc[FileDescriptor]) raises:
+        """Create a new socket object from an open `FileDescriptor`."""
         raise Error("Failed to create socket.")
 
     fn close(owned self) raises:
@@ -24,38 +31,28 @@ struct _LinuxSocket[
         ...  # TODO: implement
 
     fn __del__(owned self):
-        """Closes the Socket."""
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
         try:
-            # TODO: use ARC to only close the last ref to the socket
-            self.close()
+            if self.fd.count() == 1:
+                self.close()
         except:
             pass
 
-    async fn socketpair(self) raises -> Self:
+    @staticmethod
+    async fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
         raise Error("Failed to create socket.")
 
-    fn getfd(self) -> Arc[FileDescriptor]:
-        """Get an ARC reference to the Socket's FileDescriptor.
-
-        Returns:
-            The ARC pointer to the FileDescriptor.
-        """
-        return None
-
-    @staticmethod
-    async fn fromfd(fd: FileDescriptor) -> Optional[Self]:
-        """Create a socket object from an open file descriptor."""
-        return None
-
-    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
-        """Send file descriptor to the socket."""
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+        """Send file descriptors to the socket."""
         return False
 
     async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
         """Receive file descriptors from the socket."""
-        return 0
+        return None
 
     @staticmethod
     fn gethostname() -> Optional[String]:
@@ -74,7 +71,7 @@ struct _LinuxSocket[
 
     @staticmethod
     fn getservbyname(
-        name: String, proto: SockProtocol = SockProtocol(SockProtocol.TCP)
+        name: String, proto: SockProtocol = SockProtocol.TCP
     ) -> Optional[Address]:
         """Map a service name and a protocol name to a port number."""
         return None
