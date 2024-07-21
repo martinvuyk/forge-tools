@@ -23,7 +23,7 @@ https://learn.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports)
         - Do we setup a unified async API like [Tigerbeetle's](
 https://tigerbeetle.com/blog/a-friendly-abstraction-over-iouring-and-kqueue) ?
             - Can we keep mostly the same API as Python's but make it async ?
-    - How do we deal with external C library dependencies like [liburing](\
+    - How do we deal with external C library dependencies like [liburing](
     https://github.com/axboe/liburing) if we decide to use it ?
         - Do we wait for everything to be implemented in Mojo ? 
         ([io_uring project](https://github.com/dmitry-salin/io_uring))
