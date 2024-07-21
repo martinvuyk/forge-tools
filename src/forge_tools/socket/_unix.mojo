@@ -11,9 +11,7 @@ from .socket import (
 
 @value
 struct _UnixSocket[
-    sock_family: SockFamily,  # TODO: change once we have enums
-    sock_type: SockType,
-    sock_protocol: SockProtocol,
+    sock_family: SockFamily, sock_type: SockType, sock_protocol: SockProtocol
 ](_SocketInterface):
     """Generic POSIX compliant socket implementation."""
 

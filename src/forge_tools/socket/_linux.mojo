@@ -11,9 +11,7 @@ from .socket import (
 
 @value
 struct _LinuxSocket[
-    sock_family: SockFamily,  # TODO: change once we have enums
-    sock_type: SockType,
-    sock_protocol: SockProtocol,
+    sock_family: SockFamily, sock_type: SockType, sock_protocol: SockProtocol
 ](_SocketInterface):
     var fd: Arc[FileDescriptor]
     """The Socket's `Arc[FileDescriptor]`."""
