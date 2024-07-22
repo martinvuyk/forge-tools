@@ -26,5 +26,5 @@ from .socket import (
     SockType,
     SockProtocol,
     SockPlatform,
-    SockAddr,
 )
+from .address import IPv4Addr, IPv6Addr, IPAddr, SockAddr

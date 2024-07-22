@@ -4,7 +4,7 @@ from .socket import (
     SockType,
     SockProtocol,
     SockAddr,
-    SockTimeout,
+    SockTime,
     _DEFAULT_SOCKET_TIMEOUT,
 )
 
@@ -86,11 +86,11 @@ struct _UnixSocket[
         """Map a service name and a protocol name to a port number."""
         return None
 
-    fn getdefaulttimeout(self) -> Optional[SockTimeout]:
+    fn getdefaulttimeout(self) -> Optional[SockTime]:
         """Get the default timeout value."""
         return None
 
-    fn setdefaulttimeout(self, value: SockTimeout) -> Bool:
+    fn setdefaulttimeout(self, value: SockTime) -> Bool:
         """Set the default timeout value."""
         return False
 
@@ -103,8 +103,8 @@ struct _UnixSocket[
     @staticmethod
     fn create_connection(
         address: SockAddr,
-        timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: Optional[SockAddr] = None,
+        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        source_address: SockAddr = SockAddr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:

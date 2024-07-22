@@ -4,7 +4,7 @@ from .socket import (
     SockType,
     SockProtocol,
     SockAddr,
-    SockTimeout,
+    SockTime,
     _DEFAULT_SOCKET_TIMEOUT,
 )
 
@@ -52,6 +52,22 @@ struct _FreeRTOSSocket[
         """Receive file descriptors from the socket."""
         return None
 
+    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+        """Send a buffer of bytes to the socket."""
+        return 0
+
+    async fn send(self, buf: List[UInt8]) -> UInt:
+        """Send a list of bytes to the socket."""
+        return 0
+
+    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
+        """Receive up to max_len bytes into the buffer."""
+        return 0
+
+    async fn recv(self, max_len: UInt) -> List[UInt8]:
+        """Receive up to max_len bytes."""
+        return List[UInt8]()
+
     @staticmethod
     fn gethostname() -> Optional[String]:
         """Return the current hostname."""
@@ -74,11 +90,11 @@ struct _FreeRTOSSocket[
         """Map a service name and a protocol name to a port number."""
         return None
 
-    fn getdefaulttimeout(self) -> Optional[SockTimeout]:
+    fn getdefaulttimeout(self) -> Optional[SockTime]:
         """Get the default timeout value."""
         return None
 
-    fn setdefaulttimeout(self, value: SockTimeout) -> Bool:
+    fn setdefaulttimeout(self, value: SockTime) -> Bool:
         """Set the default timeout value."""
         return False
 
@@ -91,8 +107,8 @@ struct _FreeRTOSSocket[
     @staticmethod
     fn create_connection(
         address: SockAddr,
-        timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: Optional[SockAddr] = None,
+        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        source_address: SockAddr = SockAddr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:

@@ -1,39 +1,55 @@
-"""Socket module.
+"""Socket module. An async take on Python's socket interface.
 
-The goal is to achieve as close an interface as possible to
-Python's [socket implementation](https://docs.python.org/3/library/socket.html).
+#### Functions:
 
-From Python's socket docs:
+- `socket()`
+    - create a new socket object.
+- `socketpair()`
+    - create a pair of new socket objects.
+- `send_fds()`
+    - Send file descriptor to the socket.
+- `recv_fds()`
+    - Receive file descriptors from the socket.
+- `gethostname()`
+    - return the current hostname.
+- `gethostbyname()`
+    - Map a hostname to its Address.
+- `gethostbyaddr()`
+    - Map an Address to DNS info.
+- `getservbyname()`
+    - map a service name and a protocol name to a port number.
+- `ntohs()`, `ntohl()`
+    - convert 16, 32 bit int from network to host byte order.
+- `htons()`, `htonl()`
+    - convert 16, 32 bit int from host to network byte order.
+- `inet_aton()`
+    - convert IP addr string (123.45.67.89) to 32-bit packed format.
+- `inet_ntoa()`
+    - convert 32-bit packed format IP to string (123.45.67.89)
+- `getdefaulttimeout()`
+    - get the default timeout value.
+- `setdefaulttimeout()`
+    - set the default timeout value.
+- `create_connection()`
+    - connects to an address, with an optional timeout and optional source
+        address.
+- `create_server()`
+    - create a TCP socket and bind it to a specified address.
 
-This module provides socket operations and some related functions.
-On Unix, it supports IP (Internet Protocol) and Unix domain sockets.
-On other systems, it only supports IP. Functions specific for a
-socket are available as methods of the socket object.
 
-Functions:
+#### Python functions whose functionality is covered by other means:
 
-socket() -- create a new socket object
-socketpair() -- create a pair of new socket objects
-fromfd() -- create a socket object from an open file descriptor
-send_fds() -- Send file descriptor to the socket.
-recv_fds() -- Receive file descriptors from the socket.
-fromshare() -- create a socket object from data received from socket.share()
-gethostname() -- return the current hostname
-gethostbyname() -- Map a hostname to its Address
-gethostbyaddr() -- Map an Address to DNS info
-getservbyname() -- map a service name and a protocol name to a port number
-ntohs(), ntohl() -- convert 16, 32 bit int from network to host byte order
-htons(), htonl() -- convert 16, 32 bit int from host to network byte order
-inet_aton() -- convert IP addr string (123.45.67.89) to 32-bit packed format
-inet_ntoa() -- convert 32-bit packed format IP to string (123.45.67.89)
-socket.getdefaulttimeout() -- get the default timeout value
-socket.setdefaulttimeout() -- set the default timeout value
-create_connection() -- connects to an address, with an optional timeout and
-                       optional source address.
-create_server() -- create a TCP socket and bind it to a specified address.
+- `share()`
+    - use `get_fd()` instead.
+- `fromfd()` & `fromshare()`
+    - use `Socket(fd: Arc[FileDescriptor])` constructor instead.
+
+#### [Python's socket docs](https://docs.python.org/3/library/socket.html).
 """
 
 from sys import info
+
+from .address import SockAddr, IPAddr
 
 from ._linux import _LinuxSocket
 from ._unix import _UnixSocket
@@ -43,13 +59,38 @@ from ._windows import _WindowsSocket
 # TODO enum
 @register_passable("trivial")
 struct SockFamily:
-    """SockFamily."""
+    """Socket Address Family."""
 
     alias AF_INET = "AF_INET"
     """AF_INET."""
     alias AF_INET6 = "AF_INET6"  # TODO: implement
     """AF_INET6."""
-    # TODO the rest
+    alias AF_UNIX = "AF_UNIX"  # TODO: implement
+    """AF_UNIX."""
+    alias AF_NETLINK = "AF_NETLINK"  # TODO: implement
+    """AF_NETLINK."""
+    alias AF_TIPC = "AF_TIPC"  # TODO: implement
+    """AF_TIPC."""
+    alias AF_CAN = "AF_CAN"  # TODO: implement
+    """AF_CAN."""
+    alias AF_BLUETOOTH = "AF_BLUETOOTH"  # TODO: implement
+    """AF_BLUETOOTH."""
+    alias AF_ALG = "AF_ALG"  # TODO: implement
+    """AF_ALG."""
+    alias AF_VSOCK = "AF_VSOCK"  # TODO: implement
+    """AF_VSOCK."""
+    alias AF_PACKET = "AF_PACKET"  # TODO: implement
+    """AF_PACKET."""
+    alias AF_QIPCRTR = "AF_QIPCRTR"  # TODO: implement
+    """AF_QIPCRTR."""
+    alias AF_HYPERV = "AF_HYPERV"  # TODO: implement
+    """AF_HYPERV."""
+    alias AF_SPI = "AF_SPI"  # TODO: implement
+    """"AF_SPI"."""
+    alias AF_I2C = "AF_I2C"  # TODO: implement
+    """"AF_I2C"."""
+    alias AF_UART = "AF_UART"  # TODO: implement
+    """"AF_UART"."""
     var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
@@ -59,7 +100,24 @@ struct SockFamily:
             selected: The selected value.
         """
         debug_assert(
-            selected in (self.AF_INET, Self.AF_INET6),
+            selected
+            in (
+                Self.AF_INET,
+                Self.AF_INET6,
+                Self.AF_UNIX,
+                Self.AF_NETLINK,
+                Self.AF_TIPC,
+                Self.AF_CAN,
+                Self.AF_BLUETOOTH,
+                Self.AF_ALG,
+                Self.AF_VSOCK,
+                Self.AF_PACKET,
+                Self.AF_QIPCRTR,
+                Self.AF_HYPERV,
+                Self.AF_SPI,
+                Self.AF_I2C,
+                Self.AF_UART,
+            ),
             "selected value is not valid",
         )
         self._selected = selected
@@ -79,7 +137,7 @@ struct SockFamily:
 # TODO enum
 @register_passable("trivial")
 struct SockType:
-    """SockType."""
+    """Socket Type."""
 
     alias SOCK_STREAM = "SOCK_STREAM"
     """SOCK_STREAM."""
@@ -87,6 +145,11 @@ struct SockType:
     """SOCK_DGRAM."""
     alias SOCK_RAW = "SOCK_RAW"  # TODO: implement
     """SOCK_RAW."""
+    alias SOCK_RDM = "SOCK_RDM"  # TODO: implement
+    """SOCK_RDM."""
+    alias SOCK_SEQPACKET = "SOCK_SEQPACKET"  # TODO: implement
+    """SOCK_SEQPACKET."""
+
     # TODO the rest
     var _selected: StringLiteral
 
@@ -97,7 +160,14 @@ struct SockType:
             selected: The selected value.
         """
         debug_assert(
-            selected in (Self.SOCK_STREAM, Self.SOCK_DGRAM, Self.SOCK_RAW),
+            selected
+            in (
+                Self.SOCK_STREAM,
+                Self.SOCK_DGRAM,
+                Self.SOCK_RAW,
+                Self.SOCK_RDM,
+                Self.SOCK_SEQPACKET,
+            ),
             "selected value is not valid",
         )
         self._selected = selected
@@ -117,9 +187,22 @@ struct SockType:
 # TODO enum
 @register_passable("trivial")
 struct SockProtocol:
+    """Socket Transmission Protocol."""
+
     alias TCP = "TCP"
+    """TCP."""
     alias UDP = "UDP"  # TODO: implement
-    # TODO the rest
+    """UDP."""
+    alias SCTP = "SCTP"  # TODO: implement
+    """SCTP."""
+    alias IPPROTO_UDPLITE = "IPPROTO_UDPLITE"  # TODO: implement
+    """IPPROTO_UDPLITE."""
+    alias SPI = "SPI"  # TODO: implement. inspiration: https://github.com/OnionIoT/spi-gpio-driver
+    """SPI."""
+    alias I2C = "I2C"  # TODO: implement. inspiration: https://github.com/swedishborgie/libmma8451
+    """I2C."""
+    alias UART = "UART"  # TODO: implement. inspiration: https://github.com/AndreRenaud/simple_uart
+    """UART."""
     var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
@@ -129,7 +212,17 @@ struct SockProtocol:
             selected: The selected value.
         """
         debug_assert(
-            selected in (Self.TCP, Self.UDP), "selected value is not valid"
+            selected
+            in (
+                Self.TCP,
+                Self.UDP,
+                Self.SCTP,
+                Self.IPPROTO_UDPLITE,
+                Self.SPI,
+                Self.I2C,
+                Self.UART,
+            ),
+            "selected value is not valid",
         )
         self._selected = selected
 
@@ -226,6 +319,22 @@ trait _SocketInterface:
         """Receive file descriptors from the socket."""
         ...
 
+    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+        """Send a buffer of bytes to the socket."""
+        return 0
+
+    async fn send(self, buf: List[UInt8]) -> UInt:
+        """Send a list of bytes to the socket."""
+        return 0
+
+    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
+        """Receive up to max_len bytes into the buffer."""
+        return 0
+
+    async fn recv(self, max_len: UInt) -> List[UInt8]:
+        """Receive up to max_len bytes."""
+        return List[UInt8]()
+
     @staticmethod
     fn gethostname() -> Optional[String]:
         """Return the current hostname."""
@@ -248,11 +357,11 @@ trait _SocketInterface:
         """Map a service name and a protocol name to a port number."""
         ...
 
-    fn getdefaulttimeout(self) -> Optional[SockTimeout]:
+    fn getdefaulttimeout(self) -> Optional[SockTime]:
         """Get the default timeout value."""
         ...
 
-    fn setdefaulttimeout(self, value: SockTimeout) -> Bool:
+    fn setdefaulttimeout(self, value: SockTime) -> Bool:
         """Set the default timeout value."""
         ...
 
@@ -265,8 +374,8 @@ trait _SocketInterface:
     @staticmethod
     fn create_connection(
         address: SockAddr,
-        timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: Optional[SockAddr] = None,
+        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        source_address: SockAddr = SockAddr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -332,10 +441,10 @@ struct Socket[
     In the future something like this should be possible:
     ```mojo
     from multiprocessing import Pool
-    from forge_tools.socket import Socket, SockAddr
+    from forge_tools.socket import Socket, IPv4Addr
 
 
-    async fn handler(conn: Socket, addr: SockAddr):
+    async fn handler(conn: Socket, addr: IPv4Addr):
         ...
 
     async def main():
@@ -380,6 +489,20 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             self._impl = Self._linux_s()
 
+    fn close(owned self) raises:
+        """Closes the Socket."""
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return self._impl.unsafe_get[Self._linux_s]()[].close()
+        _ = self^
+
+    fn __del__(owned self):
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
+        _ = self^
+
     fn __enter__(owned self) -> Self:
         """Enter a context.
 
@@ -404,8 +527,9 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return await Self._linux_s.socketpair()
-        constrained[False, "Platform not supported yet."]()
-        return Self(), Self()
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return Self(), Self()
 
     fn get_fd(self) -> Arc[FileDescriptor]:
         """Get an ARC reference to the Socket's FileDescriptor.
@@ -417,8 +541,9 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.fd
-        constrained[False, "Platform not supported yet."]()
-        return FileDescriptor(2)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return FileDescriptor(2)
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket.
@@ -433,10 +558,11 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return await self._impl.unsafe_get[Self._linux_s]()[].send_fds(fds)
-        constrained[False, "Platform not supported yet."]()
-        return False
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return False
 
-    async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
+    async fn recv_fds(self, maxfds: UInt) -> Optional[List[FileDescriptor]]:
         """Receive up to maxfds file descriptors.
 
         Args:
@@ -448,11 +574,88 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].recv_fds(
-                maxfds
+            return (
+                await self._impl.unsafe_get[Self._linux_s]()[].recv_fds(maxfds)
+            )^
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return None
+
+    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+        """Send a buffer of bytes to the socket.
+
+        Args:
+            buf: The bytes buffer to send.
+            length: The amount of items in the buffer.
+
+        Returns:
+            The amount of bytes sent.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return await self._impl.unsafe_get[Self._linux_s]()[].send(
+                buf, length
             )
-        constrained[False, "Platform not supported yet."]()
-        return None
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return False
+
+    async fn send(self, buf: List[UInt8]) -> UInt:
+        """Send a List of bytes to the socket.
+
+        Args:
+            buf: The list of bytes to send.
+
+        Returns:
+            The amount of bytes sent.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return await self._impl.unsafe_get[Self._linux_s]()[].send(buf)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return False
+
+    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
+        """Receive up to max_len bytes into the buffer.
+
+        Args:
+            buf: The buffer to recieve to.
+            max_len: The maximum amount of bytes to recieve.
+
+        Returns:
+            The amount of bytes recieved.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return await self._impl.unsafe_get[Self._linux_s]()[].recv(
+                buf, max_len
+            )
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return 0
+
+    async fn recv(self, max_len: UInt) -> List[UInt8]:
+        """Receive up to max_len bytes.
+
+        Args:
+            max_len: The maximum amount of bytes to recieve.
+
+        Returns:
+            The bytes recieved.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return (
+                await self._impl.unsafe_get[Self._linux_s]()[].recv(length)
+            )^
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return List[UInt8]()
 
     fn gethostname(self) -> String:
         """Return the current hostname.
@@ -464,8 +667,9 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl.unsafe_get[Self._linux_s]()[].gethostname()
-        constrained[False, "Platform not supported yet."]()
-        return ""
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return ""
 
     @staticmethod
     fn gethostbyname(name: String) -> Optional[SockAddr]:
@@ -478,8 +682,9 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.gethostbyname(name)
-        constrained[False, "Platform not supported yet."]()
-        return None
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return None
 
     @staticmethod
     fn gethostbyaddr(address: SockAddr) -> Optional[String]:
@@ -492,8 +697,9 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.gethostbyaddr(address)
-        constrained[False, "Platform not supported yet."]()
-        return None
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return None
 
     @staticmethod
     fn getservbyname(
@@ -508,8 +714,9 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.getservbyname(name, proto)
-        constrained[False, "Platform not supported yet."]()
-        return None
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return None
 
     @staticmethod
     fn ntohs(value: Int) -> Int:
@@ -584,7 +791,7 @@ struct Socket[
 
         return None  # TODO: implement
 
-    fn getdefaulttimeout(self) -> Optional[SockTimeout]:
+    fn getdefaulttimeout(self) -> Optional[SockTime]:
         """Get the default timeout value.
 
         Returns:
@@ -594,10 +801,11 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl.unsafe_get[Self._linux_s]()[].getdefaulttimeout()
-        constrained[False, "Platform not supported yet."]()
-        return None
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return None
 
-    fn setdefaulttimeout(self, value: SockTimeout) -> Bool:
+    fn setdefaulttimeout(self, value: SockTime) -> Bool:
         """Set the default timeout value.
 
         Args:
@@ -612,8 +820,9 @@ struct Socket[
             return self._impl.unsafe_get[Self._linux_s]()[].setdefaulttimeout(
                 value
             )
-        constrained[False, "Platform not supported yet."]()
-        return False
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return False
 
     # TODO: once we have async generators
     # fn __iter__(self) -> _SocketIter:
@@ -650,8 +859,8 @@ struct Socket[
     @staticmethod
     fn create_connection(
         address: SockAddr,
-        timeout: SockTimeout = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: Optional[SockAddr] = None,
+        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        source_address: SockAddr = SockAddr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -660,10 +869,7 @@ struct Socket[
 
         Args:
             address: The Address to bind to.
-            timeout: Passing the optional timeout parameter will set the timeout
-                on the socket instance before attempting to connect. If no
-                timeout is supplied, the global default timeout setting returned
-                by `self.getdefaulttimeout` is used.
+            timeout: The timeout for attempting to connect.
             source_address: A host of '' or port 0 tells the OS to use the
                 default.
             all_errors: When a connection cannot be created, raises the last
@@ -679,12 +885,13 @@ struct Socket[
             return Self._linux_s.create_connection(
                 address, timeout, source_address, all_errors=all_errors
             )
-        constrained[False, "Platform not supported yet."]()
-        raise Error("Failed to create socket.")
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
 
     @staticmethod
     fn create_server(
-        address: SockAddr,
+        address: IPAddr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -744,55 +951,9 @@ struct Socket[
                 reuse_port=reuse_port,
                 dualstack_ipv6=dualstack_ipv6,
             )
-        constrained[False, "Platform not supported yet."]()
-        raise Error("Failed to create socket.")
-
-
-@value
-struct SockAddr:
-    """Socket Address."""
-
-    var ip: String
-    """IP."""
-    var port: Int
-    """Port."""
-
-    fn __init__(inout self, ip: StringLiteral, port: Int):
-        """Create an Address.
-
-        Args:
-            ip: The IP.
-            port: The port.
-        """
-        self.ip = str(ip)
-        self.port = port
-
-    fn __init__(inout self, values: Tuple[StringLiteral, Int]):
-        """Create an Address.
-
-        Args:
-            values: The IP and port.
-        """
-        self = Self(values[0], values[1])
-
-    fn __init__(inout self, values: Tuple[String, Int]):
-        """Create an Address.
-
-        Args:
-            values: The IP and port.
-        """
-        self = Self(values[0], values[1])
-
-    fn __init__(inout self, value: String) raises:
-        """Create an Address.
-
-        Args:
-            value: The string with IP and port.
-        """
-        var idx = value.rfind(":")
-        if idx == -1:
-            raise Error("port not found in String")
-        self = Self(value[:idx], int(value[idx + 1 :]))
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
 
 
 # TODO: enum
@@ -817,7 +978,7 @@ struct SockTimeUnits:
         debug_assert(
             selected
             in (
-                self.MICROSECONDS,
+                Self.MICROSECONDS,
                 Self.MILISECONDS,
                 Self.SECONDS,
                 Self.MINUTES,
@@ -839,8 +1000,8 @@ struct SockTimeUnits:
 
 
 @register_passable("trivial")
-struct SockTimeout:
-    """SockTimeout."""
+struct SockTime:
+    """SockTime."""
 
     var time: Int
     """Time."""
@@ -850,7 +1011,7 @@ struct SockTimeout:
     fn __init__(
         inout self, value: Int, unit: SockTimeUnits = SockTimeUnits.MINUTES
     ):
-        """Construct a SockTimeout.
+        """Construct a SockTime.
 
         Args:
             value: The value for the timeout.
@@ -870,4 +1031,4 @@ struct SockTimeout:
         self.unit = unit
 
 
-alias _DEFAULT_SOCKET_TIMEOUT = SockTimeout(1, SockTimeUnits.MINUTES)
+alias _DEFAULT_SOCKET_TIMEOUT = SockTime(1, SockTimeUnits.MINUTES)
