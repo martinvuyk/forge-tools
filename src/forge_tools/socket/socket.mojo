@@ -307,7 +307,7 @@ trait SocketInterface[
     sock_type: SockType,
     sock_protocol: SockProtocol,
     sock_platform: SockPlatform,
-]:
+](CollectionElement):
     """Interface for Sockets."""
 
     # var fd: Arc[FileDescriptor]
@@ -552,7 +552,19 @@ struct Socket[
         """Exit the context."""
         _ = self^
 
-    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+    # TODO(#3290): use SockAddr[sock_family, *_]
+    fn bind[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement, //,
+    ](
+        self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+    ) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -563,7 +575,19 @@ struct Socket[
         """
         ...
 
-    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+    # TODO(#3290): use SockAddr[sock_family, *_]
+    async fn connect[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement, //,
+    ](
+        self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+    ) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -723,8 +747,20 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return ""
 
+    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
-    fn gethostbyname(name: String) -> Optional[SockAddr[sock_family, *_]]:
+    fn gethostbyname[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement, //,
+    ](name: String) -> Optional[
+        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+    ]:
         """Map a hostname to its Address.
 
         Returns:
@@ -738,8 +774,20 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return None
 
+    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
-    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
+    fn gethostbyaddr[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement, //,
+    ](
+        address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+    ) -> Optional[String]:
         """Map an Address to DNS info.
 
         Returns:
@@ -753,10 +801,20 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return None
 
+    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
-    fn getservbyname(
-        name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[SockAddr[sock_family, *_]]:
+    fn getservbyname[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement, //,
+    ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[
+        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+    ]:
         """Map a service name and a protocol name to a port number.
 
         Returns:
@@ -897,7 +955,17 @@ struct Socket[
 
     #     ...
 
-    async fn accept(self) -> (Self, SockAddr[sock_family, *_]):
+    # TODO(#3290): use SockAddr[sock_family, *_]
+    async fn accept[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement, //,
+    ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
         """Return a new socket representing the connection, and the address of
         the client.
 
@@ -943,7 +1011,7 @@ struct Socket[
 
     @classmethod
     fn create_server(
-        cls: Socket[SockFamily.AF_INET],
+        cls: Socket[SockFamily.AF_INET, *_],
         address: IPv4Addr,
         *,
         backlog: Optional[Int] = None,
@@ -997,7 +1065,7 @@ struct Socket[
 
     @classmethod
     fn create_server(
-        cls: Socket[SockFamily.AF_INET6],
+        cls: Socket[SockFamily.AF_INET6, *_],
         address: IPv6Addr,
         *,
         backlog: Optional[Int] = None,
