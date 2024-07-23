@@ -235,7 +235,7 @@ struct SockAddr[
     - AF_SPI: (
             interface: String,
             address: UInt,
-            baudrate: UInt,
+            frequency_hz: UInt,
             mode: UInt8,
             SCLK: UInt,
             MOSI: UInt,
@@ -245,7 +245,7 @@ struct SockAddr[
     - AF_I2C: (
             interface: String,
             address: UInt,
-            baudrate: UInt,
+            bitrate: UInt,
             mode: String,
             SDA: UInt,
             SCL: UInt,
