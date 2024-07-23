@@ -244,6 +244,8 @@ struct SockProtocol:
 # TODO enum
 @register_passable("trivial")
 struct SockPlatform:
+    """Socket Platform."""
+
     alias LINUX = "LINUX"
     """LINUX."""
     alias APPLE = "APPLE"  # TODO: implement instead of sending to generic UNIX
