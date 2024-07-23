@@ -1,18 +1,18 @@
 from .socket import (
-    _SocketInterface,
+    SocketInterface,
     SockFamily,
     SockType,
     SockProtocol,
-    SockAddr,
     SockTime,
     _DEFAULT_SOCKET_TIMEOUT,
 )
+from .address import SockAddr, IPv4Addr, IPAddr
 
 
 @value
 struct _UnixSocket[
     sock_family: SockFamily, sock_type: SockType, sock_protocol: SockProtocol
-](_SocketInterface):
+](SocketInterface):
     """Generic POSIX compliant socket implementation."""
 
     fn __init__(inout self) raises:
@@ -36,6 +36,21 @@ struct _UnixSocket[
             self.close()
         except:
             pass
+
+    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+        """Bind the socket to address. The socket must not already be bound."""
+        ...
+
+    fn listen(self, backlog: UInt = 0) raises:
+        """Enable a server to accept connections. `backlog` specifies the number
+        of unaccepted connections that the system will allow before refusing
+        new connections. If `backlog == 0`, a default value is chosen.
+        """
+        ...
+
+    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+        """Connect to a remote socket at address."""
+        ...
 
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
@@ -70,19 +85,19 @@ struct _UnixSocket[
         return None
 
     @staticmethod
-    fn gethostbyname(name: String) -> Optional[SockAddr]:
+    fn gethostbyname(name: String) -> Optional[SockAddr[sock_family, *_]]:
         """Map a hostname to its Address."""
         return None
 
     @staticmethod
-    fn gethostbyaddr(address: SockAddr) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
         """Map an Address to DNS info."""
         return None
 
     @staticmethod
     fn getservbyname(
         name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[SockAddr]:
+    ) -> Optional[SockAddr[sock_family, *_]]:
         """Map a service name and a protocol name to a port number."""
         return None
 
@@ -94,7 +109,7 @@ struct _UnixSocket[
         """Set the default timeout value."""
         return False
 
-    async fn accept(self) -> (Self, SockAddr):
+    async fn accept(self) -> (Self, SockAddr[sock_family, *_]):
         """Return a new socket representing the connection, and the address of
         the client.
         """
@@ -102,9 +117,9 @@ struct _UnixSocket[
 
     @staticmethod
     fn create_connection(
-        address: SockAddr,
+        address: IPAddr[sock_family],
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: SockAddr = SockAddr("", 0),
+        source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -114,7 +129,7 @@ struct _UnixSocket[
 
     @staticmethod
     fn create_server(
-        address: SockAddr,
+        address: IPAddr[sock_family],
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,

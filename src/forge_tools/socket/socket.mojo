@@ -39,10 +39,13 @@
 
 #### Python functions whose functionality is covered by other means:
 
-- `share()`
+- `share()`, `dup()`, `fileno()`
     - use `get_fd()` instead.
 - `fromfd()` & `fromshare()`
     - use `Socket(fd: Arc[FileDescriptor])` constructor instead.
+- `detach()`
+    - functionality covered by the type's destructor.
+
 
 #### [Python's socket docs](https://docs.python.org/3/library/socket.html).
 """
@@ -123,7 +126,7 @@ struct SockFamily:
         self._selected = selected
 
     fn __is__(self, value: StringLiteral) -> Bool:
-        """Whether the selected value is the give value.
+        """Whether the selected value is the given value.
 
         Args:
             value: The value.
@@ -173,7 +176,7 @@ struct SockType:
         self._selected = selected
 
     fn __is__(self, value: StringLiteral) -> Bool:
-        """Whether the selected value is the give value.
+        """Whether the selected value is the given value.
 
         Args:
             value: The value.
@@ -190,19 +193,19 @@ struct SockProtocol:
     """Socket Transmission Protocol."""
 
     alias TCP = "TCP"
-    """TCP."""
+    """Transmission Control Protocol."""
     alias UDP = "UDP"  # TODO: implement
-    """UDP."""
+    """User Datagram Protocol."""
     alias SCTP = "SCTP"  # TODO: implement
-    """SCTP."""
+    """Stream Control Transmission Protocol."""
     alias IPPROTO_UDPLITE = "IPPROTO_UDPLITE"  # TODO: implement
-    """IPPROTO_UDPLITE."""
+    """Lightweight User Datagram Protocol."""
     alias SPI = "SPI"  # TODO: implement. inspiration: https://github.com/OnionIoT/spi-gpio-driver
-    """SPI."""
-    alias I2C = "I2C"  # TODO: implement. inspiration: https://github.com/swedishborgie/libmma8451
-    """I2C."""
+    """Serial Peripheral Interface."""
+    alias I2C = "I2C"  # TODO: implement. inspiration: https://github.com/OnionIoT/i2c-exp-driver, https://github.com/swedishborgie/libmma8451
+    """Inter Integrated Circuit."""
     alias UART = "UART"  # TODO: implement. inspiration: https://github.com/AndreRenaud/simple_uart
-    """UART."""
+    """Universal Asynchronous Reciever Transmitter."""
     var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
@@ -227,7 +230,7 @@ struct SockProtocol:
         self._selected = selected
 
     fn __is__(self, value: StringLiteral) -> Bool:
-        """Whether the selected value is the give value.
+        """Whether the selected value is the given value.
 
         Args:
             value: The value.
@@ -242,14 +245,20 @@ struct SockProtocol:
 @register_passable("trivial")
 struct SockPlatform:
     alias LINUX = "LINUX"
+    """LINUX."""
     alias APPLE = "APPLE"  # TODO: implement instead of sending to generic UNIX
+    """APPLE."""
     alias BSD = "BSD"  # TODO: implement instead of sending to generic UNIX
+    """BSD."""
     alias FREERTOS = "FREERTOS"  # TODO: implement instead of sending to generic UNIX
+    """FREERTOS."""
     alias WASI = "WASI"  # TODO: implement
+    """WASI."""
     alias UNIX = "UNIX"  # TODO: implement
     """Generic POSIX compliant OS."""
     alias WINDOWS = "WINDOWS"  # TODO: implement
-    # TODO the rest
+    """WINDOWS."""
+    # TODO other important platforms
     var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
@@ -274,7 +283,8 @@ struct SockPlatform:
         self._selected = selected
 
     fn __is__(self, value: StringLiteral) -> Bool:
-        """Whether the selected value is the give value.
+        """Whether the selected value is the given value. Unix matches with all
+        POSIX-ish platforms.
 
         Args:
             value: The value.
@@ -282,10 +292,20 @@ struct SockPlatform:
         Returns:
             The result.
         """
-        return self._selected == value
+        return self._selected == value or (
+            value == SockPlatform.UNIX
+            and self._selected
+            in (SockPlatform.UNIX, Self.LINUX, Self.APPLE, Self.BSD)
+        )
 
 
-trait _SocketInterface:
+# TODO: trait declarations do not support parameters yet
+trait SocketInterface[
+    sock_family: SockFamily,
+    sock_type: SockType,
+    sock_protocol: SockProtocol,
+    sock_platform: SockPlatform,
+]:
     """Interface for Sockets."""
 
     # var fd: Arc[FileDescriptor]
@@ -303,6 +323,21 @@ trait _SocketInterface:
         """Closes the Socket if it's the last reference to its
         `Arc[FileDescriptor]`.
         """
+        ...
+
+    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+        """Bind the socket to address. The socket must not already be bound."""
+        ...
+
+    fn listen(self, backlog: UInt = 0) raises:
+        """Enable a server to accept connections. `backlog` specifies the number
+        of unaccepted connections that the system will allow before refusing
+        new connections. If `backlog == 0`, a default value is chosen.
+        """
+        ...
+
+    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+        """Connect to a remote socket at address."""
         ...
 
     @staticmethod
@@ -341,19 +376,19 @@ trait _SocketInterface:
         ...
 
     @staticmethod
-    fn gethostbyname(name: String) -> Optional[SockAddr]:
+    fn gethostbyname(name: String) -> Optional[SockAddr[sock_family, *_]]:
         """Map a hostname to its Address."""
         ...
 
     @staticmethod
-    fn gethostbyaddr(address: SockAddr) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
         """Map an Address to DNS info."""
         ...
 
     @staticmethod
     fn getservbyname(
         name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[SockAddr]:
+    ) -> Optional[SockAddr[sock_family, *_]]:
         """Map a service name and a protocol name to a port number."""
         ...
 
@@ -365,7 +400,7 @@ trait _SocketInterface:
         """Set the default timeout value."""
         ...
 
-    async fn accept(self) -> (Self, SockAddr):
+    async fn accept(self) -> (Self, SockAddr[sock_family, *_]):
         """Return a new socket representing the connection, and the address of
         the client.
         """
@@ -373,9 +408,9 @@ trait _SocketInterface:
 
     @staticmethod
     fn create_connection(
-        address: SockAddr,
+        address: IPAddr[sock_family],
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: SockAddr = SockAddr("", 0),
+        source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -385,7 +420,7 @@ trait _SocketInterface:
 
     @staticmethod
     fn create_server(
-        address: SockAddr,
+        address: IPAddr[sock_family],
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -413,7 +448,11 @@ struct Socket[
     sock_protocol: SockProtocol = SockProtocol.TCP,
     sock_platform: SockPlatform = _get_current_platform(),
 ](CollectionElement):
-    """Struct for using Sockets.
+    """Struct for using Sockets. In the future this struct should be able to
+    use any implementation that conforms to the SocketInterface trait, once
+    traits can have attributes and have parameters defined. This will allow the
+    user to implement the interface for whatever functionality is missing and
+    inject the type.
 
     Parameters:
         sock_family: The socket family e.g. `SockFamily.AF_INET`.
@@ -458,7 +497,7 @@ struct Socket[
     alias _linux_s = _LinuxSocket[sock_family, sock_type, sock_protocol]
     alias _unix_s = _UnixSocket[sock_family, sock_type, sock_protocol]
     alias _windows_s = _WindowsSocket[sock_family, sock_type, sock_protocol]
-    # TODO: need to be able to use _SocketInterface trait regardless of type
+    # TODO: need to be able to use SocketInterface trait regardless of type
     alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
     var _impl: Self._variant
 
@@ -477,11 +516,7 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             self._impl = Self._linux_s()
-        # elif sock_platform in (
-        #     SockPlatform.UNIX,
-        #     SockPlatform.APPLE,
-        #     SockPlatform.BSD,
-        # ):
+        # elif sock_platform is SockPlatform.UNIX:
         #     self._impl = Self._unix_s()
         # elif sock_platform is SockPlatform.WINDOWS:
         #     self._impl = Self._windows_s()
@@ -514,6 +549,21 @@ struct Socket[
     fn __exit__(owned self):
         """Exit the context."""
         _ = self^
+
+    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+        """Bind the socket to address. The socket must not already be bound."""
+        ...
+
+    fn listen(self, backlog: UInt = 0) raises:
+        """Enable a server to accept connections. `backlog` specifies the number
+        of unaccepted connections that the system will allow before refusing
+        new connections. If `backlog == 0`, a default value is chosen.
+        """
+        ...
+
+    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+        """Connect to a remote socket at address."""
+        ...
 
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
@@ -672,7 +722,7 @@ struct Socket[
             return ""
 
     @staticmethod
-    fn gethostbyname(name: String) -> Optional[SockAddr]:
+    fn gethostbyname(name: String) -> Optional[SockAddr[sock_family, *_]]:
         """Map a hostname to its Address.
 
         Returns:
@@ -687,7 +737,7 @@ struct Socket[
             return None
 
     @staticmethod
-    fn gethostbyaddr(address: SockAddr) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
         """Map an Address to DNS info.
 
         Returns:
@@ -704,7 +754,7 @@ struct Socket[
     @staticmethod
     fn getservbyname(
         name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[SockAddr]:
+    ) -> Optional[SockAddr[sock_family, *_]]:
         """Map a service name and a protocol name to a port number.
 
         Returns:
@@ -845,7 +895,7 @@ struct Socket[
 
     #     ...
 
-    async fn accept(self) -> (Self, SockAddr):
+    async fn accept(self) -> (Self, SockAddr[sock_family, *_]):
         """Return a new socket representing the connection, and the address of
         the client.
 
@@ -858,9 +908,9 @@ struct Socket[
 
     @staticmethod
     fn create_connection(
-        address: SockAddr,
+        address: IPAddr[sock_family],
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: SockAddr = SockAddr("", 0),
+        source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -889,14 +939,14 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
-    @staticmethod
+    @classmethod
     fn create_server(
-        address: IPAddr,
+        cls: Socket[SockFamily.AF_INET],
+        address: IPv4Addr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
-        dualstack_ipv6: Bool = False,
-    ) raises -> Self:
+    ) raises -> __type_of(cls):
         """Convenience function which creates a socket bound to the address and
         returns the socket object.
 
@@ -905,13 +955,8 @@ struct Socket[
             backlog: Is the queue size passed to socket.listen().
             reuse_port: Dictates whether to use the SO_REUSEPORT socket
                 option.
-            dualstack_ipv6: If true and the platform supports it, it will
-                create an AF_INET6 socket able to accept both IPv4 or IPv6
-                connections. When false it will explicitly disable this
-                option on platforms that enable it by default (e.g. Linux).
 
         Constraints:
-            - sock_family can only be AF_INET or AF_INET6.
             - sock_type must be SOCK_STREAM.
 
         Returns:
@@ -936,9 +981,65 @@ struct Socket[
         """
 
         constrained[
-            sock_family._selected in (SockFamily.AF_INET, SockFamily.AF_INET6),
-            "sock_family can only be AF_INET or AF_INET6",
+            sock_type is SockType.SOCK_STREAM, "sock_type must be SOCK_STREAM"
         ]()
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return Self._linux_s.create_server(
+                address, backlog=backlog, reuse_port=reuse_port
+            )
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
+
+    @classmethod
+    fn create_server(
+        cls: Socket[SockFamily.AF_INET6],
+        address: IPv6Addr,
+        *,
+        backlog: Optional[Int] = None,
+        reuse_port: Bool = False,
+        dualstack_ipv6: Bool = False,
+    ) raises -> __type_of(cls):
+        """Convenience function which creates a socket bound to the address and
+        returns the socket object.
+
+        Args:
+            address: The adress of the new server.
+            backlog: Is the queue size passed to socket.listen().
+            reuse_port: Dictates whether to use the SO_REUSEPORT socket
+                option.
+            dualstack_ipv6: If true and the platform supports it, it will
+                create an AF_INET6 socket able to accept both IPv4 or IPv6
+                connections. When false it will explicitly disable this
+                option on platforms that enable it by default (e.g. Linux).
+
+        Constraints:
+            - sock_type must be SOCK_STREAM.
+
+        Returns:
+            The Socket.
+
+        Examples:
+        ```mojo
+        from forge_tools.socket import Socket, SockFamily
+
+
+        async def main():
+            alias S = Socket[SockFamily.AF_INET6]
+            with S.create_server(("::1", 8000)) as server:
+                while True:
+                    conn, addr = await server.accept()
+                    ...  # handle new connection
+
+                # TODO: once we have async generators:
+                # async for conn, addr in server:
+                #     ...  # handle new connection
+        ```
+        .
+        """
+
         constrained[
             sock_type is SockType.SOCK_STREAM, "sock_type must be SOCK_STREAM"
         ]()
@@ -946,7 +1047,7 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.create_server(
-                SockAddr,
+                address,
                 backlog=backlog,
                 reuse_port=reuse_port,
                 dualstack_ipv6=dualstack_ipv6,
@@ -988,7 +1089,7 @@ struct SockTimeUnits:
         self._selected = selected
 
     fn __is__(self, value: StringLiteral) -> Bool:
-        """Whether the selected value is the give value.
+        """Whether the selected value is the given value.
 
         Args:
             value: The value.
