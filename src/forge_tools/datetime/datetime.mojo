@@ -35,7 +35,9 @@ import .dt_str
 
 alias _calendar = PythonCalendar
 alias _cal_hash = CalendarHashes(64)
-alias _max_delta = UInt16(~UInt64(0) // (365 * 24 * 60 * 60 * 1_000_000_000))
+alias _max_delta = (~UInt64(0) // (365 * 24 * 60 * 60 * 1_000_000_000)).cast[
+    DType.uint16
+]()
 """Maximum year delta that fits in a UInt64 for a 
 Gregorian calendar with year = 365 d * 24 h, 60 min, 60 s, 10^9 ns"""
 
@@ -791,7 +793,7 @@ struct DateTime[
         var dt = self.to_utc()
         return dt.calendar.leapsecs_since_epoch(dt.year, dt.month, dt.day)
 
-    fn __hash__(self) -> Int:
+    fn __hash__(self) -> UInt:
         """Hash.
 
         Returns:

@@ -1544,7 +1544,7 @@ struct UTCFast(_Calendarized):
         """
 
         _ = self, year
-        return Self._days_before_month[int(month)]
+        return Self._days_before_month[int(month)].cast[DType.uint8]()
 
     @always_inline("nodebug")
     fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:

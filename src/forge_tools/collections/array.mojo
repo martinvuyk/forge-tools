@@ -66,6 +66,7 @@ print(a.concat(a.reversed() // 2)) # [3, 4, 2, 1, 2, 1]
 
 from math import sqrt, acos, sin
 from algorithm import vectorize
+from bit import bit_ceil
 from sys import info
 from collections._index_normalization import normalize_index
 from benchmark import clobber_memory
@@ -111,18 +112,6 @@ struct _ArrayIter[
             return len(self.src) - self.index
         else:
             return self.index
-
-
-fn _closest_upper_pow_2(val: Int) -> Int:
-    var v = val
-    v -= 1
-    v |= v >> 1
-    v |= v >> 2
-    v |= v >> 4
-    v |= v >> 8
-    v |= v >> 16
-    v += 1
-    return v
 
 
 @register_passable("trivial")
@@ -195,7 +184,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             methods like append(), concat(), etc. do.
     """
 
-    alias simd_size = _closest_upper_pow_2(capacity)
+    alias simd_size = bit_ceil(capacity)
     """The size of the underlying SIMD vector."""
     alias _vec_type = SIMD[T, Self.simd_size]
     var vec: Self._vec_type
@@ -360,7 +349,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             if capacity != other.capacity:
                 Self._mask_vec_capacity_delta(self.vec)
         elif other._vec_type.size == Self.simd_size:
-            self.vec = other.vec.cast[T]()
+            self.vec = rebind[Self._vec_type](other.vec.cast[T]())
 
             @parameter
             if capacity != other.capacity:
@@ -371,7 +360,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
             @parameter
             fn closure[simd_width: Int](i: Int):
-                self.vec[i] = other.vec[i]
+                self.vec[i] = other.vec[i].cast[T]()
 
             vectorize[
                 closure,
@@ -411,8 +400,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         if unsafe_simd_size:
-            var ptr = DTypePointer(unsafe_pointer)
-            self.vec = ptr.simd_strided_load[Self.simd_size](1)
+            var ptr = unsafe_pointer
+            self.vec = ptr.simd_strided_load[T, Self.simd_size](1)
             self.capacity_left = capacity - length
             return
 
@@ -462,7 +451,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             "Array capacity must be power of 2.",
         ]()
         constrained[size == capacity, "Size must be == capacity."]()
-        self.vec = SIMD[T, size].load(DTypePointer(existing.steal_data()))
+        self.vec = Self._vec_type.load(existing.steal_data())
         self.capacity_left = 0
 
     @always_inline
@@ -962,16 +951,16 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             An UnsafePointer to a copy of the SIMD vector.
         """
-        var ptr = DTypePointer[T].alloc(Self.simd_size)
+        var ptr = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
         alias size = Self._slice_simd_size
 
         @parameter
         for i in range(Self.simd_size // size):
-            ptr.offset(i * size).simd_strided_store[size](
+            ptr.offset(i * size).simd_strided_store[T, size](
                 self.vec.slice[size, offset = i * size](), 1
             )
 
-        return UnsafePointer[Self._scalar](ptr.address.address)
+        return ptr
 
     @always_inline
     fn unsafe_get(self, idx: Int) -> Self._scalar:
@@ -1094,12 +1083,12 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if delta == 0:
-            vec = self.vec.min(rebind[Self._vec_type](other.vec))
+            vec = min(self.vec, rebind[Self._vec_type](other.vec))
         elif delta > 0:
             var o = Self(other=other)
-            vec = self.vec.min(o.vec)
+            vec = min(self.vec, o.vec)
         else:
-            vec = self.vec.min(other.vec.slice[Self.simd_size]())
+            vec = min(self.vec, other.vec.slice[Self.simd_size]())
 
         @parameter
         if static:
@@ -1126,12 +1115,12 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if delta == 0:
-            vec = self.vec.max(rebind[Self._vec_type](other.vec))
+            vec = max(self.vec, rebind[Self._vec_type](other.vec))
         elif delta > 0:
             var o = Self(other=other)
-            vec = self.vec.max(o.vec)
+            vec = max(self.vec, o.vec)
         else:
-            vec = self.vec.max(other.vec.slice[Self.simd_size]())
+            vec = max(self.vec, other.vec.slice[Self.simd_size]())
 
         @parameter
         if static:
@@ -1705,12 +1694,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         if capacity == 3:
             var s = self.vec.shuffle[1, 2, 0, 3]()
             var o = other.vec.shuffle[2, 0, 1, 3]()
-
-            @parameter
-            if T.is_floating_point() and info.simdbitwidth() >= 512:
-                return s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
-            else:
-                return s * o - (s * other.vec).shuffle[1, 2, 0, 3]()
+            return s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
         elif capacity == size:
             var x0 = self.vec.rotate_left[1]()
             var y0 = other.vec.rotate_left[2]()
@@ -1771,7 +1755,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         @parameter
         if D != T:
             # FIXME: experimental
-            var res_p = DTypePointer[D].alloc(Self.simd_size)
+            var res_p = UnsafePointer[Scalar[D]].alloc(Self.simd_size)
             alias size = Self._slice_simd_size
 
             for i in range(len(self), Self.simd_size):
@@ -1782,9 +1766,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 res_p[i] = func(s_p[i])
 
             var res = Array[D, capacity, static](
-                unsafe_pointer=UnsafePointer(res_p.address.address),
-                length=len(self),
-                unsafe_simd_size=True,
+                unsafe_pointer=res_p, length=len(self), unsafe_simd_size=True
             )
             res_p.free()
             s_p.free()
@@ -1904,12 +1886,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         .
         """
 
-        var res_p = DTypePointer[T].alloc(Self.simd_size)
+        var res_p = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
         alias size = Self._slice_simd_size
 
         @parameter
         for i in range(Self.simd_size // size):
-            res_p.offset(i * size).simd_strided_store[size](SIMD[T, size](0), 1)
+            res_p.offset(i * size).simd_strided_store[T, size](
+                SIMD[T, size](0), 1
+            )
         var s_p = self.unsafe_ptr()
         var idx = 0
         for i in range(len(self)):
@@ -1919,9 +1903,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 idx += 1
 
         var res = Array[T, capacity, False](
-            unsafe_pointer=UnsafePointer(res_p.address.address),
-            length=(idx + 1),
-            unsafe_simd_size=True,
+            unsafe_pointer=res_p, length=(idx + 1), unsafe_simd_size=True
         )
         res_p.free()
         s_p.free()
