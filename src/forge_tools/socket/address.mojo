@@ -181,7 +181,7 @@ struct EtherPacket:
 struct SockAddr[
     sock_family: SockFamily,
     T0: CollectionElement,
-    T1: CollectionElement,
+    T1: CollectionElement = NoneType,
     T2: CollectionElement = NoneType,
     T3: CollectionElement = NoneType,
     T4: CollectionElement = NoneType,
@@ -205,7 +205,8 @@ struct SockAddr[
     Notes:
 
     - AF_INET: (host: String, port: UInt)
-    - AF_INET6: (host: String, port: UInt, flowinfo: UInt, scope_id: UInt)
+    - AF_INET6: (host: String, port: UInt, flowinfo: UInt, scope_id: UInt
+    - AF_UNIX: (host: String,)
     - AF_NETLINK: (pid: UInt, groups: UInt)
     - AF_TIPC: (
             addr_type: TIPCAddrType,
@@ -389,6 +390,17 @@ struct SockAddr[
         self.port = port
         self.generic_field0 = flowinfo
         self.generic_field1 = scope_id
+
+    fn __init__(inout self: UnixAddr, host: String):
+        """Create an Address.
+
+        Args:
+            host: The sun_path (maximum of 108 bytes).
+
+        Notes:
+            [Reference](https://man7.org/linux/man-pages/man7/unix.7.html).
+        """
+        self.host = host
 
     fn __init__(inout self: NETLINKAddr, pid: UInt, groups: UInt):
         """NETLINKAddr.
@@ -662,20 +674,29 @@ struct SockAddr[
 alias IPAddr = SockAddr[_, String, UInt]
 """Generic IP Address type, needs to be constrained on AF_INET or AF_INET6."""
 alias IPv4Addr = SockAddr[SockFamily.AF_INET, String, UInt]
-"""IPv4Addr.
+"""IPv4 Address (AF_INET).
 
 Args:
     host: The host.
     port: The port.
 """
 alias IPv6Addr = SockAddr[SockFamily.AF_INET6, String, UInt, UInt, UInt]
-"""IPv6Addr.
+"""IPv6 Address (AF_INET6).
 
 Args:
     host: The host.
     port: The port.
     flowinfo: The flowinfo.
     scope_id: The scope_id.
+"""
+alias UnixAddr = SockAddr[SockFamily.AF_UNIX, String]
+"""Unix local Address.
+
+Args:
+    host: The sun_path (maximum of 108 bytes).
+
+Notes:
+    [Reference](https://man7.org/linux/man-pages/man7/unix.7.html).
 """
 alias NETLINKAddr = SockAddr[SockFamily.AF_NETLINK, UInt, UInt]
 """NETLINKAddr.

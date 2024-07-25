@@ -52,8 +52,17 @@
 
 from sys import info
 
-from .address import SockAddr, IPAddr
+from forge_tools.ffi.c import (
+    ntohs,
+    ntohl,
+    htons,
+    htonl,
+    inet_aton,
+    inet_ntoa,
+    in_addr,
+)
 
+from .address import SockAddr, IPAddr
 from ._linux import _LinuxSocket
 from ._unix import _UnixSocket
 from ._windows import _WindowsSocket
@@ -302,134 +311,168 @@ struct SockPlatform:
 
 
 # TODO: trait declarations do not support parameters yet
-trait SocketInterface[
-    sock_family: SockFamily,
-    sock_type: SockType,
-    sock_protocol: SockProtocol,
-    sock_platform: SockPlatform,
-](CollectionElement):
-    """Interface for Sockets."""
+# trait SocketInterface[
+#     sock_family: SockFamily,
+#     sock_type: SockType,
+#     sock_protocol: SockProtocol,
+#     sock_platform: SockPlatform,
+# ](CollectionElement):
+#     """Interface for Sockets."""
 
-    # var fd: Arc[FileDescriptor]
-    # """The Socket's `Arc[FileDescriptor]`."""
+#     # var fd: Arc[FileDescriptor]
+#     # """The Socket's `Arc[FileDescriptor]`."""
 
-    fn __init__(inout self) raises:
-        """Create a new socket object."""
-        ...
+#     fn __init__(inout self) raises:
+#         """Create a new socket object."""
+#         ...
 
-    fn close(owned self) raises:
-        """Closes the Socket."""
-        ...
+#     fn close(owned self) raises:
+#         """Closes the Socket."""
+#         ...
 
-    fn __del__(owned self):
-        """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
-        """
-        ...
+#     fn __del__(owned self):
+#         """Closes the Socket if it's the last reference to its
+#         `Arc[FileDescriptor]`.
+#         """
+#         ...
 
-    fn bind(self, address: SockAddr[sock_family, *_]) raises:
-        """Bind the socket to address. The socket must not already be bound."""
-        ...
+#     # TODO(#3290): use SockAddr[sock_family, *_]
+#     fn bind[
+#         T0: CollectionElement,
+#         T1: CollectionElement,
+#         T2: CollectionElement,
+#         T3: CollectionElement,
+#         T4: CollectionElement,
+#         T5: CollectionElement,
+#         T6: CollectionElement,
+#         T7: CollectionElement, //,
+#     ](
+#         self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+#     ) raises:
+#         """Bind the socket to address. The socket must not already be bound."""
+#         ...
 
-    fn listen(self, backlog: UInt = 0) raises:
-        """Enable a server to accept connections. `backlog` specifies the number
-        of unaccepted connections that the system will allow before refusing
-        new connections. If `backlog == 0`, a default value is chosen.
-        """
-        ...
+#     fn listen(self, backlog: UInt = 0) raises:
+#         """Enable a server to accept connections. `backlog` specifies the number
+#         of unaccepted connections that the system will allow before refusing
+#         new connections. If `backlog == 0`, a default value is chosen.
+#         """
+#         ...
 
-    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
-        """Connect to a remote socket at address."""
-        ...
+#     # TODO(#3290): use SockAddr[sock_family, *_]
+#     async fn connect[
+#         T0: CollectionElement,
+#         T1: CollectionElement,
+#         T2: CollectionElement,
+#         T3: CollectionElement,
+#         T4: CollectionElement,
+#         T5: CollectionElement,
+#         T6: CollectionElement,
+#         T7: CollectionElement, //,
+#     ](
+#         self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+#     ) raises:
+#         """Connect to a remote socket at address."""
+#         ...
 
-    @staticmethod
-    async fn socketpair() raises -> (Self, Self):
-        """Create a pair of socket objects from the sockets returned by the
-        platform `socketpair()` function."""
-        ...
+#     @staticmethod
+#     async fn socketpair() raises -> (Self, Self):
+#         """Create a pair of socket objects from the sockets returned by the
+#         platform `socketpair()` function."""
+#         ...
 
-    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
-        """Send file descriptor to the socket."""
-        ...
+#     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+#         """Send file descriptor to the socket."""
+#         ...
 
-    async fn recv_fds(self, maxfds: Int) -> Optional[List[Arc[FileDescriptor]]]:
-        """Receive file descriptors from the socket."""
-        ...
+#     async fn recv_fds(self, maxfds: Int) -> Optional[List[Arc[FileDescriptor]]]:
+#         """Receive file descriptors from the socket."""
+#         ...
 
-    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
-        """Send a buffer of bytes to the socket."""
-        return 0
+#     async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+#         """Send a buffer of bytes to the socket."""
+#         return 0
 
-    async fn send(self, buf: List[UInt8]) -> UInt:
-        """Send a list of bytes to the socket."""
-        return 0
+#     async fn send(self, buf: List[UInt8]) -> UInt:
+#         """Send a list of bytes to the socket."""
+#         return 0
 
-    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
-        """Receive up to max_len bytes into the buffer."""
-        return 0
+#     async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
+#         """Receive up to max_len bytes into the buffer."""
+#         return 0
 
-    async fn recv(self, max_len: UInt) -> List[UInt8]:
-        """Receive up to max_len bytes."""
-        return List[UInt8]()
+#     async fn recv(self, max_len: UInt) -> List[UInt8]:
+#         """Receive up to max_len bytes."""
+#         return List[UInt8]()
 
-    @staticmethod
-    fn gethostname() -> Optional[String]:
-        """Return the current hostname."""
-        ...
+#     @staticmethod
+#     fn gethostname() -> Optional[String]:
+#         """Return the current hostname."""
+#         ...
 
-    @staticmethod
-    fn gethostbyname(name: String) -> Optional[SockAddr[sock_family, *_]]:
-        """Map a hostname to its Address."""
-        ...
+#     @staticmethod
+#     fn gethostbyname(name: String) -> Optional[SockAddr[sock_family, *_]]:
+#         """Map a hostname to its Address."""
+#         ...
 
-    @staticmethod
-    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
-        """Map an Address to DNS info."""
-        ...
+#     @staticmethod
+#     fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
+#         """Map an Address to DNS info."""
+#         ...
 
-    @staticmethod
-    fn getservbyname(
-        name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[SockAddr[sock_family, *_]]:
-        """Map a service name and a protocol name to a port number."""
-        ...
+#     @staticmethod
+#     fn getservbyname(
+#         name: String, proto: SockProtocol = SockProtocol.TCP
+#     ) -> Optional[SockAddr[sock_family, *_]]:
+#         """Map a service name and a protocol name to a port number."""
+#         ...
 
-    fn getdefaulttimeout(self) -> Optional[SockTime]:
-        """Get the default timeout value."""
-        ...
+#     fn getdefaulttimeout(self) -> Optional[SockTime]:
+#         """Get the default timeout value."""
+#         ...
 
-    fn setdefaulttimeout(self, value: SockTime) -> Bool:
-        """Set the default timeout value."""
-        ...
+#     fn setdefaulttimeout(self, value: SockTime) -> Bool:
+#         """Set the default timeout value."""
+#         ...
 
-    async fn accept(self) -> (Self, SockAddr[sock_family, *_]):
-        """Return a new socket representing the connection, and the address of
-        the client.
-        """
-        ...
+#     # TODO(#3290): use SockAddr[sock_family, *_]
+#     async fn accept[
+#         T0: CollectionElement,
+#         T1: CollectionElement,
+#         T2: CollectionElement,
+#         T3: CollectionElement,
+#         T4: CollectionElement,
+#         T5: CollectionElement,
+#         T6: CollectionElement,
+#         T7: CollectionElement, //,
+#     ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
+#         """Return a new socket representing the connection, and the address of
+#         the client.
+#         """
+#         ...
 
-    @staticmethod
-    fn create_connection(
-        address: IPAddr[sock_family],
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
-        *,
-        all_errors: Bool = False,
-    ) raises -> Self:
-        """Connects to an address, with an optional timeout and
-        optional source address."""
-        ...
+#     @staticmethod
+#     fn create_connection(
+#         address: IPAddr[sock_family],
+#         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+#         source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
+#         *,
+#         all_errors: Bool = False,
+#     ) raises -> Self:
+#         """Connects to an address, with an optional timeout and
+#         optional source address."""
+#         ...
 
-    @staticmethod
-    fn create_server(
-        address: IPAddr[sock_family],
-        *,
-        backlog: Optional[Int] = None,
-        reuse_port: Bool = False,
-        dualstack_ipv6: Bool = False,
-    ) raises -> Self:
-        """Create a TCP socket and bind it to a specified address."""
-        ...
+#     @staticmethod
+#     fn create_server(
+#         address: IPAddr[sock_family],
+#         *,
+#         backlog: Optional[Int] = None,
+#         reuse_port: Bool = False,
+#         dualstack_ipv6: Bool = False,
+#     ) raises -> Self:
+#         """Create a TCP socket and bind it to a specified address."""
+#         ...
 
 
 fn _get_current_platform() -> StringLiteral:
@@ -500,7 +543,7 @@ struct Socket[
     alias _unix_s = _UnixSocket[sock_family, sock_type, sock_protocol]
     alias _windows_s = _WindowsSocket[sock_family, sock_type, sock_protocol]
     # TODO: need to be able to use SocketInterface trait regardless of type
-    alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
+    alias _variant = Variant[Int]
     var _impl: Self._variant
 
     fn __init__(inout self, impl: Self._variant):
@@ -829,8 +872,8 @@ struct Socket[
             return None
 
     @staticmethod
-    fn ntohs(value: Int) -> Int:
-        """Convert 16, 32 bit int from network to host byte order.
+    fn ntohs(value: UInt16) -> UInt16:
+        """Convert 16 bit int from network to host byte order.
 
         Args:
             value: The value to convert.
@@ -838,23 +881,10 @@ struct Socket[
         Returns:
             The result.
         """
+        return ntohs(value)
 
-        return 0  # TODO: implement
-
-    fn ntohl(self, value: Int) -> Int:
-        """Convert 16, 32 bit int from network to host byte order.
-
-        Args:
-            value: The value to convert.
-
-        Returns:
-            The result.
-        """
-
-        return 0  # TODO: implement
-
-    fn htons(self, value: Int) -> Int:
-        """Convert 16, 32 bit int from host to network byte order.
+    fn ntohl(self, value: UInt32) -> UInt32:
+        """Convert 32 bit int from network to host byte order.
 
         Args:
             value: The value to convert.
@@ -862,11 +892,10 @@ struct Socket[
         Returns:
             The result.
         """
+        return ntohl(value)
 
-        return 0  # TODO: implement
-
-    fn htonl(self, value: Int) -> Int:
-        """Convert 16, 32 bit int from host to network byte order.
+    fn htons(self, value: UInt16) -> UInt16:
+        """Convert 16 bit int from host to network byte order.
 
         Args:
             value: The value to convert.
@@ -874,11 +903,21 @@ struct Socket[
         Returns:
             The result.
         """
+        return htons(value)
 
-        return 0  # TODO: implement
+    fn htonl(self, value: UInt32) -> UInt32:
+        """Convert 32 bit int from host to network byte order.
+
+        Args:
+            value: The value to convert.
+
+        Returns:
+            The result.
+        """
+        return htonl(value)
 
     fn inet_aton(self, value: String) -> Optional[UInt32]:
-        """Convert IP addr string (123.45.67.89) to 32-bit packed format.
+        """Convert IPv4 address string (123.45.67.89) to 32-bit packed format.
 
         Args:
             value: The value to convert.
@@ -886,11 +925,14 @@ struct Socket[
         Returns:
             The result.
         """
+        var res = in_addr(0)
+        var err = inet_aton(value.unsafe_ptr().bitcast[Int8](), res)
+        if err == 0:
+            return None
+        return res.s_addr
 
-        return None  # TODO: implement
-
-    fn inet_ntoa(self, value: UInt32) -> Optional[String]:
-        """Convert 32-bit packed format IP to string (123.45.67.89).
+    fn inet_ntoa(self, value: UInt32) -> String:
+        """Convert 32-bit packed format to IPv4 address string (123.45.67.89).
 
         Args:
             value: The value to convert.
@@ -898,8 +940,13 @@ struct Socket[
         Returns:
             The result.
         """
-
-        return None  # TODO: implement
+        var length = 0
+        var ptr = inet_ntoa(value).bitcast[UInt8]()
+        for i in range(7, 16):
+            if ptr[i] == 0:
+                length = i + 1
+                break
+        return String(ptr=ptr, len=length)
 
     fn getdefaulttimeout(self) -> Optional[SockTime]:
         """Get the default timeout value.
@@ -955,17 +1002,9 @@ struct Socket[
 
     #     ...
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     async fn accept[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement, //,
-    ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
+        Address: IPAddr[sock_family],
+    ](self) -> (Self, IPAddr[sock_family]):
         """Return a new socket representing the connection, and the address of
         the client.
 
@@ -974,7 +1013,30 @@ struct Socket[
         """
 
         var new_sock = self
-        return new_sock^, Address("", 0)  # TODO: implement
+        return new_sock^, IPAddr(("", 0))  # TODO: implement
+
+    # TODO: implement generic version
+    # TODO(#3290): use SockAddr[sock_family, *_]
+    # async fn accept[
+    #     T0: CollectionElement,
+    #     T1: CollectionElement,
+    #     T2: CollectionElement,
+    #     T3: CollectionElement,
+    #     T4: CollectionElement,
+    #     T5: CollectionElement,
+    #     T6: CollectionElement,
+    #     T7: CollectionElement, //,
+    #     Address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7],
+    # ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
+    #     """Return a new socket representing the connection, and the address of
+    #     the client.
+
+    #     Returns:
+    #         The connection and the Address.
+    #     """
+
+    #     var new_sock = self
+    #     return new_sock^, Address("", 0)
 
     @staticmethod
     fn create_connection(
@@ -1009,9 +1071,12 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
+    # TODO(#3290): use Socket[SockFamily.AF_INET, SockType.SOCK_STREAM, *_]
     @classmethod
-    fn create_server(
-        cls: Socket[SockFamily.AF_INET, *_],
+    fn create_server[
+        T0: SockProtocol, T1: SockPlatform, //
+    ](
+        cls: Socket[SockFamily.AF_INET, SockType.SOCK_STREAM, T0, T1],
         address: IPv4Addr,
         *,
         backlog: Optional[Int] = None,
@@ -1025,9 +1090,6 @@ struct Socket[
             backlog: Is the queue size passed to socket.listen().
             reuse_port: Dictates whether to use the SO_REUSEPORT socket
                 option.
-
-        Constraints:
-            - sock_type must be SOCK_STREAM.
 
         Returns:
             The Socket.
@@ -1050,10 +1112,6 @@ struct Socket[
         .
         """
 
-        constrained[
-            sock_type is SockType.SOCK_STREAM, "sock_type must be SOCK_STREAM"
-        ]()
-
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.create_server(
@@ -1063,9 +1121,12 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
+    # TODO(#3290): use Socket[SockFamily.AF_INET6, SockType.SOCK_STREAM, *_]
     @classmethod
-    fn create_server(
-        cls: Socket[SockFamily.AF_INET6, *_],
+    fn create_server[
+        T0: SockProtocol, T1: SockPlatform, //
+    ](
+        cls: Socket[SockFamily.AF_INET6, SockType.SOCK_STREAM, T0, T1],
         address: IPv6Addr,
         *,
         backlog: Optional[Int] = None,
@@ -1084,9 +1145,6 @@ struct Socket[
                 create an AF_INET6 socket able to accept both IPv4 or IPv6
                 connections. When false it will explicitly disable this
                 option on platforms that enable it by default (e.g. Linux).
-
-        Constraints:
-            - sock_type must be SOCK_STREAM.
 
         Returns:
             The Socket.
@@ -1109,10 +1167,6 @@ struct Socket[
         ```
         .
         """
-
-        constrained[
-            sock_type is SockType.SOCK_STREAM, "sock_type must be SOCK_STREAM"
-        ]()
 
         @parameter
         if sock_platform is SockPlatform.LINUX:

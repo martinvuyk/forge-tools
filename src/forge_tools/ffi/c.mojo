@@ -1,15 +1,16 @@
-"""FFI utils for the C programming language."""
+"""FFI utils for the C programming language.
+
+Notes:
+    The functions in this module follow only the POSIX standard.
+"""
+
+from sys.intrinsics import _mlirtype_is_eq
+from utils import StaticTuple
 
 
 # Adapted from https://github.com/crisadamo/mojo-Libc which doesn't currently
 # (2024-07-22) have a licence, so I'll assume MIT licence.
 # Huge thanks for the work done.
-
-# TODO: implement adaptations for when platform is windows ?
-# or be explicit and mark this module as only for POSIX-ish systems.
-
-from sys.intrinsics import _mlirtype_is_eq
-from utils import StaticTuple
 
 
 struct C:
@@ -17,7 +18,7 @@ struct C:
     always 8 bit (POSIX standard).
     """
 
-    alias char = Self.s_char
+    alias char = Int8
     """C type: `char`. The signedness of `char` is platform specific. Most
     systems, including x86 GNU/Linux and Windows, use `signed char`, but those
     based on PowerPC and ARM processors typically use `unsigned char`."""
@@ -102,103 +103,6 @@ fn fptr_to_string(s: UnsafePointer[C.char]) -> String:
 # fn cftob(val: C.int) -> Bool:
 #    """Convert C-like failure (-1) to Bool"""
 #    return rebind[Bool](val > 0)
-
-
-@always_inline("nodebug")
-fn external_call6[
-    callee: StringLiteral,
-    type: AnyTrivialRegType,
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-    T5: AnyTrivialRegType,
-](arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5) -> type:
-    """Call an external function.
-
-    Parameters:
-        callee: The name of the external function.
-        type: The return type.
-        T0: The first argument type.
-        T1: The second argument type.
-        T2: The third argument type.
-        T3: The fourth argument type.
-        T4: The fifth argument type.
-        T5: The fifth argument type.
-
-    Args:
-        arg0: The first argument.
-        arg1: The second argument.
-        arg2: The third argument.
-        arg3: The fourth argument.
-        arg4: The fifth argument.
-        arg5: The fifth argument.
-
-    Returns:
-        The external call result.
-    """
-
-    @parameter
-    if _mlirtype_is_eq[type, NoneType]():
-        __mlir_op.`pop.external_call`[func = callee.value, _type=None](
-            arg0, arg1, arg2, arg3, arg4, arg5
-        )
-        return rebind[type](None)
-    else:
-        return __mlir_op.`pop.external_call`[func = callee.value, _type=type](
-            arg0, arg1, arg2, arg3, arg4, arg5
-        )
-
-
-@always_inline("nodebug")
-fn external_call7[
-    callee: StringLiteral,
-    type: AnyTrivialRegType,
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-    T5: AnyTrivialRegType,
-    T6: AnyTrivialRegType,
-](arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5, arg6: T6) -> type:
-    """Call an external function.
-
-    Parameters:
-      callee: The name of the external function.
-      type: The return type.
-      T0: The first argument type.
-      T1: The second argument type.
-      T2: The third argument type.
-      T3: The fourth argument type.
-      T4: The fifth argument type.
-      T5: The sixth argument type.
-      T6: The seventh argument type.
-
-    Args:
-      arg0: The first argument.
-      arg1: The second argument.
-      arg2: The third argument.
-      arg3: The fourth argument.
-      arg4: The fifth argument.
-      arg5: The sixth argument.
-      arg6: The seventh argument.
-
-    Returns:
-      The external call result.
-    """
-
-    @parameter
-    if _mlirtype_is_eq[type, NoneType]():
-        __mlir_op.`pop.external_call`[func = callee.value, _type=None](
-            arg0, arg1, arg2, arg3, arg4, arg5, arg6
-        )
-        return rebind[type](None)
-    else:
-        return __mlir_op.`pop.external_call`[func = callee.value, _type=type](
-            arg0, arg1, arg2, arg3, arg4, arg5, arg6
-        )
 
 
 # --- ( Network Related Constants )---------------------------------------------
@@ -618,13 +522,37 @@ fn inet_addr(cp: UnsafePointer[C.char]) -> in_addr_t:
         cp: A pointer to a string representation of an address.
 
     Returns:
-        A pointer.
+        If the input is invalid, INADDR_NONE (usually -1) is
+            returned.  Use of this function is problematic because -1 is a
+            valid address (255.255.255.255).  Avoid its use in favor of
+            inet_aton(), inet_pton(3), or getaddrinfo(3), which provide a
+            cleaner way to indicate error return.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
         Fn signature: `in_addr_t inet_addr(const char *cp)`.
     """
     return external_call["inet_addr", in_addr_t, UnsafePointer[C.char]](cp)
+
+
+fn inet_aton(cp: UnsafePointer[C.char], addr: in_addr) -> C.int:
+    """Libc POSIX `inet_aton` function.
+
+    Args:
+        cp: A pointer to a string representation of an address.
+        addr: A pointer to a binary address.
+
+    Returns:
+        1 if the supplied string was successfully interpreted, or 0 if the
+            string is invalid.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3.html).
+        Fn signature: `int inet_aton(const char *cp, struct in_addr *inp)`.
+    """
+    return external_call["inet_aton", C.int, UnsafePointer[C.char], in_addr](
+        cp, addr
+    )
 
 
 fn inet_ntoa(addr: in_addr) -> UnsafePointer[C.char]:
@@ -634,11 +562,12 @@ fn inet_ntoa(addr: in_addr) -> UnsafePointer[C.char]:
         addr: A pointer to a binary address.
 
     Returns:
-        A pointer.
+        A pointer to the string in IPv4 dotted-decimal notation.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
         Fn signature: `char *inet_ntoa(struct in_addr in)`.
+        Allocated buffer is 16-18 bytes depending on implementation.
     """
     return external_call["inet_ntoa", UnsafePointer[C.char], in_addr](addr)
 
@@ -826,7 +755,7 @@ fn recvfrom(
             size_t length, int flags, struct sockaddr *restrict address,
             socklen_t *restrict address_len)`.
     """
-    return external_call6[
+    return external_call[
         "recvfrom",
         C.u_int,
         C.int,
@@ -897,7 +826,7 @@ fn sendto(
             size_t length, int flags, const struct sockaddr *dest_addr,
             socklen_t dest_len)`.
     """
-    return external_call6[
+    return external_call[
         "sendto",
         C.u_int,
         C.int,
@@ -1492,7 +1421,7 @@ fn _printf[
     arg3: T3,
     arg4: T4,
 ) -> C.int:
-    return external_call6[
+    return external_call[
         callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3, T4
     ](format, arg0, arg1, arg2, arg3, arg4)
 
@@ -1514,7 +1443,7 @@ fn _printf[
     arg4: T4,
     arg5: T5,
 ) -> C.int:
-    return external_call7[
+    return external_call[
         callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3, T4, T5
     ](format, arg0, arg1, arg2, arg3, arg4, arg5)
 
