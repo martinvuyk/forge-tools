@@ -350,6 +350,14 @@ struct SockAddr[
             values[0], values[1], 0, 0, None, None, None, None
         )
 
+    fn __init__(inout self: IPv4Addr, address: IPAddr[SockFamily.AF_INET]):
+        """IPv6Addr.
+
+        Args:
+            address: The IPAddr.
+        """
+        self = IPv4Addr(address.host, address.port)
+
     fn __init__(inout self: IPv4Addr, host: String, port: UInt):
         """Create an Address.
 
@@ -390,6 +398,14 @@ struct SockAddr[
         self.port = port
         self.generic_field0 = flowinfo
         self.generic_field1 = scope_id
+
+    fn __init__(inout self: IPv6Addr, address: IPAddr[SockFamily.AF_INET6]):
+        """IPv6Addr.
+
+        Args:
+            address: The IPAddr
+        """
+        self = IPv6Addr(address.host, address.port)
 
     fn __init__(inout self: UnixAddr, host: String):
         """Create an Address.

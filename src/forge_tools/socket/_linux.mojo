@@ -38,19 +38,7 @@ struct _LinuxSocket[
         except:
             pass
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
-    fn bind[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement, //,
-    ](
-        self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ) raises:
+    fn bind(self, address: SockAddr[sock_family, *_]) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -61,19 +49,7 @@ struct _LinuxSocket[
         """
         ...
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
-    async fn connect[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement, //,
-    ](
-        self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ) raises:
+    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -112,7 +88,6 @@ struct _LinuxSocket[
         """Return the current hostname."""
         return None
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
     fn gethostbyname[
         T0: CollectionElement,
@@ -122,31 +97,18 @@ struct _LinuxSocket[
         T4: CollectionElement,
         T5: CollectionElement,
         T6: CollectionElement,
-        T7: CollectionElement, //,
+        T7: CollectionElement,
     ](name: String) -> Optional[
         SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
     ]:
         """Map a hostname to its Address."""
         return None
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
-    fn gethostbyaddr[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement, //,
-    ](
-        address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
         """Map an Address to DNS info."""
         return None
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
     fn getservbyname[
         T0: CollectionElement,
@@ -156,7 +118,7 @@ struct _LinuxSocket[
         T4: CollectionElement,
         T5: CollectionElement,
         T6: CollectionElement,
-        T7: CollectionElement, //,
+        T7: CollectionElement,
     ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[
         SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
     ]:
@@ -171,7 +133,6 @@ struct _LinuxSocket[
         """Set the default timeout value."""
         return False
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     async fn accept[
         T0: CollectionElement,
         T1: CollectionElement,
@@ -180,7 +141,7 @@ struct _LinuxSocket[
         T4: CollectionElement,
         T5: CollectionElement,
         T6: CollectionElement,
-        T7: CollectionElement, //,
+        T7: CollectionElement,
     ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
         """Return a new socket representing the connection, and the address of
         the client.

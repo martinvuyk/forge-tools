@@ -595,19 +595,7 @@ struct Socket[
         """Exit the context."""
         _ = self^
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
-    fn bind[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement, //,
-    ](
-        self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ) raises:
+    fn bind(self, address: SockAddr[sock_family, *_]) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -618,19 +606,7 @@ struct Socket[
         """
         ...
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
-    async fn connect[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement, //,
-    ](
-        self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ) raises:
+    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -790,7 +766,6 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return ""
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
     fn gethostbyname[
         T0: CollectionElement,
@@ -800,7 +775,7 @@ struct Socket[
         T4: CollectionElement,
         T5: CollectionElement,
         T6: CollectionElement,
-        T7: CollectionElement, //,
+        T7: CollectionElement,
     ](name: String) -> Optional[
         SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
     ]:
@@ -817,20 +792,8 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return None
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
-    fn gethostbyaddr[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement, //,
-    ](
-        address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ) -> Optional[String]:
+    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
         """Map an Address to DNS info.
 
         Returns:
@@ -844,7 +807,6 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return None
 
-    # TODO(#3290): use SockAddr[sock_family, *_]
     @staticmethod
     fn getservbyname[
         T0: CollectionElement,
@@ -854,7 +816,7 @@ struct Socket[
         T4: CollectionElement,
         T5: CollectionElement,
         T6: CollectionElement,
-        T7: CollectionElement, //,
+        T7: CollectionElement,
     ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[
         SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
     ]:
@@ -1002,9 +964,7 @@ struct Socket[
 
     #     ...
 
-    async fn accept[
-        Address: IPAddr[sock_family],
-    ](self) -> (Self, IPAddr[sock_family]):
+    async fn accept(self) -> (Self, IPAddr[sock_family]):
         """Return a new socket representing the connection, and the address of
         the client.
 
@@ -1071,12 +1031,9 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
-    # TODO(#3290): use Socket[SockFamily.AF_INET, SockType.SOCK_STREAM, *_]
     @classmethod
-    fn create_server[
-        T0: SockProtocol, T1: SockPlatform, //
-    ](
-        cls: Socket[SockFamily.AF_INET, SockType.SOCK_STREAM, T0, T1],
+    fn create_server(
+        cls: Socket[SockFamily.AF_INET, SockType.SOCK_STREAM, *_],
         address: IPv4Addr,
         *,
         backlog: Optional[Int] = None,
@@ -1121,12 +1078,9 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
-    # TODO(#3290): use Socket[SockFamily.AF_INET6, SockType.SOCK_STREAM, *_]
     @classmethod
-    fn create_server[
-        T0: SockProtocol, T1: SockPlatform, //
-    ](
-        cls: Socket[SockFamily.AF_INET6, SockType.SOCK_STREAM, T0, T1],
+    fn create_server(
+        cls: Socket[SockFamily.AF_INET6, SockType.SOCK_STREAM, *_],
         address: IPv6Addr,
         *,
         backlog: Optional[Int] = None,
