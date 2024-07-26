@@ -319,8 +319,8 @@ struct SockPlatform:
 # ](CollectionElement):
 #     """Interface for Sockets."""
 
-#     # var fd: Arc[FileDescriptor]
-#     # """The Socket's `Arc[FileDescriptor]`."""
+#     var fd: Arc[FileDescriptor]
+#     """The Socket's `Arc[FileDescriptor]`."""
 
 #     fn __init__(inout self) raises:
 #         """Create a new socket object."""
@@ -336,19 +336,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     # TODO(#3290): use SockAddr[sock_family, *_]
-#     fn bind[
-#         T0: CollectionElement,
-#         T1: CollectionElement,
-#         T2: CollectionElement,
-#         T3: CollectionElement,
-#         T4: CollectionElement,
-#         T5: CollectionElement,
-#         T6: CollectionElement,
-#         T7: CollectionElement, //,
-#     ](
-#         self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-#     ) raises:
+#     fn bind(self, address: SockAddr[sock_family, *_]) raises:
 #         """Bind the socket to address. The socket must not already be bound."""
 #         ...
 
@@ -359,19 +347,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     # TODO(#3290): use SockAddr[sock_family, *_]
-#     async fn connect[
-#         T0: CollectionElement,
-#         T1: CollectionElement,
-#         T2: CollectionElement,
-#         T3: CollectionElement,
-#         T4: CollectionElement,
-#         T5: CollectionElement,
-#         T6: CollectionElement,
-#         T7: CollectionElement, //,
-#     ](
-#         self, address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-#     ) raises:
+#     async fn connect(self, address: SockAddr[sock_family, *_]) raises:
 #         """Connect to a remote socket at address."""
 #         ...
 
@@ -393,17 +369,9 @@ struct SockPlatform:
 #         """Send a buffer of bytes to the socket."""
 #         return 0
 
-#     async fn send(self, buf: List[UInt8]) -> UInt:
-#         """Send a list of bytes to the socket."""
-#         return 0
-
 #     async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
 #         """Receive up to max_len bytes into the buffer."""
 #         return 0
-
-#     async fn recv(self, max_len: UInt) -> List[UInt8]:
-#         """Receive up to max_len bytes."""
-#         return List[UInt8]()
 
 #     @staticmethod
 #     fn gethostname() -> Optional[String]:
@@ -411,7 +379,18 @@ struct SockPlatform:
 #         ...
 
 #     @staticmethod
-#     fn gethostbyname(name: String) -> Optional[SockAddr[sock_family, *_]]:
+#     fn gethostbyname[
+#         T0: CollectionElement,
+#         T1: CollectionElement,
+#         T2: CollectionElement,
+#         T3: CollectionElement,
+#         T4: CollectionElement,
+#         T5: CollectionElement,
+#         T6: CollectionElement,
+#         T7: CollectionElement,
+#     ](name: String) -> Optional[
+#         SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+#     ]:
 #         """Map a hostname to its Address."""
 #         ...
 
@@ -435,7 +414,6 @@ struct SockPlatform:
 #         """Set the default timeout value."""
 #         ...
 
-#     # TODO(#3290): use SockAddr[sock_family, *_]
 #     async fn accept[
 #         T0: CollectionElement,
 #         T1: CollectionElement,
@@ -444,34 +422,11 @@ struct SockPlatform:
 #         T4: CollectionElement,
 #         T5: CollectionElement,
 #         T6: CollectionElement,
-#         T7: CollectionElement, //,
+#         T7: CollectionElement,
 #     ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
 #         """Return a new socket representing the connection, and the address of
 #         the client.
 #         """
-#         ...
-
-#     @staticmethod
-#     fn create_connection(
-#         address: IPAddr[sock_family],
-#         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-#         source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
-#         *,
-#         all_errors: Bool = False,
-#     ) raises -> Self:
-#         """Connects to an address, with an optional timeout and
-#         optional source address."""
-#         ...
-
-#     @staticmethod
-#     fn create_server(
-#         address: IPAddr[sock_family],
-#         *,
-#         backlog: Optional[Int] = None,
-#         reuse_port: Bool = False,
-#         dualstack_ipv6: Bool = False,
-#     ) raises -> Self:
-#         """Create a TCP socket and bind it to a specified address."""
 #         ...
 
 
@@ -1031,14 +986,22 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
-    @classmethod
+    # TODO(#3305): add structmethod constraint
+    # @structmethod
+    # fn create_server(
+    #     stc: Socket[SockFamily.AF_INET, SockType.SOCK_STREAM, *_],
+    #     address: IPv4Addr,
+    #     *,
+    #     backlog: Optional[Int] = None,
+    #     reuse_port: Bool = False,
+    # ) raises -> __type_of(stc):
+    @staticmethod
     fn create_server(
-        cls: Socket[SockFamily.AF_INET, SockType.SOCK_STREAM, *_],
         address: IPv4Addr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
-    ) raises -> __type_of(cls):
+    ) raises -> Self:
         """Convenience function which creates a socket bound to the address and
         returns the socket object.
 
@@ -1078,15 +1041,24 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
-    @classmethod
+    # TODO(#3305): add structmethod constraint
+    # @structmethod
+    # fn create_server(
+    #     stc: Socket[SockFamily.AF_INET6, SockType.SOCK_STREAM, *_],
+    #     address: IPv6Addr,
+    #     *,
+    #     backlog: Optional[Int] = None,
+    #     reuse_port: Bool = False,
+    #     dualstack_ipv6: Bool = False,
+    # ) raises -> __type_of(stc):
+    @staticmethod
     fn create_server(
-        cls: Socket[SockFamily.AF_INET6, SockType.SOCK_STREAM, *_],
         address: IPv6Addr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
         dualstack_ipv6: Bool = False,
-    ) raises -> __type_of(cls):
+    ) raises -> Self:
         """Convenience function which creates a socket bound to the address and
         returns the socket object.
 

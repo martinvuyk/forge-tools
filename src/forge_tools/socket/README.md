@@ -42,3 +42,193 @@ on what is currently supported for each.
     2. Develop sync TCP for other platforms.
     3. Start making things really async under the hood.
     4. Develop other protocols.
+
+
+
+#### Current outlook
+The idea is for the Socket struct to be the overarching API for any one platform
+specific socket implementation
+```mojo
+struct Socket[
+    sock_family: SockFamily = SockFamily.AF_INET,
+    sock_type: SockType = SockType.SOCK_STREAM,
+    sock_protocol: SockProtocol = SockProtocol.TCP,
+    sock_platform: SockPlatform = _get_current_platform(),
+](CollectionElement):
+    """Struct for using Sockets. In the future this struct should be able to
+    use any implementation that conforms to the SocketInterface trait, once
+    traits can have attributes and have parameters defined. This will allow the
+    user to implement the interface for whatever functionality is missing and
+    inject the type.
+
+    Parameters:
+        sock_family: The socket family e.g. `SockFamily.AF_INET`.
+        sock_type: The socket type e.g. `SockType.SOCK_STREAM`.
+        sock_protocol: The socket protocol e.g. `SockProtocol.TCP`.
+        sock_platform: The socket platform e.g. `SockPlatform.LINUX`.
+   """
+   ...
+```
+
+The idea is for the interface to be generic and let each implementation
+constraint at compile time what it supports and what it doesn't
+
+The interface for any socket implementation looks like this:
+(many features are not part of the Mojo language yet but are in the roadmap)
+```mojo
+trait SocketInterface[
+    sock_family: SockFamily,
+    sock_type: SockType,
+    sock_protocol: SockProtocol,
+    sock_platform: SockPlatform,
+](CollectionElement):
+    """Interface for Sockets."""
+
+    var fd: Arc[FileDescriptor]
+    """The Socket's `Arc[FileDescriptor]`."""
+
+    fn __init__(inout self) raises:
+        """Create a new socket object."""
+        ...
+
+    fn close(owned self) raises:
+        """Closes the Socket."""
+        ...
+
+    fn __del__(owned self):
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
+        ...
+
+    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+        """Bind the socket to address. The socket must not already be bound."""
+        ...
+
+    fn listen(self, backlog: UInt = 0) raises:
+        """Enable a server to accept connections. `backlog` specifies the number
+        of unaccepted connections that the system will allow before refusing
+        new connections. If `backlog == 0`, a default value is chosen.
+        """
+        ...
+
+    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+        """Connect to a remote socket at address."""
+        ...
+
+    @staticmethod
+    async fn socketpair() raises -> (Self, Self):
+        """Create a pair of socket objects from the sockets returned by the
+        platform `socketpair()` function."""
+        ...
+
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+        """Send file descriptor to the socket."""
+        ...
+
+    async fn recv_fds(self, maxfds: Int) -> Optional[List[Arc[FileDescriptor]]]:
+        """Receive file descriptors from the socket."""
+        ...
+
+    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+        """Send a buffer of bytes to the socket."""
+        return 0
+
+    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
+        """Receive up to max_len bytes into the buffer."""
+        return 0
+
+    @staticmethod
+    fn gethostname() -> Optional[String]:
+        """Return the current hostname."""
+        ...
+
+    @staticmethod
+    fn gethostbyname[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement,
+    ](name: String) -> Optional[
+        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
+    ]:
+        """Map a hostname to its Address."""
+        ...
+
+    @staticmethod
+    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
+        """Map an Address to DNS info."""
+        ...
+
+    @staticmethod
+    fn getservbyname(
+        name: String, proto: SockProtocol = SockProtocol.TCP
+    ) -> Optional[SockAddr[sock_family, *_]]:
+        """Map a service name and a protocol name to a port number."""
+        ...
+
+    fn getdefaulttimeout(self) -> Optional[SockTime]:
+        """Get the default timeout value."""
+        ...
+
+    fn setdefaulttimeout(self, value: SockTime) -> Bool:
+        """Set the default timeout value."""
+        ...
+
+    async fn accept[
+        T0: CollectionElement,
+        T1: CollectionElement,
+        T2: CollectionElement,
+        T3: CollectionElement,
+        T4: CollectionElement,
+        T5: CollectionElement,
+        T6: CollectionElement,
+        T7: CollectionElement,
+    ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
+        """Return a new socket representing the connection, and the address of
+        the client.
+        """
+        ...
+```
+
+
+What this all will allow is to build higher level pythonic syntax to do servers
+for any protocol and inject whatever implementation for any platform specific
+use case that the user does not find in the stdlib but exists in an external
+library.
+
+Examples:
+
+```mojo
+from forge_tools.socket import Socket
+
+
+async def main():
+    with Socket.create_server(("0.0.0.0", 8000)) as server:
+        while True:
+            conn, addr = await server.accept()
+            ...  # handle new connection
+
+        # TODO: once we have async generators:
+        # async for conn, addr in server:
+        #     ...  # handle new connection
+```
+
+In the future something like this should be possible:
+```mojo
+from multiprocessing import Pool
+from forge_tools.socket import Socket, IPv4Addr
+
+
+async fn handler(conn: Socket, addr: IPv4Addr):
+    ...
+
+async def main():
+    with Socket.create_server(("0.0.0.0", 8000)) as server:
+        with Pool() as pool:
+            _ = await pool.starmap(handler, server)
+```
