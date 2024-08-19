@@ -42,7 +42,7 @@
 - `share()`, `dup()`, `fileno()`
     - use `get_fd()` instead.
 - `fromfd()` & `fromshare()`
-    - use `Socket(fd: Arc[FileDescriptor])` constructor instead.
+    - use `Socket(fd: FileDescriptor)` constructor instead.
 - `detach()`
     - functionality covered by the type's destructor.
 
@@ -51,6 +51,8 @@
 """
 
 from sys import info
+from collections import Optional
+from utils import Variant
 
 from forge_tools.ffi.c import (
     ntohs,
@@ -98,11 +100,15 @@ struct SockFamily:
     alias AF_HYPERV = "AF_HYPERV"  # TODO: implement
     """AF_HYPERV."""
     alias AF_SPI = "AF_SPI"  # TODO: implement
-    """"AF_SPI"."""
+    """"AF_SPI". Notes: This Address Family is not standard since there is none.
+    """
     alias AF_I2C = "AF_I2C"  # TODO: implement
-    """"AF_I2C"."""
+    """"AF_I2C". Notes: This Address Family is not standard since there is none.
+    """
     alias AF_UART = "AF_UART"  # TODO: implement
-    """"AF_UART"."""
+    """"AF_UART". Notes: This Address Family is not standard since there is
+    none.
+    """
     var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
@@ -319,9 +325,6 @@ struct SockPlatform:
 # ](CollectionElement):
 #     """Interface for Sockets."""
 
-#     var fd: Arc[FileDescriptor]
-#     """The Socket's `Arc[FileDescriptor]`."""
-
 #     fn __init__(inout self) raises:
 #         """Create a new socket object."""
 #         ...
@@ -332,7 +335,7 @@ struct SockPlatform:
 
 #     fn __del__(owned self):
 #         """Closes the Socket if it's the last reference to its
-#         `Arc[FileDescriptor]`.
+#         `FileDescriptor`.
 #         """
 #         ...
 
@@ -347,7 +350,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+#     async fn connect[T: SockAddr](self, address: T) raises:
 #         """Connect to a remote socket at address."""
 #         ...
 
@@ -361,7 +364,7 @@ struct SockPlatform:
 #         """Send file descriptor to the socket."""
 #         ...
 
-#     async fn recv_fds(self, maxfds: Int) -> Optional[List[Arc[FileDescriptor]]]:
+#     async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
 #         """Receive file descriptors from the socket."""
 #         ...
 
@@ -498,7 +501,7 @@ struct Socket[
     alias _unix_s = _UnixSocket[sock_family, sock_type, sock_protocol]
     alias _windows_s = _WindowsSocket[sock_family, sock_type, sock_protocol]
     # TODO: need to be able to use SocketInterface trait regardless of type
-    alias _variant = Variant[Int]
+    alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
     var _impl: Self._variant
 
     fn __init__(inout self, impl: Self._variant):
@@ -534,7 +537,7 @@ struct Socket[
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         _ = self^
 
@@ -550,7 +553,7 @@ struct Socket[
         """Exit the context."""
         _ = self^
 
-    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+    fn bind[T: SockAddr](self, address: T) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -561,7 +564,7 @@ struct Socket[
         """
         ...
 
-    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+    async fn connect[T: SockAddr](self, address: T) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -581,7 +584,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return Self(), Self()
 
-    fn get_fd(self) -> Arc[FileDescriptor]:
+    fn get_fd(self) -> FileDescriptor:
         """Get an ARC reference to the Socket's FileDescriptor.
 
         Returns:

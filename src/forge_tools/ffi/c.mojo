@@ -88,21 +88,8 @@ alias ERANGE = 34
 alias EWOULDBLOCK = EAGAIN
 
 
-fn to_char_ptr(s: String) -> UnsafePointer[C.char]:
-    """Only ASCII-based strings."""
-    var ptr = UnsafePointer[C.char]().alloc(len(s))
-    for i in range(len(s)):
-        ptr[i] = ord(s[i])
-    return ptr
-
-
-fn fptr_to_string(s: UnsafePointer[C.char]) -> String:
+fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     return String(s.bitcast[UInt8](), int(strlen(s)))
-
-
-# fn cftob(val: C.int) -> Bool:
-#    """Convert C-like failure (-1) to Bool"""
-#    return rebind[Bool](val > 0)
 
 
 # --- ( Network Related Constants )---------------------------------------------
@@ -908,7 +895,9 @@ fn inet_pton(address_family: Int, address: String) -> Int:
         ip_buf_size = 16
 
     var ip_buf = UnsafePointer[C.void].alloc(ip_buf_size)
-    _ = inet_pton(rebind[C.int](address_family), to_char_ptr(address), ip_buf)
+    _ = inet_pton(
+        rebind[C.int](address_family), address.unsafe_cstr_ptr(), ip_buf
+    )
     return int(ip_buf.bitcast[C.u_int]()[])
 
 
@@ -1449,32 +1438,34 @@ fn _printf[
 
 
 fn _printf[callee: StringLiteral](format: String) -> C.int:
-    return _printf[callee](to_char_ptr(format))
+    return _printf[callee](format.unsafe_cstr_ptr())
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType
 ](format: String, arg0: T0) -> C.int:
-    return _printf[callee, T0](to_char_ptr(format), arg0)
+    return _printf[callee, T0](format.unsafe_cstr_ptr(), arg0)
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType
 ](format: String, arg0: T0, arg1: T1) -> C.int:
-    return _printf[callee, T0, T1](to_char_ptr(format), arg0, arg1)
+    return _printf[callee, T0, T1](format.unsafe_cstr_ptr(), arg0, arg1)
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType
 ](format: String, arg0: T0, arg1: T1, arg2: T2) -> C.int:
-    return _printf[callee, T0, T1, T2](to_char_ptr(format), arg0, arg1, arg2)
+    return _printf[callee, T0, T1, T2](
+        format.unsafe_cstr_ptr(), arg0, arg1, arg2
+    )
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
 ](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3) -> C.int:
     return _printf[callee, T0, T1, T2, T3](
-        to_char_ptr(format), arg0, arg1, arg2, arg3
+        format.unsafe_cstr_ptr(), arg0, arg1, arg2, arg3
     )
 
 
@@ -1487,7 +1478,7 @@ fn _printf[
     T4: AnyTrivialRegType,
 ](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4) -> C.int:
     return _printf[callee, T0, T1, T2, T3, T4](
-        to_char_ptr(format), arg0, arg1, arg2, arg3, arg4
+        format.unsafe_cstr_ptr(), arg0, arg1, arg2, arg3, arg4
     )
 
 
@@ -1503,7 +1494,7 @@ fn _printf[
     format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5
 ) -> C.int:
     return _printf[callee, T0, T1, T2, T3, T4, T5](
-        to_char_ptr(format), arg0, arg1, arg2, arg3, arg4, arg5
+        format.unsafe_cstr_ptr(), arg0, arg1, arg2, arg3, arg4, arg5
     )
 
 

@@ -84,8 +84,8 @@ trait SocketInterface[
 ](CollectionElement):
     """Interface for Sockets."""
 
-    var fd: Arc[FileDescriptor]
-    """The Socket's `Arc[FileDescriptor]`."""
+    var fd: FileDescriptor
+    """The Socket's `FileDescriptor`."""
 
     fn __init__(inout self) raises:
         """Create a new socket object."""
@@ -97,11 +97,11 @@ trait SocketInterface[
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         ...
 
-    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+    fn bind[T: SockAddr](self, address: T) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -112,7 +112,7 @@ trait SocketInterface[
         """
         ...
 
-    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+    async fn connect[T: SockAddr](self, address: T) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -126,7 +126,7 @@ trait SocketInterface[
         """Send file descriptor to the socket."""
         ...
 
-    async fn recv_fds(self, maxfds: Int) -> Optional[List[Arc[FileDescriptor]]]:
+    async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
         """Receive file descriptors from the socket."""
         ...
 

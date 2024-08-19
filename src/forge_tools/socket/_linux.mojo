@@ -1,3 +1,6 @@
+from collections import Optional
+
+from collections import Optional
 from .socket import (
     # SocketInterface,
     SockFamily,
@@ -6,21 +9,29 @@ from .socket import (
     SockTime,
     _DEFAULT_SOCKET_TIMEOUT,
 )
-from .address import SockAddr, IPAddr
+from .address import SockAddr, IPAddr, IPv4Addr
+from forge_tools.ffi.c import socket
 
 
 @value
 struct _LinuxSocket[
     sock_family: SockFamily, sock_type: SockType, sock_protocol: SockProtocol
 ]:
-    var fd: Arc[FileDescriptor]
-    """The Socket's `Arc[FileDescriptor]`."""
+    var fd: FileDescriptor
+    """The Socket's `FileDescriptor`."""
 
     fn __init__(inout self) raises:
         """Create a new socket object."""
-        raise Error("Failed to create socket.")
+        var fd = socket(
+            int(sock_family._selected),
+            int(sock_type._selected),
+            int(sock_protocol._selected),
+        )
+        if fd == -1:
+            raise Error("Failed to create socket.")
+        self.fd = FileDescriptor(int(fd))
 
-    fn __init__(inout self, fd: Arc[FileDescriptor]) raises:
+    fn __init__(inout self, fd: FileDescriptor) raises:
         """Create a new socket object from an open `FileDescriptor`."""
         raise Error("Failed to create socket.")
 
@@ -30,15 +41,14 @@ struct _LinuxSocket[
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         try:
-            if self.fd.count() == 1:
-                self.close()
+            self^.close()
         except:
             pass
 
-    fn bind(self, address: SockAddr[sock_family, *_]) raises:
+    fn bind[T: SockAddr](self, address: T) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -49,7 +59,7 @@ struct _LinuxSocket[
         """
         ...
 
-    async fn connect(self, address: SockAddr[sock_family, *_]) raises:
+    async fn connect[T: SockAddr](self, address: T) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -89,39 +99,19 @@ struct _LinuxSocket[
         return None
 
     @staticmethod
-    fn gethostbyname[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement,
-    ](name: String) -> Optional[
-        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ]:
+    fn gethostbyname[T: SockAddr](name: String) -> Optional[T]:
         """Map a hostname to its Address."""
         return None
 
     @staticmethod
-    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
+    fn gethostbyaddr[T: SockAddr](address: T) -> Optional[String]:
         """Map an Address to DNS info."""
         return None
 
     @staticmethod
     fn getservbyname[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement,
-    ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[
-        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ]:
+        T: SockAddr
+    ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[T]:
         """Map a service name and a protocol name to a port number."""
         return None
 
@@ -146,13 +136,13 @@ struct _LinuxSocket[
         """Return a new socket representing the connection, and the address of
         the client.
         """
-        return self, Address("", 0)
+        return self, IPv4Addr("", 0)
 
     @staticmethod
     fn create_connection(
-        address: IPAddr[sock_family],
+        address: IPv4Addr[sock_family],
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
+        source_address: IPv4Addr[sock_family] = IPv4Addr[sock_family](("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -162,7 +152,7 @@ struct _LinuxSocket[
 
     @staticmethod
     fn create_server(
-        address: IPAddr[sock_family],
+        address: IPv6Addr[sock_family],
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
