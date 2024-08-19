@@ -1,6 +1,4 @@
 from collections import Optional
-
-from collections import Optional
 from .socket import (
     # SocketInterface,
     SockFamily,
@@ -123,20 +121,11 @@ struct _LinuxSocket[
         """Set the default timeout value."""
         return False
 
-    async fn accept[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement,
-    ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
+    async fn accept[T: SockAddr](self) raises -> (Self, T):
         """Return a new socket representing the connection, and the address of
         the client.
         """
-        return self, IPv4Addr("", 0)
+        raise Error("Failed to create socket.")
 
     @staticmethod
     fn create_connection(
