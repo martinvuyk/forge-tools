@@ -341,7 +341,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     fn bind(self, address: sock_address) raises:
+#     fn bind[T: SockAddr](self, address: T) raises:
 #         """Bind the socket to address. The socket must not already be bound."""
 #         ...
 
@@ -352,7 +352,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     async fn connect(self, address: sock_address) raises:
+#     async fn connect[T: SockAddr](self, address: T) raises:
 #         """Connect to a remote socket at address."""
 #         ...
 
@@ -384,12 +384,12 @@ struct SockPlatform:
 #         ...
 
 #     @staticmethod
-#     fn gethostbyname(name: String) -> Optional[sock_address]:
+#     fn gethostbyname[T: SockAddr](name: String) -> Optional[T]:
 #         """Map a hostname to its Address."""
 #         ...
 
 #     @staticmethod
-#     fn gethostbyaddr(address: sock_address) -> Optional[String]:
+#     fn gethostbyaddr[T: SockAddr](address: T) -> Optional[String]:
 #         """Map an Address to DNS info."""
 #         ...
 
@@ -408,7 +408,7 @@ struct SockPlatform:
 #         """Set the default timeout value."""
 #         ...
 
-#     async fn accept(self) -> (Self, sock_address):
+#     async fn accept[T: SockAddr](self) -> (Self, T):
 #         """Return a new socket representing the connection, and the address of
 #         the client.
 #         """

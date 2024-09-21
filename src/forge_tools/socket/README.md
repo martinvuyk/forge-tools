@@ -72,10 +72,18 @@ struct Socket[
 ```
 
 The idea is for the interface to be generic and let each implementation
-constraint at compile time what it supports and what it doesn't
+constraint at compile time what it supports and what it doesn't.
+
+The Socket struct should be parametrizable with the implementation of the
+socket interface 
+```mojo
+socket_impl: SocketInterface = _LinuxSocket[
+    sock_family, sock_type, sock_protocol, sock_address
+]
+```
 
 The interface for any socket implementation looks like this:
-(many features are not part of the Mojo language yet but are in the roadmap)
+(many features are not part of the Mojo language, take it as pseudocode)
 ```mojo
 trait SocketInterface[
     sock_family: SockFamily,
