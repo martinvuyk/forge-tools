@@ -65,6 +65,7 @@ struct Socket[
         sock_family: The socket family e.g. `SockFamily.AF_INET`.
         sock_type: The socket type e.g. `SockType.SOCK_STREAM`.
         sock_protocol: The socket protocol e.g. `SockProtocol.TCP`.
+        sock_address: The address type for the socket.
         sock_platform: The socket platform e.g. `SockPlatform.LINUX`.
    """
    ...
