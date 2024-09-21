@@ -46,7 +46,7 @@ struct _LinuxSocket[
         `FileDescriptor`.
         """
         try:
-            self^.close()
+            self.close()
         except:
             pass
 
@@ -133,9 +133,9 @@ struct _LinuxSocket[
 
     @staticmethod
     fn create_connection(
-        address: IPv4Addr[],
+        address: IPv4Addr,
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv4Addr[] = IPv4Addr(("", 0)),
+        source_address: IPv4Addr = IPv4Addr(("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -145,9 +145,9 @@ struct _LinuxSocket[
 
     @staticmethod
     fn create_connection(
-        address: IPv6Addr[],
+        address: IPv6Addr,
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv6Addr[] = IPv6Addr("", 0),
+        source_address: IPv6Addr = IPv6Addr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -157,7 +157,7 @@ struct _LinuxSocket[
 
     @staticmethod
     fn create_server(
-        address: IPv4Addr[],
+        address: IPv4Addr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -167,7 +167,7 @@ struct _LinuxSocket[
 
     @staticmethod
     fn create_server(
-        address: IPv6Addr[],
+        address: IPv6Addr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,

@@ -431,7 +431,7 @@ struct Socket[
     sock_family: SockFamily = SockFamily.AF_INET,
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
-    sock_address: SockAddr = IPv4Addr[sock_family],
+    sock_address: SockAddr = IPv4Addr,
     sock_platform: SockPlatform = _get_current_platform(),
 ](CollectionElement):
     """Struct for using Sockets. In the future this struct should be able to
@@ -909,9 +909,9 @@ struct Socket[
 
     @staticmethod
     fn create_connection(
-        address: IPv4Addr[],
+        address: IPv4Addr,
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv4Addr[] = ("", 0),
+        source_address: IPv4Addr = ("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -942,9 +942,9 @@ struct Socket[
 
     @staticmethod
     fn create_connection(
-        address: IPv6Addr[],
+        address: IPv6Addr,
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv6Addr[] = IPv6Addr("", 0),
+        source_address: IPv6Addr = IPv6Addr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -984,7 +984,7 @@ struct Socket[
     # ) raises -> __type_of(stc):
     @staticmethod
     fn create_server(
-        address: IPv4Addr[],
+        address: IPv4Addr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -1040,7 +1040,7 @@ struct Socket[
     # ) raises -> __type_of(stc):
     @staticmethod
     fn create_server(
-        address: IPv6Addr[],
+        address: IPv6Addr,
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -1068,7 +1068,7 @@ struct Socket[
 
 
         async def main():
-            alias S = Socket[SockFamily.AF_INET6, sock_address=IPv6Addr[]]
+            alias S = Socket[SockFamily.AF_INET6, sock_address=IPv6Addr]
             with S.create_server(IPv6Addr("::1", 8000)) as server:
                 while True:
                     conn, addr = await server.accept()

@@ -30,7 +30,6 @@ https://tigerbeetle.com/blog/a-friendly-abstraction-over-iouring-and-kqueue) ?
     - How portable is an async completion model for WASI and microcontrollers
     (FreeRTOS & others) ?
         - How do we deal with other platforms without async IO in the kernel ?
-            - Can an async API still wrap sync IO ?
 
 
 #### Possible steps to approach this
@@ -53,6 +52,7 @@ struct Socket[
     sock_family: SockFamily = SockFamily.AF_INET,
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
+    sock_address: SockAddr = IPv4Addr,
     sock_platform: SockPlatform = _get_current_platform(),
 ](CollectionElement):
     """Struct for using Sockets. In the future this struct should be able to
@@ -80,6 +80,7 @@ trait SocketInterface[
     sock_family: SockFamily,
     sock_type: SockType,
     sock_protocol: SockProtocol,
+    sock_address: SockAddr = IPv4Addr,
     sock_platform: SockPlatform,
 ](CollectionElement):
     """Interface for Sockets."""
@@ -144,30 +145,19 @@ trait SocketInterface[
         ...
 
     @staticmethod
-    fn gethostbyname[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement,
-    ](name: String) -> Optional[
-        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ]:
+    fn gethostbyname(name: String) -> Optional[sock_address]:
         """Map a hostname to its Address."""
         ...
 
     @staticmethod
-    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
+    fn gethostbyaddr(address: sock_address) -> Optional[String]:
         """Map an Address to DNS info."""
         ...
 
     @staticmethod
     fn getservbyname(
         name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[SockAddr[sock_family, *_]]:
+    ) -> Optional[sock_address]:
         """Map a service name and a protocol name to a port number."""
         ...
 
@@ -179,16 +169,7 @@ trait SocketInterface[
         """Set the default timeout value."""
         ...
 
-    async fn accept[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement,
-    ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
+    async fn accept(self) -> (Self, sock_address):
         """Return a new socket representing the connection, and the address of
         the client.
         """

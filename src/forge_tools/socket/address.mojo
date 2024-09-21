@@ -245,7 +245,7 @@ trait SockAddr(CollectionElement):
 
 
 @value
-struct IPv4Addr[sock_family: SockFamily = SockFamily.AF_INET](SockAddr):
+struct IPv4Addr(SockAddr):
     """IPv4 Address (AF_INET).
 
     Args:
@@ -265,10 +265,7 @@ struct IPv4Addr[sock_family: SockFamily = SockFamily.AF_INET](SockAddr):
             host: The IP.
             port: The port.
         """
-        constrained[
-            sock_family is SockFamily.AF_INET,
-            "sock_family must be SockFamily.AF_INET",
-        ]()
+
         self.host = host
         self.port = port
 
@@ -317,7 +314,7 @@ struct IPv4Addr[sock_family: SockFamily = SockFamily.AF_INET](SockAddr):
 
 
 @value
-struct IPv6Addr[sock_family: SockFamily = SockFamily.AF_INET6](SockAddr):
+struct IPv6Addr(SockAddr):
     """IPv6 Address (AF_INET6).
 
     Args:
@@ -351,10 +348,7 @@ struct IPv6Addr[sock_family: SockFamily = SockFamily.AF_INET6](SockAddr):
             flowinfo: The flowinfo.
             scope_id: The scope_id.
         """
-        constrained[
-            sock_family is SockFamily.AF_INET6,
-            "sock_family must be SockFamily.AF_INET6",
-        ]()
+
         self.host = host
         self.port = port
         self.flowinfo = flowinfo
@@ -362,7 +356,7 @@ struct IPv6Addr[sock_family: SockFamily = SockFamily.AF_INET6](SockAddr):
 
 
 @value
-struct UnixAddr[sock_family: SockFamily = SockFamily.AF_UNIX](SockAddr):
+struct UnixAddr(SockAddr):
     """Unix local Address.
 
     Args:
@@ -384,15 +378,12 @@ struct UnixAddr[sock_family: SockFamily = SockFamily.AF_UNIX](SockAddr):
         Notes:
             [Reference](https://man7.org/linux/man-pages/man7/unix.7.html).
         """
-        constrained[
-            sock_family is SockFamily.AF_UNIX,
-            "sock_family must be SockFamily.AF_UNIX",
-        ]()
+
         self.host = host
 
 
 @value
-struct NETLINKAddr[sock_family: SockFamily = SockFamily.AF_NETLINK](SockAddr):
+struct NETLINKAddr(SockAddr):
     """NETLINKAddr.
 
     Args:
@@ -412,16 +403,13 @@ struct NETLINKAddr[sock_family: SockFamily = SockFamily.AF_NETLINK](SockAddr):
             pid: The pid.
             groups: The groups.
         """
-        constrained[
-            sock_family is SockFamily.AF_NETLINK,
-            "sock_family must be SockFamily.AF_NETLINK",
-        ]()
+
         self.pid = pid
         self.groups = groups
 
 
 @value
-struct TIPCAddr[sock_family: SockFamily = SockFamily.AF_TIPC](SockAddr):
+struct TIPCAddr(SockAddr):
     """TIPCAddr.
 
     Args:
@@ -460,10 +448,7 @@ struct TIPCAddr[sock_family: SockFamily = SockFamily.AF_TIPC](SockAddr):
             v3: The v3.
             scope: The scope.
         """
-        constrained[
-            sock_family is SockFamily.AF_TIPC,
-            "sock_family must be SockFamily.AF_TIPC",
-        ]()
+
         self.addr_type = addr_type
         self.v1 = v1
         self.v2 = v2
@@ -472,7 +457,7 @@ struct TIPCAddr[sock_family: SockFamily = SockFamily.AF_TIPC](SockAddr):
 
 
 @value
-struct CANISOTPAddr[sock_family: SockFamily = SockFamily.AF_CAN](SockAddr):
+struct CANISOTPAddr(SockAddr):
     """CANISOTPAddr.
 
     Args:
@@ -501,17 +486,14 @@ struct CANISOTPAddr[sock_family: SockFamily = SockFamily.AF_CAN](SockAddr):
             rx_addr: The rx_addr.
             tx_addr: The tx_addr.
         """
-        constrained[
-            sock_family is SockFamily.AF_CAN,
-            "sock_family must be SockFamily.AF_CAN",
-        ]()
+
         self.interface = interface
         self.rx_addr = rx_addr
         self.tx_addr = tx_addr
 
 
 @value
-struct CANJ1939Addr[sock_family: SockFamily = SockFamily.AF_CAN](SockAddr):
+struct CANJ1939Addr(SockAddr):
     """CANJ1939Addr.
 
     Args:
@@ -545,10 +527,7 @@ struct CANJ1939Addr[sock_family: SockFamily = SockFamily.AF_CAN](SockAddr):
             pgn: The Parameter Group Number.
             addr: The address.
         """
-        constrained[
-            sock_family is SockFamily.AF_CAN,
-            "sock_family must be SockFamily.AF_CAN",
-        ]()
+
         self.interface = interface
         self.name = name
         self.pgn = pgn
@@ -556,7 +535,7 @@ struct CANJ1939Addr[sock_family: SockFamily = SockFamily.AF_CAN](SockAddr):
 
 
 @value
-struct BTL2CAPAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](SockAddr):
+struct BTL2CAPAddr(SockAddr):
     """BTL2CAPAddr.
 
     Args:
@@ -576,18 +555,13 @@ struct BTL2CAPAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](SockAddr):
             bdaddr: The Bluetooth address.
             psm: The psm.
         """
-        constrained[
-            sock_family is SockFamily.AF_BLUETOOTH,
-            "sock_family must be SockFamily.AF_BLUETOOTH",
-        ]()
+
         self.bdaddr = bdaddr
         self.psm = psm
 
 
 @value
-struct BTRFCOMMAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](
-    SockAddr
-):
+struct BTRFCOMMAddr(SockAddr):
     """BTRFCOMMAddr.
 
     Args:
@@ -607,16 +581,13 @@ struct BTRFCOMMAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](
             bdaddr: The Bluetooth address.
             channel: The channel.
         """
-        constrained[
-            sock_family is SockFamily.AF_BLUETOOTH,
-            "sock_family must be SockFamily.AF_BLUETOOTH",
-        ]()
+
         self.bdaddr = bdaddr
         self.channel = channel
 
 
 @value
-struct BTHCIAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](SockAddr):
+struct BTHCIAddr(SockAddr):
     """BTHCIAddr.
 
     Args:
@@ -632,15 +603,12 @@ struct BTHCIAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](SockAddr):
         Args:
             device_id: The device_id.
         """
-        constrained[
-            sock_family is SockFamily.AF_BLUETOOTH,
-            "sock_family must be SockFamily.AF_BLUETOOTH",
-        ]()
+
         self.device_id = device_id
 
 
 @value
-struct BTSCOAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](SockAddr):
+struct BTSCOAddr(SockAddr):
     """BTSCOAddr.
 
     Args:
@@ -656,15 +624,12 @@ struct BTSCOAddr[sock_family: SockFamily = SockFamily.AF_BLUETOOTH](SockAddr):
         Args:
             bdaddr: The Bluetooth address.
         """
-        constrained[
-            sock_family is SockFamily.AF_BLUETOOTH,
-            "sock_family must be SockFamily.AF_BLUETOOTH",
-        ]()
+
         self.bdaddr = bdaddr
 
 
 @value
-struct ALGAddr[sock_family: SockFamily = SockFamily.AF_ALG](SockAddr):
+struct ALGAddr(SockAddr):
     """ALGAddr.
 
     Args:
@@ -700,10 +665,7 @@ struct ALGAddr[sock_family: SockFamily = SockFamily.AF_ALG](SockAddr):
             feat: The features.
             mask: The mask.
         """
-        constrained[
-            sock_family is SockFamily.AF_ALG,
-            "sock_family must be SockFamily.AF_ALG",
-        ]()
+
         self.type = type
         self.name = name
         self.feat = feat
@@ -711,7 +673,7 @@ struct ALGAddr[sock_family: SockFamily = SockFamily.AF_ALG](SockAddr):
 
 
 @value
-struct VSOCKAddr[sock_family: SockFamily = SockFamily.AF_VSOCK](SockAddr):
+struct VSOCKAddr(SockAddr):
     """VSOCKAddr.
 
     Args:
@@ -731,16 +693,13 @@ struct VSOCKAddr[sock_family: SockFamily = SockFamily.AF_VSOCK](SockAddr):
             CID: The Context ID.
             port: The port.
         """
-        constrained[
-            sock_family is SockFamily.AF_VSOCK,
-            "sock_family must be SockFamily.AF_VSOCK",
-        ]()
+
         self.CID = CID
         self.port = port
 
 
 @value
-struct PACKETAddr[sock_family: SockFamily = SockFamily.AF_PACKET](SockAddr):
+struct PACKETAddr(SockAddr):
     """PACKETAddr.
 
     Args:
@@ -779,10 +738,7 @@ struct PACKETAddr[sock_family: SockFamily = SockFamily.AF_PACKET](SockAddr):
             hatype: The ARP hardware address type.
             addr: The hardware physical address.
         """
-        constrained[
-            sock_family is SockFamily.AF_PACKET,
-            "sock_family must be SockFamily.AF_PACKET",
-        ]()
+
         self.ifname = ifname
         self.proto = proto
         self.pkttype = pkttype
@@ -791,7 +747,7 @@ struct PACKETAddr[sock_family: SockFamily = SockFamily.AF_PACKET](SockAddr):
 
 
 @value
-struct QIPCRTRAddr[sock_family: SockFamily = SockFamily.AF_QIPCRTR](SockAddr):
+struct QIPCRTRAddr(SockAddr):
     """QIPCRTRAddr.
 
     Args:
@@ -811,16 +767,13 @@ struct QIPCRTRAddr[sock_family: SockFamily = SockFamily.AF_QIPCRTR](SockAddr):
             node: The node.
             port: The port.
         """
-        constrained[
-            sock_family is SockFamily.AF_QIPCRTR,
-            "sock_family must be SockFamily.AF_QIPCRTR",
-        ]()
+
         self.node = node
         self.port = port
 
 
 @value
-struct HYPERVAddr[sock_family: SockFamily = SockFamily.AF_HYPERV](SockAddr):
+struct HYPERVAddr(SockAddr):
     """HYPERVAddr.
 
     Args:
@@ -840,16 +793,13 @@ struct HYPERVAddr[sock_family: SockFamily = SockFamily.AF_HYPERV](SockAddr):
             vm_id: The virtual machine identifier.
             service_id: The service identifier of the registered service.
         """
-        constrained[
-            sock_family is SockFamily.AF_HYPERV,
-            "sock_family must be SockFamily.AF_HYPERV",
-        ]()
+
         self.vm_id = vm_id
         self.service_id = service_id
 
 
 @value
-struct SPIAddr[sock_family: SockFamily = SockFamily.AF_SPI](SockAddr):
+struct SPIAddr(SockAddr):
     """Serial Peripheral Interface Address.
 
     Args:
@@ -909,10 +859,7 @@ struct SPIAddr[sock_family: SockFamily = SockFamily.AF_SPI](SockAddr):
             MISO: The Master In Slave Out (pin number).
             CS: The Chip Select (pin number).
         """
-        constrained[
-            sock_family is SockFamily.AF_SPI,
-            "sock_family must be SockFamily.AF_SPI",
-        ]()
+
         self.interface = interface
         self.address = address
         self.frequency_hz = frequency_hz
@@ -924,7 +871,7 @@ struct SPIAddr[sock_family: SockFamily = SockFamily.AF_SPI](SockAddr):
 
 
 @value
-struct I2CAddr[sock_family: SockFamily = SockFamily.AF_I2C](SockAddr):
+struct I2CAddr(SockAddr):
     """Inter Integrated Circuit Address.
 
     Args:
@@ -974,10 +921,7 @@ struct I2CAddr[sock_family: SockFamily = SockFamily.AF_I2C](SockAddr):
             SDA: The Serial Data line Address (pin number).
             SCL: The Serial Clock Line (pin number).
         """
-        constrained[
-            sock_family is SockFamily.AF_I2C,
-            "sock_family must be SockFamily.AF_I2C",
-        ]()
+
         self.interface = interface
         self.address = address
         self.bitrate = bitrate
@@ -987,7 +931,7 @@ struct I2CAddr[sock_family: SockFamily = SockFamily.AF_I2C](SockAddr):
 
 
 @value
-struct UARTAddr[sock_family: SockFamily = SockFamily.AF_UART](SockAddr):
+struct UARTAddr(SockAddr):
     """Universal Asynchronous Reciever Transmitter Address.
 
     Args:
@@ -1032,10 +976,7 @@ struct UARTAddr[sock_family: SockFamily = SockFamily.AF_UART](SockAddr):
             rx_addr: The rx_addr.
             tx_addr: The tx_addr.
         """
-        constrained[
-            sock_family is SockFamily.AF_UART,
-            "sock_family must be SockFamily.AF_UART",
-        ]()
+
         self.interface = interface
         self.baudrate = baudrate
         self.mode = mode
