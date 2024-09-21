@@ -81,7 +81,7 @@ trait SocketInterface[
     sock_family: SockFamily,
     sock_type: SockType,
     sock_protocol: SockProtocol,
-    sock_address: SockAddr = IPv4Addr,
+    sock_address: SockAddr,
     sock_platform: SockPlatform,
 ](CollectionElement):
     """Interface for Sockets."""
