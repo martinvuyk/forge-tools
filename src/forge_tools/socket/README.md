@@ -101,7 +101,7 @@ trait SocketInterface[
         """
         ...
 
-    fn bind[T: SockAddr](self, address: T) raises:
+    fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -112,7 +112,7 @@ trait SocketInterface[
         """
         ...
 
-    async fn connect[T: SockAddr](self, address: T) raises:
+    async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
         ...
 

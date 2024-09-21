@@ -1,20 +1,22 @@
 # Forge Tools
 Tools to extend the functionality of the Mojo standard library. Hopefully they will all someday be available in the stdlib. The main focus is to only include things that would make sense in such a library.
 
+
 ## How to Install
+#### Keep in mind: Everything is still a Work In Progress and mojo nightly is constantly changing
 ```bash
-source ./scripts/package-lib.sh || true
+magic run ./scripts/package-lib.sh
 ```
 The semi-compiled package will be under `./build/forge_tools.mojopkg`
 ## How to run tests
 Test an entire directory or subdirectory or specific file
 ```bash
-source ./scripts/test.sh test/ || true
+magic run ./scripts/test.sh test/
 ```
 ## How to run benchmarks
 Run an entire directory or subdirectory or specific file (sequentially)
 ```bash
-source ./scripts/benchmark.sh benchmarks/ || true
+magic run ./scripts/benchmark.sh benchmarks/
 ```
 
 # Packages
@@ -167,24 +169,6 @@ struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
         return bool(self) and (self.kind == value or value == "AnyError")
 ```
 
-Examples:
-
-```mojo
-from forge_tools.collections.result import Result2
-from forge_tools.builtin.error import Error2
-
-fn do_something(i: Int) -> Result2[Int, "IndexError"]:
-    if i < 0:
-        return None, Error2["IndexError"]("index out of bounds: " + str(i))
-    return 1
-
-fn do_some_other_thing() -> Result2[String, "OtherError"]:
-    var a = do_something(-1)
-    if a.err:
-        print(a.err) # IndexError: index out of bounds: -1
-        return a # error message ("index out of bounds: -1") gets transferred
-    return "success"
-```
 This could be expanded upon:
 ```mojo
 struct Result2[
@@ -221,47 +205,8 @@ fn do_some_other_thing() -> Result2[String, "OtherError"]:
 ```
 
 
-It would be nice to have:
-```mojo
-struct Result2[T: CollectionElement, *Errs: StringLiteral](Boolable):
-    alias _type = Variant[NoneType, T]
-    var _value: Self._type
-    alias _err_type = Variant[
-        Error2["AnyError"],
-        VariadicListUnpack[VariadicListEmbed[Error2[_], Errs]]
-    ]
-    var err: Self._err_type
-    """The Error inside the `Result`."""
-    ...
-```
-
 #### On the interop with raising functions
-Idea 1: new dunder method that gets automatically executed when the type gets
-assigned to a variable inside a raising context.
-This way there is no type that gets special treatment from the compiler.
-```mojo
-struct Result2:
-    ...
-    fn __unwrap__(self) raises -> T:
-        if self.err:
-            raise self.err
-        return self.value()
-
-fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
-    ...
-
-# what the developer sees
-fn do_some_other_thing() raises -> String:
-    var a = do_something(-1) # a is unwrapped and can be used as value
-    return "success"
-
-# what is added
-fn do_some_other_thing() raises -> String:
-    var a = do_something(-1).__unwrap__()
-    return "success"
-```
-
-Idea 2: Less magic, but results will not have the same "feel" as raising Errors.
+Idea: Less magic, but results will not have the same "feel" as raising Errors.
 Very likely fragmentation in API development standards.
 ```mojo
 struct Result2:

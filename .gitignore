@@ -1,4 +1,5 @@
-build/
-*.mojopkg
-
-install_id
+# pixi environments
+.pixi
+*.egg-info
+# magic environments
+.magic

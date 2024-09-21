@@ -52,6 +52,7 @@
 
 from sys import info
 from collections import Optional
+from memory import UnsafePointer
 from utils import Variant
 
 from forge_tools.ffi.c import (
@@ -64,7 +65,7 @@ from forge_tools.ffi.c import (
     in_addr,
 )
 
-from .address import SockAddr, IPAddr
+from .address import SockAddr, IPv4Addr, IPv6Addr
 from ._linux import _LinuxSocket
 from ._unix import _UnixSocket
 from ._windows import _WindowsSocket
@@ -321,6 +322,7 @@ struct SockPlatform:
 #     sock_family: SockFamily,
 #     sock_type: SockType,
 #     sock_protocol: SockProtocol,
+#     sock_address: SockAddr,
 #     sock_platform: SockPlatform,
 # ](CollectionElement):
 #     """Interface for Sockets."""
@@ -339,7 +341,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     fn bind(self, address: SockAddr[sock_family, *_]) raises:
+#     fn bind(self, address: sock_address) raises:
 #         """Bind the socket to address. The socket must not already be bound."""
 #         ...
 
@@ -350,7 +352,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     async fn connect[T: SockAddr](self, address: T) raises:
+#     async fn connect(self, address: sock_address) raises:
 #         """Connect to a remote socket at address."""
 #         ...
 
@@ -382,30 +384,19 @@ struct SockPlatform:
 #         ...
 
 #     @staticmethod
-#     fn gethostbyname[
-#         T0: CollectionElement,
-#         T1: CollectionElement,
-#         T2: CollectionElement,
-#         T3: CollectionElement,
-#         T4: CollectionElement,
-#         T5: CollectionElement,
-#         T6: CollectionElement,
-#         T7: CollectionElement,
-#     ](name: String) -> Optional[
-#         SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-#     ]:
+#     fn gethostbyname(name: String) -> Optional[sock_address]:
 #         """Map a hostname to its Address."""
 #         ...
 
 #     @staticmethod
-#     fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
+#     fn gethostbyaddr(address: sock_address) -> Optional[String]:
 #         """Map an Address to DNS info."""
 #         ...
 
 #     @staticmethod
-#     fn getservbyname(
-#         name: String, proto: SockProtocol = SockProtocol.TCP
-#     ) -> Optional[SockAddr[sock_family, *_]]:
+#     fn getservbyname[
+#         T: SockAddr
+#     ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[T]:
 #         """Map a service name and a protocol name to a port number."""
 #         ...
 
@@ -417,16 +408,7 @@ struct SockPlatform:
 #         """Set the default timeout value."""
 #         ...
 
-#     async fn accept[
-#         T0: CollectionElement,
-#         T1: CollectionElement,
-#         T2: CollectionElement,
-#         T3: CollectionElement,
-#         T4: CollectionElement,
-#         T5: CollectionElement,
-#         T6: CollectionElement,
-#         T7: CollectionElement,
-#     ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
+#     async fn accept(self) -> (Self, sock_address):
 #         """Return a new socket representing the connection, and the address of
 #         the client.
 #         """
@@ -449,6 +431,7 @@ struct Socket[
     sock_family: SockFamily = SockFamily.AF_INET,
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
+    sock_address: SockAddr = IPv4Addr[sock_family],
     sock_platform: SockPlatform = _get_current_platform(),
 ](CollectionElement):
     """Struct for using Sockets. In the future this struct should be able to
@@ -461,6 +444,7 @@ struct Socket[
         sock_family: The socket family e.g. `SockFamily.AF_INET`.
         sock_type: The socket type e.g. `SockType.SOCK_STREAM`.
         sock_protocol: The socket protocol e.g. `SockProtocol.TCP`.
+        sock_address: The address type for the socket.
         sock_platform: The socket platform e.g. `SockPlatform.LINUX`.
 
     Examples:
@@ -497,9 +481,15 @@ struct Socket[
     .
     """
 
-    alias _linux_s = _LinuxSocket[sock_family, sock_type, sock_protocol]
-    alias _unix_s = _UnixSocket[sock_family, sock_type, sock_protocol]
-    alias _windows_s = _WindowsSocket[sock_family, sock_type, sock_protocol]
+    alias _linux_s = _LinuxSocket[
+        sock_family, sock_type, sock_protocol, sock_address
+    ]
+    alias _unix_s = _UnixSocket[
+        sock_family, sock_type, sock_protocol, sock_address
+    ]
+    alias _windows_s = _WindowsSocket[
+        sock_family, sock_type, sock_protocol, sock_address
+    ]
     # TODO: need to be able to use SocketInterface trait regardless of type
     alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
     var _impl: Self._variant
@@ -549,11 +539,7 @@ struct Socket[
         """
         return self^
 
-    fn __exit__(owned self):
-        """Exit the context."""
-        _ = self^
-
-    fn bind[T: SockAddr](self, address: T) raises:
+    fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -564,7 +550,7 @@ struct Socket[
         """
         ...
 
-    async fn connect[T: SockAddr](self, address: T) raises:
+    async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -579,7 +565,8 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await Self._linux_s.socketpair()
+            var s = await Self._linux_s.socketpair()
+            return Self(s[0]), Self(s[1])
         else:
             constrained[False, "Platform not supported yet."]()
             return Self(), Self()
@@ -593,7 +580,7 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.fd
+            return self._impl.unsafe_get[Self._linux_s]()[].fd
         else:
             constrained[False, "Platform not supported yet."]()
             return FileDescriptor(2)
@@ -704,13 +691,13 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return (
-                await self._impl.unsafe_get[Self._linux_s]()[].recv(length)
+                await self._impl.unsafe_get[Self._linux_s]()[].recv(max_len)
             )^
         else:
             constrained[False, "Platform not supported yet."]()
             return List[UInt8]()
 
-    fn gethostname(self) -> String:
+    fn gethostname(self) -> Optional[String]:
         """Return the current hostname.
 
         Returns:
@@ -725,18 +712,7 @@ struct Socket[
             return ""
 
     @staticmethod
-    fn gethostbyname[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement,
-    ](name: String) -> Optional[
-        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ]:
+    fn gethostbyname(name: String) -> Optional[sock_address]:
         """Map a hostname to its Address.
 
         Returns:
@@ -751,7 +727,7 @@ struct Socket[
             return None
 
     @staticmethod
-    fn gethostbyaddr(address: SockAddr[sock_family, *_]) -> Optional[String]:
+    fn gethostbyaddr(address: sock_address) -> Optional[String]:
         """Map an Address to DNS info.
 
         Returns:
@@ -766,18 +742,9 @@ struct Socket[
             return None
 
     @staticmethod
-    fn getservbyname[
-        T0: CollectionElement,
-        T1: CollectionElement,
-        T2: CollectionElement,
-        T3: CollectionElement,
-        T4: CollectionElement,
-        T5: CollectionElement,
-        T6: CollectionElement,
-        T7: CollectionElement,
-    ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[
-        SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]
-    ]:
+    fn getservbyname(
+        name: String, proto: SockProtocol = SockProtocol.TCP
+    ) -> Optional[sock_address]:
         """Map a service name and a protocol name to a port number.
 
         Returns:
@@ -922,7 +889,7 @@ struct Socket[
 
     #     ...
 
-    async fn accept(self) -> (Self, IPAddr[sock_family]):
+    async fn accept(self) raises -> (Self, sock_address):
         """Return a new socket representing the connection, and the address of
         the client.
 
@@ -930,37 +897,54 @@ struct Socket[
             The connection and the Address.
         """
 
-        var new_sock = self
-        return new_sock^, IPAddr(("", 0))  # TODO: implement
-
-    # TODO: implement generic version
-    # TODO(#3290): use SockAddr[sock_family, *_]
-    # async fn accept[
-    #     T0: CollectionElement,
-    #     T1: CollectionElement,
-    #     T2: CollectionElement,
-    #     T3: CollectionElement,
-    #     T4: CollectionElement,
-    #     T5: CollectionElement,
-    #     T6: CollectionElement,
-    #     T7: CollectionElement, //,
-    #     Address: SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7],
-    # ](self) -> (Self, SockAddr[sock_family, T0, T1, T2, T3, T4, T5, T6, T7]):
-    #     """Return a new socket representing the connection, and the address of
-    #     the client.
-
-    #     Returns:
-    #         The connection and the Address.
-    #     """
-
-    #     var new_sock = self
-    #     return new_sock^, Address("", 0)
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            var conn_addr = await self._impl.unsafe_get[
+                Self._linux_s
+            ]()[].accept()
+            return Self(conn_addr[0]), conn_addr[1]
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
 
     @staticmethod
     fn create_connection(
-        address: IPAddr[sock_family],
+        address: IPv4Addr[],
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPAddr[sock_family] = IPAddr[sock_family](("", 0)),
+        source_address: IPv4Addr[] = ("", 0),
+        *,
+        all_errors: Bool = False,
+    ) raises -> Self:
+        """Convenience function. Connect to address and return the socket
+        object.
+
+        Args:
+            address: The Address to bind to.
+            timeout: The timeout for attempting to connect.
+            source_address: A host of '' or port 0 tells the OS to use the
+                default.
+            all_errors: When a connection cannot be created, raises the last
+                error if all_errors is False, and an ExceptionGroup of all
+                errors if all_errors is True.
+
+        Returns:
+            The Socket.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return Self._linux_s.create_connection(
+                address, timeout, source_address, all_errors=all_errors
+            )
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
+
+    @staticmethod
+    fn create_connection(
+        address: IPv6Addr[],
+        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        source_address: IPv6Addr[] = IPv6Addr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -1000,7 +984,7 @@ struct Socket[
     # ) raises -> __type_of(stc):
     @staticmethod
     fn create_server(
-        address: IPv4Addr,
+        address: IPv4Addr[],
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -1056,7 +1040,7 @@ struct Socket[
     # ) raises -> __type_of(stc):
     @staticmethod
     fn create_server(
-        address: IPv6Addr,
+        address: IPv6Addr[],
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
@@ -1080,12 +1064,12 @@ struct Socket[
 
         Examples:
         ```mojo
-        from forge_tools.socket import Socket, SockFamily
+        from forge_tools.socket import Socket, SockFamily, IPv6Addr
 
 
         async def main():
-            alias S = Socket[SockFamily.AF_INET6]
-            with S.create_server(("::1", 8000)) as server:
+            alias S = Socket[SockFamily.AF_INET6, sock_address=IPv6Addr[]]
+            with S.create_server(IPv6Addr("::1", 8000)) as server:
                 while True:
                     conn, addr = await server.accept()
                     ...  # handle new connection

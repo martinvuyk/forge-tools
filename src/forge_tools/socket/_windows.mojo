@@ -1,4 +1,5 @@
 from collections import Optional
+from memory import UnsafePointer
 from .socket import (
     # SocketInterface,
     SockFamily,
@@ -7,12 +8,15 @@ from .socket import (
     SockTime,
     _DEFAULT_SOCKET_TIMEOUT,
 )
-from .address import SockAddr, IPv4Addr, IPAddr
+from .address import SockAddr, IPv4Addr, IPv6Addr
 
 
 @value
 struct _WindowsSocket[
-    sock_family: SockFamily, sock_type: SockType, sock_protocol: SockProtocol
+    sock_family: SockFamily,
+    sock_type: SockType,
+    sock_protocol: SockProtocol,
+    sock_address: SockAddr,
 ]:
     var fd: FileDescriptor
     """The Socket's `FileDescriptor`."""
@@ -38,7 +42,7 @@ struct _WindowsSocket[
         except:
             pass
 
-    fn bind[T: SockAddr](self, address: T) raises:
+    fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
         ...
 
@@ -49,7 +53,7 @@ struct _WindowsSocket[
         """
         ...
 
-    async fn connect[T: SockAddr](self, address: T) raises:
+    async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
         ...
 
@@ -89,19 +93,19 @@ struct _WindowsSocket[
         return None
 
     @staticmethod
-    fn gethostbyname[T: SockAddr](name: String) -> Optional[T]:
+    fn gethostbyname(name: String) -> Optional[sock_address]:
         """Map a hostname to its Address."""
         return None
 
     @staticmethod
-    fn gethostbyaddr[T: SockAddr](address: T) -> Optional[String]:
+    fn gethostbyaddr(address: sock_address) -> Optional[String]:
         """Map an Address to DNS info."""
         return None
 
     @staticmethod
-    fn getservbyname[
-        T: SockAddr
-    ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[T]:
+    fn getservbyname(
+        name: String, proto: SockProtocol = SockProtocol.TCP
+    ) -> Optional[sock_address]:
         """Map a service name and a protocol name to a port number."""
         return None
 
@@ -113,7 +117,7 @@ struct _WindowsSocket[
         """Set the default timeout value."""
         return False
 
-    async fn accept[T: SockAddr](self) raises -> (Self, T):
+    async fn accept(self) raises -> (Self, sock_address):
         """Return a new socket representing the connection, and the address of
         the client.
         """
@@ -121,9 +125,21 @@ struct _WindowsSocket[
 
     @staticmethod
     fn create_connection(
-        address: IPv4Addr[sock_family],
+        address: IPv4Addr[],
         timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv4Addr[sock_family] = IPv4Addr[sock_family](("", 0)),
+        source_address: IPv4Addr[] = IPv4Addr(("", 0)),
+        *,
+        all_errors: Bool = False,
+    ) raises -> Self:
+        """Connects to an address, with an optional timeout and
+        optional source address."""
+        raise Error("Failed to create socket.")
+
+    @staticmethod
+    fn create_connection(
+        address: IPv6Addr[],
+        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        source_address: IPv6Addr[] = IPv6Addr("", 0),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
@@ -133,7 +149,17 @@ struct _WindowsSocket[
 
     @staticmethod
     fn create_server(
-        address: IPv6Addr[sock_family],
+        address: IPv4Addr[],
+        *,
+        backlog: Optional[Int] = None,
+        reuse_port: Bool = False,
+    ) raises -> Self:
+        """Create a TCP socket and bind it to a specified address."""
+        raise Error("Failed to create socket.")
+
+    @staticmethod
+    fn create_server(
+        address: IPv6Addr[],
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,

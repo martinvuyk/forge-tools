@@ -5,6 +5,8 @@ Notes:
 """
 
 from sys.intrinsics import _mlirtype_is_eq
+from sys.ffi import external_call
+from memory import UnsafePointer
 from utils import StaticTuple
 
 
@@ -350,8 +352,8 @@ struct addrinfo:
     # FIXME: This should be UnsafePointer[addrinfo]
     var ai_next: UnsafePointer[C.void]
 
-    fn __init__() -> Self:
-        return Self(
+    fn __init__(inout self):
+        self = Self(
             0,
             0,
             0,
