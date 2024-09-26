@@ -269,16 +269,16 @@ struct IPv4Addr(SockAddr):
         self.host = host
         self.port = port
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(inout self, host_port: String) raises:
         """Create an Address.
 
         Args:
-            value: The string with IP and port.
+            host_port: The string with IP and port.
         """
-        var idx = value.rfind(":")
+        var idx = host_port.rfind(":")
         if idx == -1:
             raise Error("port not found in String")
-        self = Self(value[:idx], int(value[idx + 1 :]))
+        self = Self(host_port[:idx], int(host_port[idx + 1 :]))
 
     fn __init__(inout self: Self, value: Tuple[String, UInt]):
         """Create an Address.

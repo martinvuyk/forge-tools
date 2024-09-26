@@ -53,9 +53,10 @@
 from sys import info
 from collections import Optional
 from memory import UnsafePointer
-from utils import Variant
+from utils import Variant, Span
 
 from forge_tools.ffi.c import (
+    C,
     ntohs,
     ntohl,
     htons,
@@ -509,10 +510,8 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             self._impl = Self._linux_s()
-        # elif sock_platform is SockPlatform.UNIX:
-        #     self._impl = Self._unix_s()
-        # elif sock_platform is SockPlatform.WINDOWS:
-        #     self._impl = Self._windows_s()
+        elif sock_platform is SockPlatform.UNIX:
+            self._impl = Self._unix_s()
         else:
             constrained[False, "Platform not supported yet."]()
             self._impl = Self._linux_s()
@@ -529,7 +528,7 @@ struct Socket[
         """Closes the Socket if it's the last reference to its
         `FileDescriptor`.
         """
-        _ = self^
+        _ = self^  # The OS should keep track if it's the last reference (?)
 
     fn __enter__(owned self) -> Self:
         """Enter a context.
@@ -553,6 +552,29 @@ struct Socket[
     async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
         ...
+
+    async fn accept(self) raises -> (Self, sock_address):
+        """Return a new socket representing the connection, and the address of
+        the client.
+
+        Returns:
+            The connection and the Address.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            var conn_addr = await self._impl.unsafe_get[
+                Self._linux_s
+            ]()[].accept()
+            return Self(conn_addr[0]), conn_addr[1]
+        elif sock_platform is SockPlatform.UNIX:
+            var conn_addr = await self._impl.unsafe_get[
+                Self._unix_s
+            ]()[].accept()
+            return Self(conn_addr[0]), conn_addr[1]
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
 
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
@@ -621,79 +643,57 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return None
 
-    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+    async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Send a buffer of bytes to the socket.
 
         Args:
-            buf: The bytes buffer to send.
-            length: The amount of items in the buffer.
+            buf: The buffer of bytes to send.
+            flags: The [optional flags](\
+https://manpages.debian.org/bookworm/manpages-dev/\
+recv.2.en.html#The_flags_argument).
 
         Returns:
-            The amount of bytes sent.
+            The amount of bytes sent, -1 on error.
         """
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return await self._impl.unsafe_get[Self._linux_s]()[].send(
-                buf, length
+                buf, flags
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return await self._impl.unsafe_get[Self._unix_s]()[].send(
+                buf, flags
             )
         else:
             constrained[False, "Platform not supported yet."]()
             return False
 
-    async fn send(self, buf: List[UInt8]) -> UInt:
-        """Send a List of bytes to the socket.
-
-        Args:
-            buf: The list of bytes to send.
-
-        Returns:
-            The amount of bytes sent.
-        """
-
-        @parameter
-        if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].send(buf)
-        else:
-            constrained[False, "Platform not supported yet."]()
-            return False
-
-    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
-        """Receive up to max_len bytes into the buffer.
+    async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
+        """Receive up to `len(buf)` bytes into the buffer.
 
         Args:
             buf: The buffer to recieve to.
-            max_len: The maximum amount of bytes to recieve.
+            flags: The [optional flags](\
+https://manpages.debian.org/bookworm/manpages-dev/\
+recv.2.en.html#The_flags_argument).
 
         Returns:
-            The amount of bytes recieved.
+            The amount of bytes recieved, -1 on error.
         """
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return await self._impl.unsafe_get[Self._linux_s]()[].recv(
-                buf, max_len
+                buf, flags
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return await self._impl.unsafe_get[Self._unix_s]()[].recv(
+                buf, flags
             )
         else:
             constrained[False, "Platform not supported yet."]()
             return 0
-
-    async fn recv(self, max_len: UInt) -> List[UInt8]:
-        """Receive up to max_len bytes.
-
-        Args:
-            max_len: The maximum amount of bytes to recieve.
-
-        Returns:
-            The bytes recieved.
-        """
-
-        @parameter
-        if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].recv(max_len)
-        else:
-            constrained[False, "Platform not supported yet."]()
-            return List[UInt8]()
 
     fn gethostname(self) -> Optional[String]:
         """Return the current hostname.
@@ -705,6 +705,8 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl.unsafe_get[Self._linux_s]()[].gethostname()
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl.unsafe_get[Self._unix_s]()[].gethostname()
         else:
             constrained[False, "Platform not supported yet."]()
             return ""
@@ -720,6 +722,8 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.gethostbyname(name)
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.gethostbyname(name)
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -735,14 +739,14 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.gethostbyaddr(address)
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.gethostbyaddr(address)
         else:
             constrained[False, "Platform not supported yet."]()
             return None
 
     @staticmethod
-    fn getservbyname(
-        name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[sock_address]:
+    fn getservbyname(name: String) -> Optional[sock_address]:
         """Map a service name and a protocol name to a port number.
 
         Returns:
@@ -751,7 +755,9 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.getservbyname(name, proto)
+            return Self._linux_s.getservbyname(name)
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.getservbyname(name)
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -768,7 +774,8 @@ struct Socket[
         """
         return ntohs(value)
 
-    fn ntohl(self, value: UInt32) -> UInt32:
+    @staticmethod
+    fn ntohl(value: UInt32) -> UInt32:
         """Convert 32 bit int from network to host byte order.
 
         Args:
@@ -779,7 +786,8 @@ struct Socket[
         """
         return ntohl(value)
 
-    fn htons(self, value: UInt16) -> UInt16:
+    @staticmethod
+    fn htons(value: UInt16) -> UInt16:
         """Convert 16 bit int from host to network byte order.
 
         Args:
@@ -790,7 +798,8 @@ struct Socket[
         """
         return htons(value)
 
-    fn htonl(self, value: UInt32) -> UInt32:
+    @staticmethod
+    fn htonl(value: UInt32) -> UInt32:
         """Convert 32 bit int from host to network byte order.
 
         Args:
@@ -801,7 +810,8 @@ struct Socket[
         """
         return htonl(value)
 
-    fn inet_aton(self, value: String) -> Optional[UInt32]:
+    @staticmethod
+    fn inet_aton(value: String) -> Optional[UInt32]:
         """Convert IPv4 address string (123.45.67.89) to 32-bit packed format.
 
         Args:
@@ -811,12 +821,13 @@ struct Socket[
             The result.
         """
         var res = in_addr(0)
-        var err = inet_aton(value.unsafe_ptr().bitcast[Int8](), res)
+        var err = inet_aton(value.unsafe_ptr().bitcast[C.char](), res)
         if err == 0:
             return None
         return res.s_addr
 
-    fn inet_ntoa(self, value: UInt32) -> String:
+    @staticmethod
+    fn inet_ntoa(value: UInt32) -> String:
         """Convert 32-bit packed format to IPv4 address string (123.45.67.89).
 
         Args:
@@ -826,7 +837,7 @@ struct Socket[
             The result.
         """
         var length = 0
-        var ptr = inet_ntoa(value).bitcast[UInt8]()
+        var ptr = inet_ntoa(value).bitcast[C.u_char]()
         for i in range(7, 16):
             if ptr[i] == 0:
                 length = i + 1
@@ -843,6 +854,8 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl.unsafe_get[Self._linux_s]()[].getdefaulttimeout()
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl.unsafe_get[Self._unix_s]()[].getdefaulttimeout()
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -860,6 +873,10 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl.unsafe_get[Self._linux_s]()[].setdefaulttimeout(
+                value
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl.unsafe_get[Self._unix_s]()[].setdefaulttimeout(
                 value
             )
         else:
@@ -886,24 +903,6 @@ struct Socket[
     #     """
 
     #     ...
-
-    async fn accept(self) raises -> (Self, sock_address):
-        """Return a new socket representing the connection, and the address of
-        the client.
-
-        Returns:
-            The connection and the Address.
-        """
-
-        @parameter
-        if sock_platform is SockPlatform.LINUX:
-            var conn_addr = await self._impl.unsafe_get[
-                Self._linux_s
-            ]()[].accept()
-            return Self(conn_addr[0]), conn_addr[1]
-        else:
-            constrained[False, "Platform not supported yet."]()
-            raise Error("Failed to create socket.")
 
     @staticmethod
     fn create_connection(
@@ -932,6 +931,10 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.create_connection(
+                address, timeout, source_address, all_errors=all_errors
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.create_connection(
                 address, timeout, source_address, all_errors=all_errors
             )
         else:
@@ -965,6 +968,10 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.create_connection(
+                address, timeout, source_address, all_errors=all_errors
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.create_connection(
                 address, timeout, source_address, all_errors=all_errors
             )
         else:
@@ -1020,6 +1027,10 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.create_server(
+                address, backlog=backlog, reuse_port=reuse_port
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.create_server(
                 address, backlog=backlog, reuse_port=reuse_port
             )
         else:
@@ -1082,6 +1093,13 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return Self._linux_s.create_server(
+                address,
+                backlog=backlog,
+                reuse_port=reuse_port,
+                dualstack_ipv6=dualstack_ipv6,
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.create_server(
                 address,
                 backlog=backlog,
                 reuse_port=reuse_port,

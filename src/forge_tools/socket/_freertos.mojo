@@ -1,5 +1,6 @@
 from collections import Optional
 from memory import UnsafePointer
+from utils import Span
 from .socket import (
     # SocketInterface,
     SockFamily,
@@ -23,10 +24,6 @@ struct _FreeRTOSSocket[
 
     fn __init__(inout self) raises:
         """Create a new socket object."""
-        raise Error("Failed to create socket.")
-
-    fn __init__(inout self, fd: FileDescriptor) raises:
-        """Create a new socket object from an open `FileDescriptor`."""
         raise Error("Failed to create socket.")
 
     fn close(owned self) raises:
@@ -57,6 +54,12 @@ struct _FreeRTOSSocket[
         """Connect to a remote socket at address."""
         ...
 
+    async fn accept(self) raises -> (Self, sock_address):
+        """Return a new socket representing the connection, and the address of
+        the client.
+        """
+        raise Error("Failed to create socket.")
+
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
@@ -71,13 +74,13 @@ struct _FreeRTOSSocket[
         """Receive file descriptors from the socket."""
         return List[FileDescriptor]()
 
-    async fn send(self, buf: Span[UInt8]) -> UInt:
+    async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
-        return 0
+        return -1
 
-    async fn recv(self, buf: Span[UInt8]) -> UInt:
+    async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Receive up to `len(buf)` bytes into the buffer."""
-        return 0
+        return -1
 
     async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
         """Send a buffer of bytes to the socket."""
@@ -111,9 +114,7 @@ struct _FreeRTOSSocket[
         return None
 
     @staticmethod
-    fn getservbyname(
-        name: String, proto: SockProtocol = SockProtocol.TCP
-    ) -> Optional[sock_address]:
+    fn getservbyname(name: String) -> Optional[sock_address]:
         """Map a service name and a protocol name to a port number."""
         return None
 
@@ -124,12 +125,6 @@ struct _FreeRTOSSocket[
     fn setdefaulttimeout(self, value: SockTime) -> Bool:
         """Set the default timeout value."""
         return False
-
-    async fn accept(self) raises -> (Self, sock_address):
-        """Return a new socket representing the connection, and the address of
-        the client.
-        """
-        raise Error("Failed to create socket.")
 
     @staticmethod
     fn create_connection(

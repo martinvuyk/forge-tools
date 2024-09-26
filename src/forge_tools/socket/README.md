@@ -126,6 +126,12 @@ trait SocketInterface[
         """Connect to a remote socket at address."""
         ...
 
+    async fn accept(self) raises -> (Self, sock_address):
+        """Return a new socket representing the connection, and the address of
+        the client.
+        """
+        raise Error("Failed to create socket.")
+
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the

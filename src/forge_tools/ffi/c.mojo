@@ -89,11 +89,6 @@ alias EDOM = 33
 alias ERANGE = 34
 alias EWOULDBLOCK = EAGAIN
 
-
-fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
-    return String(s.bitcast[UInt8](), int(strlen(s)))
-
-
 # --- ( Network Related Constants )---------------------------------------------
 alias sa_family_t = C.u_short
 alias socklen_t = C.u_int
@@ -201,6 +196,65 @@ alias SOCK_DCCP = 6
 alias SOCK_PACKET = 10
 # alias SOCK_CLOEXEC = O_CLOEXEC
 # alias SOCK_NONBLOCK = O_NONBLOCK
+
+# Internet (IP) protocols
+# Updated from http://www.iana.org/assignments/protocol-numbers and other
+# sources.
+alias IP = 0  # internet protocol, pseudo protocol number
+alias HOPOPT = 0  # IPv6 Hop-by-Hop Option [RFC1883]
+alias ICMP = 1  # internet control message protocol
+alias IGMP = 2  # Internet Group Management
+alias GGP = 3  # gateway-gateway protocol
+alias IP_ENCAP = 4  # IP encapsulated in IP (officially ``IP'')
+alias ST = 5  # ST datagram mode
+alias TCP = 6  # transmission control protocol
+alias EGP = 8  # exterior gateway protocol
+alias IGP = 9  # any private interior gateway (Cisco)
+alias PUP = 12  # PARC universal packet protocol
+alias UDP = 17  # user datagram protocol
+alias HMP = 20  # host monitoring protocol
+alias XNS_IDP = 22  # Xerox NS IDP
+alias RDP = 27  # "reliable datagram" protocol
+alias ISO_TP4 = 29  # ISO Transport Protocol class 4 [RFC905]
+alias DCCP = 33  # Datagram Congestion Control Prot. [RFC4340]
+alias XTP = 36  # Xpress Transfer Protocol
+alias DDP = 37  # Datagram Delivery Protocol
+alias IDPR_CMTP = 38  # IDPR Control Message Transport
+alias IPv6 = 41  # Internet Protocol, version 6
+alias IPv6_Route = 43  # Routing Header for IPv6
+alias IPv6_Frag = 44  # Fragment Header for IPv6
+alias IDRP = 45  # Inter_Domain Routing Protocol
+alias RSVP = 46  # Reservation Protocol
+alias GRE = 47  # General Routing Encapsulation
+alias IPSEC_ESP = 50  # Encap Security Payload [RFC2406]
+alias IPSEC_AH = 51  # Authentication Header [RFC2402]
+alias SKIP = 57  # SKIP
+alias IPv6_ICMP = 58  # ICMP for IPv6
+alias IPv6_NoNxt = 59  # No Next Header for IPv6
+alias IPv6_Opts = 60  # Destination Options for IPv6
+alias RSPF_CPHB = 73  # Radio Shortest Path First (officially CPHB)
+alias VMTP = 81  # Versatile Message Transport
+alias EIGRP = 88  # Enhanced Interior Routing Protocol (Cisco)
+alias OSPFIGP = 89  # Open Shortest Path First IGP
+alias AX_25 = 93  # AX.25 frames
+alias IPIP = 94  # IP_within_IP Encapsulation Protocol
+alias ETHERIP = 97  # Ethernet_within_IP Encapsulation [RFC3378]
+alias ENCAP = 98  # Yet Another IP encapsulation [RFC1241]
+alias PIM = 103  # Protocol Independent Multicast
+alias IPCOMP = 108  # IP Payload Compression Protocol
+alias VRRP = 112  # Virtual Router Redundancy Protocol [RFC5798]
+alias L2TP = 115  # Layer Two Tunneling Protocol [RFC2661]
+alias ISIS = 124  # IS_IS over IPv4
+alias SCTP = 132  # Stream Control Transmission Protocol
+alias FC = 133  # Fibre Channel
+alias Mobility_Header = 135  # Mobility Support for IPv6 [RFC3775]
+alias UDPLite = 136  # UDP_Lite [RFC3828]
+alias MPLS_in_IP = 137  # MPLS_in_IP [RFC4023]
+alias HIP = 139  # Host Identity Protocol
+alias Shim6 = 140  # Shim6 Protocol [RFC5533]
+alias WESP = 141  # Wrapped Encapsulating Security Payload
+alias ROHC = 142  # Robust Header Compression
+
 
 # Address Information
 alias AI_PASSIVE = 1
@@ -365,6 +419,10 @@ struct addrinfo:
         )
 
 
+fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
+    return String(s.bitcast[UInt8](), int(strlen(s)))
+
+
 fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
     """Libc POSIX `strlen` function.
 
@@ -492,7 +550,9 @@ fn inet_pton(
         dst: A pointer to a buffer to store the binary address.
 
     Returns:
-        A pointer.
+        Returns 1 on success (network address was successfully converted). 0 is
+        returned if src does not contain a character string representing a valid
+        network address in the specified address family.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3p.html).
