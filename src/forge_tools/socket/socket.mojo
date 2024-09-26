@@ -52,8 +52,8 @@
 
 from sys import info
 from collections import Optional
-from memory import UnsafePointer
-from utils import Variant, Span
+from memory import UnsafePointer, stack_allocation
+from utils import Variant, Span, StringSlice
 
 from forge_tools.ffi.c import (
     C,
@@ -64,6 +64,7 @@ from forge_tools.ffi.c import (
     inet_aton,
     inet_ntoa,
     in_addr,
+    in_addr_t,
 )
 
 from .address import SockAddr, IPv4Addr, IPv6Addr
@@ -820,11 +821,11 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
-        var res = in_addr(0)
-        var err = inet_aton(value.unsafe_ptr().bitcast[C.char](), res)
+        var ptr = stack_allocation[1, in_addr]()
+        var err = inet_aton(value.unsafe_ptr().bitcast[C.char](), ptr)
         if err == 0:
             return None
-        return res.s_addr
+        return ptr[0].s_addr
 
     @staticmethod
     fn inet_ntoa(value: UInt32) -> String:
@@ -837,12 +838,13 @@ recv.2.en.html#The_flags_argument).
             The result.
         """
         var length = 0
-        var ptr = inet_ntoa(value).bitcast[C.u_char]()
+        var ptr = inet_ntoa(value).bitcast[UInt8]()
         for i in range(7, 16):
             if ptr[i] == 0:
-                length = i + 1
+                length = i
                 break
-        return String(ptr=ptr, len=length)
+        alias S = StringSlice[ImmutableAnyLifetime]
+        return String(S(unsafe_from_utf8_ptr=ptr, len=length))
 
     fn getdefaulttimeout(self) -> Optional[SockTime]:
         """Get the default timeout value.

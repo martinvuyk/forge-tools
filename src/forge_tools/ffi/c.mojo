@@ -420,7 +420,7 @@ struct addrinfo:
 
 
 fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
-    return String(s.bitcast[UInt8](), int(strlen(s)))
+    return String(ptr=s.bitcast[UInt8](), len=int(strlen(s) + 1))
 
 
 fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
@@ -584,7 +584,7 @@ fn inet_addr(cp: UnsafePointer[C.char]) -> in_addr_t:
     return external_call["inet_addr", in_addr_t, UnsafePointer[C.char]](cp)
 
 
-fn inet_aton(cp: UnsafePointer[C.char], addr: in_addr) -> C.int:
+fn inet_aton(cp: UnsafePointer[C.char], addr: UnsafePointer[in_addr]) -> C.int:
     """Libc POSIX `inet_aton` function.
 
     Args:
@@ -599,7 +599,7 @@ fn inet_aton(cp: UnsafePointer[C.char], addr: in_addr) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3.html).
         Fn signature: `int inet_aton(const char *cp, struct in_addr *inp)`.
     """
-    return external_call["inet_aton", C.int, UnsafePointer[C.char], in_addr](
+    return external_call["inet_aton", C.int, UnsafePointer[C.char], UnsafePointer[in_addr]](
         cp, addr
     )
 
@@ -958,7 +958,7 @@ fn inet_pton(address_family: Int, address: String) -> Int:
 
     var ip_buf = UnsafePointer[C.void].alloc(ip_buf_size)
     _ = inet_pton(
-        rebind[C.int](address_family), address.unsafe_cstr_ptr(), ip_buf
+        rebind[C.int](address_family), address.unsafe_ptr().bitcast[C.char](), ip_buf
     )
     return int(ip_buf.bitcast[C.u_int]()[])
 
@@ -1500,26 +1500,26 @@ fn _printf[
 
 
 fn _printf[callee: StringLiteral](format: String) -> C.int:
-    return _printf[callee](format.unsafe_cstr_ptr())
+    return _printf[callee](format.unsafe_ptr().bitcast[C.char]())
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType
 ](format: String, arg0: T0) -> C.int:
-    return _printf[callee, T0](format.unsafe_cstr_ptr(), arg0)
+    return _printf[callee, T0](format.unsafe_ptr().bitcast[C.char](), arg0)
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType
 ](format: String, arg0: T0, arg1: T1) -> C.int:
-    return _printf[callee, T0, T1](format.unsafe_cstr_ptr(), arg0, arg1)
+    return _printf[callee, T0, T1](format.unsafe_ptr().bitcast[C.char](), arg0, arg1)
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType
 ](format: String, arg0: T0, arg1: T1, arg2: T2) -> C.int:
     return _printf[callee, T0, T1, T2](
-        format.unsafe_cstr_ptr(), arg0, arg1, arg2
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2
     )
 
 
@@ -1527,7 +1527,7 @@ fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
 ](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3) -> C.int:
     return _printf[callee, T0, T1, T2, T3](
-        format.unsafe_cstr_ptr(), arg0, arg1, arg2, arg3
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3
     )
 
 
@@ -1540,7 +1540,7 @@ fn _printf[
     T4: AnyTrivialRegType,
 ](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4) -> C.int:
     return _printf[callee, T0, T1, T2, T3, T4](
-        format.unsafe_cstr_ptr(), arg0, arg1, arg2, arg3, arg4
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3, arg4
     )
 
 
@@ -1556,7 +1556,7 @@ fn _printf[
     format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5
 ) -> C.int:
     return _printf[callee, T0, T1, T2, T3, T4, T5](
-        format.unsafe_cstr_ptr(), arg0, arg1, arg2, arg3, arg4, arg5
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3, arg4, arg5
     )
 
 
