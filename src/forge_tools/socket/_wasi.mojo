@@ -67,9 +67,17 @@ struct _WASISocket[
         """Send file descriptors to the socket."""
         return False
 
-    async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
+    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
         """Receive file descriptors from the socket."""
-        return None
+        return List[FileDescriptor]()
+
+    async fn send(self, buf: Span[UInt8]) -> UInt:
+        """Send a buffer of bytes to the socket."""
+        return 0
+
+    async fn recv(self, buf: Span[UInt8]) -> UInt:
+        """Receive up to `len(buf)` bytes into the buffer."""
+        return 0
 
     async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
         """Send a buffer of bytes to the socket."""

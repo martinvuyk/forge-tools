@@ -14,7 +14,7 @@
 
 from pathlib import Path, cwd
 from utils import Variant
-from collections import OptionalReg
+from collections import OptionalReg, Dict, Optional
 
 from .calendar import PythonCalendar
 

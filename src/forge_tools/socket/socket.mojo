@@ -341,7 +341,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     fn bind[T: SockAddr](self, address: T) raises:
+#     fn bind(self, address: sock_address) raises:
 #         """Bind the socket to address. The socket must not already be bound."""
 #         ...
 
@@ -352,7 +352,7 @@ struct SockPlatform:
 #         """
 #         ...
 
-#     async fn connect[T: SockAddr](self, address: T) raises:
+#     async fn connect(self, address: sock_address) raises:
 #         """Connect to a remote socket at address."""
 #         ...
 
@@ -366,16 +366,16 @@ struct SockPlatform:
 #         """Send file descriptor to the socket."""
 #         ...
 
-#     async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
+#     async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
 #         """Receive file descriptors from the socket."""
 #         ...
 
-#     async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+#     async fn send(self, buf: Span[UInt8]) -> UInt:
 #         """Send a buffer of bytes to the socket."""
 #         return 0
 
-#     async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
-#         """Receive up to max_len bytes into the buffer."""
+#     async fn recv(self, buf: Span[UInt8]) -> UInt:
+#         """Receive up to `len(buf)` bytes into the buffer."""
 #         return 0
 
 #     @staticmethod
@@ -384,12 +384,12 @@ struct SockPlatform:
 #         ...
 
 #     @staticmethod
-#     fn gethostbyname[T: SockAddr](name: String) -> Optional[T]:
+#     fn gethostbyname(name: String) -> Optional[sock_address]:
 #         """Map a hostname to its Address."""
 #         ...
 
 #     @staticmethod
-#     fn gethostbyaddr[T: SockAddr](address: T) -> Optional[String]:
+#     fn gethostbyaddr(address: sock_address) -> Optional[String]:
 #         """Map an Address to DNS info."""
 #         ...
 
@@ -408,7 +408,7 @@ struct SockPlatform:
 #         """Set the default timeout value."""
 #         ...
 
-#     async fn accept[T: SockAddr](self) -> (Self, T):
+#     async fn accept(self) -> (Self, sock_address):
 #         """Return a new socket representing the connection, and the address of
 #         the client.
 #         """
@@ -614,9 +614,9 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return (
-                await self._impl.unsafe_get[Self._linux_s]()[].recv_fds(maxfds)
-            )^
+            return await self._impl.unsafe_get[Self._linux_s]()[].recv_fds(
+                maxfds
+            )
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -690,9 +690,7 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return (
-                await self._impl.unsafe_get[Self._linux_s]()[].recv(max_len)
-            )^
+            return await self._impl.unsafe_get[Self._linux_s]()[].recv(max_len)
         else:
             constrained[False, "Platform not supported yet."]()
             return List[UInt8]()

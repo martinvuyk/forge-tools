@@ -77,6 +77,7 @@ fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T
 .
 """
 
+from os import abort
 from utils import Variant
 
 
@@ -227,7 +228,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self.err = err
 
     @always_inline
-    fn value(ref [_]self) -> ref [__lifetime_of(self)] T:
+    fn value(ref [_]self) -> ref [__lifetime_of(self._value)] T:
         """Retrieve a reference to the value of the `Result`.
 
         This check to see if the `Result` contains a value.
@@ -246,7 +247,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     @always_inline
     fn unsafe_value(
         ref [_]self,
-    ) -> ref [__lifetime_of(self)] T:
+    ) -> ref [__lifetime_of(self._value)] T:
         """Unsafely retrieve a reference to the value of the `Result`.
 
         This doesn't check to see if the `Result` contains a value.
@@ -258,19 +259,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             A reference to the contained data of the `Result` as a Reference[T].
         """
         debug_assert(bool(self), ".value() on empty Result")
-        return self._value[T]
-
-    @always_inline
-    fn _value_copy(self) -> T:
-        """Unsafely retrieve the value out of the `Result`.
-
-        Note: only used for Results when used in a parameter context
-        due to compiler bugs.  In general, prefer using the public `Result.value()`
-        function that returns a `Reference[T]`.
-        """
-
-        debug_assert(bool(self), ".value() on empty Result")
-        return self._value[T]
+        return self._value.unsafe_get[T]()[]
 
     fn take(inout self) -> T:
         """Move the value out of the `Result`.
@@ -483,7 +472,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self.err = err
 
     @always_inline
-    fn value(ref [_]self) -> ref [__lifetime_of(self)] T:
+    fn value(ref [_]self) -> ref [__lifetime_of(self._value)] T:
         """Retrieve a reference to the value of the `Result`.
 
         This check to see if the `Result` contains a value.
@@ -502,7 +491,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
     @always_inline
     fn unsafe_value(
         ref [_]self,
-    ) -> ref [__lifetime_of(self)] T:
+    ) -> ref [__lifetime_of(self._value)] T:
         """Unsafely retrieve a reference to the value of the `Result`.
 
         This doesn't check to see if the `Result` contains a value.
@@ -514,19 +503,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
             A reference to the contained data of the `Result` as a Reference[T].
         """
         debug_assert(bool(self), ".value() on empty Result")
-        return self._value[T]
-
-    @always_inline
-    fn _value_copy(self) -> T:
-        """Unsafely retrieve the value out of the `Result`.
-
-        Note: only used for Results when used in a parameter context
-        due to compiler bugs.  In general, prefer using the public `Result.value()`
-        function that returns a `Reference[T]`.
-        """
-
-        debug_assert(bool(self), ".value() on empty Result")
-        return self._value[T]
+        return self._value.unsafe_get[T]()[]
 
     fn take(inout self) -> T:
         """Move the value out of the `Result`.

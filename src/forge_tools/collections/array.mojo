@@ -68,8 +68,13 @@ from math import sqrt, acos, sin
 from algorithm import vectorize
 from bit import bit_ceil
 from sys import info
+from collections import Optional
 from collections._index_normalization import normalize_index
 from benchmark import clobber_memory
+from memory import UnsafePointer
+from utils import StaticIntTuple
+from os import abort
+
 
 # ===----------------------------------------------------------------------===#
 # Array
@@ -261,10 +266,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             fn closure[simd_width: Int](i: Int):
                 self.vec[i] = values[i]
 
+            self.capacity_left = 0
             vectorize[
                 closure, 1, size=capacity, unroll_factor = Self._slice_simd_size
             ]()
-            self.capacity_left = 0
         else:
             self.vec = Self._vec_type(0)
             self.capacity_left = capacity
@@ -305,13 +310,13 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             fn closure[simd_width: Int](i: Int):
                 self.vec[i] = values[i]
 
+            self.capacity_left = 0
             vectorize[
                 closure,
                 1,
                 size = min(size, capacity),
                 unroll_factor = Self._slice_simd_size,
             ]()
-            self.capacity_left = 0
         elif size == Self.simd_size:
             self.vec = rebind[Self._vec_type](values)
             Self._mask_vec_size(self.vec, length)
@@ -362,13 +367,6 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             fn closure[simd_width: Int](i: Int):
                 self.vec[i] = other.vec[i].cast[T]()
 
-            vectorize[
-                closure,
-                1,
-                size = min(other._vec_type.size, Self.simd_size),
-                unroll_factor = Self._slice_simd_size,
-            ]()
-
             @parameter
             if other.capacity > capacity:
                 Self._mask_vec_capacity_delta(self.vec)
@@ -377,6 +375,13 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 self.capacity_left = capacity - other.capacity
             else:
                 self.capacity_left = 0
+
+            vectorize[
+                closure,
+                1,
+                size = min(other._vec_type.size, Self.simd_size),
+                unroll_factor = Self._slice_simd_size,
+            ]()
 
     fn __init__(
         inout self,
@@ -401,7 +406,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         if unsafe_simd_size:
             var ptr = unsafe_pointer
-            self.vec = ptr.simd_strided_load[T, Self.simd_size](1)
+            self.vec = ptr.load[T, width = Self.simd_size]()
             self.capacity_left = capacity - length
             return
 
@@ -451,7 +456,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             "Array capacity must be power of 2.",
         ]()
         constrained[size == capacity, "Size must be == capacity."]()
-        self.vec = Self._vec_type.load(existing.steal_data())
+        self.vec = existing.steal_data().load[T, width = Self.simd_size]()
         self.capacity_left = 0
 
     @always_inline
@@ -956,8 +961,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         for i in range(Self.simd_size // size):
-            ptr.offset(i * size).simd_strided_store[T, size](
-                self.vec.slice[size, offset = i * size](), 1
+            (ptr + i * size).store[T, width=size](
+                self.vec.slice[size, offset = i * size]()
             )
 
         return ptr
@@ -1891,9 +1896,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         for i in range(Self.simd_size // size):
-            res_p.offset(i * size).simd_strided_store[T, size](
-                SIMD[T, size](0), 1
-            )
+            (res_p + i * size).store[T, width=size](SIMD[T, size](0))
         var s_p = self.unsafe_ptr()
         var idx = 0
         for i in range(len(self)):

@@ -12,6 +12,7 @@
 # ===----------------------------------------------------------------------=== #
 """`DateTime` and `Date` String parsing module."""
 
+from collections import Optional
 from .timezone import (
     TimeZone,
     ZoneInfo,

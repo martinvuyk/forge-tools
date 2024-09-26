@@ -19,7 +19,7 @@
         https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
 """
 
-from collections import OptionalReg
+from collections import Optional
 
 from .zoneinfo import (
     Offset,
