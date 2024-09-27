@@ -98,6 +98,10 @@ trait SocketInterface[
         """Create a new socket object."""
         ...
 
+   fn __init__(inout self, fd: FileDescriptor):
+       """Create a new socket object from an open `FileDescriptor`."""
+       ...
+
     fn close(owned self) raises:
         """Closes the Socket."""
         ...
@@ -176,15 +180,17 @@ trait SocketInterface[
         """Map a service name and a protocol name to a port number."""
         ...
 
-    fn getdefaulttimeout(self) -> Optional[SockTime]:
+    @staticmethod
+    fn getdefaulttimeout() -> Optional[Float64]:
         """Get the default timeout value."""
         ...
 
-    fn setdefaulttimeout(self, value: SockTime) -> Bool:
+    @staticmethod
+    fn setdefaulttimeout(value: Optional[Float64]) -> Bool:
         """Set the default timeout value."""
         ...
 
-    fn settimeout(self, value: SockTime) -> Bool:
+    fn settimeout(self, value: Optional[Float64]) -> Bool:
         """Set the socket timeout value."""
         ...
 

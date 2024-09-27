@@ -319,11 +319,11 @@ alias IPPROTO_DDP = 37
 """Datagram Delivery Protocol."""
 alias IPPROTO_IDPR_CMTP = 38
 """IDPR Control Message Transport."""
-alias IPPROTO_IPv6 = 41
+alias IPPROTO_IPV6 = 41
 """Internet Protocol, version 6."""
-alias IPPROTO_IPv6_Route = 43
+alias IPPROTO_IPV6_ROUTE = 43
 """Routing Header for IPv6."""
-alias IPPROTO_IPv6_Frag = 44
+alias IPPROTO_IPV6_FRAG = 44
 """Fragment Header for IPv6."""
 alias IPPROTO_IDRP = 45
 """Inter_Domain Routing Protocol."""
@@ -337,11 +337,11 @@ alias IPPROTO_IPSEC_AH = 51
 """Authentication Header [RFC2402]."""
 alias IPPROTO_SKIP = 57
 """SKIP."""
-alias IPPROTO_IPv6_ICMP = 58
+alias IPPROTO_IPV6_ICMP = 58
 """ICMP for IPv6."""
-alias IPPROTO_IPv6_NoNxt = 59
+alias IPPROTO_IPV6_NONXT = 59
 """No Next Header for IPv6."""
-alias IPPROTO_IPv6_Opts = 60
+alias IPPROTO_IPV6_OPTS = 60
 """Destination Options for IPv6."""
 alias IPPROTO_RSPF_CPHB = 73
 """Radio Shortest Path First (officially CPHB)."""
@@ -373,15 +373,15 @@ alias IPPROTO_SCTP = 132
 """Stream Control Transmission Protocol."""
 alias IPPROTO_FC = 133
 """Fibre Channel."""
-alias IPPROTO_Mobility_Header = 135
+alias IPPROTO_MOBILITY_HEADER = 135
 """Mobility Support for IPv6 [RFC3775]."""
-alias IPPROTO_UDPLite = 136
+alias IPPROTO_UDPLITE = 136
 """UDP_Lite [RFC3828]."""
-alias IPPROTO_MPLS_in_IP = 137
+alias IPPROTO_MPLS_IN_IP = 137
 """MPLS_in_IP [RFC4023]."""
 alias IPPROTO_HIP = 139
 """Host Identity Protocol."""
-alias IPPROTO_Shim6 = 140
+alias IPPROTO_SHIM6 = 140
 """Shim6 Protocol [RFC5533]."""
 alias IPPROTO_WESP = 141
 """Wrapped Encapsulating Security Payload."""

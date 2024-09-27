@@ -333,6 +333,10 @@ struct SockPlatform:
 #         """Create a new socket object."""
 #         ...
 
+#    fn __init__(inout self, fd: FileDescriptor):
+#        """Create a new socket object from an open `FileDescriptor`."""
+#        ...
+
 #     fn close(owned self) raises:
 #         """Closes the Socket."""
 #         ...
@@ -411,15 +415,17 @@ struct SockPlatform:
 #         """Map a service name and a protocol name to a port number."""
 #         ...
 
-#     fn getdefaulttimeout(self) -> Optional[SockTime]:
+#     @staticmethod
+#     fn getdefaulttimeout() -> Optional[Float64]:
 #         """Get the default timeout value."""
 #         ...
 
-#     fn setdefaulttimeout(self, value: SockTime) -> Bool:
+#     @staticmethod
+#     fn setdefaulttimeout(value: Optional[Float64]) -> Bool:
 #         """Set the default timeout value."""
 #         ...
 
-#     fn settimeout(self, value: SockTime) -> Bool:
+#     fn settimeout(self, value: Optional[Float64]) -> Bool:
 #         """Set the socket timeout value."""
 #         ...
 
@@ -534,6 +540,18 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             self._impl = Self._linux_s()
 
+    fn __init__(inout self, fd: FileDescriptor):
+        """Create a new socket object from an open `FileDescriptor`."""
+    
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            self._impl = Self._linux_s(fd)
+        elif sock_platform is SockPlatform.UNIX:
+            self._impl = Self._unix_s(fd)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            self._impl = Self._linux_s(fd)
+
     fn close(owned self) raises:
         """Closes the Socket."""
 
@@ -571,15 +589,13 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var conn_addr = await self._impl.unsafe_get[
+            var conn_addr = self._impl.unsafe_get[
                 Self._linux_s
             ]()[].setsockopt(level, option_name, option_value)
-            return Self(conn_addr[0]), conn_addr[1]
         elif sock_platform is SockPlatform.UNIX:
-            var conn_addr = await self._impl.unsafe_get[
+            var conn_addr = self._impl.unsafe_get[
                 Self._unix_s
             ]()[].setsockopt(level, option_name, option_value)
-            return Self(conn_addr[0]), conn_addr[1]
         else:
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to set socket options.")
@@ -891,27 +907,29 @@ recv.2.en.html#The_flags_argument).
         alias S = StringSlice[ImmutableAnyLifetime]
         return String(S(unsafe_from_utf8_ptr=ptr, len=length))
 
-    fn getdefaulttimeout(self) -> SockTime:
-        """Get the default timeout value.
+    @staticmethod
+    fn getdefaulttimeout() -> Optional[Float64]:
+        """Returns the default timeout for new socket objects (in seconds).
 
         Returns:
-            The default timeout.
+            The default timeout in seconds.
         """
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]()[].getdefaulttimeout()
+            return Self._linux_s.getdefaulttimeout()
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]()[].getdefaulttimeout()
+            return Self._unix_s.getdefaulttimeout()
         else:
             constrained[False, "Platform not supported yet."]()
             return None
 
-    fn setdefaulttimeout(self, value: SockTime) -> Bool:
-        """Set the default timeout value.
+    @staticmethod
+    fn setdefaulttimeout(value: Optional[Float64]) -> Bool:
+        """Set the default timeout value (in seconds).
 
         Args:
-            value: The timeout.
+            value: The timeout in seconds.
 
         Returns:
             True on success, False otherwise.
@@ -919,18 +937,18 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]()[].setdefaulttimeout(
+            return Self._linux_s.setdefaulttimeout(
                 value
             )
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]()[].setdefaulttimeout(
+            return Self._unix_s.setdefaulttimeout(
                 value
             )
         else:
             constrained[False, "Platform not supported yet."]()
             return False
 
-    fn settimeout(self, value: SockTime) -> Bool:
+    fn settimeout(self, value: Optional[Float64]) -> Bool:
         """Set the socket timeout value.
 
         Args:
@@ -989,21 +1007,23 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]()[].getaddrinfo(
+            return Self._linux_s.getaddrinfo(
                 address, flags
             )
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]()[].getaddrinfo(
+            return Self._unix_s.getaddrinfo(
                 address, flags
             )
         else:
             constrained[False, "Platform not supported yet."]()
-            return False
+            return List[
+        (SockFamily, SockType, SockProtocol, String, sock_address)
+    ]()
 
     @staticmethod
     fn create_connection(
         address: IPv4Addr,
-        timeout: Optional[SockTime] = None,
+        timeout: Optional[Float64] = None,
         source_address: IPv4Addr = ("", 0),
         *,
         all_errors: Bool = False,
@@ -1040,7 +1060,7 @@ nf-ws2tcpip-getaddrinfo).
     @staticmethod
     fn create_connection(
         address: IPv6Addr,
-        timeout: Optional[SockTime] = None,
+        timeout: Optional[Float64] = None,
         source_address: IPv6Addr = IPv6Addr("", 0),
         *,
         all_errors: Bool = False,
@@ -1231,100 +1251,25 @@ nf-ws2tcpip-getaddrinfo).
         Returns:
             A pair of IPv6 and IPv4 sockets.
         """
+        alias S = Socket[SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr, sock_platform]
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.create_server(
+            var res = Self._linux_s.create_server(
                 address,
                 backlog=backlog,
                 reuse_port=reuse_port,
                 dualstack_ipv6=dualstack_ipv6,
             )
+            return Self(res[0]), S(res[1])
         elif sock_platform is SockPlatform.UNIX:
-            return Self._unix_s.create_server(
+            var res = Self._unix_s.create_server(
                 address,
                 backlog=backlog,
                 reuse_port=reuse_port,
                 dualstack_ipv6=dualstack_ipv6,
             )
+            return Self(res[0]), S(res[1])
         else:
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
-
-
-# TODO: enum
-@register_passable("trivial")
-struct SockTimeUnits:
-    alias MICROSECONDS = "MICROSECONDS"
-    """MICROSECONDS."""
-    alias MILISECONDS = "MILISECONDS"
-    """MILISECONDS."""
-    alias SECONDS = "SECONDS"
-    """SECONDS."""
-    alias MINUTES = "MINUTES"
-    """MINUTES."""
-    var _selected: StringLiteral
-
-    fn __init__(inout self, selected: StringLiteral):
-        """Construct an instance.
-
-        Args:
-            selected: The selected value.
-        """
-        debug_assert(
-            selected
-            in (
-                Self.MICROSECONDS,
-                Self.MILISECONDS,
-                Self.SECONDS,
-                Self.MINUTES,
-            ),
-            "selected value is not valid",
-        )
-        self._selected = selected
-
-    fn __is__(self, value: StringLiteral) -> Bool:
-        """Whether the selected value is the given value.
-
-        Args:
-            value: The value.
-
-        Returns:
-            The result.
-        """
-        return self._selected == value
-
-
-@register_passable("trivial")
-struct SockTime:
-    """SockTime."""
-
-    var time: Int
-    """Time."""
-    var unit: SockTimeUnits
-    """Unit."""
-
-    fn __init__(
-        inout self, value: Int, unit: SockTimeUnits = SockTimeUnits.MINUTES
-    ):
-        """Construct a SockTime.
-
-        Args:
-            value: The value for the timeout.
-            unit: The SockTimeUnits instance to measure by.
-        """
-        debug_assert(
-            unit._selected
-            in (
-                SockTimeUnits.MICROSECONDS,
-                SockTimeUnits.MILISECONDS,
-                SockTimeUnits.SECONDS,
-                SockTimeUnits.MINUTES,
-            ),
-            "unit is not in SockTimeUnits",
-        )
-        self.time = value
-        self.unit = unit
-
-
-alias _DEFAULT_SOCKET_TIMEOUT = SockTime(1, SockTimeUnits.MINUTES)

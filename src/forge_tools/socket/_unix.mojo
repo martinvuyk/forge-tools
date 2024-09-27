@@ -1,6 +1,6 @@
 from collections import Optional
 from memory import UnsafePointer, stack_allocation
-from utils import Span, StaticTuple
+from utils import Span, StaticTuple, StringSlice
 from sys.intrinsics import _type_is_eq
 from sys import sizeof
 from .socket import (
@@ -8,8 +8,6 @@ from .socket import (
     SockFamily,
     SockType,
     SockProtocol,
-    SockTime,
-    _DEFAULT_SOCKET_TIMEOUT,
 )
 from .address import SockAddr, IPv4Addr, IPv6Addr
 from forge_tools.ffi.c import (
@@ -29,10 +27,10 @@ from forge_tools.ffi.c import (
     SOCK_RAW,
     SOCK_RDM,
     SOCK_SEQPACKET,
-    TCP,
-    UDP,
-    SCTP,
-    UDPLite,
+    IPPROTO_TCP,
+    IPPROTO_UDP,
+    IPPROTO_SCTP,
+    IPPROTO_UDPLITE,
     C,
     socket,
     htons,
@@ -54,6 +52,13 @@ from forge_tools.ffi.c import (
     IPPROTO_IPV6,
     IPV6_V6ONLY,
     NULL,
+    setsockopt,
+    addrinfo,
+    getaddrinfo,
+    strlen,
+    SOL_SOCKET,
+    SO_REUSEADDR,
+    SO_REUSEPORT,
 )
 
 
@@ -79,6 +84,10 @@ struct _UnixSocket[
             raise Error("Failed to create socket.")
         self.fd = FileDescriptor(int(fd))
 
+    fn __init__(inout self, fd: FileDescriptor):
+        """Create a new socket object from an open `FileDescriptor`."""
+        self.fd = fd
+
     fn close(owned self) raises:
         """Closes the Socket."""
         _ = shutdown(self.fd.value, SHUT_RDWR)
@@ -95,9 +104,11 @@ struct _UnixSocket[
 
     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
         """Set socket options."""
-        var ptr = UnsafePointer[Int].address_of(option_value).bitcast[C.void]()
+        var ptr = UnsafePointer[Int](stack_allocation[1, Int]())
+        ptr[0] = option_value
+        var cvoid = ptr.bitcast[C.void]()
         var s = sizeof[Int]()
-        if setsockopt(self.fd.value, level, option_name, option_value, s) == -1:
+        if setsockopt(self.fd.value, level, option_name, cvoid, s) == -1:
             raise Error("Failed to set socket options.")
 
     fn bind(self, address: sock_address) raises:
@@ -175,8 +186,7 @@ struct _UnixSocket[
                 raise Error("Wrong Address Family for this socket.")
             var ptr = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
             var addr_str = String(ptr=ptr.bitcast[UInt8](), len=int(sin_size))
-            var ip_addr = rebind[sock_address](IPv4Addr(host_port=addr_str^))
-            return Self(fd=int(fd)), ip_addr^
+            return Self(fd=int(fd)), sock_address(addr_str^)
         else:
             constrained[False, "currently unsupported Address type"]()
             raise Error("Failed to create socket.")
@@ -238,15 +248,17 @@ struct _UnixSocket[
         """Map a service name and a protocol name to a port number."""
         return None
 
-    fn getdefaulttimeout(self) -> Optional[SockTime]:
+    @staticmethod
+    fn getdefaulttimeout() -> Optional[Float64]:
         """Get the default timeout value."""
         return None
 
-    fn setdefaulttimeout(self, value: SockTime) -> Bool:
+    @staticmethod
+    fn setdefaulttimeout(value: Optional[Float64]) -> Bool:
         """Set the default timeout value."""
         return False
 
-    fn settimeout(self, value: SockTime) -> Bool:
+    fn settimeout(self, value: Optional[Float64]) -> Bool:
         """Set the socket timeout value."""
         return False
 
@@ -264,43 +276,47 @@ struct _UnixSocket[
             https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
         """
         alias P = SockProtocol
-        var info = List[SockFamily, SockType, P, sock_address, String]()
+        alias T = Tuple[SockFamily, SockType, P, String, sock_address]
+        var info = List[T]()
         var hints = addrinfo()
         hints.ai_family = Self._sock_family
         hints.ai_socktype = Self._sock_type
         hints.ai_flags = flags
         hints.ai_protocol = Self._sock_protocol
-        var hints_ptr = UnsafePointer[addrinfo].address_of(hints)
-        var servname = String("")
-        var serv_ptr = servname.unsafe_ptr().bitcast[C.char]()
+        var hints_p = UnsafePointer[addrinfo].address_of(hints)
+        var nodename = str(address)
+        var nodename_p = nodename.unsafe_ptr().bitcast[C.char]()
+        var servname_p = NULL.bitcast[C.char]()
         var result = addrinfo()
-        var res_ptr = UnsafePointer[addrinfo].address_of(result)
-        var err = getaddrinfo(C.void(), serv_ptr, hints_ptr, res_ptr)
+        alias UP = UnsafePointer
+        var res_p = int(UP[addrinfo].address_of(result))
+        var res_p_p = UP[Int].address_of(res_p)
+        var err = getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
         if err != 0:
             raise Error("Error in getaddrinfo(). Code: " + str(err))
         var next_addr = result.ai_next
         while next_addr != NULL:
-            ai_flags
-            var af = _parse_unix_sock_family_constant(result.ai_family)
-            var st = _parse_unix_sock_sock_type_constant(result.ai_socktype)
-            var pt = _parse_unix_sock_protocol_constant(result.ai_protocol)
-            var addrlen = result.ai_addrlen
-            var addr_ptr = result.ai_addr
+            var af = _parse_unix_sock_family_constant(int(result.ai_family))
+            var st = _parse_unix_sock_type_constant(int(result.ai_socktype))
+            var pt = _parse_unix_sock_protocol_constant(int(result.ai_protocol))
+            var addrlen = int(result.ai_addrlen)
+            var addr_ptr = result.ai_addr.bitcast[UInt8]()
             alias S = StringSlice[ImmutableAnyLifetime]
             var addr = String(S(unsafe_from_utf8_ptr=addr_ptr, len=addrlen))
             var can = String()
             if flags != 0:
                 var p = result.ai_canonname
-                can = String(S(unsafe_from_utf8_ptr=p, len=strlen(p)))
-            info.append((af, st, pt, addr, can^))
+                var l = int(strlen(p))
+                can = String(S(unsafe_from_utf8_ptr=p.bitcast[UInt8](), len=l))
+            info.append(T(af, st, rebind[P](pt), can^, sock_address(addr^)))
             result = next_addr.bitcast[addrinfo]()[0]
             next_addr = result.ai_next
-        return info^
+        return rebind[List[Tuple[SockFamily, SockType, SockProtocol, String, sock_address]]](info^)
 
     @staticmethod
     fn create_connection(
         address: IPv4Addr,
-        timeout: Optional[SockTime] = None,
+        timeout: Optional[Float64] = None,
         source_address: IPv4Addr = IPv4Addr(),
         *,
         all_errors: Bool = False,
@@ -312,14 +328,14 @@ struct _UnixSocket[
         var errors = List[String]()
         var idx = 0
         var time = timeout.value() if timeout else Self.getdefaulttimeout()
-        for res in Self.getaddrinfo(address):
+        for res in Self.getaddrinfo(rebind[sock_address](address)):
             try:
                 var socket = Self()
-                socket.settimeout(time)
-                socket.bind(source_address)
-                socket.connect(res[4])
+                _ = socket.settimeout(time)
+                socket.bind(rebind[sock_address](source_address))
+                await socket.connect(res[][4])
                 return socket^
-            except Error as e:
+            except e:
                 errors[idx] = str(e)
                 if all_errors:
                     idx += 1
@@ -329,7 +345,7 @@ struct _UnixSocket[
     @staticmethod
     fn create_connection(
         address: IPv6Addr,
-        timeout: Optional[SockTime] = None,
+        timeout: Optional[Float64] = None,
         source_address: IPv6Addr = IPv6Addr(),
         *,
         all_errors: Bool = False,
@@ -341,14 +357,14 @@ struct _UnixSocket[
         var errors = List[String]()
         var idx = 0
         var time = timeout.value() if timeout else Self.getdefaulttimeout()
-        for res in Self.getaddrinfo(address):
+        for res in Self.getaddrinfo(rebind[sock_address](address)):
             try:
                 var socket = Self()
-                socket.settimeout(time)
-                socket.bind(source_address)
-                socket.connect(res[4])
+                _ = socket.settimeout(time)
+                socket.bind(rebind[sock_address](source_address))
+                await socket.connect(res[][4])
                 return socket^
-            except Error as e:
+            except e:
                 errors[idx] = str(e)
                 if all_errors:
                     idx += 1
@@ -369,8 +385,8 @@ struct _UnixSocket[
         socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         if reuse_port:
             socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
-        socket.bind(address)
-        server.listen(backlog=backlog.value() if backlog else 0)
+        socket.bind(rebind[sock_address](address))
+        socket.listen(backlog=backlog.value() if backlog else 0)
         return socket^
 
     @staticmethod
@@ -386,11 +402,11 @@ struct _UnixSocket[
         constrained[cond, "sock_address must be IPv6Addr"]()
         var socket = Self()
         socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
+        socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
         if reuse_port:
             socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
-        socket.bind(address)
-        server.listen(backlog=backlog.value() if backlog else 0)
+        socket.bind(rebind[sock_address](address))
+        socket.listen(backlog=backlog.value() if backlog else 0)
         return socket^
 
     @staticmethod
@@ -402,29 +418,27 @@ struct _UnixSocket[
         reuse_port: Bool = False,
     ) raises -> (
         Self,
-        Socket[
+        _UnixSocket[
             SockFamily.AF_INET,
             sock_type,
             sock_protocol,
-            IPv4Addr,
-            sock_platform,
+            IPv4Addr
         ],
     ):
         """Create a socket, bind it to a specified address, and listen."""
-        alias F = SockFamily.AF_INET
-        alias S = Socket[F, sock_type, sock_protocol, IPv4Addr, sock_platform]
+        alias S = _UnixSocket[SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr]
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
         var ipv6_sock = Self()
         ipv6_sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         if dualstack_ipv6:
-            sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
+            ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
         else:
-            sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
+            ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
         if reuse_port:
             ipv6_sock.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
-        ipv6_sock.bind(address)
-        server.listen(backlog=backlog.value() if backlog else 0)
+        ipv6_sock.bind(rebind[sock_address](address))
+        ipv6_sock.listen(backlog=backlog.value() if backlog else 0)
         return ipv6_sock^, S(fd=ipv6_sock.fd) if dualstack_ipv6 else S()
 
 
@@ -475,13 +489,13 @@ fn _get_unix_sock_type_constant(sock_type: SockType) -> Int:
 @always_inline("nodebug")
 fn _get_unix_sock_protocol_constant(sock_protocol: SockProtocol) -> Int:
     if sock_protocol is SockProtocol.TCP:
-        return TCP
+        return IPPROTO_TCP
     elif sock_protocol is SockProtocol.UDP:
-        return UDP
+        return IPPROTO_UDP
     elif sock_protocol is SockProtocol.SCTP:
-        return SCTP
+        return IPPROTO_SCTP
     elif sock_protocol is SockProtocol.IPPROTO_UDPLITE:
-        return UDPLite
+        return IPPROTO_UDPLITE
     else:
         return -1
 
@@ -532,13 +546,13 @@ fn _parse_unix_sock_type_constant(sock_type: Int) -> SockType:
 
 @always_inline("nodebug")
 fn _parse_unix_sock_protocol_constant(sock_protocol: Int) -> SockProtocol:
-    if sock_protocol == TCP:
+    if sock_protocol == IPPROTO_TCP:
         return SockProtocol.TCP
-    elif sock_protocol == UDP:
+    elif sock_protocol == IPPROTO_UDP:
         return SockProtocol.UDP
-    elif sock_protocol == SCTP:
+    elif sock_protocol == IPPROTO_SCTP:
         return SockProtocol.SCTP
-    elif sock_protocol == UDPLite:
+    elif sock_protocol == IPPROTO_UDPLITE:
         return SockProtocol.IPPROTO_UDPLITE
     else:
         return ""

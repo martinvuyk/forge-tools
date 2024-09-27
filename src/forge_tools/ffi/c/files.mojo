@@ -5,7 +5,7 @@ from memory import UnsafePointer
 from .types import *
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn fcntl(fildes: C.int, cmd: C.int) -> C.int:
     """Libc POSIX `fcntl` function.
 
@@ -39,7 +39,7 @@ fn close(fildes: C.int) -> C.int:
     return external_call["close", C.int, C.int](fildes)
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn open(path: UnsafePointer[C.char], oflag: C.int) -> C.int:
     """Libc POSIX `open` function.
 
@@ -58,7 +58,7 @@ fn open(path: UnsafePointer[C.char], oflag: C.int) -> C.int:
     return external_call["open", C.int, UP[C.char], C.int](path, oflag)
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn openat(fd: C.int, path: UnsafePointer[C.char], oflag: C.int) -> C.int:
     """Libc POSIX `open` function.
 
@@ -329,7 +329,7 @@ fn fgets(
     )
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn dprintf(fildes: C.int, format: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `dprintf` function.
 
@@ -349,7 +349,7 @@ fn dprintf(fildes: C.int, format: UnsafePointer[C.char]) -> C.int:
     return external_call["dprintf", C.int, C.int, UP[C.char]](fildes, format)
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `fprintf` function.
 
@@ -369,44 +369,314 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
     return external_call["fprintf", C.int, UP[FILE], UP[C.char]](stream, format)
 
 
-@always_inline
+# FIXME: this should take in  *args: *T
+# @always_inline
+# fn printf[
+#     *T: AnyType
+# ](format: UnsafePointer[C.char], *args: *T) -> C.int:
+#     """Libc POSIX `printf` function.
+
+#     Args:
+#         format: The format string.
+#         args: The args to send to the `printf` function.
+
+#     Returns:
+#         The number of bytes written.
+
+#     Notes:
+#         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+#     """
+#     alias UP = UnsafePointer
+#     return external_call["printf", C.int, UP[C.char], *T](format, *args)
+
+# FIXME: this should take in  *args: *T
+# @always_inline
+# fn printf[*T: AnyType](format: String, *args: *T) -> C.int:
+#     """Libc POSIX `printf` function.
+
+#     Args:
+#         format: The format string.
+#         args: The args to send to the `printf` function.
+
+#     Returns:
+#         The number of bytes written.
+
+#     Notes:
+#         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+#     """
+#     return printf(format.unsafe_ptr().bitcast[C.char](), args)
+
+
+# printf's family function(s) this is used to implement the rest of the printf's family
+fn _printf[callee: StringLiteral](format: UnsafePointer[C.char]) -> C.int:
+    return external_call[callee, C.int, UnsafePointer[C.char]](format)
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType
+](format: UnsafePointer[C.char], arg0: T0) -> C.int:
+    return external_call[callee, C.int, UnsafePointer[C.char], T0](format, arg0)
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType, T1: AnyType
+](format: UnsafePointer[C.char], arg0: T0, arg1: T1) -> C.int:
+    return external_call[callee, C.int, UnsafePointer[C.char], T0, T1](
+        format, arg0, arg1
+    )
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType
+](format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2) -> C.int:
+    return external_call[callee, C.int, UnsafePointer[C.char], T0, T1, T2](
+        format, arg0, arg1, arg2
+    )
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
+](
+    format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2, arg3: T3
+) -> C.int:
+    return external_call[callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3](
+        format, arg0, arg1, arg2, arg3
+    )
+
+
+fn _printf[
+    callee: StringLiteral,
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+](
+    format: UnsafePointer[C.char],
+    arg0: T0,
+    arg1: T1,
+    arg2: T2,
+    arg3: T3,
+    arg4: T4,
+) -> C.int:
+    return external_call[
+        callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3, T4
+    ](format, arg0, arg1, arg2, arg3, arg4)
+
+
+fn _printf[
+    callee: StringLiteral,
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+    T5: AnyTrivialRegType,
+](
+    format: UnsafePointer[C.char],
+    arg0: T0,
+    arg1: T1,
+    arg2: T2,
+    arg3: T3,
+    arg4: T4,
+    arg5: T5,
+) -> C.int:
+    return external_call[
+        callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3, T4, T5
+    ](format, arg0, arg1, arg2, arg3, arg4, arg5)
+
+
+fn _printf[callee: StringLiteral](format: String) -> C.int:
+    return _printf[callee](format.unsafe_ptr().bitcast[C.char]())
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType
+](format: String, arg0: T0) -> C.int:
+    return _printf[callee, T0](format.unsafe_ptr().bitcast[C.char](), arg0)
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType, T1: AnyType
+](format: String, arg0: T0, arg1: T1) -> C.int:
+    return _printf[callee, T0, T1](
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1
+    )
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType
+](format: String, arg0: T0, arg1: T1, arg2: T2) -> C.int:
+    return _printf[callee, T0, T1, T2](
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2
+    )
+
+
+fn _printf[
+    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
+](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3) -> C.int:
+    return _printf[callee, T0, T1, T2, T3](
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3
+    )
+
+
+fn _printf[
+    callee: StringLiteral,
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4) -> C.int:
+    return _printf[callee, T0, T1, T2, T3, T4](
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3, arg4
+    )
+
+
+fn _printf[
+    callee: StringLiteral,
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+    T5: AnyTrivialRegType,
+](
+    format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5
+) -> C.int:
+    return _printf[callee, T0, T1, T2, T3, T4, T5](
+        format.unsafe_ptr().bitcast[C.char](),
+        arg0,
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
+    )
+
+
+fn printf(format: UnsafePointer[C.char]) -> C.int:
+    return _printf["printf"](format)
+
+
+fn printf[T0: AnyType](format: UnsafePointer[C.char], arg0: T0) -> C.int:
+    return _printf["printf", T0](format, arg0)
+
+
 fn printf[
-    *T: AnyTrivialRegType
-](format: UnsafePointer[C.char], *args: T) -> C.int:
-    """Libc POSIX `snprintf` function.
-
-    Args:
-        format: The format string.
-        args: The args to send to the `printf` function.
-
-    Returns:
-        The number of bytes written.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/printf.3.html)
-    """
-    alias UP = UnsafePointer
-    return external_call["printf", C.int, UP[C.char], T0](format, args)
+    T0: AnyType, T1: AnyType
+](format: UnsafePointer[C.char], arg0: T0, arg1: T1) -> C.int:
+    return _printf["printf", T0, T1](format, arg0, arg1)
 
 
-@always_inline
-fn printf[*T: AnyTrivialRegType](format: String, *args: T) -> C.int:
-    """Libc POSIX `snprintf` function.
-
-    Args:
-        format: The format string.
-        args: The args to send to the `printf` function.
-
-    Returns:
-        The number of bytes written.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/printf.3.html)
-    """
-    return printf(format.unsafe_ptr().bitcast[C.char](), args)
+fn printf[
+    T0: AnyType, T1: AnyType, T2: AnyType
+](format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2) -> C.int:
+    return _printf["printf", T0, T1, T2](format, arg0, arg1, arg2)
 
 
-# TODO: this should take in  *args: *T
+fn printf[
+    T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
+](
+    format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2, arg3: T3
+) -> C.int:
+    return _printf["printf", T0, T1, T2, T3](format, arg0, arg1, arg2, arg3)
+
+
+fn printf[
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+](
+    format: UnsafePointer[C.char],
+    arg0: T0,
+    arg1: T1,
+    arg2: T2,
+    arg3: T3,
+    arg4: T4,
+) -> C.int:
+    return _printf["printf", T0, T1, T2, T3, T4](
+        format, arg0, arg1, arg2, arg3, arg4
+    )
+
+
+fn printf[
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+    T5: AnyTrivialRegType,
+](
+    format: UnsafePointer[C.char],
+    arg0: T0,
+    arg1: T1,
+    arg2: T2,
+    arg3: T3,
+    arg4: T4,
+    arg5: T5,
+) -> C.int:
+    return _printf["printf", T0, T1, T2, T3, T4, T5](
+        format, arg0, arg1, arg2, arg3, arg4, arg5
+    )
+
+
+fn printf(format: String) -> C.int:
+    return _printf["printf"](format)
+
+
+fn printf[T0: AnyType](format: String, arg0: T0) -> C.int:
+    return _printf["printf", T0](format, arg0)
+
+
+fn printf[
+    T0: AnyType, T1: AnyType
+](format: String, arg0: T0, arg1: T1) -> C.int:
+    return _printf["printf", T0, T1](format, arg0, arg1)
+
+
+fn printf[
+    T0: AnyType, T1: AnyType, T2: AnyType
+](format: String, arg0: T0, arg1: T1, arg2: T2) -> C.int:
+    return _printf["printf", T0, T1, T2](format, arg0, arg1, arg2)
+
+
+fn printf[
+    T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
+](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3) -> C.int:
+    return _printf["printf", T0, T1, T2, T3](format, arg0, arg1, arg2, arg3)
+
+
+fn printf[
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4) -> C.int:
+    return _printf["printf", T0, T1, T2, T3, T4](
+        format, arg0, arg1, arg2, arg3, arg4
+    )
+
+
+fn printf[
+    T0: AnyTrivialRegType,
+    T1: AnyTrivialRegType,
+    T2: AnyTrivialRegType,
+    T3: AnyTrivialRegType,
+    T4: AnyTrivialRegType,
+    T5: AnyTrivialRegType,
+](
+    format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5
+) -> C.int:
+    return _printf["printf", T0, T1, T2, T3, T4, T5](
+        format, arg0, arg1, arg2, arg3, arg4, arg5
+    )
+
+
+# FIXME: this should take in  *args: *T
 fn snprintf(
     s: UnsafePointer[C.char],
     n: C.u_int,
@@ -433,7 +703,7 @@ fn snprintf(
     )
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn sprintf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `sprintf` function.
 
@@ -453,7 +723,7 @@ fn sprintf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
     return external_call["sprintf", C.int, UP[C.char], UP[C.char]](s, format)
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn fscanf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `fscanf` function.
 
@@ -473,7 +743,7 @@ fn fscanf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
     return external_call["fscanf", C.int, UP[FILE], UP[C.char]](stream, format)
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn scanf(format: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `scanf` function.
 
@@ -570,10 +840,13 @@ fn getline(
         Fn signature: `ssize_t getline(char **restrict lineptr,
             size_t *restrict n, FILE *restrict stream);`.
     """
-    alias UP = UnsafePointer
-    return external_call["getline", C.u_int, UP[F], UP[C.u_int], UP[FILE]](
-        lineptr, n, stream
-    )
+    return external_call[
+        "getline",
+        C.u_int,
+        UnsafePointer[UnsafePointer[FILE]],
+        UnsafePointer[C.u_int],
+        UnsafePointer[FILE],
+    ](lineptr, n, stream)
 
 
 fn pread(
@@ -777,7 +1050,7 @@ fn ferror(stream: UnsafePointer[FILE]) -> C.int:
 
 
 # TODO: add ioctl Options
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn ioctl(fildes: C.int, request: C.int) -> C.int:
     """Libc POSIX `ioctl` function.
 

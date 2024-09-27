@@ -1,5 +1,7 @@
 """C POSIX types."""
 
+from utils import StaticTuple
+
 # ===----------------------------------------------------------------------=== #
 # Base Types
 # ===----------------------------------------------------------------------=== #
@@ -75,7 +77,7 @@ struct in6_addr:
     """Incoming IPv6 Socket Address."""
 
     var s6_addr: StaticTuple[C.char, 16]
-    """Source IPv6 Address"""
+    """Source IPv6 Address."""
 
 
 @value

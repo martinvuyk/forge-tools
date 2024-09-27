@@ -1,13 +1,12 @@
 from collections import Optional
 from memory import UnsafePointer
+from sys.intrinsics import _type_is_eq
 from utils import Span
 from .socket import (
     # SocketInterface,
     SockFamily,
     SockType,
     SockProtocol,
-    SockTime,
-    _DEFAULT_SOCKET_TIMEOUT,
 )
 from .address import SockAddr, IPv4Addr, IPv6Addr
 
@@ -25,6 +24,10 @@ struct _AppleSocket[
     fn __init__(inout self) raises:
         """Create a new socket object."""
         raise Error("Failed to create socket.")
+
+    fn __init__(inout self, fd: FileDescriptor):
+        """Create a new socket object from an open `FileDescriptor`."""
+        self.fd = fd
 
     fn close(owned self) raises:
         """Closes the Socket."""
@@ -118,22 +121,24 @@ struct _AppleSocket[
         """Map a service name and a protocol name to a port number."""
         return None
 
-    fn getdefaulttimeout(self) -> Optional[SockTime]:
+    @staticmethod
+    fn getdefaulttimeout() -> Optional[Float64]:
         """Get the default timeout value."""
         return None
 
-    fn setdefaulttimeout(self, value: SockTime) -> Bool:
+    @staticmethod
+    fn setdefaulttimeout(value: Optional[Float64]) -> Bool:
         """Set the default timeout value."""
         return False
 
-    fn settimeout(self, value: SockTime) -> Bool:
+    fn settimeout(self, value: Optional[Float64]) -> Bool:
         """Set the socket timeout value."""
         return False
 
     @staticmethod
     fn create_connection(
         address: IPv4Addr,
-        timeout: Optional[SockTime] = None,
+        timeout: Optional[Float64] = None,
         source_address: IPv4Addr = IPv4Addr(("", 0)),
         *,
         all_errors: Bool = False,

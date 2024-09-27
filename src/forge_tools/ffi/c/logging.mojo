@@ -23,7 +23,7 @@ fn openlog(ident: UnsafePointer[C.char], logopt: C.int, facility: C.int):
     )
 
 
-# TODO: this should take in  *args: *T
+# FIXME: this should take in  *args: *T
 fn syslog(priority: C.int, message: UnsafePointer[C.char]):
     """Libc POSIX `syslog` function.
 

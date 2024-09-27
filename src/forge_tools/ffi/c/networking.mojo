@@ -340,6 +340,7 @@ fn recv(
     """Libc POSIX `recv` function.
 
     Args:
+        socket: The socket's file descriptor.
         buffer: A pointer to a buffer to store the recieved bytes.
         length: The amount of bytes to store in the buffer.
         flags: Specifies the type of message reception.
@@ -368,6 +369,7 @@ fn recvfrom(
     """Libc POSIX `recvfrom` function.
 
     Args:
+        socket: The socket's file descriptor.
         buffer: A pointer to a buffer to store the recieved bytes.
         length: The amount of bytes to store in the buffer.
         flags: Specifies the type of message reception.
@@ -385,15 +387,16 @@ fn recvfrom(
             size_t length, int flags, struct sockaddr *restrict address,
             socklen_t *restrict address_len)`.
     """
+    alias UP = UnsafePointer
     return external_call[
         "recvfrom",
         C.u_int,
         C.int,
-        UnsafePointer[C.void],
+        UP[C.void],
         C.u_int,
         C.int,
-        UnsafePointer[sockaddr],
-        UnsafePointer[socklen_t],
+        UP[sockaddr],
+        UP[socklen_t],
     ](socket, buffer, length, flags, address, address_len)
 
 
@@ -453,15 +456,10 @@ fn sendto(
             size_t length, int flags, const struct sockaddr *dest_addr,
             socklen_t dest_len)`.
     """
+    alias UP = UnsafePointer
+    alias I = C.int
     return external_call[
-        "sendto",
-        C.u_int,
-        C.int,
-        UnsafePointer[C.void],
-        C.u_int,
-        C.int,
-        UnsafePointer[sockaddr],
-        socklen_t,
+        "sendto", C.u_int, I, UP[C.void], C.u_int, I, UP[sockaddr], socklen_t
     ](socket, message, length, flags, dest_addr, dest_len)
 
 
@@ -483,11 +481,12 @@ fn shutdown(socket: C.int, how: C.int) -> C.int:
     return external_call["shutdown", C.int, C.int, C.int](socket, how)
 
 
+# FIXME: res should be res: UnsafePointer[UnsafePointer[addrinfo]]
 fn getaddrinfo(
     nodename: UnsafePointer[C.char],
     servname: UnsafePointer[C.char],
     hints: UnsafePointer[addrinfo],
-    res: UnsafePointer[UnsafePointer[addrinfo]],
+    res: UnsafePointer[Int],
 ) -> C.int:
     """Libc POSIX `getaddrinfo` function.
 
@@ -512,7 +511,7 @@ fn getaddrinfo(
         UnsafePointer[C.char],
         UnsafePointer[C.char],
         UnsafePointer[addrinfo],
-        UnsafePointer[UnsafePointer[addrinfo]],
+        UnsafePointer[Int],
     ](nodename, servname, hints, res)
 
 

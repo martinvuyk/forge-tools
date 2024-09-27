@@ -177,7 +177,7 @@ struct EtherPacket:
         return self._selected == value
 
 
-trait SockAddr(CollectionElement):
+trait SockAddr(CollectionElement, Stringable):
     """Socket Address.
 
     Parameters:
@@ -241,7 +241,13 @@ trait SockAddr(CollectionElement):
         )
     """
 
-    ...
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        ...
 
 
 @value
@@ -269,16 +275,16 @@ struct IPv4Addr(SockAddr):
         self.host = host
         self.port = port
 
-    fn __init__(inout self, host_port: String) raises:
-        """Create an Address.
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
 
         Args:
-            host_port: The string with IP and port.
+            value: The string with the value.
         """
-        var idx = host_port.rfind(":")
+        var idx = value.rfind(":")
         if idx == -1:
             raise Error("port not found in String")
-        self = Self(host_port[:idx], int(host_port[idx + 1 :]))
+        self = Self(value[:idx], int(value[idx + 1 :]))
 
     fn __init__(inout self: Self, value: Tuple[String, UInt]):
         """Create an Address.
@@ -311,6 +317,14 @@ struct IPv4Addr(SockAddr):
             value: The string with IP and port.
         """
         self = Self(value[0], value[1])
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return self.host + str(self.port)
 
 
 @value
@@ -354,6 +368,25 @@ struct IPv6Addr(SockAddr):
         self.flowinfo = flowinfo
         self.scope_id = scope_id
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        var idx = value.rfind(":")
+        if idx == -1:
+            raise Error("port not found in String")
+        self = Self(value[:idx], int(value[idx + 1 :]))
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return self.host + str(self.port)
+
 
 @value
 struct UnixAddr(SockAddr):
@@ -369,7 +402,7 @@ struct UnixAddr(SockAddr):
     var host: String
     """The sun_path (maximum of 108 bytes)."""
 
-    fn __init__(inout self: UnixAddr, host: String):
+    fn from_host(inout self: UnixAddr, host: String):
         """Create an Address.
 
         Args:
@@ -378,8 +411,23 @@ struct UnixAddr(SockAddr):
         Notes:
             [Reference](https://man7.org/linux/man-pages/man7/unix.7.html).
         """
-
         self.host = host
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        self.host = value
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return self.host
 
 
 @value
@@ -406,6 +454,22 @@ struct NETLINKAddr(SockAddr):
 
         self.pid = pid
         self.groups = groups
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
 
 
 @value
@@ -455,6 +519,22 @@ struct TIPCAddr(SockAddr):
         self.v3 = v3
         self.scope = scope
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct CANISOTPAddr(SockAddr):
@@ -490,6 +570,22 @@ struct CANISOTPAddr(SockAddr):
         self.interface = interface
         self.rx_addr = rx_addr
         self.tx_addr = tx_addr
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
 
 
 @value
@@ -533,6 +629,22 @@ struct CANJ1939Addr(SockAddr):
         self.pgn = pgn
         self.addr = addr
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct BTL2CAPAddr(SockAddr):
@@ -558,6 +670,22 @@ struct BTL2CAPAddr(SockAddr):
 
         self.bdaddr = bdaddr
         self.psm = psm
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
 
 
 @value
@@ -585,6 +713,22 @@ struct BTRFCOMMAddr(SockAddr):
         self.bdaddr = bdaddr
         self.channel = channel
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct BTHCIAddr(SockAddr):
@@ -606,6 +750,22 @@ struct BTHCIAddr(SockAddr):
 
         self.device_id = device_id
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct BTSCOAddr(SockAddr):
@@ -626,6 +786,22 @@ struct BTSCOAddr(SockAddr):
         """
 
         self.bdaddr = bdaddr
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
 
 
 @value
@@ -671,6 +847,22 @@ struct ALGAddr(SockAddr):
         self.feat = feat
         self.mask = mask
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct VSOCKAddr(SockAddr):
@@ -696,6 +888,22 @@ struct VSOCKAddr(SockAddr):
 
         self.CID = CID
         self.port = port
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
 
 
 @value
@@ -745,6 +953,22 @@ struct PACKETAddr(SockAddr):
         self.hatype = hatype
         self.addr = addr
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct QIPCRTRAddr(SockAddr):
@@ -771,6 +995,22 @@ struct QIPCRTRAddr(SockAddr):
         self.node = node
         self.port = port
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct HYPERVAddr(SockAddr):
@@ -796,6 +1036,22 @@ struct HYPERVAddr(SockAddr):
 
         self.vm_id = vm_id
         self.service_id = service_id
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
 
 
 @value
@@ -869,6 +1125,22 @@ struct SPIAddr(SockAddr):
         self.MISO = MISO
         self.CS = CS
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct I2CAddr(SockAddr):
@@ -929,6 +1201,22 @@ struct I2CAddr(SockAddr):
         self.SDA = SDA
         self.SCL = SCL
 
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
+
 
 @value
 struct UARTAddr(SockAddr):
@@ -982,3 +1270,19 @@ struct UARTAddr(SockAddr):
         self.mode = mode
         self.rx_addr = rx_addr
         self.tx_addr = tx_addr
+
+    fn __init__(inout self, value: String) raises:
+        """Create an Address from a String value.
+
+        Args:
+            value: The string with the value.
+        """
+        raise Error("Address constructor not yet implemented.")
+
+    fn __str__(self) -> String:
+        """Get the String representation of the Address.
+        
+        Returns:
+            The String representation.
+        """
+        return ""  # TODO
