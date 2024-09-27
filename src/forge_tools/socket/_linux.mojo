@@ -72,7 +72,7 @@ struct _LinuxSocket[
         if fd == -1:
             raise Error("Failed to create socket.")
         self.fd = FileDescriptor(int(fd))
-    
+
     fn __init__(inout self, fd: FileDescriptor):
         """Create a new socket object from an open `FileDescriptor`."""
         self.fd = fd
@@ -249,9 +249,9 @@ struct _LinuxSocket[
             [Reference](\
             https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
         """
-        alias P = SockProtocol
-        alias T = Tuple[SockFamily, SockType, P, String, sock_address]
-        var info = List[T]()
+        var info = List[
+            Tuple[SockFamily, SockType, SockProtocol, String, sock_address]
+        ]()
         var hints = addrinfo()
         hints.ai_family = Self._sock_family
         hints.ai_socktype = Self._sock_type
@@ -282,10 +282,10 @@ struct _LinuxSocket[
                 var p = result.ai_canonname
                 var l = int(strlen(p))
                 can = String(S(unsafe_from_utf8_ptr=p.bitcast[UInt8](), len=l))
-            info.append(T(af, st, rebind[P](pt), can^, sock_address(addr^)))
+            info.append((af, st, pt, can^, sock_address(addr^)))
             result = next_addr.bitcast[addrinfo]()[0]
             next_addr = result.ai_next
-        return rebind[List[Tuple[SockFamily, SockType, SockProtocol, String, sock_address]]](info^)
+        return info^
 
     @staticmethod
     fn create_connection(
@@ -392,15 +392,12 @@ struct _LinuxSocket[
         reuse_port: Bool = False,
     ) raises -> (
         Self,
-        _LinuxSocket[
-            SockFamily.AF_INET,
-            sock_type,
-            sock_protocol,
-            IPv4Addr
-        ],
+        _LinuxSocket[SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr],
     ):
         """Create a socket, bind it to a specified address, and listen."""
-        alias S = _LinuxSocket[SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr]
+        alias S = _LinuxSocket[
+            SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr
+        ]
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
         var ipv6_sock = Self()

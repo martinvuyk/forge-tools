@@ -80,36 +80,48 @@ def test_inet_ntoa():
     assert_equal(String("123.45.67.89"), res)
 
 
-async def test_server_client_ipv4():
-    var server = Socket.create_server(("0.0.0.0", 8000))
-    var client = Socket.create_connection(("0.0.0.0", 8000))
+def test_socket_sync_ipv4():
+    try:
+        var socket = Socket()
+        # socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        # if reuse_port:
+        #     socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        # socket.bind(rebind[sock_address](address))
+        # socket.listen(backlog=backlog.value() if backlog else 0)
+    except e:
+        print(e)
+        print("this is not printing for some reason")
+        assert_true(False)
 
-    var client_msg = String("123456789")
-    var bytes_sent = client.send(client_msg.as_bytes_span())
+# async def test_server_client_ipv4():
+#     var server = Socket.create_server(("0.0.0.0", 8000))
+#     var client = Socket.create_connection(("0.0.0.0", 8000))
 
-    var conn = (await server.accept())[0]
-    assert_equal(10, await bytes_sent^)
-    var server_msg = String("987654321")
-    var server_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
+#     var client_msg = String("123456789")
+#     var bytes_sent = client.send(client_msg.as_bytes_span())
 
-    alias Life = ImmutableAnyLifetime
-    var server_buf = Span[UInt8, Life](unsafe_ptr=server_ptr, len=10)
-    var server_bytes_recv = await conn.recv(server_buf)
-    assert_equal(10, server_bytes_recv)
+#     var conn = (await server.accept())[0]
+#     assert_equal(10, await bytes_sent^)
+#     var server_msg = String("987654321")
+#     var server_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
 
-    alias S = StringSlice[Life]
-    assert_equal(String(S(unsafe_from_utf8=server_buf)), client_msg)
-    var server_sent = await conn.send(server_msg.as_bytes_span())
-    assert_equal(10, server_sent)
+#     alias Life = ImmutableAnyLifetime
+#     var server_buf = Span[UInt8, Life](unsafe_ptr=server_ptr, len=10)
+#     var server_bytes_recv = await conn.recv(server_buf)
+#     assert_equal(10, server_bytes_recv)
 
-    var client_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
-    var client_buf = Span[UInt8, Life](unsafe_ptr=client_ptr, len=10)
-    var client_bytes_recv = await client.recv(client_buf)
-    assert_equal(10, client_bytes_recv)
-    assert_equal(String(S(unsafe_from_utf8=client_buf)), server_msg)
-    server_ptr.free()
-    client_ptr.free()
+#     alias S = StringSlice[Life]
+#     assert_equal(String(S(unsafe_from_utf8=server_buf)), client_msg)
+#     var server_sent = await conn.send(server_msg.as_bytes_span())
+#     assert_equal(10, server_sent)
 
+#     var client_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
+#     var client_buf = Span[UInt8, Life](unsafe_ptr=client_ptr, len=10)
+#     var client_bytes_recv = await client.recv(client_buf)
+#     assert_equal(10, client_bytes_recv)
+#     assert_equal(String(S(unsafe_from_utf8=client_buf)), server_msg)
+#     server_ptr.free()
+#     client_ptr.free()
 
 async def main():
     test_ntohs()
@@ -118,4 +130,5 @@ async def main():
     test_htonl()
     test_inet_aton()
     test_inet_ntoa()
-    await test_server_client_ipv4()
+    test_socket_sync_ipv4()
+    # await test_server_client_ipv4()

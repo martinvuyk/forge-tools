@@ -320,7 +320,7 @@ struct IPv4Addr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -381,7 +381,7 @@ struct IPv6Addr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -423,7 +423,7 @@ struct UnixAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -465,7 +465,7 @@ struct NETLINKAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -529,7 +529,7 @@ struct TIPCAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -581,7 +581,7 @@ struct CANISOTPAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -639,7 +639,7 @@ struct CANJ1939Addr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -681,7 +681,7 @@ struct BTL2CAPAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -723,7 +723,7 @@ struct BTRFCOMMAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -760,7 +760,7 @@ struct BTHCIAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -797,7 +797,7 @@ struct BTSCOAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -857,7 +857,7 @@ struct ALGAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -899,7 +899,7 @@ struct VSOCKAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -963,7 +963,7 @@ struct PACKETAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -1005,7 +1005,7 @@ struct QIPCRTRAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -1047,7 +1047,7 @@ struct HYPERVAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -1135,7 +1135,7 @@ struct SPIAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -1211,7 +1211,7 @@ struct I2CAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """
@@ -1281,7 +1281,7 @@ struct UARTAddr(SockAddr):
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.
-        
+
         Returns:
             The String representation.
         """

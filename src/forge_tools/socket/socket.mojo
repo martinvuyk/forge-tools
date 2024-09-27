@@ -542,7 +542,7 @@ struct Socket[
 
     fn __init__(inout self, fd: FileDescriptor):
         """Create a new socket object from an open `FileDescriptor`."""
-    
+
         @parameter
         if sock_platform is SockPlatform.LINUX:
             self._impl = Self._linux_s(fd)
@@ -589,13 +589,13 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var conn_addr = self._impl.unsafe_get[
-                Self._linux_s
-            ]()[].setsockopt(level, option_name, option_value)
+            var conn_addr = self._impl.unsafe_get[Self._linux_s]()[].setsockopt(
+                level, option_name, option_value
+            )
         elif sock_platform is SockPlatform.UNIX:
-            var conn_addr = self._impl.unsafe_get[
-                Self._unix_s
-            ]()[].setsockopt(level, option_name, option_value)
+            var conn_addr = self._impl.unsafe_get[Self._unix_s]()[].setsockopt(
+                level, option_name, option_value
+            )
         else:
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to set socket options.")
@@ -937,13 +937,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.setdefaulttimeout(
-                value
-            )
+            return Self._linux_s.setdefaulttimeout(value)
         elif sock_platform is SockPlatform.UNIX:
-            return Self._unix_s.setdefaulttimeout(
-                value
-            )
+            return Self._unix_s.setdefaulttimeout(value)
         else:
             constrained[False, "Platform not supported yet."]()
             return False
@@ -1007,18 +1003,14 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.getaddrinfo(
-                address, flags
-            )
+            return Self._linux_s.getaddrinfo(address, flags)
         elif sock_platform is SockPlatform.UNIX:
-            return Self._unix_s.getaddrinfo(
-                address, flags
-            )
+            return Self._unix_s.getaddrinfo(address, flags)
         else:
             constrained[False, "Platform not supported yet."]()
             return List[
-        (SockFamily, SockType, SockProtocol, String, sock_address)
-    ]()
+                (SockFamily, SockType, SockProtocol, String, sock_address)
+            ]()
 
     @staticmethod
     fn create_connection(
@@ -1251,7 +1243,13 @@ nf-ws2tcpip-getaddrinfo).
         Returns:
             A pair of IPv6 and IPv4 sockets.
         """
-        alias S = Socket[SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr, sock_platform]
+        alias S = Socket[
+            SockFamily.AF_INET,
+            sock_type,
+            sock_protocol,
+            IPv4Addr,
+            sock_platform,
+        ]
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
