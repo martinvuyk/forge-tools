@@ -1,4 +1,4 @@
-"""C POSIX networking syscalls."""
+"""Libc POSIX networking syscalls."""
 
 from sys.ffi import external_call
 from memory import UnsafePointer
@@ -193,7 +193,7 @@ fn socket(domain: C.int, type: C.int, protocol: C.int) -> C.int:
         protocol: Protocol see IPPROTO_ alises.
 
     Returns:
-        A pointer to a socket.
+        A file descriptor for the socket.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/socket.3p.html).
@@ -214,7 +214,7 @@ fn setsockopt(
     """Libc POSIX `setsockopt` function.
 
     Args:
-        socket: A pointer to a socket.
+        socket: The socket's file descriptor.
         level: Protocol Level see SOL_ alises.
         option_name: Option name see SO_ alises.
         option_value: A pointer to a buffer containing the option value.
@@ -245,12 +245,12 @@ fn bind(
     """Libc POSIX `bind` function.
 
     Args:
-        socket: The socket.
+        socket: The socket's file descriptor.
         address: A pointer to the address.
         address_len: The length of the pointer.
 
     Returns:
-        An int.
+        Value 0 on success, -1 on error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/bind.3p.html).
@@ -266,12 +266,12 @@ fn listen(socket: C.int, backlog: C.int) -> C.int:
     """Libc POSIX `listen` function.
 
     Args:
-        socket: A pointer to a socket.
+        socket: The socket's file descriptor.
         backlog: The maximum length to which the queue of pending connections
             for socket may grow.
 
     Returns:
-        A pointer to a socket.
+        Value 0 on success, -1 on error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/listen.3p.html).
@@ -288,14 +288,14 @@ fn accept(
     """Libc POSIX `accept` function.
 
     Args:
-        socket: A pointer to a socket.
+        socket: The socket's file descriptor.
         address: A pointer to a buffer to store the address of the accepted
             socket.
         address_len: A pointer to a buffer to store the length of the address of
             the accepted socket.
 
     Returns:
-        A pointer to a socket.
+        Value 0 on success, -1 on error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/accept.3p.html).
@@ -317,14 +317,12 @@ fn connect(
     """Libc POSIX `connect` function.
 
     Args:
-        socket: A pointer to a socket.
-        address: A pointer to a buffer to store the address of the accepted
-            socket.
-        address_len: A pointer to a buffer to store the length of the address of
-            the accepted socket.
+        socket: The socket's file descriptor.
+        address: A pointer of the address to connect to.
+        address_len: The length of the address.
 
     Returns:
-        A pointer to a socket.
+        Value 0 on success, -1 on error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/connect.3p.html).
@@ -340,6 +338,14 @@ fn recv(
     socket: C.int, buffer: UnsafePointer[C.void], length: C.u_int, flags: C.int
 ) -> C.u_int:
     """Libc POSIX `recv` function.
+
+    Args:
+        buffer: A pointer to a buffer to store the recieved bytes.
+        length: The amount of bytes to store in the buffer.
+        flags: Specifies the type of message reception.
+
+    Returns:
+        The amount of bytes recieved.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/recv.3p.html).
@@ -360,6 +366,18 @@ fn recvfrom(
     address_len: UnsafePointer[socklen_t],
 ) -> C.u_int:
     """Libc POSIX `recvfrom` function.
+
+    Args:
+        buffer: A pointer to a buffer to store the recieved bytes.
+        length: The amount of bytes to store in the buffer.
+        flags: Specifies the type of message reception.
+        address: A pointer to a sockaddr to store the address of the sending
+            socket.
+        address_len: A pointer to a buffer to store the length of the address of
+            the sending socket.
+
+    Returns:
+        The amount of bytes recieved.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/recvfrom.3p.html).
@@ -385,16 +403,13 @@ fn send(
     """Libc POSIX `send` function.
 
     Args:
-        socket: A pointer to a socket.
-        buffer: A pointer to a buffer to store the address of the accepted
-            socket.
-        length: A pointer to a buffer to store the length of the address of the
-            accepted socket.
-        flags: A pointer to a buffer to store the length of the address of the
-            accepted socket.
+        socket: The socket's file descriptor.
+        buffer: Points to the buffer containing the message to send.
+        length: Specifies the length of the message in bytes.
+        flags: Specifies the type of message transmission.
 
     Returns:
-        A pointer to a socket.
+        The socket's file descriptor.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/send.3p.html).
@@ -417,7 +432,7 @@ fn sendto(
     """Libc POSIX `sendto` function.
 
     Args:
-        socket: A pointer to a socket.
+        socket: The socket's file descriptor.
         message: A pointer to a buffer to store the address of the accepted
             socket.
         length: A pointer to a buffer to store the length of the address of the
@@ -430,7 +445,7 @@ fn sendto(
             the accepted socket.
 
     Returns:
-        A pointer to a socket.
+        The socket's file descriptor.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/sendto.3p.html).
@@ -454,12 +469,12 @@ fn shutdown(socket: C.int, how: C.int) -> C.int:
     """Libc POSIX `shutdown` function.
 
     Args:
-        socket: A pointer to a socket.
+        socket: The socket's file descriptor.
         how: A pointer to a buffer to store the length of the address of the
             accepted socket.
 
     Returns:
-        A pointer to a socket.
+        The socket's file descriptor.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/shutdown.3p.html).
@@ -476,8 +491,17 @@ fn getaddrinfo(
 ) -> C.int:
     """Libc POSIX `getaddrinfo` function.
 
+    Args:
+        nodename: The node name.
+        servname: The service name.
+        hints: The hints.
+        res: The Pointer to the Pointer to store the result.
+
+    Returns:
+        Value 0 on success, one of several errors otherwise.
+
     Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html).
+        [Reference](https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
         Fn signature: `int getaddrinfo(const char *restrict nodename,
             const char *restrict servname, const struct addrinfo *restrict hints
             , struct addrinfo **restrict res)`.
@@ -496,33 +520,14 @@ fn gai_strerror(ecode: C.int) -> UnsafePointer[C.char]:
     """Libc POSIX `gai_strerror` function.
 
     Args:
-        ecode: A pointer to a socket.
+        ecode: An error code.
 
     Returns:
-        A pointer to a socket.
+        A pointer to a text string describing an error value for the
+        `getaddrinfo()` and `getnameinfo()` functions.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/gai_strerror.3p.html).
         Fn signature: `const char *gai_strerror(int ecode)`.
     """
     return external_call["gai_strerror", UnsafePointer[C.char], C.int](ecode)
-
-
-# fn get_addr(ptr: UnsafePointer[sockaddr]) -> sockaddr:
-#    if ptr.load().sa_family == AF_INET:
-#        ptr.bitcast[sockaddr_in]().load().sin_addr
-#    return ptr.bitcast[sockaddr_in6]().load().sin6_addr
-
-
-fn inet_pton(address_family: Int, address: String) -> Int:
-    var ip_buf_size = 4
-    if address_family == AF_INET6:
-        ip_buf_size = 16
-
-    var ip_buf = UnsafePointer[C.void].alloc(ip_buf_size)
-    _ = inet_pton(
-        rebind[C.int](address_family),
-        address.unsafe_ptr().bitcast[C.char](),
-        ip_buf,
-    )
-    return int(ip_buf.bitcast[C.u_int]()[])
