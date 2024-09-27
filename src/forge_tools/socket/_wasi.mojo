@@ -126,28 +126,24 @@ struct _WASISocket[
         """Set the default timeout value."""
         return False
 
+    fn settimeout(self, value: SockTime) -> Bool:
+        """Set the default timeout value."""
+        return False
+
+
     @staticmethod
     fn create_connection(
         address: IPv4Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        timeout: Optional[SockTime] = None,
         source_address: IPv4Addr = IPv4Addr(("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
-        """Connects to an address, with an optional timeout and
-        optional source address."""
-        raise Error("Failed to create socket.")
-
-    @staticmethod
-    fn create_connection(
-        address: IPv6Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv6Addr = IPv6Addr("", 0),
-        *,
-        all_errors: Bool = False,
-    ) raises -> Self:
-        """Connects to an address, with an optional timeout and
-        optional source address."""
+        """Connects to an address, with an optional timeout and optional source
+        address."""
+        alias s = sock_address
+        alias cond = _type_is_eq[s, IPv4Addr]() or _type_is_eq[s, IPv6Addr]()
+        constrained[cond, "sock_address must be IPv4Addr or IPv6Addr"]()
         raise Error("Failed to create socket.")
 
     @staticmethod
@@ -157,7 +153,11 @@ struct _WASISocket[
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
     ) raises -> Self:
-        """Create a TCP socket and bind it to a specified address."""
+        """Create a socket, bind it to a specified address, and listen."""
+        constrained[
+            _type_is_eq[sock_address, IPv4Addr](),
+            "sock_address must be IPv4Addr",
+        ]()
         raise Error("Failed to create socket.")
 
     @staticmethod
@@ -168,5 +168,9 @@ struct _WASISocket[
         reuse_port: Bool = False,
         dualstack_ipv6: Bool = False,
     ) raises -> Self:
-        """Create a TCP socket and bind it to a specified address."""
+        """Create a socket, bind it to a specified address, and listen."""
+        constrained[
+            _type_is_eq[sock_address, IPv6Addr](),
+            "sock_address must be IPv6Addr",
+        ]()
         raise Error("Failed to create socket.")

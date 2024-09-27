@@ -69,6 +69,10 @@ def test_inet_ntoa():
     assert_equal(String("123.45.67.89"), res)
 
 
+async def test_server_client():
+    var server = Socket.create_server(("0.0.0.0", 8000))
+    var server = Socket.create_connection(("0.0.0.0", 8000))
+
 
 def main():
     test_ntohs()

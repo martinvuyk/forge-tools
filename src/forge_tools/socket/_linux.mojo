@@ -31,6 +31,13 @@ from forge_tools.ffi.c import (
     char_ptr_to_string,
     inet_pton,
     sa_family_t,
+    SOL_SOCKET,
+    SO_REUSEPORT,
+    SO_REUSEADDR,
+    AF_UNSPEC,
+    SOCK_DGRAM,
+    AI_PASSIVE,
+    strlen,
 )
 from ._unix import (
     _get_unix_sock_family_constant,
@@ -70,7 +77,15 @@ struct _LinuxSocket[
         try:
             self.close()
         except:
+            print("Failed trying to close the socket.")
             pass
+
+    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+        """Set socket options."""
+        var ptr = UnsafePointer[Int].address_of(option_value).bitcast[C.void]()
+        var s = sizeof[Int]()
+        if setsockopt(self.fd.value, level, option_name, option_value, s) == -1:
+            raise Error("Failed to set socket options.")
 
     fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
@@ -90,11 +105,11 @@ struct _LinuxSocket[
             var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if bind(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                raise Error("Failed to create socket.")
+                raise Error("Failed to bind the socket.")
             _ = ai
         else:
-            constrained[False, "currently unsupported Address type"]()
-            raise Error("Failed to create socket.")
+            constrained[False, "Currently unsupported Address type"]()
+            raise Error("Failed to bind the socket.")
 
     fn listen(self, backlog: UInt = 0) raises:
         """Enable a server to accept connections. `backlog` specifies the number
@@ -203,29 +218,105 @@ struct _LinuxSocket[
         """Set the default timeout value."""
         return False
 
+    fn settimeout(self, value: SockTime) -> Bool:
+        """Set the default timeout value."""
+        return False
+
+    # TODO: should this return an iterator instead?
+    @staticmethod
+    fn getaddrinfo( 
+        address: Variant[IPv4Addr, IPv6Addr], flags: Int = 0
+    ) raises -> List[
+        (
+            SockFamily,
+            SockType,
+            SockProtocol,
+            Variant[IPv4Addr, IPv6Addr],
+            String,
+        )
+    ]:
+        """Get the available address information.
+        
+        Notes:
+            [Reference](\
+            https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
+        """
+        alias v = Variant[IPv4Addr, IPv6Addr]
+        var info = List[(SockFamily, SockType SockProtocol, v, String)]
+        var hints = addrinfo()
+        hints.ai_family = Self._sock_family
+        hints.ai_socktype = Self._sock_type
+        hints.ai_flags = flags
+        hints.ai_protocol = Self._sock_protocol
+        var hints_ptr = UnsafePointer[addrinfo].address_of(hints)
+        var servname = String("")
+        var serv_ptr = servname.unsafe_ptr().bitcast[C.char]()
+        var result = addrinfo()
+        var res_ptr = UnsafePointer[addrinfo].address_of(result)
+        var err = getaddrinfo(C.void(), serv_ptr, hints_ptr, res_ptr)
+        if err != 0:
+            raise Error("Error in getaddrinfo(). Code: " + str(err))
+        var next_addr = result.ai_next
+        while next_addr:
+            ai_flags
+            var af = _parse_unix_sock_family_constant(result.ai_family)
+            var st = _parse_unix_sock_sock_type_constant(result.ai_socktype)
+            var pt = _parse_unix_sock_protocol_constant(result.ai_protocol)
+            var addrlen = result.ai_addrlen
+            var addr_ptr = result.ai_addr
+            alias S = StringSlice[ImmutableAnyLifetime]
+            var addr = String(S(unsafe_from_utf8_ptr=addr_ptr, len=addrlen))
+            var can = String()
+            if flags != 0:
+                var p = result.ai_canonname
+                can = String(S(unsafe_from_utf8_ptr=p, len=strlen(p)))
+            info.append((af, st, pt, addr, can^))
+            result = next_addr.bitcast[addrinfo]()[0]
+            next_addr = result.ai_next
+        return info^
+
+
     @staticmethod
     fn create_connection(
-        address: IPv4Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        address: Variant[IPv4Addr, IPv6Addr],
+        timeout: Optional[SockTime] = None,
         source_address: IPv4Addr = IPv4Addr(("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
-        """Connects to an address, with an optional timeout and
-        optional source address."""
-        raise Error("Failed to create socket.")
+        """Connects to an address, with an optional timeout and optional source
+        address."""
+        alias s = sock_address
+        alias cond = _type_is_eq[s, IPv4Addr]() or _type_is_eq[s, IPv6Addr]()
+        constrained[cond, "sock_address must be IPv4Addr or IPv6Addr"]()
+        var errors = List[String]()
+        var idx = 0
+        var time = timeout.value() if timeout else Self.getdefaulttimeout()
+        var af: SockFamily
+        var st: SockType
+        var proto: SockProtocol
+        var canonname: String
+        var sa: Variant[IPv4Addr, IPv6Addr]
+        for res in Self.getaddrinfo(address):
+            af, st, proto, canonname, sa = res
 
-    @staticmethod
-    fn create_connection(
-        address: IPv6Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv6Addr = IPv6Addr("", 0),
-        *,
-        all_errors: Bool = False,
-    ) raises -> Self:
-        """Connects to an address, with an optional timeout and
-        optional source address."""
-        raise Error("Failed to create socket.")
+            try:
+                var socket = Self()
+                socket.settimeout(time)
+                if source_address != IPv4Addr(("", 0)):
+                    socket.bind(source_address)
+                if sa.isa[IPv4Addr]():
+                    socket.connect(sa.unsafe_get[IPv4Addr]()[])
+                else:
+                    socket.connect(sa.unsafe_get[IPv6Addr]()[])
+                return socket^
+            except Error as e:
+                errors[idx] = str(e)
+                if all_errors:
+                    idx += 1
+
+        raise Error(String("; ").join(errors)) # TODO: need ErrorGroup
+
 
     @staticmethod
     fn create_server(
@@ -234,8 +325,18 @@ struct _LinuxSocket[
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
     ) raises -> Self:
-        """Create a TCP socket and bind it to a specified address."""
-        raise Error("Failed to create socket.")
+        """Create a socket, bind it to a specified address, and listen."""
+        constrained[
+            _type_is_eq[sock_address, IPv4Addr](),
+            "sock_address must be IPv4Addr",
+        ]()
+        var socket = Self()
+        socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        if reuse_port:
+            socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        socket.bind(address)
+        server.listen(backlog=backlog.value() if backlog else 0)
+        return socket^
 
     @staticmethod
     fn create_server(
@@ -245,5 +346,15 @@ struct _LinuxSocket[
         reuse_port: Bool = False,
         dualstack_ipv6: Bool = False,
     ) raises -> Self:
-        """Create a TCP socket and bind it to a specified address."""
-        raise Error("Failed to create socket.")
+        """Create a socket, bind it to a specified address, and listen."""
+        constrained[
+            _type_is_eq[sock_address, IPv6Addr](),
+            "sock_address must be IPv6Addr",
+        ]()
+        var socket = Self()
+        socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        if reuse_port:
+            socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        socket.bind(address)
+        server.listen(backlog=backlog.value() if backlog else 0)
+        return socket^

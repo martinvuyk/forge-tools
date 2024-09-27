@@ -343,6 +343,10 @@ struct SockPlatform:
 #         """
 #         ...
 
+#     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+#         """Set socket options."""
+#         ...
+
 #     fn bind(self, address: sock_address) raises:
 #         """Bind the socket to address. The socket must not already be bound."""
 #         ...
@@ -415,7 +419,6 @@ struct SockPlatform:
 #         the client.
 #         """
 #         ...
-
 
 fn _get_current_platform() -> StringLiteral:
     if info.os_is_linux():
@@ -538,6 +541,34 @@ struct Socket[
             The instance of self.
         """
         return self^
+
+    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+        """Set socket options.
+
+        Args:
+            level: Protocol Level see SOL_ alises.
+            option_name: Option name see SO_ alises.
+            option_value: A pointer to a buffer containing the option value.
+
+        Notes:
+            [Reference](\
+            https://man7.org/linux/man-pages/man3/setsockopt.3p.html).
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            var conn_addr = await self._impl.unsafe_get[
+                Self._linux_s
+            ]()[].setsockopt(level, option_name, option_value)
+            return Self(conn_addr[0]), conn_addr[1]
+        elif sock_platform is SockPlatform.UNIX:
+            var conn_addr = await self._impl.unsafe_get[
+                Self._unix_s
+            ]()[].setsockopt(level, option_name, option_value)
+            return Self(conn_addr[0]), conn_addr[1]
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to set socket options.")
 
     fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
@@ -846,7 +877,7 @@ recv.2.en.html#The_flags_argument).
         alias S = StringSlice[ImmutableAnyLifetime]
         return String(S(unsafe_from_utf8_ptr=ptr, len=length))
 
-    fn getdefaulttimeout(self) -> Optional[SockTime]:
+    fn getdefaulttimeout(self) -> SockTime:
         """Get the default timeout value.
 
         Returns:
@@ -909,7 +940,7 @@ recv.2.en.html#The_flags_argument).
     @staticmethod
     fn create_connection(
         address: IPv4Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        timeout: Optional[SockTime] = None,
         source_address: IPv4Addr = ("", 0),
         *,
         all_errors: Bool = False,
@@ -946,7 +977,7 @@ recv.2.en.html#The_flags_argument).
     @staticmethod
     fn create_connection(
         address: IPv6Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        timeout: Optional[SockTime] = None,
         source_address: IPv6Addr = IPv6Addr("", 0),
         *,
         all_errors: Bool = False,
@@ -997,7 +1028,7 @@ recv.2.en.html#The_flags_argument).
         reuse_port: Bool = False,
     ) raises -> Self:
         """Convenience function which creates a socket bound to the address and
-        returns the socket object.
+        returns the listening socket object.
 
         Args:
             address: The adress of the new server.
@@ -1058,7 +1089,7 @@ recv.2.en.html#The_flags_argument).
         dualstack_ipv6: Bool = False,
     ) raises -> Self:
         """Convenience function which creates a socket bound to the address and
-        returns the socket object.
+        returns the listening socket object.
 
         Args:
             address: The adress of the new server.

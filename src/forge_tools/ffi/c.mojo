@@ -599,9 +599,9 @@ fn inet_aton(cp: UnsafePointer[C.char], addr: UnsafePointer[in_addr]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3.html).
         Fn signature: `int inet_aton(const char *cp, struct in_addr *inp)`.
     """
-    return external_call["inet_aton", C.int, UnsafePointer[C.char], UnsafePointer[in_addr]](
-        cp, addr
-    )
+    return external_call[
+        "inet_aton", C.int, UnsafePointer[C.char], UnsafePointer[in_addr]
+    ](cp, addr)
 
 
 fn inet_ntoa(addr: in_addr) -> UnsafePointer[C.char]:
@@ -658,7 +658,7 @@ fn setsockopt(
         option_len: The size of the buffer pointed by option_value.
 
     Returns:
-        A pointer to a socket opt.
+        Value 0 on success, -1 on error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/setsockopt.3p.html).
@@ -958,7 +958,9 @@ fn inet_pton(address_family: Int, address: String) -> Int:
 
     var ip_buf = UnsafePointer[C.void].alloc(ip_buf_size)
     _ = inet_pton(
-        rebind[C.int](address_family), address.unsafe_ptr().bitcast[C.char](), ip_buf
+        rebind[C.int](address_family),
+        address.unsafe_ptr().bitcast[C.char](),
+        ip_buf,
     )
     return int(ip_buf.bitcast[C.u_int]()[])
 
@@ -1512,7 +1514,9 @@ fn _printf[
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType
 ](format: String, arg0: T0, arg1: T1) -> C.int:
-    return _printf[callee, T0, T1](format.unsafe_ptr().bitcast[C.char](), arg0, arg1)
+    return _printf[callee, T0, T1](
+        format.unsafe_ptr().bitcast[C.char](), arg0, arg1
+    )
 
 
 fn _printf[
@@ -1556,7 +1560,13 @@ fn _printf[
     format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5
 ) -> C.int:
     return _printf[callee, T0, T1, T2, T3, T4, T5](
-        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3, arg4, arg5
+        format.unsafe_ptr().bitcast[C.char](),
+        arg0,
+        arg1,
+        arg2,
+        arg3,
+        arg4,
+        arg5,
     )
 
 

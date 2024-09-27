@@ -84,7 +84,15 @@ struct _UnixSocket[
         try:
             self.close()
         except:
+            print("Failed trying to close the socket.")
             pass
+
+    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+        """Set socket options."""
+        var ptr = UnsafePointer[Int].address_of(option_value).bitcast[C.void]()
+        var s = sizeof[Int]()
+        if setsockopt(self.fd.value, level, option_name, option_value, s) == -1:
+            raise Error("Failed to set socket options.")
 
     fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
@@ -104,11 +112,11 @@ struct _UnixSocket[
             var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if bind(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                raise Error("Failed to create socket.")
+                raise Error("Failed to bind the socket.")
             _ = ai
         else:
-            constrained[False, "currently unsupported Address type"]()
-            raise Error("Failed to create socket.")
+            constrained[False, "Currently unsupported Address type"]()
+            raise Error("Failed to bind the socket.")
 
     fn listen(self, backlog: UInt = 0) raises:
         """Enable a server to accept connections. `backlog` specifies the number
@@ -232,29 +240,26 @@ struct _UnixSocket[
         """Set the default timeout value."""
         return False
 
+    fn settimeout(self, value: SockTime) -> Bool:
+        """Set the default timeout value."""
+        return False
+
+
     @staticmethod
     fn create_connection(
-        address: IPv4Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
+        address: Variant[IPv4Addr, IPv6Addr],
+        timeout: Optional[SockTime] = None,
         source_address: IPv4Addr = IPv4Addr(("", 0)),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
-        """Connects to an address, with an optional timeout and
-        optional source address."""
+        """Connects to an address, with an optional timeout and optional source
+        address."""
+        alias s = sock_address
+        alias cond = _type_is_eq[s, IPv4Addr]() or _type_is_eq[s, IPv6Addr]()
+        constrained[cond, "sock_address must be IPv4Addr or IPv6Addr"]()
         raise Error("Failed to create socket.")
 
-    @staticmethod
-    fn create_connection(
-        address: IPv6Addr,
-        timeout: SockTime = _DEFAULT_SOCKET_TIMEOUT,
-        source_address: IPv6Addr = IPv6Addr("", 0),
-        *,
-        all_errors: Bool = False,
-    ) raises -> Self:
-        """Connects to an address, with an optional timeout and
-        optional source address."""
-        raise Error("Failed to create socket.")
 
     @staticmethod
     fn create_server(
@@ -263,8 +268,18 @@ struct _UnixSocket[
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
     ) raises -> Self:
-        """Create a TCP socket and bind it to a specified address."""
-        raise Error("Failed to create socket.")
+        """Create a socket, bind it to a specified address, and listen."""
+        constrained[
+            _type_is_eq[sock_address, IPv4Addr](),
+            "sock_address must be IPv4Addr",
+        ]()
+        var socket = Self()
+        socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        if reuse_port:
+            socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        socket.bind(address)
+        server.listen(backlog=backlog.value() if backlog else 0)
+        return socket^
 
     @staticmethod
     fn create_server(
@@ -274,8 +289,22 @@ struct _UnixSocket[
         reuse_port: Bool = False,
         dualstack_ipv6: Bool = False,
     ) raises -> Self:
-        """Create a TCP socket and bind it to a specified address."""
-        raise Error("Failed to create socket.")
+        """Create a socket, bind it to a specified address, and listen."""
+        constrained[
+            _type_is_eq[sock_address, IPv6Addr](),
+            "sock_address must be IPv6Addr",
+        ]()
+        constrained[
+            _type_is_eq[sock_address, IPv6Addr](),
+            "sock_address must be IPv6Addr",
+        ]()
+        var socket = Self()
+        socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        if reuse_port:
+            socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        socket.bind(address)
+        server.listen(backlog=backlog.value() if backlog else 0)
+        return socket^
 
 
 @always_inline("nodebug")
@@ -334,3 +363,61 @@ fn _get_unix_sock_protocol_constant(sock_protocol: SockProtocol) -> Int:
         return UDPLite
     else:
         return -1
+
+
+@always_inline("nodebug")
+fn _parse_unix_sock_family_constant(sock_family: Int) -> SockFamily:
+    if sock_family == AF_INET:
+        return SockFamily.AF_INET
+    elif sock_family == AF_INET6:
+        return SockFamily.AF_INET6
+    elif sock_family == AF_UNIX:
+        return SockFamily.AF_UNIX
+    elif sock_family == AF_NETLINK:
+        return SockFamily.AF_NETLINK
+    elif sock_family == AF_TIPC:
+        return SockFamily.AF_TIPC
+    elif sock_family == AF_CAN:
+        return SockFamily.AF_CAN
+    elif sock_family == AF_BLUETOOTH:
+        return SockFamily.AF_BLUETOOTH
+    elif sock_family == AF_ALG:
+        return SockFamily.AF_ALG
+    elif sock_family == AF_VSOCK:
+        return SockFamily.AF_VSOCK
+    elif sock_family == AF_PACKET:
+        return SockFamily.AF_PACKET
+    elif sock_family == AF_QIPCRTR:
+        return SockFamily.AF_QIPCRTR
+    else:
+        return ""
+
+
+@always_inline("nodebug")
+fn _parse_unix_sock_type_constant(sock_type: Int) -> SockType:
+    if sock_type == SOCK_STREAM:
+        return SockType.SOCK_STREAM
+    elif sock_type == SOCK_DGRAM:
+        return SockType.SOCK_DGRAM
+    elif sock_type == SOCK_RAW:
+        return SockType.SOCK_RAW
+    elif sock_type == SOCK_RDM:
+        return SockType.SOCK_RDM
+    elif sock_type == SOCK_SEQPACKET:
+        return SockType.SOCK_SEQPACKET
+    else:
+        return ""
+
+
+@always_inline("nodebug")
+fn _parse_unix_sock_protocol_constant(sock_protocol: Int) -> SockProtocol:
+    if sock_protocol == TCP:
+        return SockProtocol.TCP
+    elif sock_protocol == UDP:
+        return SockProtocol.UDP
+    elif sock_protocol == SCTP:
+        return SockProtocol.SCTP
+    elif sock_protocol == UDPLite:
+        return SockProtocol.IPPROTO_UDPLITE
+    else:
+        return ""
