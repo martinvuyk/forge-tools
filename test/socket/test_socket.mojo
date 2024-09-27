@@ -107,6 +107,8 @@ async def test_server_client_ipv4():
     var client_bytes_recv = await client.recv(client_buf)
     assert_equal(10, client_bytes_recv)
     assert_equal(String(S(unsafe_from_utf8=client_buf)), server_msg)
+    server_ptr.free()
+    client_ptr.free()
 
 
 async def main():
