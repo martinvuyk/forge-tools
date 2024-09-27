@@ -38,6 +38,9 @@ from forge_tools.ffi.c import (
     SOCK_DGRAM,
     AI_PASSIVE,
     strlen,
+    IPPROTO_IPV6,
+    IPV6_V6ONLY,
+    NULL,
 )
 from ._unix import (
     _get_unix_sock_family_constant,
@@ -219,7 +222,7 @@ struct _LinuxSocket[
         return False
 
     fn settimeout(self, value: SockTime) -> Bool:
-        """Set the default timeout value."""
+        """Set the socket timeout value."""
         return False
 
     # TODO: should this return an iterator instead?
@@ -251,7 +254,7 @@ struct _LinuxSocket[
         if err != 0:
             raise Error("Error in getaddrinfo(). Code: " + str(err))
         var next_addr = result.ai_next
-        while next_addr:
+        while next_addr != NULL:
             ai_flags
             var af = _parse_unix_sock_family_constant(result.ai_family)
             var st = _parse_unix_sock_sock_type_constant(result.ai_socktype)
@@ -288,8 +291,7 @@ struct _LinuxSocket[
             try:
                 var socket = Self()
                 socket.settimeout(time)
-                if source_address != IPv4Addr():
-                    socket.bind(source_address)
+                socket.bind(source_address)
                 socket.connect(res[4])
                 return socket^
             except Error as e:
@@ -318,8 +320,7 @@ struct _LinuxSocket[
             try:
                 var socket = Self()
                 socket.settimeout(time)
-                if source_address != IPv6Addr():
-                    socket.bind(source_address)
+                socket.bind(source_address)
                 socket.connect(res[4])
                 return socket^
             except Error as e:
@@ -337,10 +338,8 @@ struct _LinuxSocket[
         reuse_port: Bool = False,
     ) raises -> Self:
         """Create a socket, bind it to a specified address, and listen."""
-        constrained[
-            _type_is_eq[sock_address, IPv4Addr](),
-            "sock_address must be IPv4Addr",
-        ]()
+        alias cond = _type_is_eq[sock_address, IPv4Addr]()
+        constrained[cond, "sock_address must be IPv4Addr"]()
         var socket = Self()
         socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         if reuse_port:
@@ -355,17 +354,50 @@ struct _LinuxSocket[
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
-        dualstack_ipv6: Bool = False,
     ) raises -> Self:
-        """Create a socket, bind it to a specified address, and listen."""
-        constrained[
-            _type_is_eq[sock_address, IPv6Addr](),
-            "sock_address must be IPv6Addr",
-        ]()
+        """Create a socket, bind it to a specified address, and listen. Default
+        no dual stack IPv6."""
+        alias cond = _type_is_eq[sock_address, IPv6Addr]()
+        constrained[cond, "sock_address must be IPv6Addr"]()
         var socket = Self()
         socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
         if reuse_port:
             socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
         socket.bind(address)
         server.listen(backlog=backlog.value() if backlog else 0)
         return socket^
+
+    @staticmethod
+    fn create_server(
+        address: IPv6Addr,
+        *,
+        dualstack_ipv6: Bool,
+        backlog: Optional[Int] = None,
+        reuse_port: Bool = False,
+    ) raises -> (
+        Self,
+        Socket[
+            SockFamily.AF_INET,
+            sock_type,
+            sock_protocol,
+            IPv4Addr,
+            sock_platform,
+        ],
+    ):
+        """Create a socket, bind it to a specified address, and listen."""
+        alias F = SockFamily.AF_INET
+        alias S = Socket[F, sock_type, sock_protocol, IPv4Addr, sock_platform]
+        alias cond = _type_is_eq[sock_address, IPv6Addr]()
+        constrained[cond, "sock_address must be IPv6Addr"]()
+        var ipv6_sock = Self()
+        ipv6_sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        if dualstack_ipv6:
+            sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
+        else:
+            sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
+        if reuse_port:
+            ipv6_sock.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        ipv6_sock.bind(address)
+        server.listen(backlog=backlog.value() if backlog else 0)
+        return ipv6_sock^, S(fd=ipv6_sock.fd) if dualstack_ipv6 else S()

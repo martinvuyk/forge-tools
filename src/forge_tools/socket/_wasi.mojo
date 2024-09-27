@@ -127,7 +127,7 @@ struct _WASISocket[
         return False
 
     fn settimeout(self, value: SockTime) -> Bool:
-        """Set the default timeout value."""
+        """Set the socket timeout value."""
         return False
 
     @staticmethod

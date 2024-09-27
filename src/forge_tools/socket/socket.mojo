@@ -362,6 +362,11 @@ struct SockPlatform:
 #         """Connect to a remote socket at address."""
 #         ...
 
+#     async fn accept(self) -> (Self, sock_address):
+#         """Return a new socket representing the connection, and the address of
+#         the client."""
+#         ...
+
 #     @staticmethod
 #     async fn socketpair() raises -> (Self, Self):
 #         """Create a pair of socket objects from the sockets returned by the
@@ -400,9 +405,9 @@ struct SockPlatform:
 #         ...
 
 #     @staticmethod
-#     fn getservbyname[
-#         T: SockAddr
-#     ](name: String, proto: SockProtocol = SockProtocol.TCP) -> Optional[T]:
+#     fn getservbyname(
+#         name: String, proto: SockProtocol = SockProtocol.TCP
+#     ) -> Optional[sock_address]:
 #         """Map a service name and a protocol name to a port number."""
 #         ...
 
@@ -414,11 +419,19 @@ struct SockPlatform:
 #         """Set the default timeout value."""
 #         ...
 
-#     async fn accept(self) -> (Self, sock_address):
-#         """Return a new socket representing the connection, and the address of
-#         the client.
-#         """
+#     fn settimeout(self, value: SockTime) -> Bool:
+#         """Set the socket timeout value."""
 #         ...
+
+#    # TODO: should this return an iterator instead?
+#    @staticmethod
+#    fn getaddrinfo(
+#        address: sock_address, flags: Int = 0
+#    ) raises -> List[
+#        (SockFamily, SockType, SockProtocol, String, sock_address)
+#    ]:
+#        """Get the available address information.
+#        ...
 
 
 fn _get_current_platform() -> StringLiteral:
@@ -917,6 +930,25 @@ recv.2.en.html#The_flags_argument).
             constrained[False, "Platform not supported yet."]()
             return False
 
+    fn settimeout(self, value: SockTime) -> Bool:
+        """Set the socket timeout value.
+
+        Args:
+            value: The timeout.
+
+        Returns:
+            True on success, False otherwise.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return self._impl.unsafe_get[Self._linux_s]()[].settimeout(value)
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl.unsafe_get[Self._unix_s]()[].settimeout(value)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return False
+
     # TODO: once we have async generators
     # fn __iter__(self) -> _SocketIter:
     #     """Iterate asyncronously over the incoming connections.
@@ -937,6 +969,36 @@ recv.2.en.html#The_flags_argument).
     #     """
 
     #     ...
+
+    # TODO: should this return an iterator instead?
+    @staticmethod
+    fn getaddrinfo(
+        address: sock_address, flags: Int = 0
+    ) raises -> List[
+        (SockFamily, SockType, SockProtocol, String, sock_address)
+    ]:
+        """Get the available address information.
+        
+        Notes:
+            [Linux reference](\
+                https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
+            [Windows reference](\
+https://learn.microsoft.com/en-us/windows/win32/api/ws2tcpip/\
+nf-ws2tcpip-getaddrinfo).
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return self._impl.unsafe_get[Self._linux_s]()[].getaddrinfo(
+                address, flags
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl.unsafe_get[Self._unix_s]()[].getaddrinfo(
+                address, flags
+            )
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return False
 
     @staticmethod
     fn create_connection(
@@ -1087,20 +1149,15 @@ recv.2.en.html#The_flags_argument).
         *,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
-        dualstack_ipv6: Bool = False,
     ) raises -> Self:
         """Convenience function which creates a socket bound to the address and
-        returns the listening socket object.
+        returns the listening socket object. By default no dual stack IPv6.
 
         Args:
             address: The adress of the new server.
             backlog: Is the queue size passed to socket.listen().
             reuse_port: Dictates whether to use the SO_REUSEPORT socket
                 option.
-            dualstack_ipv6: If true and the platform supports it, it will
-                create an AF_INET6 socket able to accept both IPv4 or IPv6
-                connections. When false it will explicitly disable this
-                option on platforms that enable it by default (e.g. Linux).
 
         Returns:
             The Socket.
@@ -1122,6 +1179,57 @@ recv.2.en.html#The_flags_argument).
                 #     ...  # handle new connection
         ```
         .
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return Self._linux_s.create_server(
+                address,
+                backlog=backlog,
+                reuse_port=reuse_port,
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return Self._unix_s.create_server(
+                address,
+                backlog=backlog,
+                reuse_port=reuse_port,
+            )
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
+
+    @staticmethod
+    fn create_server(
+        address: IPv6Addr,
+        *,
+        dualstack_ipv6: Bool,
+        backlog: Optional[Int] = None,
+        reuse_port: Bool = False,
+    ) raises -> (
+        Self,
+        Socket[
+            SockFamily.AF_INET,
+            sock_type,
+            sock_protocol,
+            IPv4Addr,
+            sock_platform,
+        ],
+    ):
+        """Convenience function which creates a socket bound to the address and
+        returns the listening socket object.
+
+        Args:
+            address: The adress of the new server.
+            dualstack_ipv6: If true and the platform supports it, it will
+                create an AF_INET6 socket able to accept both IPv4 or IPv6
+                connections. When false it will explicitly disable this
+                option on platforms that enable it by default (e.g. Linux).
+            backlog: Is the queue size passed to socket.listen().
+            reuse_port: Dictates whether to use the SO_REUSEPORT socket
+                option.
+
+        Returns:
+            A pair of IPv6 and IPv4 sockets.
         """
 
         @parameter

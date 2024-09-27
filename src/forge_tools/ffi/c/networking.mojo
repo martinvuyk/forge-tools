@@ -1,0 +1,528 @@
+"""C POSIX networking syscalls."""
+
+from sys.ffi import external_call
+from memory import UnsafePointer
+from .types import *
+
+
+fn htonl(hostlong: C.u_int) -> C.u_int:
+    """Libc POSIX `htonl` function.
+
+    Args:
+        hostlong: A 32-bit unsigned integer in host byte order.
+
+    Returns:
+        A 32-bit unsigned integer in network byte order.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
+        Fn signature: `uint32_t htonl(uint32_t hostlong)`.
+    """
+    return external_call["htonl", C.u_int, C.u_int](hostlong)
+
+
+fn htons(hostshort: C.u_short) -> C.u_short:
+    """Libc POSIX `htons` function.
+
+    Args:
+        hostshort: A 16-bit unsigned integer in host byte order.
+
+    Returns:
+        A 16-bit unsigned integer in network byte order.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
+        Fn signature: `uint16_t htons(uint16_t hostshort)`.
+    """
+    return external_call["htons", C.u_short, C.u_short](hostshort)
+
+
+fn ntohl(netlong: C.u_int) -> C.u_int:
+    """Libc POSIX `ntohl` function.
+
+    Args:
+        netlong: A 32-bit unsigned integer in network byte order.
+
+    Returns:
+        A 32-bit unsigned integer in host byte order.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
+        Fn signature: `uint32_t ntohl(uint32_t netlong)`.
+    """
+    return external_call["ntohl", C.u_int, C.u_int](netlong)
+
+
+fn ntohs(netshort: C.u_short) -> C.u_short:
+    """Libc POSIX `ntohs` function.
+
+    Args:
+        netshort: A 16-bit unsigned integer in network byte order.
+
+    Returns:
+        A 16-bit unsigned integer in host byte order.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
+        Fn signature: `uint16_t ntohs(uint16_t netshort)`.
+    """
+    return external_call["ntohs", C.u_short, C.u_short](netshort)
+
+
+fn inet_ntop(
+    af: C.int,
+    src: UnsafePointer[C.void],
+    dst: UnsafePointer[C.char],
+    size: socklen_t,
+) -> UnsafePointer[C.char]:
+    """Libc POSIX `inet_ntop` function.
+
+    Args:
+        af: Address Family see AF_ alises.
+        src: A pointer to a binary address.
+        dst: A pointer to a buffer to store the string representation of the
+            address.
+        size: The size of the buffer pointed by dst.
+
+    Returns:
+        A pointer.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3p.html.).
+        Fn signature: `const char *inet_ntop(int af, const void *restrict src,
+            char *restrict dst, socklen_t size)`.
+    """
+    return external_call[
+        "inet_ntop",
+        UnsafePointer[C.char],
+        C.int,
+        UnsafePointer[C.void],
+        UnsafePointer[C.char],
+        socklen_t,
+    ](af, src, dst, size)
+
+
+fn inet_pton(
+    af: C.int, src: UnsafePointer[C.char], dst: UnsafePointer[C.void]
+) -> C.int:
+    """Libc POSIX `inet_pton` function.
+
+    Args:
+        af: Address Family see AF_ alises.
+        src: A pointer to a string representation of an address.
+        dst: A pointer to a buffer to store the binary address.
+
+    Returns:
+        Returns 1 on success (network address was successfully converted). 0 is
+        returned if src does not contain a character string representing a valid
+        network address in the specified address family.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3p.html).
+        Fn signature: `int inet_pton(int af, const char *restrict src,
+            void *restrict dst)`.
+    """
+    return external_call[
+        "inet_pton", C.int, C.int, UnsafePointer[C.char], UnsafePointer[C.void]
+    ](af, src, dst)
+
+
+fn inet_addr(cp: UnsafePointer[C.char]) -> in_addr_t:
+    """Libc POSIX `inet_addr` function.
+
+    Args:
+        cp: A pointer to a string representation of an address.
+
+    Returns:
+        If the input is invalid, INADDR_NONE (usually -1) is
+            returned.  Use of this function is problematic because -1 is a
+            valid address (255.255.255.255).  Avoid its use in favor of
+            inet_aton(), inet_pton(3), or getaddrinfo(3), which provide a
+            cleaner way to indicate error return.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
+        Fn signature: `in_addr_t inet_addr(const char *cp)`.
+    """
+    return external_call["inet_addr", in_addr_t, UnsafePointer[C.char]](cp)
+
+
+fn inet_aton(cp: UnsafePointer[C.char], addr: UnsafePointer[in_addr]) -> C.int:
+    """Libc POSIX `inet_aton` function.
+
+    Args:
+        cp: A pointer to a string representation of an address.
+        addr: A pointer to a binary address.
+
+    Returns:
+        1 if the supplied string was successfully interpreted, or 0 if the
+            string is invalid.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3.html).
+        Fn signature: `int inet_aton(const char *cp, struct in_addr *inp)`.
+    """
+    return external_call[
+        "inet_aton", C.int, UnsafePointer[C.char], UnsafePointer[in_addr]
+    ](cp, addr)
+
+
+fn inet_ntoa(addr: in_addr) -> UnsafePointer[C.char]:
+    """Libc POSIX `inet_ntoa` function.
+
+    Args:
+        addr: A pointer to a binary address.
+
+    Returns:
+        A pointer to the string in IPv4 dotted-decimal notation.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
+        Fn signature: `char *inet_ntoa(struct in_addr in)`.
+        Allocated buffer is 16-18 bytes depending on implementation.
+    """
+    return external_call["inet_ntoa", UnsafePointer[C.char], in_addr](addr)
+
+
+fn socket(domain: C.int, type: C.int, protocol: C.int) -> C.int:
+    """Libc POSIX `socket` function.
+
+    Args:
+        domain: Address Family see AF_ alises.
+        type: Socket Type see SOCK_ alises.
+        protocol: Protocol see IPPROTO_ alises.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/socket.3p.html).
+        Fn signature: `int socket(int domain, int type, int protocol)`.
+    """
+    return external_call["socket", C.int, C.int, C.int, C.int](
+        domain, type, protocol
+    )
+
+
+fn setsockopt(
+    socket: C.int,
+    level: C.int,
+    option_name: C.int,
+    option_value: UnsafePointer[C.void],
+    option_len: socklen_t,
+) -> C.int:
+    """Libc POSIX `setsockopt` function.
+
+    Args:
+        socket: A pointer to a socket.
+        level: Protocol Level see SOL_ alises.
+        option_name: Option name see SO_ alises.
+        option_value: A pointer to a buffer containing the option value.
+        option_len: The size of the buffer pointed by option_value.
+
+    Returns:
+        Value 0 on success, -1 on error.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/setsockopt.3p.html).
+        Fn signature: `int setsockopt(int socket, int level, int option_name,
+            const void *option_value, socklen_t option_len)`.
+    """
+    return external_call[
+        "setsockopt",
+        C.int,
+        C.int,
+        C.int,
+        C.int,
+        UnsafePointer[C.void],
+        socklen_t,
+    ](socket, level, option_name, option_value, option_len)
+
+
+fn bind(
+    socket: C.int, address: UnsafePointer[sockaddr], address_len: socklen_t
+) -> C.int:
+    """Libc POSIX `bind` function.
+
+    Args:
+        socket: The socket.
+        address: A pointer to the address.
+        address_len: The length of the pointer.
+
+    Returns:
+        An int.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/bind.3p.html).
+        Fn signature: `int bind(int socket, const struct sockaddr *address,
+            socklen_t address_len)`.
+    """
+    return external_call[
+        "bind", C.int, C.int, UnsafePointer[sockaddr], socklen_t
+    ](socket, address, address_len)
+
+
+fn listen(socket: C.int, backlog: C.int) -> C.int:
+    """Libc POSIX `listen` function.
+
+    Args:
+        socket: A pointer to a socket.
+        backlog: The maximum length to which the queue of pending connections
+            for socket may grow.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/listen.3p.html).
+        Fn signature: `int listen(int socket, int backlog)`.
+    """
+    return external_call["listen", C.int, C.int, C.int](socket, backlog)
+
+
+fn accept(
+    socket: C.int,
+    address: UnsafePointer[sockaddr],
+    address_len: UnsafePointer[socklen_t],
+) -> C.int:
+    """Libc POSIX `accept` function.
+
+    Args:
+        socket: A pointer to a socket.
+        address: A pointer to a buffer to store the address of the accepted
+            socket.
+        address_len: A pointer to a buffer to store the length of the address of
+            the accepted socket.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/accept.3p.html).
+        Fn signature: `int accept(int socket, struct sockaddr *restrict address,
+            socklen_t *restrict address_len);`.
+    """
+    return external_call[
+        "accept",
+        C.int,
+        C.int,
+        UnsafePointer[sockaddr],
+        UnsafePointer[socklen_t],
+    ](socket, address, address_len)
+
+
+fn connect(
+    socket: C.int, address: UnsafePointer[sockaddr], address_len: socklen_t
+) -> C.int:
+    """Libc POSIX `connect` function.
+
+    Args:
+        socket: A pointer to a socket.
+        address: A pointer to a buffer to store the address of the accepted
+            socket.
+        address_len: A pointer to a buffer to store the length of the address of
+            the accepted socket.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/connect.3p.html).
+        Fn signature: `int connect(int socket, const struct sockaddr *address,
+            socklen_t address_len)`.
+    """
+    return external_call[
+        "connect", C.int, C.int, UnsafePointer[sockaddr], socklen_t
+    ](socket, address, address_len)
+
+
+fn recv(
+    socket: C.int, buffer: UnsafePointer[C.void], length: C.u_int, flags: C.int
+) -> C.u_int:
+    """Libc POSIX `recv` function.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/recv.3p.html).
+        Fn signature: `ssize_t recv(int socket, void *buffer, size_t length,
+            int flags)`.
+    """
+    return external_call[
+        "recv", C.u_int, C.int, UnsafePointer[C.void], C.u_int, C.int
+    ](socket, buffer, length, flags)
+
+
+fn recvfrom(
+    socket: C.int,
+    buffer: UnsafePointer[C.void],
+    length: C.u_int,
+    flags: C.int,
+    address: UnsafePointer[sockaddr],
+    address_len: UnsafePointer[socklen_t],
+) -> C.u_int:
+    """Libc POSIX `recvfrom` function.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/recvfrom.3p.html).
+        Fn signature: `ssize_t recvfrom(int socket, void *restrict buffer,
+            size_t length, int flags, struct sockaddr *restrict address,
+            socklen_t *restrict address_len)`.
+    """
+    return external_call[
+        "recvfrom",
+        C.u_int,
+        C.int,
+        UnsafePointer[C.void],
+        C.u_int,
+        C.int,
+        UnsafePointer[sockaddr],
+        UnsafePointer[socklen_t],
+    ](socket, buffer, length, flags, address, address_len)
+
+
+fn send(
+    socket: C.int, buffer: UnsafePointer[C.void], length: C.u_int, flags: C.int
+) -> C.u_int:
+    """Libc POSIX `send` function.
+
+    Args:
+        socket: A pointer to a socket.
+        buffer: A pointer to a buffer to store the address of the accepted
+            socket.
+        length: A pointer to a buffer to store the length of the address of the
+            accepted socket.
+        flags: A pointer to a buffer to store the length of the address of the
+            accepted socket.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/send.3p.html).
+        Fn signature: `ssize_t send(int socket, const void *buffer,
+            size_t length, int flags)`.
+    """
+    return external_call[
+        "send", C.u_int, C.int, UnsafePointer[C.void], C.u_int, C.int
+    ](socket, buffer, length, flags)
+
+
+fn sendto(
+    socket: C.int,
+    message: UnsafePointer[C.void],
+    length: C.u_int,
+    flags: C.int,
+    dest_addr: UnsafePointer[sockaddr],
+    dest_len: socklen_t,
+) -> C.u_int:
+    """Libc POSIX `sendto` function.
+
+    Args:
+        socket: A pointer to a socket.
+        message: A pointer to a buffer to store the address of the accepted
+            socket.
+        length: A pointer to a buffer to store the length of the address of the
+            accepted socket.
+        flags: A pointer to a buffer to store the length of the address of the
+            accepted socket.
+        dest_addr: A pointer to a buffer to store the length of the address of
+            the accepted socket.
+        dest_len: A pointer to a buffer to store the length of the address of
+            the accepted socket.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/sendto.3p.html).
+        Fn signature: `ssize_t sendto(int socket, const void *message,
+            size_t length, int flags, const struct sockaddr *dest_addr,
+            socklen_t dest_len)`.
+    """
+    return external_call[
+        "sendto",
+        C.u_int,
+        C.int,
+        UnsafePointer[C.void],
+        C.u_int,
+        C.int,
+        UnsafePointer[sockaddr],
+        socklen_t,
+    ](socket, message, length, flags, dest_addr, dest_len)
+
+
+fn shutdown(socket: C.int, how: C.int) -> C.int:
+    """Libc POSIX `shutdown` function.
+
+    Args:
+        socket: A pointer to a socket.
+        how: A pointer to a buffer to store the length of the address of the
+            accepted socket.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/shutdown.3p.html).
+        Fn signature: `int shutdown(int socket, int how)`.
+    """
+    return external_call["shutdown", C.int, C.int, C.int](socket, how)
+
+
+fn getaddrinfo(
+    nodename: UnsafePointer[C.char],
+    servname: UnsafePointer[C.char],
+    hints: UnsafePointer[addrinfo],
+    res: UnsafePointer[UnsafePointer[addrinfo]],
+) -> C.int:
+    """Libc POSIX `getaddrinfo` function.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/getaddrinfo.3p.html).
+        Fn signature: `int getaddrinfo(const char *restrict nodename,
+            const char *restrict servname, const struct addrinfo *restrict hints
+            , struct addrinfo **restrict res)`.
+    """
+    return external_call[
+        "getaddrinfo",
+        C.int,
+        UnsafePointer[C.char],
+        UnsafePointer[C.char],
+        UnsafePointer[addrinfo],
+        UnsafePointer[UnsafePointer[addrinfo]],
+    ](nodename, servname, hints, res)
+
+
+fn gai_strerror(ecode: C.int) -> UnsafePointer[C.char]:
+    """Libc POSIX `gai_strerror` function.
+
+    Args:
+        ecode: A pointer to a socket.
+
+    Returns:
+        A pointer to a socket.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/gai_strerror.3p.html).
+        Fn signature: `const char *gai_strerror(int ecode)`.
+    """
+    return external_call["gai_strerror", UnsafePointer[C.char], C.int](ecode)
+
+
+# fn get_addr(ptr: UnsafePointer[sockaddr]) -> sockaddr:
+#    if ptr.load().sa_family == AF_INET:
+#        ptr.bitcast[sockaddr_in]().load().sin_addr
+#    return ptr.bitcast[sockaddr_in6]().load().sin6_addr
+
+
+fn inet_pton(address_family: Int, address: String) -> Int:
+    var ip_buf_size = 4
+    if address_family == AF_INET6:
+        ip_buf_size = 16
+
+    var ip_buf = UnsafePointer[C.void].alloc(ip_buf_size)
+    _ = inet_pton(
+        rebind[C.int](address_family),
+        address.unsafe_ptr().bitcast[C.char](),
+        ip_buf,
+    )
+    return int(ip_buf.bitcast[C.u_int]()[])

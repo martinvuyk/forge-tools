@@ -84,7 +84,9 @@ def test_returning_err():
     var item_i = _returning_err_reg(Int())
     assert_true(not item_i and item_i.err and str(item_i.err) == "something")
     var item_i64 = _returning_err_reg(Int64())
-    assert_true(not item_i64 and item_i64.err and str(item_i64.err) == "something")
+    assert_true(
+        not item_i64 and item_i64.err and str(item_i64.err) == "something"
+    )
     var item_f = _returning_err_reg(Float64())
     assert_true(not item_f and item_f.err and str(item_f.err) == "something")
     var item_sl = _returning_err_reg("stringliteral")
@@ -100,9 +102,13 @@ def test_returning_err():
     var item_ls = _returning_err(List[String]())
     assert_true(not item_ls and item_ls.err and str(item_ls.err) == "something")
     var item_dii = _returning_err(Dict[Int, Int]())
-    assert_true(not item_dii and item_dii.err and str(item_dii.err) == "something")
+    assert_true(
+        not item_dii and item_dii.err and str(item_dii.err) == "something"
+    )
     var item_dss = _returning_err(Dict[String, String]())
-    assert_true(not item_dss and item_dss.err and str(item_dss.err) == "something")
+    assert_true(
+        not item_dss and item_dss.err and str(item_dss.err) == "something"
+    )
     var item_oi = _returning_err(Result[Int]())
     assert_true(not item_oi and item_oi.err and str(item_oi.err) == "something")
     var item_os = _returning_err(Result[String]())
@@ -112,7 +118,9 @@ def test_returning_err():
         not item_oi64 and item_oi64.err and str(item_oi64.err) == "something"
     )
     var item_osl = _returning_err(ResultReg[StringLiteral]())
-    assert_true(not item_osl and item_osl.err and str(item_osl.err) == "something")
+    assert_true(
+        not item_osl and item_osl.err and str(item_osl.err) == "something"
+    )
 
 
 def test_returning_ok():

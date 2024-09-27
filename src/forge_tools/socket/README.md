@@ -94,9 +94,6 @@ trait SocketInterface[
 ](CollectionElement):
     """Interface for Sockets."""
 
-    var fd: FileDescriptor
-    """The Socket's `FileDescriptor`."""
-
     fn __init__(inout self) raises:
         """Create a new socket object."""
         ...
@@ -109,6 +106,10 @@ trait SocketInterface[
         """Closes the Socket if it's the last reference to its
         `FileDescriptor`.
         """
+        ...
+
+    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+        """Set socket options."""
         ...
 
     fn bind(self, address: sock_address) raises:
@@ -126,11 +127,10 @@ trait SocketInterface[
         """Connect to a remote socket at address."""
         ...
 
-    async fn accept(self) raises -> (Self, sock_address):
+    async fn accept(self) -> (Self, sock_address):
         """Return a new socket representing the connection, and the address of
-        the client.
-        """
-        raise Error("Failed to create socket.")
+        the client."""
+        ...
 
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
@@ -142,16 +142,16 @@ trait SocketInterface[
         """Send file descriptor to the socket."""
         ...
 
-    async fn recv_fds(self, maxfds: Int) -> Optional[List[FileDescriptor]]:
+    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
         """Receive file descriptors from the socket."""
         ...
 
-    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
+    async fn send(self, buf: Span[UInt8]) -> UInt:
         """Send a buffer of bytes to the socket."""
         return 0
 
-    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
-        """Receive up to max_len bytes into the buffer."""
+    async fn recv(self, buf: Span[UInt8]) -> UInt:
+        """Receive up to `len(buf)` bytes into the buffer."""
         return 0
 
     @staticmethod
@@ -184,11 +184,19 @@ trait SocketInterface[
         """Set the default timeout value."""
         ...
 
-    async fn accept(self) -> (Self, sock_address):
-        """Return a new socket representing the connection, and the address of
-        the client.
-        """
+    fn settimeout(self, value: SockTime) -> Bool:
+        """Set the socket timeout value."""
         ...
+
+   # TODO: should this return an iterator instead?
+   @staticmethod
+   fn getaddrinfo(
+       address: sock_address, flags: Int = 0
+   ) raises -> List[
+       (SockFamily, SockType, SockProtocol, String, sock_address)
+   ]:
+       """Get the available address information.
+       ...
 ```
 
 
