@@ -224,16 +224,10 @@ struct _LinuxSocket[
 
     # TODO: should this return an iterator instead?
     @staticmethod
-    fn getaddrinfo( 
-        address: Variant[IPv4Addr, IPv6Addr], flags: Int = 0
+    fn getaddrinfo(
+        address: sock_address, flags: Int = 0
     ) raises -> List[
-        (
-            SockFamily,
-            SockType,
-            SockProtocol,
-            Variant[IPv4Addr, IPv6Addr],
-            String,
-        )
+        (SockFamily, SockType, SockProtocol, String, sock_address)
     ]:
         """Get the available address information.
         
@@ -241,8 +235,8 @@ struct _LinuxSocket[
             [Reference](\
             https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
         """
-        alias v = Variant[IPv4Addr, IPv6Addr]
-        var info = List[(SockFamily, SockType SockProtocol, v, String)]
+        alias P = SockProtocol
+        var info = List[SockFamily, SockType, P, sock_address, String]()
         var hints = addrinfo()
         hints.ai_family = Self._sock_family
         hints.ai_socktype = Self._sock_type
@@ -275,48 +269,65 @@ struct _LinuxSocket[
             next_addr = result.ai_next
         return info^
 
-
     @staticmethod
     fn create_connection(
-        address: Variant[IPv4Addr, IPv6Addr],
+        address: IPv4Addr,
         timeout: Optional[SockTime] = None,
-        source_address: IPv4Addr = IPv4Addr(("", 0)),
+        source_address: IPv4Addr = IPv4Addr(),
         *,
         all_errors: Bool = False,
     ) raises -> Self:
         """Connects to an address, with an optional timeout and optional source
         address."""
-        alias s = sock_address
-        alias cond = _type_is_eq[s, IPv4Addr]() or _type_is_eq[s, IPv6Addr]()
-        constrained[cond, "sock_address must be IPv4Addr or IPv6Addr"]()
+        alias cond = _type_is_eq[sock_address, IPv4Addr]()
+        constrained[cond, "sock_address must be IPv4Addr"]()
         var errors = List[String]()
         var idx = 0
         var time = timeout.value() if timeout else Self.getdefaulttimeout()
-        var af: SockFamily
-        var st: SockType
-        var proto: SockProtocol
-        var canonname: String
-        var sa: Variant[IPv4Addr, IPv6Addr]
         for res in Self.getaddrinfo(address):
-            af, st, proto, canonname, sa = res
-
             try:
                 var socket = Self()
                 socket.settimeout(time)
-                if source_address != IPv4Addr(("", 0)):
+                if source_address != IPv4Addr():
                     socket.bind(source_address)
-                if sa.isa[IPv4Addr]():
-                    socket.connect(sa.unsafe_get[IPv4Addr]()[])
-                else:
-                    socket.connect(sa.unsafe_get[IPv6Addr]()[])
+                socket.connect(res[4])
                 return socket^
             except Error as e:
                 errors[idx] = str(e)
                 if all_errors:
                     idx += 1
 
-        raise Error(String("; ").join(errors)) # TODO: need ErrorGroup
+        raise Error(String("; ").join(errors))  # TODO: need ErrorGroup
 
+    @staticmethod
+    fn create_connection(
+        address: IPv6Addr,
+        timeout: Optional[SockTime] = None,
+        source_address: IPv6Addr = IPv6Addr(),
+        *,
+        all_errors: Bool = False,
+    ) raises -> Self:
+        """Connects to an address, with an optional timeout and optional source
+        address."""
+        alias cond = _type_is_eq[sock_address, IPv6Addr]()
+        constrained[cond, "sock_address must be IPv6Addr"]()
+        var errors = List[String]()
+        var idx = 0
+        var time = timeout.value() if timeout else Self.getdefaulttimeout()
+        for res in Self.getaddrinfo(address):
+            try:
+                var socket = Self()
+                socket.settimeout(time)
+                if source_address != IPv6Addr():
+                    socket.bind(source_address)
+                socket.connect(res[4])
+                return socket^
+            except Error as e:
+                errors[idx] = str(e)
+                if all_errors:
+                    idx += 1
+
+        raise Error(String("; ").join(errors))  # TODO: need ErrorGroup
 
     @staticmethod
     fn create_server(

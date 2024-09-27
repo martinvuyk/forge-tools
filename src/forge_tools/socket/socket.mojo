@@ -420,6 +420,7 @@ struct SockPlatform:
 #         """
 #         ...
 
+
 fn _get_current_platform() -> StringLiteral:
     if info.os_is_linux():
         return SockPlatform.LINUX

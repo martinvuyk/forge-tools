@@ -130,7 +130,6 @@ struct _BSDSocket[
         """Set the default timeout value."""
         return False
 
-
     @staticmethod
     fn create_connection(
         address: IPv4Addr,
