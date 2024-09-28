@@ -131,10 +131,16 @@ trait SocketInterface[
         """Connect to a remote socket at address."""
         ...
 
+    # TODO: This should return an async iterator instead
     async fn accept(self) -> (Self, sock_address):
         """Return a new socket representing the connection, and the address of
         the client."""
         ...
+
+   # TODO: once we have async generators
+   fn __iter__(self) -> _SocketIter:
+       """Iterate asynchronously over the incoming connections."""
+       ...
 
     @staticmethod
     async fn socketpair() raises -> (Self, Self):
@@ -194,7 +200,7 @@ trait SocketInterface[
         """Set the socket timeout value."""
         ...
 
-   # TODO: should this return an iterator instead?
+   # TODO: This should return an iterator instead
    @staticmethod
    fn getaddrinfo(
        address: sock_address, flags: Int = 0

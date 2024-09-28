@@ -1,4 +1,5 @@
-"""Socket module. An async take on Python's socket interface.
+"""Socket module. An async take on [Python's socket interface](\
+https://docs.python.org/3/library/socket.html).
 
 #### Functions:
 
@@ -45,9 +46,6 @@
     - use `Socket(fd: FileDescriptor)` constructor instead.
 - `detach()`
     - functionality covered by the type's destructor.
-
-
-#### [Python's socket docs](https://docs.python.org/3/library/socket.html).
 """
 
 from sys import info
@@ -371,6 +369,11 @@ struct SockPlatform:
 #         the client."""
 #         ...
 
+#    # TODO: once we have async generators
+#    fn __iter__(self) -> _SocketIter:
+#        """Iterate asynchronously over the incoming connections."""
+#        ...
+
 #     @staticmethod
 #     async fn socketpair() raises -> (Self, Self):
 #         """Create a pair of socket objects from the sockets returned by the
@@ -429,7 +432,7 @@ struct SockPlatform:
 #         """Set the socket timeout value."""
 #         ...
 
-#    # TODO: should this return an iterator instead?
+#    # TODO: This should return an iterator instead
 #    @staticmethod
 #    fn getaddrinfo(
 #        address: sock_address, flags: Int = 0
@@ -554,17 +557,13 @@ struct Socket[
 
     fn close(owned self) raises:
         """Closes the Socket."""
-
-        @parameter
-        if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]()[].close()
         _ = self^
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
         `FileDescriptor`.
         """
-        _ = self^  # The OS should keep track if it's the last reference (?)
+        _ = self^
 
     fn __enter__(owned self) -> Self:
         """Enter a context.
@@ -965,7 +964,7 @@ recv.2.en.html#The_flags_argument).
 
     # TODO: once we have async generators
     # fn __iter__(self) -> _SocketIter:
-    #     """Iterate asyncronously over the incoming connections.
+    #     """Iterate asynchronously over the incoming connections.
 
     #     Returns:
     #         The async iterator.
@@ -981,7 +980,6 @@ recv.2.en.html#The_flags_argument).
     #     ```
     #     .
     #     """
-
     #     ...
 
     # TODO: should this return an iterator instead?

@@ -486,7 +486,7 @@ fn getaddrinfo(
     nodename: UnsafePointer[C.char],
     servname: UnsafePointer[C.char],
     hints: UnsafePointer[addrinfo],
-    res: UnsafePointer[Int],
+    res: UnsafePointer[C.ptr_addr],
 ) -> C.int:
     """Libc POSIX `getaddrinfo` function.
 

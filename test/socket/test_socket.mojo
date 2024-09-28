@@ -80,20 +80,28 @@ def test_inet_ntoa():
     assert_equal(String("123.45.67.89"), res)
 
 
-def test_socket_sync_ipv4():
-    try:
-        var socket = Socket()
-        # socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        # if reuse_port:
-        #     socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
-        # socket.bind(rebind[sock_address](address))
-        # socket.listen(backlog=backlog.value() if backlog else 0)
-    except e:
-        print(e)
-        print("this is not printing for some reason")
-        assert_true(False)
+def test_server_sync_ipv4():
+    var socket = Socket()
+    socket.bind(("0.0.0.0", 8000))
+    socket.listen()
 
-# async def test_server_client_ipv4():
+
+def test_client_sync_ipv4():
+    var socket = Socket()
+    # not sure if this works, should redirect to default gateway
+    await socket.connect(("", 0))
+    socket.listen()
+
+
+def test_create_server_sync_ipv4():
+    var server = Socket.create_server(("0.0.0.0", 8000))
+
+
+# def test_create_connection_sync_ipv4():
+#     # not sure if this works, should redirect to default gateway
+#     var client = Socket.create_connection(("", 0))
+
+# async def test_client_server_ipv4():
 #     var server = Socket.create_server(("0.0.0.0", 8000))
 #     var client = Socket.create_connection(("0.0.0.0", 8000))
 
@@ -101,27 +109,25 @@ def test_socket_sync_ipv4():
 #     var bytes_sent = client.send(client_msg.as_bytes_span())
 
 #     var conn = (await server.accept())[0]
-#     assert_equal(10, await bytes_sent^)
-#     var server_msg = String("987654321")
-#     var server_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
+#     assert_equal(9, await bytes_sent^)
 
 #     alias Life = ImmutableAnyLifetime
+#     var server_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
 #     var server_buf = Span[UInt8, Life](unsafe_ptr=server_ptr, len=10)
 #     var server_bytes_recv = await conn.recv(server_buf)
-#     assert_equal(10, server_bytes_recv)
+#     assert_equal(9, server_bytes_recv)
+#     assert_equal(client_msg, String(ptr=server_ptr, len=10))
 
-#     alias S = StringSlice[Life]
-#     assert_equal(String(S(unsafe_from_utf8=server_buf)), client_msg)
+#     var server_msg = String("987654321")
 #     var server_sent = await conn.send(server_msg.as_bytes_span())
-#     assert_equal(10, server_sent)
+#     assert_equal(9, server_sent)
 
 #     var client_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
 #     var client_buf = Span[UInt8, Life](unsafe_ptr=client_ptr, len=10)
 #     var client_bytes_recv = await client.recv(client_buf)
-#     assert_equal(10, client_bytes_recv)
-#     assert_equal(String(S(unsafe_from_utf8=client_buf)), server_msg)
-#     server_ptr.free()
-#     client_ptr.free()
+#     assert_equal(9, client_bytes_recv)
+#     assert_equal(server_msg, String(ptr=client_ptr, len=10))
+
 
 async def main():
     test_ntohs()
@@ -130,5 +136,8 @@ async def main():
     test_htonl()
     test_inet_aton()
     test_inet_ntoa()
-    test_socket_sync_ipv4()
-    # await test_server_client_ipv4()
+    test_server_sync_ipv4()
+    test_client_sync_ipv4()
+    test_create_server_sync_ipv4()
+    # test_create_connection_sync_ipv4()
+    # await test_client_server_ipv4()

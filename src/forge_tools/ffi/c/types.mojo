@@ -1,6 +1,6 @@
 """C POSIX types."""
 
-from utils import StaticTuple
+from utils import StaticTuple, StringSlice
 
 # ===----------------------------------------------------------------------=== #
 # Base Types
@@ -42,6 +42,8 @@ struct C:
     """Type: `double`."""
     alias void = Int8
     """Type: `void`."""
+    alias ptr_addr = Int
+    """Type: A Pointer Address."""
 
 
 alias NULL = UnsafePointer[C.void]()
@@ -153,7 +155,7 @@ struct addrinfo:
 
 
 fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
-    """Create a String from a char pointer.
+    """Create a String **copying** a char pointer.
 
     Args:
         s: A pointer to a C string.
@@ -161,7 +163,10 @@ fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     Returns:
         The String.
     """
-    return String(ptr=s.bitcast[UInt8](), len=int(strlen(s) + 1))
+    alias S = StringSlice[ImmutableAnyLifetime]
+    return String(
+        S(unsafe_from_utf8_ptr=s.bitcast[UInt8](), len=int(strlen(s)))
+    )
 
 
 fn strlen(s: UnsafePointer[C.char]) -> C.u_int:

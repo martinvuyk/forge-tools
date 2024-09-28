@@ -5,6 +5,45 @@ from memory import UnsafePointer
 from .types import *
 
 
+# TODO
+fn errno() -> Int:
+    """Get the `errno` global variable.
+
+    Returns:
+        The current value of the variable.
+    """
+    return 0
+
+
+fn strerror(errnum: Int) -> UnsafePointer[C.char]:
+    """Libc POSIX `strerror` function.
+
+    Args:
+        errnum: The number of the error.
+
+    Returns:
+        A Pointer to the error message.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/strerror.3.html).
+        Fn signature: `char *strerror(int errnum)`.
+    """
+    return external_call["strerror", UnsafePointer[C.char], Int](errnum)
+
+
+fn perror(s: UnsafePointer[C.char]):
+    """Libc POSIX `perror` function.
+
+    Args:
+        s: The string to print in front of the error message.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/perror.3.html).
+        Fn signature: `char *perror(int errnum)`.
+    """
+    _ = external_call["perror", C.void, UnsafePointer[C.char]](s)
+
+
 fn openlog(ident: UnsafePointer[C.char], logopt: C.int, facility: C.int):
     """Libc POSIX `openlog` function.
 

@@ -59,6 +59,9 @@ from forge_tools.ffi.c import (
     SOL_SOCKET,
     SO_REUSEADDR,
     SO_REUSEPORT,
+    errno,
+    strerror,
+    STDERR_FILENO,
 )
 
 
@@ -81,7 +84,8 @@ struct _UnixSocket[
         """Create a new socket object."""
         var fd = socket(Self._sock_family, Self._sock_type, Self._sock_protocol)
         if fd == -1:
-            raise Error("Failed to create socket.")
+            var message = char_ptr_to_string(strerror(errno()))
+            raise Error("Failed to create socket: " + message)
         self.fd = FileDescriptor(int(fd))
 
     fn __init__(inout self, fd: FileDescriptor):
@@ -90,17 +94,19 @@ struct _UnixSocket[
 
     fn close(owned self) raises:
         """Closes the Socket."""
-        _ = shutdown(self.fd.value, SHUT_RDWR)
+        _ = self^
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
         `FileDescriptor`.
         """
         try:
-            self.close()
-        except:
-            print("Failed trying to close the socket.")
-            pass
+            var err = shutdown(self.fd.value, SHUT_RDWR)
+            if err == -1:
+                var message = char_ptr_to_string(strerror(errno()))
+                raise Error("Failed trying to close the socket: " + message)
+        except e:
+            print(e, file=STDERR_FILENO)
 
     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
         """Set socket options."""
@@ -109,7 +115,8 @@ struct _UnixSocket[
         var cvoid = ptr.bitcast[C.void]()
         var s = sizeof[Int]()
         if setsockopt(self.fd.value, level, option_name, cvoid, s) == -1:
-            raise Error("Failed to set socket options.")
+            var message = char_ptr_to_string(strerror(errno()))
+            raise Error("Failed to set socket options: " + message)
 
     fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
@@ -129,7 +136,8 @@ struct _UnixSocket[
             var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if bind(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                raise Error("Failed to bind the socket.")
+                var message = char_ptr_to_string(strerror(errno()))
+                raise Error("Failed to bind the socket: " + message)
             _ = ai
         else:
             constrained[False, "Currently unsupported Address type"]()
@@ -141,7 +149,8 @@ struct _UnixSocket[
         new connections. If `backlog == 0`, a default value is chosen.
         """
         if listen(self.fd.value, C.int(backlog)) == -1:
-            raise Error("Failed to listen on socket.")
+            var message = char_ptr_to_string(strerror(errno()))
+            raise Error("Failed to listen on socket: " + message)
 
     async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
@@ -161,7 +170,8 @@ struct _UnixSocket[
             var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if connect(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                raise Error("Failed to create socket.")
+                var message = char_ptr_to_string(strerror(errno()))
+                raise Error("Failed to create socket: " + message)
             _ = ai
         else:
             constrained[False, "currently unsupported Address type"]()
@@ -180,7 +190,8 @@ struct _UnixSocket[
             var fd = accept(self.fd.value, addr_ptr, size_ptr)
             _ = sin_size
             if fd == -1:
-                raise Error("Failed to create socket.")
+                var message = char_ptr_to_string(strerror(errno()))
+                raise Error("Failed to create socket: " + message)
             var sa_family = addr_ptr.bitcast[sa_family_t]()[0]
             if sa_family != Self._sock_family:
                 raise Error("Wrong Address Family for this socket.")
@@ -289,13 +300,15 @@ struct _UnixSocket[
         var servname_p = NULL.bitcast[C.char]()
         var result = addrinfo()
         alias UP = UnsafePointer
-        var res_p = int(UP[addrinfo].address_of(result))
-        var res_p_p = UP[Int].address_of(res_p)
+        var res_p = C.ptr_addr(int(UP[addrinfo].address_of(result)))
+        var res_p_p = UP[C.ptr_addr].address_of(res_p)
         var err = getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
         if err != 0:
             raise Error("Error in getaddrinfo(). Code: " + str(err))
-        var next_addr = result.ai_next
-        while next_addr != NULL:
+        var next_addr = NULL
+        var first = True
+        while first or next_addr != NULL:
+            first = False
             var af = _parse_unix_sock_family_constant(int(result.ai_family))
             var st = _parse_unix_sock_type_constant(int(result.ai_socktype))
             var pt = _parse_unix_sock_protocol_constant(int(result.ai_protocol))
