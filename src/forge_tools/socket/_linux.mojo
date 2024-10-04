@@ -209,7 +209,8 @@ struct _LinuxSocket[
         var ptr = buf.unsafe_ptr().bitcast[C.void]()
         var sent = int(send(self.fd.value, ptr, len(buf), flags))
         if sent == -1:
-            print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
+            print(get_errno())
+            # print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
         return sent
 
     async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:

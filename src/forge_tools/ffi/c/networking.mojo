@@ -335,8 +335,8 @@ fn connect(
 
 
 fn recv(
-    socket: C.int, buffer: UnsafePointer[C.void], length: C.u_int, flags: C.int
-) -> C.u_int:
+    socket: C.int, buffer: UnsafePointer[C.void], length: size_t, flags: C.int
+) -> ssize_t:
     """Libc POSIX `recv` function.
 
     Args:
@@ -354,18 +354,18 @@ fn recv(
             int flags)`.
     """
     return external_call[
-        "recv", C.u_int, C.int, UnsafePointer[C.void], C.u_int, C.int
+        "recv", ssize_t, C.int, UnsafePointer[C.void], size_t, C.int
     ](socket, buffer, length, flags)
 
 
 fn recvfrom(
     socket: C.int,
     buffer: UnsafePointer[C.void],
-    length: C.u_int,
+    length: size_t,
     flags: C.int,
     address: UnsafePointer[sockaddr],
     address_len: UnsafePointer[socklen_t],
-) -> C.u_int:
+) -> ssize_t:
     """Libc POSIX `recvfrom` function.
 
     Args:
@@ -389,10 +389,10 @@ fn recvfrom(
     """
     return external_call[
         "recvfrom",
-        C.u_int,
+        ssize_t,
         C.int,
         UnsafePointer[C.void],
-        C.u_int,
+        size_t,
         C.int,
         UnsafePointer[sockaddr],
         UnsafePointer[socklen_t],
@@ -400,7 +400,7 @@ fn recvfrom(
 
 
 fn send(
-    socket: C.int, buffer: UnsafePointer[C.void], length: C.u_int, flags: C.int
+    socket: C.int, buffer: UnsafePointer[C.void], length: size_t, flags: C.int
 ) -> ssize_t:
     """Libc POSIX `send` function.
 
@@ -420,18 +420,18 @@ fn send(
             size_t length, int flags)`.
     """
     return external_call[
-        "send", ssize_t, C.int, UnsafePointer[C.void], C.u_int, C.int
+        "send", ssize_t, C.int, UnsafePointer[C.void], size_t, C.int
     ](socket, buffer, length, flags)
 
 
 fn sendto(
     socket: C.int,
     message: UnsafePointer[C.void],
-    length: C.u_int,
+    length: size_t,
     flags: C.int,
     dest_addr: UnsafePointer[sockaddr],
     dest_len: socklen_t,
-) -> C.u_int:
+) -> ssize_t:
     """Libc POSIX `sendto` function.
 
     Args:
@@ -456,14 +456,13 @@ fn sendto(
             size_t length, int flags, const struct sockaddr *dest_addr,
             socklen_t dest_len)`.
     """
-    alias I = C.int
     return external_call[
         "sendto",
-        C.u_int,
-        I,
+        ssize_t,
+        C.int,
         UnsafePointer[C.void],
-        C.u_int,
-        I,
+        size_t,
+        C.int,
         UnsafePointer[sockaddr],
         socklen_t,
     ](socket, message, length, flags, dest_addr, dest_len)
@@ -517,7 +516,7 @@ fn getaddrinfo(
         UnsafePointer[C.char],
         UnsafePointer[C.char],
         UnsafePointer[addrinfo],
-        UnsafePointer[Int],
+        UnsafePointer[C.ptr_addr],
     ](nodename, servname, hints, res)
 
 

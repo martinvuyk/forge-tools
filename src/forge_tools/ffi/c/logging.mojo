@@ -2,29 +2,25 @@
 
 from sys.ffi import external_call, DLHandle
 from sys.info import os_is_windows
-from memory import UnsafePointer, stack_allocation, memcpy
+from memory import UnsafePointer, stack_allocation
 from .types import *
 
 
 fn get_errno() -> C.int:
-    """Get a copy of the current value of the `errno` global variable.
+    """Get a copy of the current value of the `errno` global variable for the
+    current thread.
 
     Returns:
-        A copy of the current value of `errno`.
+        A copy of the current value of `errno` for the current thread.
     """
-    var errno = stack_allocation[1, C.int]()
 
     @parameter
     if os_is_windows():
-        _ = external_call[
-            "_get_errno", UnsafePointer[C.void], UnsafePointer[C.int]
-        ](errno)
+        var errno = stack_allocation[1, C.int]()
+        _ = external_call["_get_errno", C.void, UnsafePointer[C.int]](errno)
+        return errno[]
     else:
-        var ptr = external_call["__errno_location", UnsafePointer[C.int]]()
-        memcpy(errno, ptr, 1)
-
-    return errno[0]
-
+        return external_call["__errno_location", UnsafePointer[C.int]]()[]
 
 fn set_errno(errnum: C.int):
     """Set the `errno` global variable."""

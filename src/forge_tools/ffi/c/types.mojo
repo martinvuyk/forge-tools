@@ -76,7 +76,7 @@ fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     return String(ptr=buf, len=l)
 
 
-fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
+fn strlen(s: UnsafePointer[C.char]) -> size_t:
     """Libc POSIX `strlen` function.
 
     Args:
@@ -89,7 +89,7 @@ fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
         [Reference](https://man7.org/linux/man-pages/man3/strlen.3p.html).
         Fn signature: `size_t strlen(const char *s)`.
     """
-    return external_call["strlen", C.u_int, UnsafePointer[C.char]](s)
+    return external_call["strlen", size_t, UnsafePointer[C.char]](s)
 
 
 fn _size_t_dtype() -> DType:
