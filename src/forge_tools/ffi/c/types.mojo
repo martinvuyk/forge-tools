@@ -3,6 +3,7 @@
 from sys.info import is_64bit, os_is_windows
 from os import abort
 from utils import StaticTuple, StringSlice
+from memory import memcpy
 
 # ===----------------------------------------------------------------------=== #
 # Base Types
@@ -69,10 +70,10 @@ fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     Returns:
         The String.
     """
-    alias S = StringSlice[ImmutableAnyLifetime]
-    return String(
-        S(unsafe_from_utf8_ptr=s.bitcast[UInt8](), len=int(strlen(s)))
-    )
+    var l = int(strlen(s))
+    var buf = UnsafePointer[UInt8].alloc(l)
+    memcpy(buf.bitcast[C.char](), s, l)
+    return String(ptr=buf, len=l)
 
 
 fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
