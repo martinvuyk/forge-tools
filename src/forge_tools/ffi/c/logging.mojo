@@ -23,15 +23,17 @@ fn get_errno() -> C.int:
         return external_call["__errno_location", UnsafePointer[C.int]]()[]
 
 fn set_errno(errnum: C.int):
-    """Set the `errno` global variable."""
+    """Set the `errno` global variable for the current thread.
+    
+    Args:
+        errnum: The value to set `errno` to.
+    """
 
     @parameter
     if os_is_windows():
         _ = external_call["_set_errno", C.int, C.int](errnum)
     else:
-        external_call[
-            "__errno_location", UnsafePointer[C.int]
-        ]().init_pointee_copy(errnum)
+        external_call["__errno_location", UnsafePointer[C.int]]()[0] = errnum
 
 
 fn strerror(errnum: C.int) -> UnsafePointer[C.char]:
