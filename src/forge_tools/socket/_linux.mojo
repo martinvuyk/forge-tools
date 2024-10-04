@@ -285,7 +285,8 @@ struct _LinuxSocket[
         var res_p_p = UP[C.ptr_addr].address_of(res_p)
         var err = getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
         if err != 0:
-            raise Error("Error in getaddrinfo(). Code: " + str(err))
+            var msg = char_ptr_to_string(strerror(err))
+            raise Error("Error in getaddrinfo(): " + msg)
         var next_addr = NULL
         var first = True
         while first or next_addr != NULL:

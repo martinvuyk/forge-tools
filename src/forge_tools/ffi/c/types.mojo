@@ -52,9 +52,9 @@ struct C:
 alias NULL = UnsafePointer[C.void]()
 """Null pointer."""
 
-alias size_t = Scalar[_size_t_dtype()]
+alias size_t = C.u_long
 """Type: size_t."""
-alias ssize_t = Scalar[_ssize_t_dtype()]
+alias ssize_t = C.long
 """Type: ssize_t."""
 # ===----------------------------------------------------------------------=== #
 # Utils
@@ -70,7 +70,7 @@ fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     Returns:
         The String.
     """
-    var l = int(strlen(s))
+    var l = int(strlen(s)) + 1
     var buf = UnsafePointer[UInt8].alloc(l)
     memcpy(buf.bitcast[C.char](), s, l)
     return String(ptr=buf, len=l)
@@ -90,30 +90,6 @@ fn strlen(s: UnsafePointer[C.char]) -> size_t:
         Fn signature: `size_t strlen(const char *s)`.
     """
     return external_call["strlen", size_t, UnsafePointer[C.char]](s)
-
-
-fn _size_t_dtype() -> DType:
-    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
-
-    @parameter
-    if is_64bit() and os_is_windows():
-        return DType.uint32  # LLP64
-    elif is_64bit():
-        return DType.uint64  # LP64
-    else:
-        return DType.uint32  # ILP32
-
-fn _ssize_t_dtype() -> DType:
-    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
-
-    @parameter
-    if is_64bit() and os_is_windows():
-        return DType.int32  # LLP64
-    elif is_64bit():
-        return DType.int64  # LP64
-    else:
-        return DType.int32  # ILP32
-
 
 fn _c_long_dtype() -> DType:
     # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
