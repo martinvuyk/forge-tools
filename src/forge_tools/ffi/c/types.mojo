@@ -1,5 +1,7 @@
 """C POSIX types."""
 
+from sys.info import is_64bit, os_is_windows
+from os import abort
 from utils import StaticTuple, StringSlice
 
 # ===----------------------------------------------------------------------=== #
@@ -28,9 +30,9 @@ struct C:
     """Type: `int`."""
     alias u_int = UInt32
     """Type: `unsigned int`."""
-    alias long = Int64
+    alias long = Scalar[_c_long_dtype()]
     """Type: `long`."""
-    alias u_long = UInt64
+    alias u_long = Scalar[_c_u_long_dtype()]
     """Type: `unsigned long`."""
     alias long_long = Int64
     """Type: `long long`."""
@@ -49,7 +51,10 @@ struct C:
 alias NULL = UnsafePointer[C.void]()
 """Null pointer."""
 
-
+alias size_t = Scalar[_size_t_dtype()]
+"""Type: size_t."""
+alias ssize_t = Scalar[_ssize_t_dtype()]
+"""Type: ssize_t."""
 # ===----------------------------------------------------------------------=== #
 # Utils
 # ===----------------------------------------------------------------------=== #
@@ -84,6 +89,53 @@ fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
         Fn signature: `size_t strlen(const char *s)`.
     """
     return external_call["strlen", C.u_int, UnsafePointer[C.char]](s)
+
+
+fn _size_t_dtype() -> DType:
+    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
+
+    @parameter
+    if is_64bit() and os_is_windows():
+        return DType.uint32  # LLP64
+    elif is_64bit():
+        return DType.uint64  # LP64
+    else:
+        return DType.uint32  # ILP32
+
+fn _ssize_t_dtype() -> DType:
+    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
+
+    @parameter
+    if is_64bit() and os_is_windows():
+        return DType.int32  # LLP64
+    elif is_64bit():
+        return DType.int64  # LP64
+    else:
+        return DType.int32  # ILP32
+
+
+fn _c_long_dtype() -> DType:
+    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
+
+    @parameter
+    if is_64bit() and os_is_windows():
+        return DType.uint32  # LLP64
+    elif is_64bit():
+        return DType.uint64  # LP64
+    else:
+        return DType.uint32  # ILP32
+
+
+fn _c_u_long_dtype() -> DType:
+    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
+
+    @parameter
+    if is_64bit() and os_is_windows():
+        return DType.uint32  # LLP64
+    elif is_64bit():
+        return DType.uint64  # LP64
+    else:
+        return DType.uint32  # ILP32
 
 
 # ===----------------------------------------------------------------------=== #

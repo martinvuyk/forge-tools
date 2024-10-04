@@ -1,28 +1,8 @@
 # RUN: %mojo %s
 
 from testing import assert_true, assert_false, assert_equal
-
-from forge_tools.collections.result import (
-    Result,
-    ResultReg,
-    ErrorReg,
-    Result2,
-    Error2,
-)
-
-
-fn _returning_err_reg[T: AnyTrivialRegType](value: T) raises -> ResultReg[T]:
-    var result = ResultReg[T](err=ErrorReg("something"))
-    if not result:
-        return result
-    raise Error("shouldn't get here")
-
-
-fn _returning_ok_reg[T: AnyTrivialRegType](value: T) raises -> ResultReg[T]:
-    var result = ResultReg[T](value)
-    if result:
-        return result
-    raise Error("shouldn't get here")
+from collections import Dict
+from forge_tools.collections.result import Result, Result2, Error2
 
 
 fn _returning_err[T: CollectionElement](value: T) raises -> Result[T]:
@@ -81,16 +61,6 @@ def test_error_transfer():
 
 
 def test_returning_err():
-    var item_i = _returning_err_reg(Int())
-    assert_true(not item_i and item_i.err and str(item_i.err) == "something")
-    var item_i64 = _returning_err_reg(Int64())
-    assert_true(
-        not item_i64 and item_i64.err and str(item_i64.err) == "something"
-    )
-    var item_f = _returning_err_reg(Float64())
-    assert_true(not item_f and item_f.err and str(item_f.err) == "something")
-    var item_sl = _returning_err_reg("stringliteral")
-    assert_true(not item_sl and item_sl.err and str(item_sl.err) == "something")
     var item_s = _returning_err(String("string"))
     assert_true(not item_s and item_s.err and str(item_s.err) == "something")
     # var item_ti = _returning_err(Tuple[Int]())
@@ -113,29 +83,9 @@ def test_returning_err():
     assert_true(not item_oi and item_oi.err and str(item_oi.err) == "something")
     var item_os = _returning_err(Result[String]())
     assert_true(not item_os and item_os.err and str(item_os.err) == "something")
-    var item_oi64 = _returning_err(ResultReg[UInt64]())
-    assert_true(
-        not item_oi64 and item_oi64.err and str(item_oi64.err) == "something"
-    )
-    var item_osl = _returning_err(ResultReg[StringLiteral]())
-    assert_true(
-        not item_osl and item_osl.err and str(item_osl.err) == "something"
-    )
 
 
 def test_returning_ok():
-    var item_i = _returning_ok_reg(Int())
-    assert_true(item_i.value() == _returning_ok(Int()).value())
-    assert_true(item_i and not item_i.err and str(item_i.err) == "")
-    var item_i64 = _returning_ok_reg(Int64())
-    assert_true(item_i64.value() == _returning_ok(Int64()).value())
-    assert_true(item_i64 and not item_i64.err and str(item_i64.err) == "")
-    var item_f = _returning_ok_reg(Float64())
-    assert_true(item_f.value() == _returning_ok(Float64()).value())
-    assert_true(item_f and not item_f.err and str(item_f.err) == "")
-    var item_sl = _returning_ok_reg("stringliteral")
-    assert_true(item_sl.value() == _returning_ok("stringliteral").value())
-    assert_true(item_sl and not item_sl.err and str(item_sl.err) == "")
     # this one would fail if the String gets implicitly cast to Error(src: String)
     var item_s = _returning_ok(String("string"))
     assert_true(item_s and not item_s.err and str(item_s.err) == "")
@@ -155,10 +105,6 @@ def test_returning_ok():
     assert_true(item_oi and not item_oi.err and str(item_oi.err) == "")
     var item_os = _returning_ok(Result[String]())
     assert_true(item_os and not item_os.err and str(item_os.err) == "")
-    var item_oi64 = _returning_ok(ResultReg[UInt64]())
-    assert_true(item_oi64 and not item_oi64.err and str(item_oi64.err) == "")
-    var item_osl = _returning_ok(ResultReg[StringLiteral]())
-    assert_true(item_osl and not item_osl.err and str(item_osl.err) == "")
 
 
 def test_basic():
@@ -204,23 +150,6 @@ def test_basic():
     assert_equal(a2.value(), 2)
 
 
-def test_result_reg_basic():
-    var val = ResultReg[Int](err=ErrorReg("something"))
-    var val2 = Result[Int](err=Error("something"))
-    assert_false(val and val2)
-
-    val = ResultReg[Int](15)
-    assert_true(val)
-
-    assert_equal(val.value(), 15)
-
-    assert_true(val or False)
-    assert_true(val and True)
-
-    assert_true(False or val)
-    assert_true(True and val)
-
-
 def test_result_is():
     var a = Result(1)
     assert_false(a is None)
@@ -237,22 +166,6 @@ def test_result_isnot():
     assert_false(a is not None)
 
 
-def test_result_reg_is():
-    var a = ResultReg(1)
-    assert_false(a is None)
-
-    a = ResultReg[Int]()
-    assert_true(a is None)
-
-
-def test_result_reg_isnot():
-    var a = ResultReg(1)
-    assert_true(a is not None)
-
-    a = ResultReg[Int]()
-    assert_false(a is not None)
-
-
 fn _do_something(i: Int) -> Result2[Int, "IndexError"]:
     if i < 0:
         return None, Error2["IndexError"]("index out of bounds: " + str(i))
@@ -262,7 +175,7 @@ fn _do_something(i: Int) -> Result2[Int, "IndexError"]:
 fn _do_some_other_thing() -> Result2[String, "OtherError"]:
     var a = _do_something(-1)
     if a.err:
-        print(a.err)  # IndexError: index out of bounds: -1
+        print(str(a.err))  # IndexError: index out of bounds: -1
         return a
     return "success"
 
@@ -275,11 +188,8 @@ def test_result2():
 
 def main():
     test_basic()
-    test_result_reg_basic()
     test_result_is()
     test_result_isnot()
-    test_result_reg_is()
-    test_result_reg_isnot()
     test_returning_ok()
     test_returning_err()
     test_error_transfer()

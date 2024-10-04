@@ -401,7 +401,7 @@ fn recvfrom(
 
 fn send(
     socket: C.int, buffer: UnsafePointer[C.void], length: C.u_int, flags: C.int
-) -> C.u_int:
+) -> ssize_t:
     """Libc POSIX `send` function.
 
     Args:
@@ -411,7 +411,8 @@ fn send(
         flags: Specifies the type of message transmission.
 
     Returns:
-        The socket's file descriptor.
+        The number of bytes sent. Otherwise, -1 shall be returned and errno set
+        to indicate the error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/send.3p.html).
@@ -419,7 +420,7 @@ fn send(
             size_t length, int flags)`.
     """
     return external_call[
-        "send", C.u_int, C.int, UnsafePointer[C.void], C.u_int, C.int
+        "send", ssize_t, C.int, UnsafePointer[C.void], C.u_int, C.int
     ](socket, buffer, length, flags)
 
 

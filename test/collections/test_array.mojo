@@ -7,7 +7,7 @@ from testing import (
     assert_raises,
     assert_almost_equal,
 )
-
+from memory import UnsafePointer
 from forge_tools.collections.array import Array
 
 

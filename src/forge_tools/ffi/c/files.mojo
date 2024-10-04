@@ -1,6 +1,7 @@
 """Libc POSIX file syscalls."""
 
 from sys.ffi import external_call
+from sys.info import os_is_windows
 from memory import UnsafePointer
 from .types import *
 
@@ -119,8 +120,9 @@ fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
         [Reference](https://man7.org/linux/man-pages/man3/fdopen.3p.html).
         Fn signature: `FILE *fdopen(int fildes, const char *mode)`.
     """
+    alias name = "_fdopen" if os_is_windows() else "fdopen"
     return external_call[
-        "fdopen", UnsafePointer[FILE], C.int, UnsafePointer[C.char]
+        name, UnsafePointer[FILE], C.int, UnsafePointer[C.char]
     ](fildes, mode)
 
 

@@ -42,7 +42,7 @@ from forge_tools.ffi.c import (
     setsockopt,
     addrinfo,
     getaddrinfo,
-    errno,
+    get_errno,
     strerror,
     STDERR_FILENO,
 )
@@ -73,7 +73,7 @@ struct _LinuxSocket[
         """Create a new socket object."""
         var fd = socket(Self._sock_family, Self._sock_type, Self._sock_protocol)
         if fd == -1:
-            var message = char_ptr_to_string(strerror(errno()))
+            var message = char_ptr_to_string(strerror(get_errno()))
             raise Error("Failed to create socket: " + message)
         self.fd = FileDescriptor(int(fd))
 
@@ -92,7 +92,7 @@ struct _LinuxSocket[
         try:
             var err = shutdown(self.fd.value, SHUT_RDWR)
             if err == -1:
-                var message = char_ptr_to_string(strerror(errno()))
+                var message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed trying to close the socket: " + message)
         except e:
             print(e, file=STDERR_FILENO)
@@ -104,7 +104,7 @@ struct _LinuxSocket[
         var cvoid = ptr.bitcast[C.void]()
         var s = sizeof[Int]()
         if setsockopt(self.fd.value, level, option_name, cvoid, s) == -1:
-            var message = char_ptr_to_string(strerror(errno()))
+            var message = char_ptr_to_string(strerror(get_errno()))
             raise Error("Failed to set socket options: " + message)
 
     fn bind(self, address: sock_address) raises:
@@ -125,7 +125,7 @@ struct _LinuxSocket[
             var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if bind(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                var message = char_ptr_to_string(strerror(errno()))
+                var message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed to bind the socket: " + message)
             _ = ai
         else:
@@ -138,7 +138,7 @@ struct _LinuxSocket[
         new connections. If `backlog == 0`, a default value is chosen.
         """
         if listen(self.fd.value, C.int(backlog)) == -1:
-            var message = char_ptr_to_string(strerror(errno()))
+            var message = char_ptr_to_string(strerror(get_errno()))
             raise Error("Failed to listen on socket: " + message)
 
     async fn connect(self, address: sock_address) raises:
@@ -160,7 +160,7 @@ struct _LinuxSocket[
             var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if connect(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                var message = char_ptr_to_string(strerror(errno()))
+                var message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed to create socket: " + message)
             _ = ai
         else:
@@ -178,7 +178,7 @@ struct _LinuxSocket[
             var size_ptr = UnsafePointer[socklen_t].address_of(sin_size)
             var fd = accept(self.fd.value, addr_ptr, size_ptr)
             if fd == -1:
-                var message = char_ptr_to_string(strerror(errno()))
+                var message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed to create socket: " + message)
             var sa_family = addr_ptr.bitcast[sa_family_t]()[0]
             if sa_family != Self._sock_family:
@@ -207,12 +207,18 @@ struct _LinuxSocket[
     async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
         var ptr = buf.unsafe_ptr().bitcast[C.void]()
-        return int(send(self.fd.value, ptr, len(buf), flags))
+        var sent = int(send(self.fd.value, ptr, len(buf), flags))
+        if sent == -1:
+            print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
+        return sent
 
     async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Receive up to `len(buf)` bytes into the buffer."""
         var ptr = buf.unsafe_ptr().bitcast[C.void]()
-        return int(recv(self.fd.value, ptr, len(buf), flags))
+        var recvd = int(recv(self.fd.value, ptr, len(buf), flags))
+        if recvd == -1:
+            print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
+        return recvd
 
     @staticmethod
     fn gethostname() -> Optional[String]:

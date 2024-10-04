@@ -5,3 +5,5 @@
 .magic/
 magic.lock
 build/
+# packages
+*.mojopkg

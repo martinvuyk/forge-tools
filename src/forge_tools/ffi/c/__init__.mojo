@@ -1,7 +1,8 @@
 """FFI utils for the C programming language.
 
 Notes:
-    The functions in this module follow only the Libc POSIX standard.
+    The functions in this module follow only the Libc POSIX standard. Some
+    exceptions are made for Windows, but no full support is guaranteed.
 """
 
 

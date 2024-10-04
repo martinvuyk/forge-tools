@@ -98,6 +98,7 @@ def test_inet_ntoa():
 
 # print(f"Received {data!r}")
 
+
 def test_client_sync_ipv4():
     var socket = Socket()
     # not sure if this works, should redirect to default gateway
@@ -105,6 +106,7 @@ def test_client_sync_ipv4():
     var client_msg = String("123456789")
     var bytes_sent = await socket.send(client_msg.as_bytes_span())
     _ = socket
+
 
 # def test_create_server_sync_ipv4():
 #     var server = Socket.create_server(("0.0.0.0", 8000))

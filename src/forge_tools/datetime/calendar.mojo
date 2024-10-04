@@ -844,6 +844,24 @@ struct Calendar:
         else:
             return _date(0, 0, 0, 0, 0, 0, 0, 0)
 
+    @always_inline("nodebug")
+    fn is_leapyear(self, year: UInt16) -> Bool:
+        """Whether the year is a leap year.
+
+        Args:
+            year: Year.
+
+        Returns:
+            Bool.
+        """
+
+        if self._implementation.isa[Gregorian]():
+            return Gregorian.is_leapyear(year)
+        elif self._implementation.isa[UTCFast]():
+            return UTCFast.is_leapyear(year)
+        else:
+            return False
+
 
 @value
 # @register_passable("trivial")

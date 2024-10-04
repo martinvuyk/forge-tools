@@ -226,8 +226,8 @@ fn test_bitwise() raises:
     assert_true((ref1 ^ date(1969, 12, 31, tz1_, pycal)) != 0)
     assert_true((ref1 ^ date(1970, 1, 2, tz_0_, pycal)) != 0)
     assert_true((ref1 | (date(1970, 1, 2, tz_0_, pycal) & 0)) == hash(ref1))
-    assert_true((hash(ref1) & ~hash(ref1)) == 0)
-    assert_true(~(hash(ref1) ^ ~hash(ref1)) == 0)
+    # assert_true((hash(ref1) & ~hash(ref1)) == 0) # FIXME: uint has no ~ yet
+    # assert_true(~(hash(ref1) ^ ~hash(ref1)) == 0)
 
 
 fn test_iso() raises:
