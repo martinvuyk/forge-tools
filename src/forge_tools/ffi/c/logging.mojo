@@ -6,21 +6,21 @@ from memory import UnsafePointer, stack_allocation, memcpy
 from .types import *
 
 
-fn get_errno() -> C.int:
+fn get_errno() -> C.long:
     """Get a copy of the current value of the `errno` global variable.
 
     Returns:
         A copy of the current value of `errno`.
     """
-    var errno = stack_allocation[1, C.int]()
+    var errno = stack_allocation[1, C.long]()
 
     @parameter
     if os_is_windows():
         _ = external_call[
-            "_get_errno", UnsafePointer[C.void], UnsafePointer[C.int]
+            "_get_errno", UnsafePointer[C.void], UnsafePointer[C.long]
         ](errno)
     else:
-        var ptr = external_call["__errno_location", UnsafePointer[C.int]]()
+        var ptr = external_call["__errno_location", UnsafePointer[C.long]]()
         memcpy(errno, ptr, 1)
 
     return errno[0]
@@ -38,7 +38,7 @@ fn set_errno(errnum: C.int):
         ]().init_pointee_copy(errnum)
 
 
-fn strerror(errnum: C.int) -> UnsafePointer[C.char]:
+fn strerror(errnum: C.long) -> UnsafePointer[C.char]:
     """Libc POSIX `strerror` function.
 
     Args:
@@ -51,7 +51,7 @@ fn strerror(errnum: C.int) -> UnsafePointer[C.char]:
         [Reference](https://man7.org/linux/man-pages/man3/strerror.3.html).
         Fn signature: `char *strerror(int errnum)`.
     """
-    return external_call["strerror", UnsafePointer[C.char], C.int](errnum)
+    return external_call["strerror", UnsafePointer[C.char], C.long](errnum)
 
 
 fn perror(s: UnsafePointer[C.char]):
