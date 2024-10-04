@@ -51,6 +51,42 @@ alias NULL = UnsafePointer[C.void]()
 
 
 # ===----------------------------------------------------------------------=== #
+# Utils
+# ===----------------------------------------------------------------------=== #
+
+
+fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
+    """Create a String **copying** a char pointer.
+
+    Args:
+        s: A pointer to a C string.
+
+    Returns:
+        The String.
+    """
+    alias S = StringSlice[ImmutableAnyLifetime]
+    return String(
+        S(unsafe_from_utf8_ptr=s.bitcast[UInt8](), len=int(strlen(s)))
+    )
+
+
+fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
+    """Libc POSIX `strlen` function.
+
+    Args:
+        s: A pointer to a C string.
+
+    Returns:
+        The length of the string.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/strlen.3p.html).
+        Fn signature: `size_t strlen(const char *s)`.
+    """
+    return external_call["strlen", C.u_int, UnsafePointer[C.char]](s)
+
+
+# ===----------------------------------------------------------------------=== #
 # Networking Types
 # ===----------------------------------------------------------------------=== #
 
@@ -152,37 +188,6 @@ struct addrinfo:
         """Construct an empty addrinfo struct."""
         var p0 = UnsafePointer[sockaddr]()
         self = Self(0, 0, 0, 0, 0, p0, UnsafePointer[C.char](), NULL)
-
-
-fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
-    """Create a String **copying** a char pointer.
-
-    Args:
-        s: A pointer to a C string.
-
-    Returns:
-        The String.
-    """
-    alias S = StringSlice[ImmutableAnyLifetime]
-    return String(
-        S(unsafe_from_utf8_ptr=s.bitcast[UInt8](), len=int(strlen(s)))
-    )
-
-
-fn strlen(s: UnsafePointer[C.char]) -> C.u_int:
-    """Libc POSIX `strlen` function.
-
-    Args:
-        s: A pointer to a C string.
-
-    Returns:
-        The length of the string.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/strlen.3p.html).
-        Fn signature: `size_t strlen(const char *s)`.
-    """
-    return external_call["strlen", C.u_int, UnsafePointer[C.char]](s)
 
 
 # ===----------------------------------------------------------------------=== #

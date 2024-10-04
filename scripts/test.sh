@@ -29,4 +29,4 @@ if [[ $# -gt 0 ]]; then
 fi
 
 # Run the tests
-mojo test -I build/ $TEST_PATH || true
+mojo test --debug -I build/ $TEST_PATH || true

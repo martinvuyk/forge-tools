@@ -406,7 +406,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         if unsafe_simd_size:
             var ptr = unsafe_pointer
-            self.vec = ptr.load[T, width = Self.simd_size]()
+            self.vec = ptr.load[width = Self.simd_size]()
             self.capacity_left = capacity - length
             return
 
@@ -456,7 +456,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             "Array capacity must be power of 2.",
         ]()
         constrained[size == capacity, "Size must be == capacity."]()
-        self.vec = existing.steal_data().load[T, width = Self.simd_size]()
+        self.vec = existing.steal_data().load[width = Self.simd_size]()
         self.capacity_left = 0
 
     @always_inline
@@ -961,9 +961,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         for i in range(Self.simd_size // size):
-            (ptr + i * size).store[T, width=size](
-                self.vec.slice[size, offset = i * size]()
-            )
+            ptr.store(i * size, self.vec.slice[size, offset = i * size]())
 
         return ptr
 
@@ -1161,7 +1159,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     @staticmethod
     fn _mask_vec_capacity_delta[
-        D: DType = T, value: Scalar[D] = 0
+        D: DType, //, value: Scalar[D] = 0
     ](inout vec: SIMD[D, Self.simd_size]):
         @parameter
         for i in range(Self.simd_size - capacity):
@@ -1169,7 +1167,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     @staticmethod
     fn _mask_vec_size[
-        D: DType = T, value: Scalar[D] = 0
+        D: DType, //, value: Scalar[D] = 0
     ](inout vec: SIMD[D, Self.simd_size], length: Int = capacity):
         @parameter
         if static:
@@ -1896,7 +1894,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         for i in range(Self.simd_size // size):
-            (res_p + i * size).store[T, width=size](SIMD[T, size](0))
+            res_p.store(i * size, SIMD[T, size](0))
         var s_p = self.unsafe_ptr()
         var idx = 0
         for i in range(len(self)):

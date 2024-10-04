@@ -110,7 +110,7 @@ struct _UnixSocket[
 
     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
         """Set socket options."""
-        var ptr = UnsafePointer[Int](stack_allocation[1, Int]())
+        var ptr = stack_allocation[1, Int]()
         ptr[0] = option_value
         var cvoid = ptr.bitcast[C.void]()
         var s = sizeof[Int]()

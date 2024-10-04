@@ -54,8 +54,9 @@ fn open(path: UnsafePointer[C.char], oflag: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
         Fn signature: `int open(const char *path, int oflag, ...)`.
     """
-    alias UP = UnsafePointer
-    return external_call["open", C.int, UP[C.char], C.int](path, oflag)
+    return external_call["open", C.int, UnsafePointer[C.char], C.int](
+        path, oflag
+    )
 
 
 # FIXME: this should take in  *args: *T
@@ -96,10 +97,12 @@ fn fopen(
         Fn signature: `FILE *fopen(const char *restrict pathname,
             const char *restrict mode)`.
     """
-    alias UP = UnsafePointer
-    return external_call["fopen", UP[FILE], UP[C.char], UP[C.char]](
-        pathname, mode
-    )
+    return external_call[
+        "fopen",
+        UnsafePointer[FILE],
+        UnsafePointer[C.char],
+        UnsafePointer[C.char],
+    ](pathname, mode)
 
 
 fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
@@ -141,10 +144,13 @@ fn freopen(
         Fn signature: `FILE *freopen(const char *restrict pathname,
             const char *restrict mode, FILE *restrict stream)`.
     """
-    alias UP = UnsafePointer
-    return external_call["freopen", UP[FILE], UP[C.char], UP[C.char], UP[FILE]](
-        pathname, mode, stream
-    )
+    return external_call[
+        "freopen",
+        UnsafePointer[FILE],
+        UnsafePointer[C.char],
+        UnsafePointer[C.char],
+        UnsafePointer[FILE],
+    ](pathname, mode, stream)
 
 
 fn fmemopen(
@@ -165,10 +171,13 @@ fn fmemopen(
         Fn signature: `FILE *fmemopen(void *restrict buf, size_t size,
             const char *restrict mode)`.
     """
-    alias UP = UnsafePointer
-    return external_call["fmemopen", UP[FILE], UP[C.void], C.u_int, UP[C.char]](
-        buf, size, mode
-    )
+    return external_call[
+        "fmemopen",
+        UnsafePointer[FILE],
+        UnsafePointer[C.void],
+        C.u_int,
+        UnsafePointer[C.char],
+    ](buf, size, mode)
 
 
 fn creat(path: UnsafePointer[C.char], mode: mode_t) -> C.int:
@@ -285,8 +294,9 @@ fn fputs(s: UnsafePointer[C.char], stream: UnsafePointer[FILE]) -> C.int:
         Fn signature: `int fputs(const char *restrict s, FILE *restrict stream
         )`.
     """
-    alias UP = UnsafePointer
-    return external_call["fputs", C.int, UP[C.char], UP[FILE]](s, stream)
+    return external_call[
+        "fputs", C.int, UnsafePointer[C.char], UnsafePointer[FILE]
+    ](s, stream)
 
 
 fn fgetc(stream: UnsafePointer[FILE]) -> C.int:
@@ -323,10 +333,13 @@ fn fgets(
         Fn signature: `char *fgets(char *restrict s, int n,
             FILE *restrict stream)`.
     """
-    alias UP = UnsafePointer
-    return external_call["fgets", UP[C.char], UP[C.char], C.int, UP[FILE]](
-        s, n, stream
-    )
+    return external_call[
+        "fgets",
+        UnsafePointer[C.char],
+        UnsafePointer[C.char],
+        C.int,
+        UnsafePointer[FILE],
+    ](s, n, stream)
 
 
 # FIXME: this should take in  *args: *T
@@ -345,8 +358,9 @@ fn dprintf(fildes: C.int, format: UnsafePointer[C.char]) -> C.int:
         Fn signature: `int dprintf(int fildes,
             const char *restrict format, ...)`.
     """
-    alias UP = UnsafePointer
-    return external_call["dprintf", C.int, C.int, UP[C.char]](fildes, format)
+    return external_call["dprintf", C.int, C.int, UnsafePointer[C.char]](
+        fildes, format
+    )
 
 
 # FIXME: this should take in  *args: *T
@@ -365,8 +379,9 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: `int fprintf(FILE *restrict stream,
             const char *restrict format, ...)`.
     """
-    alias UP = UnsafePointer
-    return external_call["fprintf", C.int, UP[FILE], UP[C.char]](stream, format)
+    return external_call[
+        "fprintf", C.int, UnsafePointer[FILE], UnsafePointer[C.char]
+    ](stream, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -386,8 +401,7 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
 #     Notes:
 #         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
 #     """
-#     alias UP = UnsafePointer
-#     return external_call["printf", C.int, UP[C.char], *T](format, *args)
+#     return external_call["printf", C.int, UnsafePointer[C.char], *T](format, *args)
 
 # FIXME: this should take in  *args: *T
 # @always_inline
@@ -697,10 +711,9 @@ fn snprintf(
         Fn signature: ``int snprintf(char *restrict s, size_t n,`.
             const char *restrict format, ...)`.
     """
-    alias UP = UnsafePointer
-    return external_call["snprintf", C.int, UP[C.char], C.u_int, UP[C.char]](
-        s, n, format
-    )
+    return external_call[
+        "snprintf", C.int, UnsafePointer[C.char], C.u_int, UnsafePointer[C.char]
+    ](s, n, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -719,8 +732,9 @@ fn sprintf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int sprintf(char *restrict s,`.
             const char *restrict format, ...)`.
     """
-    alias UP = UnsafePointer
-    return external_call["sprintf", C.int, UP[C.char], UP[C.char]](s, format)
+    return external_call[
+        "sprintf", C.int, UnsafePointer[C.char], UnsafePointer[C.char]
+    ](s, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -739,8 +753,9 @@ fn fscanf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int fscanf(FILE *restrict stream,`.
             const char *restrict format, ...)`.
     """
-    alias UP = UnsafePointer
-    return external_call["fscanf", C.int, UP[FILE], UP[C.char]](stream, format)
+    return external_call[
+        "fscanf", C.int, UnsafePointer[FILE], UnsafePointer[C.char]
+    ](stream, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -775,8 +790,9 @@ fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int sscanf(const char *restrict s,`.
             const char *restrict format, ...)`.
     """
-    alias UP = UnsafePointer
-    return external_call["sscanf", C.int, UP[C.char], UP[C.char]](s, format)
+    return external_call[
+        "sscanf", C.int, UnsafePointer[C.char], UnsafePointer[C.char]
+    ](s, format)
 
 
 fn fread(
@@ -801,9 +817,13 @@ fn fread(
         Fn signature: `size_t fread(void *restrict ptr, size_t size,
             size_t nitems, FILE *restrict stream)`.
     """
-    alias UP = UnsafePointer
     return external_call[
-        "fread", C.u_int, UP[C.void], C.u_int, C.u_int, UP[FILE]
+        "fread",
+        C.u_int,
+        UnsafePointer[C.void],
+        C.u_int,
+        C.u_int,
+        UnsafePointer[FILE],
     ](ptr, size, nitems, stream)
 
 

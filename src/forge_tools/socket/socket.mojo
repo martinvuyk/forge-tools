@@ -588,11 +588,11 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var conn_addr = self._impl.unsafe_get[Self._linux_s]()[].setsockopt(
+            var conn_addr = self._impl.unsafe_get[Self._linux_s]().setsockopt(
                 level, option_name, option_value
             )
         elif sock_platform is SockPlatform.UNIX:
-            var conn_addr = self._impl.unsafe_get[Self._unix_s]()[].setsockopt(
+            var conn_addr = self._impl.unsafe_get[Self._unix_s]().setsockopt(
                 level, option_name, option_value
             )
         else:
@@ -626,12 +626,10 @@ struct Socket[
         if sock_platform is SockPlatform.LINUX:
             var conn_addr = await self._impl.unsafe_get[
                 Self._linux_s
-            ]()[].accept()
+            ]().accept()
             return Self(conn_addr[0]), conn_addr[1]
         elif sock_platform is SockPlatform.UNIX:
-            var conn_addr = await self._impl.unsafe_get[
-                Self._unix_s
-            ]()[].accept()
+            var conn_addr = await self._impl.unsafe_get[Self._unix_s]().accept()
             return Self(conn_addr[0]), conn_addr[1]
         else:
             constrained[False, "Platform not supported yet."]()
@@ -663,7 +661,7 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]()[].fd
+            return self._impl.unsafe_get[Self._linux_s]().fd
         else:
             constrained[False, "Platform not supported yet."]()
             return FileDescriptor(2)
@@ -680,7 +678,7 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].send_fds(fds)
+            return await self._impl.unsafe_get[Self._linux_s]().send_fds(fds)
         else:
             constrained[False, "Platform not supported yet."]()
             return False
@@ -697,9 +695,7 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].recv_fds(
-                maxfds
-            )
+            return await self._impl.unsafe_get[Self._linux_s]().recv_fds(maxfds)
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -719,13 +715,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].send(
-                buf, flags
-            )
+            return await self._impl.unsafe_get[Self._linux_s]().send(buf, flags)
         elif sock_platform is SockPlatform.UNIX:
-            return await self._impl.unsafe_get[Self._unix_s]()[].send(
-                buf, flags
-            )
+            return await self._impl.unsafe_get[Self._unix_s]().send(buf, flags)
         else:
             constrained[False, "Platform not supported yet."]()
             return False
@@ -745,13 +737,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]()[].recv(
-                buf, flags
-            )
+            return await self._impl.unsafe_get[Self._linux_s]().recv(buf, flags)
         elif sock_platform is SockPlatform.UNIX:
-            return await self._impl.unsafe_get[Self._unix_s]()[].recv(
-                buf, flags
-            )
+            return await self._impl.unsafe_get[Self._unix_s]().recv(buf, flags)
         else:
             constrained[False, "Platform not supported yet."]()
             return 0
@@ -765,9 +753,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]()[].gethostname()
+            return self._impl.unsafe_get[Self._linux_s]().gethostname()
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]()[].gethostname()
+            return self._impl.unsafe_get[Self._unix_s]().gethostname()
         else:
             constrained[False, "Platform not supported yet."]()
             return ""
@@ -955,9 +943,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]()[].settimeout(value)
+            return self._impl.unsafe_get[Self._linux_s]().settimeout(value)
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]()[].settimeout(value)
+            return self._impl.unsafe_get[Self._unix_s]().settimeout(value)
         else:
             constrained[False, "Platform not supported yet."]()
             return False

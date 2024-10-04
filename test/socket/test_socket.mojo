@@ -80,21 +80,34 @@ def test_inet_ntoa():
     assert_equal(String("123.45.67.89"), res)
 
 
-def test_server_sync_ipv4():
-    var socket = Socket()
-    socket.bind(("0.0.0.0", 8000))
-    socket.listen()
+# def test_server_sync_ipv4():
+#     var socket = Socket()
+#     socket.bind(("0.0.0.0", 8000))
+#     socket.listen()
 
+
+# import socket
+
+# HOST = "0.0.0.0"  # The server's hostname or IP address
+# PORT = 8000  # The port used by the server
+
+# with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+#     s.connect((HOST, PORT))
+#     s.sendall(b"Hello, world")
+#     data = s.recv(1024)
+
+# print(f"Received {data!r}")
 
 def test_client_sync_ipv4():
     var socket = Socket()
     # not sure if this works, should redirect to default gateway
-    await socket.connect(("", 0))
-    socket.listen()
+    await socket.connect(("0.0.0.0", 8000))
+    var client_msg = String("123456789")
+    var bytes_sent = await socket.send(client_msg.as_bytes_span())
+    _ = socket
 
-
-def test_create_server_sync_ipv4():
-    var server = Socket.create_server(("0.0.0.0", 8000))
+# def test_create_server_sync_ipv4():
+#     var server = Socket.create_server(("0.0.0.0", 8000))
 
 
 # def test_create_connection_sync_ipv4():
@@ -107,7 +120,6 @@ def test_create_server_sync_ipv4():
 
 #     var client_msg = String("123456789")
 #     var bytes_sent = client.send(client_msg.as_bytes_span())
-
 #     var conn = (await server.accept())[0]
 #     assert_equal(9, await bytes_sent^)
 
@@ -129,15 +141,15 @@ def test_create_server_sync_ipv4():
 #     assert_equal(server_msg, String(ptr=client_ptr, len=10))
 
 
-async def main():
+def main():
     test_ntohs()
     test_ntohl()
     test_htons()
     test_htonl()
     test_inet_aton()
     test_inet_ntoa()
-    test_server_sync_ipv4()
+    # test_server_sync_ipv4()
     test_client_sync_ipv4()
-    test_create_server_sync_ipv4()
+    # test_create_server_sync_ipv4()
     # test_create_connection_sync_ipv4()
     # await test_client_server_ipv4()

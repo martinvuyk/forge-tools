@@ -99,7 +99,7 @@ struct _LinuxSocket[
 
     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
         """Set socket options."""
-        var ptr = UnsafePointer[Int](stack_allocation[1, Int]())
+        var ptr = stack_allocation[1, Int]()
         ptr[0] = option_value
         var cvoid = ptr.bitcast[C.void]()
         var s = sizeof[Int]()
@@ -151,6 +151,7 @@ struct _LinuxSocket[
             var ip_buf = stack_allocation[4, C.void]()
             var ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
             var err = inet_pton(Self._sock_family, ip_ptr, ip_buf)
+            _ = addr
             if err == 0:
                 raise Error("Invalid Address.")
             var ip = ip_buf.bitcast[C.u_int]().load()

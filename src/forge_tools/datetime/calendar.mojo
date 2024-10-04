@@ -147,7 +147,8 @@ trait _Calendarized:
     fn from_year(self, year: UInt16) -> Self:
         ...
 
-    fn is_leapyear(self, year: UInt16) -> Bool:
+    @staticmethod
+    fn is_leapyear(year: UInt16) -> Bool:
         ...
 
     fn is_leapsec(
@@ -405,11 +406,11 @@ struct Calendar:
             - day: Day of the week: [0, 6] (monday - sunday).
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].day_of_week(
+            return self._implementation.unsafe_get[Gregorian]().day_of_week(
                 year, month, day
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].day_of_week(
+            return self._implementation.unsafe_get[UTCFast]().day_of_week(
                 year, month, day
             )
         else:
@@ -428,11 +429,11 @@ struct Calendar:
             - day: Day of the year: [1, 366] (for gregorian calendar).
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].day_of_year(
+            return self._implementation.unsafe_get[Gregorian]().day_of_year(
                 year, month, day
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].day_of_year(
+            return self._implementation.unsafe_get[UTCFast]().day_of_year(
                 year, month, day
             )
         else:
@@ -452,11 +453,11 @@ struct Calendar:
         """
 
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].day_of_month(
+            return self._implementation.unsafe_get[Gregorian]().day_of_month(
                 year, day_of_year
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].day_of_month(
+            return self._implementation.unsafe_get[UTCFast]().day_of_month(
                 year, day_of_year
             )
         else:
@@ -476,11 +477,11 @@ struct Calendar:
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[
                 Gregorian
-            ]()[].max_days_in_month(year, month)
+            ]().max_days_in_month(year, month)
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[
-                UTCFast
-            ]()[].max_days_in_month(year, month)
+            return self._implementation.unsafe_get[UTCFast]().max_days_in_month(
+                year, month
+            )
         else:
             return 0
 
@@ -498,11 +499,11 @@ struct Calendar:
             - day_of_month: Day of the month.
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].monthrange(
+            return self._implementation.unsafe_get[Gregorian]().monthrange(
                 year, month
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].monthrange(
+            return self._implementation.unsafe_get[UTCFast]().monthrange(
                 year, month
             )
         else:
@@ -525,33 +526,12 @@ struct Calendar:
             The amount.
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].max_second(
+            return self._implementation.unsafe_get[Gregorian]().max_second(
                 year, month, day, hour, minute
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].max_second(
+            return self._implementation.unsafe_get[UTCFast]().max_second(
                 year, month, day, hour, minute
-            )
-        else:
-            return 0
-
-    @always_inline("nodebug")
-    fn is_leapyear(self, year: UInt16) -> Bool:
-        """Whether the year is a leap year.
-
-        Args:
-            year: Year.
-
-        Returns:
-            Bool.
-        """
-        if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].is_leapyear(
-                year
-            )
-        elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].is_leapyear(
-                year
             )
         else:
             return 0
@@ -580,11 +560,11 @@ struct Calendar:
             Bool.
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].is_leapsec(
+            return self._implementation.unsafe_get[Gregorian]().is_leapsec(
                 year, month, day, hour, minute, second
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].is_leapsec(
+            return self._implementation.unsafe_get[UTCFast]().is_leapsec(
                 year, month, day, hour, minute, second
             )
         else:
@@ -607,11 +587,11 @@ struct Calendar:
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[
                 Gregorian
-            ]()[].leapsecs_since_epoch(year, month, day)
+            ]().leapsecs_since_epoch(year, month, day)
         elif self._implementation.isa[UTCFast]():
             return self._implementation.unsafe_get[
                 UTCFast
-            ]()[].leapsecs_since_epoch(year, month, day)
+            ]().leapsecs_since_epoch(year, month, day)
         else:
             return 0
 
@@ -633,11 +613,11 @@ struct Calendar:
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[
                 Gregorian
-            ]()[].leapdays_since_epoch(year, month, day)
+            ]().leapdays_since_epoch(year, month, day)
         elif self._implementation.isa[UTCFast]():
             return self._implementation.unsafe_get[
                 UTCFast
-            ]()[].leapdays_since_epoch(year, month, day)
+            ]().leapdays_since_epoch(year, month, day)
         else:
             return 0
 
@@ -667,11 +647,11 @@ struct Calendar:
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[
                 Gregorian
-            ]()[].seconds_since_epoch(year, month, day, hour, minute, second)
+            ]().seconds_since_epoch(year, month, day, hour, minute, second)
         elif self._implementation.isa[UTCFast]():
             return self._implementation.unsafe_get[
                 UTCFast
-            ]()[].seconds_since_epoch(year, month, day, hour, minute, second)
+            ]().seconds_since_epoch(year, month, day, hour, minute, second)
         else:
             return 0
 
@@ -703,13 +683,13 @@ struct Calendar:
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[
                 Gregorian
-            ]()[].m_seconds_since_epoch(
+            ]().m_seconds_since_epoch(
                 year, month, day, hour, minute, second, m_second
             )
         elif self._implementation.isa[UTCFast]():
             return self._implementation.unsafe_get[
                 UTCFast
-            ]()[].m_seconds_since_epoch(
+            ]().m_seconds_since_epoch(
                 year, month, day, hour, minute, second, m_second
             )
         else:
@@ -748,7 +728,7 @@ struct Calendar:
         if self._implementation.isa[Gregorian]():
             return self._implementation.unsafe_get[
                 Gregorian
-            ]()[].n_seconds_since_epoch(
+            ]().n_seconds_since_epoch(
                 year,
                 month,
                 day,
@@ -762,7 +742,7 @@ struct Calendar:
         elif self._implementation.isa[UTCFast]():
             return self._implementation.unsafe_get[
                 UTCFast
-            ]()[].n_seconds_since_epoch(
+            ]().n_seconds_since_epoch(
                 year,
                 month,
                 day,
@@ -812,9 +792,7 @@ struct Calendar:
             The hash.
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].hash[
-                cal_hash
-            ](
+            return self._implementation.unsafe_get[Gregorian]().hash[cal_hash](
                 year,
                 month,
                 day,
@@ -826,7 +804,7 @@ struct Calendar:
                 n_second,
             )
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].hash[cal_hash](
+            return self._implementation.unsafe_get[UTCFast]().hash[cal_hash](
                 year,
                 month,
                 day,
@@ -856,11 +834,11 @@ struct Calendar:
             Tuple containing date data.
         """
         if self._implementation.isa[Gregorian]():
-            return self._implementation.unsafe_get[Gregorian]()[].from_hash[
+            return self._implementation.unsafe_get[Gregorian]().from_hash[
                 cal_hash
             ](value)
         elif self._implementation.isa[UTCFast]():
-            return self._implementation.unsafe_get[UTCFast]()[].from_hash[
+            return self._implementation.unsafe_get[UTCFast]().from_hash[
                 cal_hash
             ](value)
         else:

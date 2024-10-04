@@ -259,7 +259,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             A reference to the contained data of the `Result` as a Reference[T].
         """
         debug_assert(bool(self), ".value() on empty Result")
-        return self._value.unsafe_get[T]()[]
+        return self._value.unsafe_get[T]()
 
     fn take(inout self) -> T:
         """Move the value out of the `Result`.
@@ -503,7 +503,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
             A reference to the contained data of the `Result` as a Reference[T].
         """
         debug_assert(bool(self), ".value() on empty Result")
-        return self._value.unsafe_get[T]()[]
+        return self._value.unsafe_get[T]()
 
     fn take(inout self) -> T:
         """Move the value out of the `Result`.

@@ -387,16 +387,15 @@ fn recvfrom(
             size_t length, int flags, struct sockaddr *restrict address,
             socklen_t *restrict address_len)`.
     """
-    alias UP = UnsafePointer
     return external_call[
         "recvfrom",
         C.u_int,
         C.int,
-        UP[C.void],
+        UnsafePointer[C.void],
         C.u_int,
         C.int,
-        UP[sockaddr],
-        UP[socklen_t],
+        UnsafePointer[sockaddr],
+        UnsafePointer[socklen_t],
     ](socket, buffer, length, flags, address, address_len)
 
 
@@ -456,10 +455,16 @@ fn sendto(
             size_t length, int flags, const struct sockaddr *dest_addr,
             socklen_t dest_len)`.
     """
-    alias UP = UnsafePointer
     alias I = C.int
     return external_call[
-        "sendto", C.u_int, I, UP[C.void], C.u_int, I, UP[sockaddr], socklen_t
+        "sendto",
+        C.u_int,
+        I,
+        UnsafePointer[C.void],
+        C.u_int,
+        I,
+        UnsafePointer[sockaddr],
+        socklen_t,
     ](socket, message, length, flags, dest_addr, dest_len)
 
 
