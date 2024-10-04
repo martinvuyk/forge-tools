@@ -1,79 +1,273 @@
 """Libc POSIX constants."""
 
 # ===----------------------------------------------------------------------=== #
-# Error constants
+# Error constants (errno.h)
 # ===----------------------------------------------------------------------=== #
 
 alias EPERM = 1
-"""Constant: EPERM."""
+"""Operation not permitted."""
 alias ENOENT = 2
-"""Constant: ENOENT."""
+"""No such file or directory."""
 alias ESRCH = 3
-"""Constant: ESRCH."""
+"""No such process."""
 alias EINTR = 4
-"""Constant: EINTR."""
+"""Interrupted system call."""
 alias EIO = 5
-"""Constant: EIO."""
+"""Input/output error."""
 alias ENXIO = 6
-"""Constant: ENXIO."""
+"""No such device or address."""
 alias E2BIG = 7
-"""Constant: E2BIG."""
+"""Argument list too long."""
 alias ENOEXEC = 8
-"""Constant: ENOEXEC."""
+"""Exec format error."""
 alias EBADF = 9
-"""Constant: EBADF."""
+"""Bad file descriptor."""
 alias ECHILD = 10
-"""Constant: ECHILD."""
+"""No child processes."""
 alias EAGAIN = 11
-"""Constant: EAGAIN."""
-alias ENOMEM = 12
-"""Constant: ENOMEM."""
-alias EACCES = 13
-"""Constant: EACCES."""
-alias EFAULT = 14
-"""Constant: EFAULT."""
-alias ENOTBLK = 15
-"""Constant: ENOTBLK."""
-alias EBUSY = 16
-"""Constant: EBUSY."""
-alias EEXIST = 17
-"""Constant: EEXIST."""
-alias EXDEV = 18
-"""Constant: EXDEV."""
-alias ENODEV = 19
-"""Constant: ENODEV."""
-alias ENOTDIR = 20
-"""Constant: ENOTDIR."""
-alias EISDIR = 21
-"""Constant: EISDIR."""
-alias EINVAL = 22
-"""Constant: EINVAL."""
-alias ENFILE = 23
-"""Constant: ENFILE."""
-alias EMFILE = 24
-"""Constant: EMFILE."""
-alias ENOTTY = 25
-"""Constant: ENOTTY."""
-alias ETXTBSY = 26
-"""Constant: ETXTBSY."""
-alias EFBIG = 27
-"""Constant: EFBIG."""
-alias ENOSPC = 28
-"""Constant: ENOSPC."""
-alias ESPIPE = 29
-"""Constant: ESPIPE."""
-alias EROFS = 30
-"""Constant: EROFS."""
-alias EMLINK = 31
-"""Constant: EMLINK."""
-alias EPIPE = 32
-"""Constant: EPIPE."""
-alias EDOM = 33
-"""Constant: EDOM."""
-alias ERANGE = 34
-"""Constant: ERANGE."""
+"""Resource temporarily unavailable."""
 alias EWOULDBLOCK = EAGAIN
 """Constant: EWOULDBLOCK."""
+alias ENOMEM = 12
+"""Cannot allocate memory."""
+alias EACCES = 13
+"""Permission denied."""
+alias EFAULT = 14
+"""Bad address."""
+alias ENOTBLK = 15
+"""Block device required."""
+alias EBUSY = 16
+"""Device or resource busy."""
+alias EEXIST = 17
+"""File exists."""
+alias EXDEV = 18
+"""Invalid cross-device link."""
+alias ENODEV = 19
+"""No such device."""
+alias ENOTDIR = 20
+"""Not a directory."""
+alias EISDIR = 21
+"""Is a directory."""
+alias EINVAL = 22
+"""Invalid argument."""
+alias ENFILE = 23
+"""Too many open files in system."""
+alias EMFILE = 24
+"""Too many open files."""
+alias ENOTTY = 25
+"""Inappropriate ioctl for device."""
+alias ETXTBSY = 26
+"""Text file busy."""
+alias EFBIG = 27
+"""File too large."""
+alias ENOSPC = 28
+"""No space left on device."""
+alias ESPIPE = 29
+"""Illegal seek."""
+alias EROFS = 30
+"""Read-only file system."""
+alias EMLINK = 31
+"""Too many links."""
+alias EPIPE = 32
+"""Broken pipe."""
+alias EDOM = 33
+"""Numerical argument out of domain."""
+alias ERANGE = 34
+"""Numerical result out of range."""
+alias EDEADLK = 35
+"""Resource deadlock avoided."""
+alias ENAMETOOLONG = 36
+"""File name too long."""
+alias ENOLCK = 37
+"""No locks available."""
+alias ENOSYS = 38
+"""Function not implemented."""
+alias ENOTEMPTY = 39
+"""Directory not empty."""
+alias ELOOP = 40
+"""Too many levels of symbolic links."""
+alias ENOMSG = 42
+"""No message of desired type."""
+alias EIDRM = 43
+"""Identifier removed."""
+alias ECHRNG = 44
+"""Channel number out of range."""
+alias EL2NSYNC = 45
+"""Level 2 not synchronized."""
+alias EL3HLT = 46
+"""Level 3 halted."""
+alias EL3RST = 47
+"""Level 3 reset."""
+alias ELNRNG = 48
+"""Link number out of range."""
+alias EUNATCH = 49
+"""Protocol driver not attached."""
+alias ENOCSI = 50
+"""No CSI structure available."""
+alias EL2HLT = 51
+"""Level 2 halted."""
+alias EBADE = 52
+"""Invalid exchange."""
+alias EBADR = 53
+"""Invalid request descriptor."""
+alias EXFULL = 54
+"""Exchange full."""
+alias ENOANO = 55
+"""No anode."""
+alias EBADRQC = 56
+"""Invalid request code."""
+alias EBADSLT = 57
+"""Invalid slot."""
+alias EBFONT = 59
+"""Bad font file format."""
+alias ENOSTR = 60
+"""Device not a stream."""
+alias ENODATA = 61
+"""No data available."""
+alias ETIME = 62
+"""Timer expired."""
+alias ENOSR = 63
+"""Out of streams resources."""
+alias ENONET = 64
+"""Machine is not on the network."""
+alias ENOPKG = 65
+"""Package not installed."""
+alias EREMOTE = 66
+"""Object is remote."""
+alias ENOLINK = 67
+"""Link has been severed."""
+alias EADV = 68
+"""Advertise error."""
+alias ESRMNT = 69
+"""Srmount error."""
+alias ECOMM = 70
+"""Communication error on send."""
+alias EPROTO = 71
+"""Protocol error."""
+alias EMULTIHOP = 72
+"""Multihop attempted."""
+alias EDOTDOT = 73
+"""RFS specific error."""
+alias EBADMSG = 74
+"""Bad message."""
+alias EOVERFLOW = 75
+"""Value too large for defined data type."""
+alias ENOTUNIQ = 76
+"""Name not unique on network."""
+alias EBADFD = 77
+"""File descriptor in bad state."""
+alias EREMCHG = 78
+"""Remote address changed."""
+alias ELIBACC = 79
+"""Can not access a needed shared library."""
+alias ELIBBAD = 80
+"""Accessing a corrupted shared library."""
+alias ELIBSCN = 81
+""".lib section in a.out corrupted."""
+alias ELIBMAX = 82
+"""Attempting to link in too many shared libraries."""
+alias ELIBEXEC = 83
+"""Cannot exec a shared library directly."""
+alias EILSEQ = 84
+"""Invalid or incomplete multibyte or wide character."""
+alias ERESTART = 85
+"""Interrupted system call should be restarted."""
+alias ESTRPIPE = 86
+"""Streams pipe error."""
+alias EUSERS = 87
+"""Too many users."""
+alias ENOTSOCK = 88
+"""Socket operation on non-socket."""
+alias EDESTADDRREQ = 89
+"""Destination address required."""
+alias EMSGSIZE = 90
+"""Message too long."""
+alias EPROTOTYPE = 91
+"""Protocol wrong type for socket."""
+alias ENOPROTOOPT = 92
+"""Protocol not available."""
+alias EPROTONOSUPPORT = 93
+"""Protocol not supported."""
+alias ESOCKTNOSUPPORT = 94
+"""Socket type not supported."""
+alias EOPNOTSUPP = 95
+"""Operation not supported."""
+alias EPFNOSUPPORT = 96
+"""Protocol family not supported."""
+alias EAFNOSUPPORT = 97
+"""Address family not supported by protocol."""
+alias EADDRINUSE = 98
+"""Address already in use."""
+alias EADDRNOTAVAIL = 99
+"""Cannot assign requested address."""
+alias ENETDOWN = 100
+"""Network is down."""
+alias ENETUNREACH = 101
+"""Network is unreachable."""
+alias ENETRESET = 102
+"""Network dropped connection on reset."""
+alias ECONNABORTED = 103
+"""Software caused connection abort."""
+alias ECONNRESET = 104
+"""Connection reset by peer."""
+alias ENOBUFS = 105
+"""No buffer space available."""
+alias EISCONN = 106
+"""Transport endpoint is already connected."""
+alias ENOTCONN = 107
+"""Transport endpoint is not connected."""
+alias ESHUTDOWN = 108
+"""Cannot send after transport endpoint shutdown."""
+alias ETOOMANYREFS = 109
+"""Too many references: cannot splice."""
+alias ETIMEDOUT = 110
+"""Connection timed out."""
+alias ECONNREFUSED = 111
+"""Connection refused."""
+alias EHOSTDOWN = 112
+"""Host is down."""
+alias EHOSTUNREACH = 113
+"""No route to host."""
+alias EALREADY = 114
+"""Operation already in progress."""
+alias EINPROGRESS = 115
+"""Operation now in progress."""
+alias ESTALE = 116
+"""Stale file handle."""
+alias EUCLEAN = 117
+"""Structure needs cleaning."""
+alias ENOTNAM = 118
+"""Not a XENIX named type file."""
+alias ENAVAIL = 119
+"""No XENIX semaphores available."""
+alias EISNAM = 120
+"""Is a named type file."""
+alias EREMOTEIO = 121
+"""Remote I/O error."""
+alias EDQUOT = 122
+"""Disk quota exceeded."""
+alias ENOMEDIUM = 123
+"""No medium found."""
+alias EMEDIUMTYPE = 124
+"""Wrong medium type."""
+alias ECANCELED = 125
+"""Operation canceled."""
+alias ENOKEY = 126
+"""Required key not available."""
+alias EKEYEXPIRED = 127
+"""Key has expired."""
+alias EKEYREVOKED = 128
+"""Key has been revoked."""
+alias EKEYREJECTED = 129
+"""Key was rejected by service."""
+alias EOWNERDEAD = 130
+"""Owner died."""
+alias ENOTRECOVERABLE = 131
+"""State not recoverable."""
+alias ERFKILL = 132
+"""Operation not possible due to RF-kill."""
+alias EHWPOISON = 133
+"""Memory page has hardware error."""
 
 
 # ===----------------------------------------------------------------------=== #
