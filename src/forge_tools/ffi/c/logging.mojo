@@ -1,6 +1,6 @@
 """Libc POSIX logging syscalls."""
 
-from sys.ffi import external_call, DLHandle
+from sys.ffi import external_call
 from sys.info import os_is_windows
 from memory import UnsafePointer, stack_allocation
 from .types import *
