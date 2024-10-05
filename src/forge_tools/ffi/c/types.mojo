@@ -91,6 +91,7 @@ fn strlen(s: UnsafePointer[C.char]) -> size_t:
     """
     return external_call["strlen", size_t, UnsafePointer[C.char]](s)
 
+
 fn _c_long_dtype() -> DType:
     # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
 

@@ -15,7 +15,7 @@ fn fcntl(fildes: C.int, cmd: C.int) -> C.int:
         cmd: A command to execute.
 
     Returns:
-        0 if succesful, otherwise -1 and errno set to indicate the error.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/close.3p.html).
@@ -31,7 +31,7 @@ fn close(fildes: C.int) -> C.int:
         fildes: A File Descriptor to close.
 
     Returns:
-        0 if succesful, otherwise -1 and errno set to indicate the error.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/close.3p.html).
@@ -49,7 +49,7 @@ fn open(path: UnsafePointer[C.char], oflag: C.int) -> C.int:
         oflag: A flag to open the file with.
 
     Returns:
-        A File Descriptor or -1 in case of failure
+        A File Descriptor. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
@@ -70,7 +70,7 @@ fn openat(fd: C.int, path: UnsafePointer[C.char], oflag: C.int) -> C.int:
         oflag: A flag to open the file with.
 
     Returns:
-        A File Descriptor or -1 in case of failure
+        A File Descriptor. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
@@ -91,7 +91,7 @@ fn fopen(
         mode: A mode to open the file with.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        A pointer to a File Descriptor. Otherwise `NULL` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fopen.3p.html).
@@ -114,7 +114,7 @@ fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
         mode: A mode to open the file with.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        A pointer to a File Descriptor. Otherwise `NULL` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fdopen.3p.html).
@@ -139,7 +139,7 @@ fn freopen(
         stream: A pointer to a stream.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        A pointer to a File Descriptor. Otherwise `NULL` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/freopen.3p.html).
@@ -166,7 +166,7 @@ fn fmemopen(
         mode: A mode to open the file with.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        A pointer to a File Descriptor. Otherwise `NULL` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fmemopen.3p.html).
@@ -190,7 +190,7 @@ fn creat(path: UnsafePointer[C.char], mode: mode_t) -> C.int:
         mode: A mode to open the file with.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        A File Descriptor. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/creat.3p.html).
@@ -211,7 +211,7 @@ fn fseek(stream: UnsafePointer[FILE], offset: C.long, whence: C.int) -> C.int:
             accepted socket.
 
     Returns:
-        A File Descriptor or -1 in case of failure
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fseek.3p.html).
@@ -232,7 +232,7 @@ fn fseeko(stream: UnsafePointer[FILE], offset: off_t, whence: C.int) -> C.int:
             accepted socket.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fseek.3p.html).
@@ -253,7 +253,8 @@ fn lseek(fildes: C.int, offset: off_t, whence: C.int) -> off_t:
             accepted socket.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The resulting offset, as measured in bytes from the beginning of the
+        file on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/lseek.3p.html).
@@ -272,7 +273,8 @@ fn fputc(c: C.int, stream: UnsafePointer[FILE]) -> C.int:
         stream: A pointer to a stream.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The value it has written. Otherwise `EOF` (usually -1) and `errno` is
+        set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fputc.3p.html).
@@ -289,7 +291,8 @@ fn fputs(s: UnsafePointer[C.char], stream: UnsafePointer[FILE]) -> C.int:
         stream: A pointer to a stream.
 
     Returns:
-        A File Descriptor or -1 in case of failure
+        The value it has written. Otherwise `EOF` (usually -1) and `errno` is
+        set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fputs.3p.html).
@@ -308,7 +311,12 @@ fn fgetc(stream: UnsafePointer[FILE]) -> C.int:
         stream: A pointer to a stream.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The next byte from the input stream pointed to by stream. If the
+        end-of-file indicator for the stream is set, or if the stream is at
+        end-of-file, the end-of-file indicator for the stream shall be set and
+        `fgetc()` shall return EOF. If a read error occurs, the error indicator
+        for the stream shall be set, fgetc() shall return EOF, and shall set
+        `errno` to indicate the error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fgetc.3p.html).
@@ -328,7 +336,11 @@ fn fgets(
         stream: A pointer to a stream.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        Upon successful completion, fgets() shall return s. If the stream is at
+        end-of-file, the end-of-file indicator for the stream shall be set and
+        `fgets()` shall return a null pointer. If a read error occurs, the error
+        indicator for the stream shall be set, `fgets()` shall return a null
+        pointer, and shall set `errno` to indicate the error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fgets.3p.html).
@@ -353,7 +365,8 @@ fn dprintf(fildes: C.int, format: UnsafePointer[C.char]) -> C.int:
         format: A format string.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The number of bytes transmitted. Otherwise a negative value and `errno`
+        is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
@@ -374,7 +387,8 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         format: A format string.
 
     Returns:
-        The number of bytes transmitted.
+        The number of bytes transmitted. Otherwise a negative value and `errno`
+        is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
@@ -398,7 +412,8 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
 #         args: The args to send to the `printf` function.
 
 #     Returns:
-#         The number of bytes written.
+#        The number of bytes transmitted. Otherwise a negative value and `errno`
+#        is set.
 
 #     Notes:
 #         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
@@ -415,7 +430,8 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
 #         args: The args to send to the `printf` function.
 
 #     Returns:
-#         The number of bytes written.
+#        The number of bytes transmitted. Otherwise a negative value and `errno`
+#        is set.
 
 #     Notes:
 #         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
@@ -706,7 +722,8 @@ fn snprintf(
         format: A format string.
 
     Returns:
-        The number of bytes transmitted.
+        The number of bytes that would be written to s had n been sufficiently
+        large excluding the terminating null byte.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
@@ -727,7 +744,7 @@ fn sprintf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         format: A format string.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The number of bytes written to s, excluding the terminating null byte.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
@@ -748,7 +765,14 @@ fn fscanf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         format: A format string.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The number of successfully matched and assigned input items; this number
+        can be zero in the event of an early matching failure. If the input ends
+        before the first conversion (if any) has completed, and without a
+        matching failure having occurred, `EOF` shall be returned. If an error
+        occurs before the first conversion (if any) has completed, and without a
+        matching failure having occurred, `EOF` shall be returned and `errno`
+        shall be set to indicate the error. If a read error occurs, the error
+        indicator for the stream shall be set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
@@ -768,7 +792,14 @@ fn scanf(format: UnsafePointer[C.char]) -> C.int:
         format: A format string.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The number of successfully matched and assigned input items; this number
+        can be zero in the event of an early matching failure. If the input ends
+        before the first conversion (if any) has completed, and without a
+        matching failure having occurred, `EOF` shall be returned. If an error
+        occurs before the first conversion (if any) has completed, and without a
+        matching failure having occurred, `EOF` shall be returned and `errno`
+        shall be set to indicate the error. If a read error occurs, the error
+        indicator for the stream shall be set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
@@ -785,7 +816,14 @@ fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         format: A format string.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The number of successfully matched and assigned input items; this number
+        can be zero in the event of an early matching failure. If the input ends
+        before the first conversion (if any) has completed, and without a
+        matching failure having occurred, `EOF` shall be returned. If an error
+        occurs before the first conversion (if any) has completed, and without a
+        matching failure having occurred, `EOF` shall be returned and `errno`
+        shall be set to indicate the error. If a read error occurs, the error
+        indicator for the stream shall be set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
@@ -812,7 +850,12 @@ fn fread(
         stream: A pointer to a stream.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The number of elements successfully read which is less than nitems only
+        if a read error or end-of-file is encountered. If size or nitems is 0,
+        `fread()` shall return 0 and the contents of the array and the state of
+        the stream remain unchanged. Otherwise, if a read error occurs, the
+        error indicator for the stream shall be set, and `errno` shall be set to
+        indicate the error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fread.3p.html).
@@ -855,7 +898,14 @@ fn getline(
         stream: A pointer to a stream.
 
     Returns:
-        Number of bytes written into the buffer.
+        The number of bytes written into the buffer, including the delimiter
+        character if one was encountered before EOF, but excluding the
+        terminating NUL character. If the end-of-file indicator for the stream
+        is set, or if no characters were read and the stream is at end-of-file,
+        the end-of-file indicator for the stream shall be set and the function
+        shall return -1.  If an error occurs, the error indicator for the stream
+        shall be set, and the function shall return -1 and set `errno` to
+        indicate the error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/getline.3p.html).
@@ -864,6 +914,42 @@ fn getline(
     """
     return external_call[
         "getline",
+        C.u_int,
+        UnsafePointer[UnsafePointer[FILE]],
+        UnsafePointer[C.u_int],
+        UnsafePointer[FILE],
+    ](lineptr, n, stream)
+
+
+fn getdelim(
+    lineptr: UnsafePointer[UnsafePointer[FILE]],
+    n: UnsafePointer[C.u_int],
+    stream: UnsafePointer[FILE],
+) -> C.u_int:
+    """Libc POSIX `getdelim` function.
+
+    Args:
+        lineptr: A pointer to a pointer to a buffer to store the read string.
+        n: The length in bytes of the buffer.
+        stream: A pointer to a stream.
+
+    Returns:
+        The number of bytes written into the buffer, including the delimiter
+        character if one was encountered before EOF, but excluding the
+        terminating NUL character. If the end-of-file indicator for the stream
+        is set, or if no characters were read and the stream is at end-of-file,
+        the end-of-file indicator for the stream shall be set and the function
+        shall return -1.  If an error occurs, the error indicator for the stream
+        shall be set, and the function shall return -1 and set `errno` to
+        indicate the error.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/getdelim.3p.html).
+        Fn signature: `ssize_t getdelim(char **restrict lineptr,
+            size_t *restrict n, FILE *restrict stream);`.
+    """
+    return external_call[
+        "getdelim",
         C.u_int,
         UnsafePointer[UnsafePointer[FILE]],
         UnsafePointer[C.u_int],
@@ -883,7 +969,7 @@ fn pread(
         offset: An offset to seek to.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+        The number of bytes read. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/read.3p.html).
@@ -904,7 +990,7 @@ fn read(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
         nbyte: The maximum number of characters to read.
 
     Returns:
-        Amount of bytes read.
+        The number of bytes read. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/read.3p.html).
@@ -927,7 +1013,7 @@ fn pwrite(
         offset: An offset to seek to.
 
     Returns:
-        Amount of bytes written.
+        The number of bytes written. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/write.3p.html).
@@ -948,7 +1034,7 @@ fn write(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
         nbyte: The maximum number of characters to read.
 
     Returns:
-        Amount of bytes written.
+        The number of bytes written. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/write.3p.html).
@@ -967,7 +1053,7 @@ fn fclose(stream: UnsafePointer[FILE]) -> C.int:
         stream: A pointer to a stream.
 
     Returns:
-        A File Descriptor or -1 in case of failure.
+       Value 0 on success, `EOF` (usually -1) and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/fclose.3p.html).
@@ -983,7 +1069,7 @@ fn ftell(stream: UnsafePointer[FILE]) -> C.long:
         stream: A pointer to a stream.
 
     Returns:
-        The current file position of the given stream.
+        The byte offset form the start. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/ftell.3p.html).
@@ -999,7 +1085,7 @@ fn ftello(stream: UnsafePointer[FILE]) -> off_t:
         stream: A pointer to a stream.
 
     Returns:
-        The current file position of the given stream.
+        The byte offset form the start. Otherwise -1 and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/ftell.3p.html).
@@ -1008,21 +1094,20 @@ fn ftello(stream: UnsafePointer[FILE]) -> off_t:
     return external_call["ftello", off_t, UnsafePointer[FILE]](stream)
 
 
-# TODO
-# fn fflush(stream: UnsafePointer[FILE]) -> C.int:
-#     """Libc POSIX `fflush` function.
+fn fflush(stream: UnsafePointer[FILE]) -> C.int:
+    """Libc POSIX `fflush` function.
 
-#     Args:
-#         stream
+    Args:
+        stream
 
-#     Returns:
-#         An int.
+    Returns:
+        Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
 
-#     Notes:
-#         [Reference](https://man7.org/linux/man-pages/man3/fflush.3p.html).
-#         Fn signature: `int fflush(FILE *stream)`.
-#     """
-#     return external_call["fflush", C.int, UnsafePointer[FILE]](stream)
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/fflush.3p.html).
+        Fn signature: `int fflush(FILE *stream)`.
+    """
+    return external_call["fflush", C.int, UnsafePointer[FILE]](stream)
 
 
 fn clearerr(stream: UnsafePointer[FILE]):
@@ -1045,8 +1130,8 @@ fn feof(stream: UnsafePointer[FILE]) -> C.int:
         stream: A pointer to a stream.
 
     Returns:
-        1 if the end-of-file indicator associated with the stream is set,
-            else 0.
+        A non-zero value if the end-of-file indicator associated with the stream
+        is set, else 0.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/feof.3p.html).
@@ -1062,7 +1147,8 @@ fn ferror(stream: UnsafePointer[FILE]) -> C.int:
         stream: A pointer to a stream.
 
     Returns:
-        1 if the error indicator associated with the stream is set, else 0.
+        A non-zero value if the error indicator associated with the stream is
+        set, else 0.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/ferror.3p.html).
@@ -1071,7 +1157,6 @@ fn ferror(stream: UnsafePointer[FILE]) -> C.int:
     return external_call["ferror", C.int, UnsafePointer[FILE]](stream)
 
 
-# TODO: add ioctl Options
 # FIXME: this should take in  *args: *T
 fn ioctl(fildes: C.int, request: C.int) -> C.int:
     """Libc POSIX `ioctl` function.
@@ -1081,7 +1166,9 @@ fn ioctl(fildes: C.int, request: C.int) -> C.int:
         request: An offset to seek to.
 
     Returns:
-        A File Descriptor or -1 in case of failure
+        Upon successful completion, `ioctl()` shall return a value other than
+        -1 that depends upon the STREAMS device control function. Otherwise, it
+        shall return -1 and set `errno` to indicate the error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/ioctl.3p.html).

@@ -177,33 +177,38 @@ struct _UnixSocket[
             constrained[False, "currently unsupported Address type"]()
             raise Error("Failed to create socket.")
 
-    async fn accept(self) raises -> (Self, sock_address):
+    async fn accept(self) -> Optional[(Self, sock_address)]:
         """Return a new socket representing the connection, and the address of
         the client.
         """
 
         @parameter
         if _type_is_eq[sock_address, IPv4Addr]():
-            var addr_ptr = stack_allocation[1, sockaddr]()
-            var sin_size = socklen_t(sizeof[socklen_t]())
-            var size_ptr = UnsafePointer[socklen_t].address_of(sin_size)
-            var fd = accept(self.fd.value, addr_ptr, size_ptr)
-            _ = sin_size
-            if fd == -1:
-                var message = char_ptr_to_string(strerror(get_errno()))
-                raise Error("Failed to create socket: " + message)
-            var sa_family = addr_ptr.bitcast[sa_family_t]()[0]
-            if sa_family != Self._sock_family:
-                raise Error("Wrong Address Family for this socket.")
-            var ptr = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
-            var addr_str = String(ptr=ptr.bitcast[UInt8](), len=int(sin_size))
-            return Self(fd=int(fd)), sock_address(addr_str^)
+            try:
+                var addr_ptr = stack_allocation[1, sockaddr]()
+                var sin_size = socklen_t(sizeof[socklen_t]())
+                var size_ptr = UnsafePointer[socklen_t].address_of(sin_size)
+                var fd = int(accept(self.fd.value, addr_ptr, size_ptr))
+                if fd == -1:
+                    var message = char_ptr_to_string(strerror(get_errno()))
+                    raise Error("Failed to create socket: " + message)
+                    return None
+                var sa_family = addr_ptr.bitcast[sa_family_t]()[0]
+                if sa_family != Self._sock_family:
+                    raise Error("Wrong Address Family for this socket.")
+                    return None
+                var p = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
+                var addr_str = String(ptr=p.bitcast[UInt8](), len=int(sin_size))
+                return Self(fd=fd), sock_address(addr_str^)
+            except e:
+                print(str(e), file=STDERR_FILENO)
+                return None
         else:
             constrained[False, "currently unsupported Address type"]()
-            raise Error("Failed to create socket.")
+            return None
 
     @staticmethod
-    async fn socketpair() raises -> (Self, Self):
+    fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
         raise Error("Failed to create socket.")
@@ -220,6 +225,10 @@ struct _UnixSocket[
     async fn fromfd(fd: FileDescriptor) -> Optional[Self]:
         """Create a socket object from an open file descriptor."""
         return None
+
+    fn get_fd(self) -> FileDescriptor:
+        """Get the Socket's FileDescriptor."""
+        return self.fd
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket."""

@@ -85,7 +85,8 @@ fn inet_ntop(
         size: The size of the buffer pointed by dst.
 
     Returns:
-        A pointer.
+        A pointer to the buffer containing the text string if the conversion
+        succeeds, and `NULL` otherwise, and set `errno` to indicate the error.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3p.html.).
@@ -134,11 +135,11 @@ fn inet_addr(cp: UnsafePointer[C.char]) -> in_addr_t:
         cp: A pointer to a string representation of an address.
 
     Returns:
-        If the input is invalid, INADDR_NONE (usually -1) is
-            returned.  Use of this function is problematic because -1 is a
-            valid address (255.255.255.255).  Avoid its use in favor of
-            inet_aton(), inet_pton(3), or getaddrinfo(3), which provide a
-            cleaner way to indicate error return.
+        If the input is invalid, INADDR_NONE (usually -1) is returned. Use of
+        this function is problematic because -1 is a valid address
+        `(255.255.255.255)`. Avoid its use in favor of inet_aton(),
+        inet_pton(3), or getaddrinfo(3), which provide a cleaner way to indicate
+        error return.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
@@ -155,8 +156,7 @@ fn inet_aton(cp: UnsafePointer[C.char], addr: UnsafePointer[in_addr]) -> C.int:
         addr: A pointer to a binary address.
 
     Returns:
-        1 if the supplied string was successfully interpreted, or 0 if the
-            string is invalid.
+        Value 1 if successful, 0 if the string is invalid.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3.html).
@@ -221,7 +221,7 @@ fn setsockopt(
         option_len: The size of the buffer pointed by option_value.
 
     Returns:
-        Value 0 on success, -1 on error.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/setsockopt.3p.html).
@@ -250,7 +250,7 @@ fn bind(
         address_len: The length of the pointer.
 
     Returns:
-        Value 0 on success, -1 on error.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/bind.3p.html).
@@ -271,7 +271,7 @@ fn listen(socket: C.int, backlog: C.int) -> C.int:
             for socket may grow.
 
     Returns:
-        Value 0 on success, -1 on error.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/listen.3p.html).
@@ -295,7 +295,7 @@ fn accept(
             the accepted socket.
 
     Returns:
-        Value 0 on success, -1 on error.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/accept.3p.html).
@@ -322,7 +322,7 @@ fn connect(
         address_len: The length of the address.
 
     Returns:
-        Value 0 on success, -1 on error.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/connect.3p.html).
@@ -346,7 +346,7 @@ fn recv(
         flags: Specifies the type of message reception.
 
     Returns:
-        The amount of bytes recieved.
+        The amount of bytes recieved. Value -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/recv.3p.html).
@@ -379,7 +379,7 @@ fn recvfrom(
             the sending socket.
 
     Returns:
-        The amount of bytes recieved.
+        The amount of bytes recieved. Value -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/recvfrom.3p.html).
@@ -411,8 +411,7 @@ fn send(
         flags: Specifies the type of message transmission.
 
     Returns:
-        The number of bytes sent. Otherwise, -1 shall be returned and errno set
-        to indicate the error.
+        The number of bytes sent. Value -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/send.3p.html).
@@ -448,7 +447,7 @@ fn sendto(
             the accepted socket.
 
     Returns:
-        The socket's file descriptor.
+        The number of bytes sent. Value -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/sendto.3p.html).
@@ -477,7 +476,7 @@ fn shutdown(socket: C.int, how: C.int) -> C.int:
             accepted socket.
 
     Returns:
-        The socket's file descriptor.
+        Value 0 on success, -1 on error and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/shutdown.3p.html).

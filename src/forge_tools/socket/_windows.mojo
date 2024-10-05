@@ -57,17 +57,21 @@ struct _WindowsSocket[
         """Connect to a remote socket at address."""
         ...
 
-    async fn accept(self) raises -> (Self, sock_address):
+    async fn accept(self) -> Optional[(Self, sock_address)]:
         """Return a new socket representing the connection, and the address of
         the client.
         """
-        raise Error("Failed to create socket.")
+        return None
 
     @staticmethod
-    async fn socketpair() raises -> (Self, Self):
+    fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
         raise Error("Failed to create socket.")
+
+    fn get_fd(self) -> FileDescriptor:
+        """Get the Socket's FileDescriptor."""
+        return 0
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket."""

@@ -82,7 +82,7 @@ socket_impl: SocketInterface = _LinuxSocket[
 ]
 ```
 
-The interface for any socket implementation looks like this:
+Where the interface for any socket implementation looks like this:
 (many features are not part of the Mojo language, take it as pseudocode)
 ```mojo
 trait SocketInterface[
@@ -131,7 +131,6 @@ trait SocketInterface[
         """Connect to a remote socket at address."""
         ...
 
-    # TODO: This should return an async iterator instead
     async fn accept(self) -> (Self, sock_address):
         """Return a new socket representing the connection, and the address of
         the client."""
@@ -143,7 +142,7 @@ trait SocketInterface[
        ...
 
     @staticmethod
-    async fn socketpair() raises -> (Self, Self):
+    fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
         ...
@@ -224,27 +223,33 @@ from forge_tools.socket import Socket
 
 
 async def main():
+    # TODO: once we have async generators:
+    # async for conn_attempt in Socket.create_server(("0.0.0.0", 8000)):
+    #     conn, addr = conn_attempt[]
+    #     ...  # handle new connection
+
     with Socket.create_server(("0.0.0.0", 8000)) as server:
         while True:
             conn, addr = await server.accept()
             ...  # handle new connection
 
-        # TODO: once we have async generators:
-        # async for conn, addr in server:
-        #     ...  # handle new connection
 ```
 
 In the future something like this should be possible:
 ```mojo
+from collections import Optional
 from multiprocessing import Pool
 from forge_tools.socket import Socket, IPv4Addr
 
 
-async fn handler(conn: Socket, addr: IPv4Addr):
+async fn handler(conn_attempt: Optional[Socket, IPv4Addr]):
+    if not conn_attempt:
+        return
+    conn, addr = conn_attempt.value()
     ...
 
 async def main():
-    with Socket.create_server(("0.0.0.0", 8000)) as server:
-        with Pool() as pool:
-            _ = await pool.starmap(handler, server)
+    server = Socket.create_server(("0.0.0.0", 8000))
+    with Pool() as pool:
+        _ = await pool.starmap(handler, server)
 ```

@@ -364,7 +364,7 @@ struct SockPlatform:
 #         """Connect to a remote socket at address."""
 #         ...
 
-#     async fn accept(self) -> (Self, sock_address):
+#     async fn accept(self) -> Optional[(Self, sock_address)]:
 #         """Return a new socket representing the connection, and the address of
 #         the client."""
 #         ...
@@ -375,9 +375,13 @@ struct SockPlatform:
 #        ...
 
 #     @staticmethod
-#     async fn socketpair() raises -> (Self, Self):
+#     fn socketpair() raises -> (Self, Self):
 #         """Create a pair of socket objects from the sockets returned by the
 #         platform `socketpair()` function."""
+#         ...
+
+#     fn get_fd(self) -> FileDescriptor:
+#         """Get the Socket's FileDescriptor."""
 #         ...
 
 #     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
@@ -443,7 +447,12 @@ struct SockPlatform:
 #        ...
 
 
-fn _get_current_platform() -> StringLiteral:
+fn get_current_platform() -> SockPlatform:
+    """Get the current platform.
+
+    Returns:
+        The current platform.
+    """
     if info.os_is_linux():
         return SockPlatform.LINUX
     elif info.os_is_macos():
@@ -460,7 +469,7 @@ struct Socket[
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
     sock_address: SockAddr = IPv4Addr,
-    sock_platform: SockPlatform = _get_current_platform(),
+    sock_platform: SockPlatform = get_current_platform(),
 ](CollectionElement):
     """Struct for using Sockets. In the future this struct should be able to
     use any implementation that conforms to the SocketInterface trait, once
@@ -482,29 +491,34 @@ struct Socket[
 
 
     async def main():
+        # TODO: once we have async generators:
+        # async for conn_attempt in Socket.create_server(("0.0.0.0", 8000)):
+        #     conn, addr = conn_attempt[]
+        #     ...  # handle new connection
+
         with Socket.create_server(("0.0.0.0", 8000)) as server:
             while True:
-                conn, addr = await server.accept()
+                conn, addr = (await server.accept())[]
                 ...  # handle new connection
-
-            # TODO: once we have async generators:
-            # async for conn, addr in server:
-            #     ...  # handle new connection
     ```
 
     In the future something like this should be possible:
     ```mojo
+    from collections import Optional
     from multiprocessing import Pool
     from forge_tools.socket import Socket, IPv4Addr
 
 
-    async fn handler(conn: Socket, addr: IPv4Addr):
+    async fn handler(conn_attempt: Optional[Socket, IPv4Addr]):
+        if not conn_attempt:
+            return
+        conn, addr = conn_attempt.value()
         ...
 
     async def main():
-        with Socket.create_server(("0.0.0.0", 8000)) as server:
-            with Pool() as pool:
-                _ = await pool.starmap(handler, server)
+        server = Socket.create_server(("0.0.0.0", 8000))
+        with Pool() as pool:
+            _ = await pool.starmap(handler, server)
     ```
     .
     """
@@ -601,14 +615,30 @@ struct Socket[
 
     fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
-        ...
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            self._impl.unsafe_get[Self._linux_s]().bind(address)
+        elif sock_platform is SockPlatform.UNIX:
+            self._impl.unsafe_get[Self._unix_s]().bind(address)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
 
     fn listen(self, backlog: UInt = 0) raises:
         """Enable a server to accept connections. `backlog` specifies the number
         of unaccepted connections that the system will allow before refusing
         new connections. If `backlog == 0`, a default value is chosen.
         """
-        ...
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            self._impl.unsafe_get[Self._linux_s]().listen(backlog)
+        elif sock_platform is SockPlatform.UNIX:
+            self._impl.unsafe_get[Self._unix_s]().listen(backlog)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
 
     async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
@@ -622,7 +652,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
 
-    async fn accept(self) raises -> (Self, sock_address):
+    async fn accept(self) -> Optional[(Self, sock_address)]:
         """Return a new socket representing the connection, and the address of
         the client.
 
@@ -641,10 +671,10 @@ struct Socket[
             return Self(conn_addr[0]), conn_addr[1]
         else:
             constrained[False, "Platform not supported yet."]()
-            raise Error("Failed to create socket.")
+            return None
 
     @staticmethod
-    async fn socketpair() raises -> (Self, Self):
+    fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function.
 
@@ -664,17 +694,17 @@ struct Socket[
             return Self(), Self()
 
     fn get_fd(self) -> FileDescriptor:
-        """Get an ARC reference to the Socket's FileDescriptor.
+        """Get the Socket's FileDescriptor.
 
         Returns:
-            The ARC pointer to the FileDescriptor.
+            The Socket's FileDescriptor.
         """
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]().fd
+            return self._impl.unsafe_get[Self._linux_s]().get_fd()
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]().fd
+            return self._impl.unsafe_get[Self._unix_s]().get_fd()
         else:
             constrained[False, "Platform not supported yet."]()
             return FileDescriptor(0)
@@ -1121,14 +1151,16 @@ nf-ws2tcpip-getaddrinfo).
 
 
         async def main():
+            # TODO: once we have async generators:
+            # async for conn_attempt in Socket.create_server(("0.0.0.0", 8000)):
+            #     conn, addr = conn_attempt[]
+            #     ...  # handle new connection
+
             with Socket.create_server(("0.0.0.0", 8000)) as server:
                 while True:
-                    conn, addr = await server.accept()
+                    conn, addr = (await server.accept())[]
                     ...  # handle new connection
 
-                # TODO: once we have async generators:
-                # async for conn, addr in server:
-                #     ...  # handle new connection
         ```
         .
         """
@@ -1182,14 +1214,15 @@ nf-ws2tcpip-getaddrinfo).
 
         async def main():
             alias S = Socket[SockFamily.AF_INET6, sock_address=IPv6Addr]
+            # TODO: once we have async generators:
+            # async for conn_attempt in S.create_server(IPv6Addr("::1", 8000)):
+            #     conn, addr = conn_attempt[]
+            #     ...  # handle new connection
+
             with S.create_server(IPv6Addr("::1", 8000)) as server:
                 while True:
-                    conn, addr = await server.accept()
+                    conn, addr = (await server.accept())[]
                     ...  # handle new connection
-
-                # TODO: once we have async generators:
-                # async for conn, addr in server:
-                #     ...  # handle new connection
         ```
         .
         """

@@ -1,5 +1,6 @@
 """Libc POSIX constants."""
 
+
 # ===----------------------------------------------------------------------=== #
 # Error constants (errno.h)
 # ===----------------------------------------------------------------------=== #
@@ -927,6 +928,17 @@ alias IPV6_PMTUDISC_PROBE = 3
 # File constants
 # ===----------------------------------------------------------------------=== #
 
+alias EOF = -1
+"""Constant: EOF."""
+
+alias STDIN_FILENO = 0
+"""Constant: STDIN_FILENO."""
+alias STDOUT_FILENO = 1
+"""Constant: STDOUT_FILENO."""
+alias STDERR_FILENO = 2
+"""Constant: STDERR_FILENO."""
+
+
 alias FM_READ = "r"
 """Constant: FM_READ."""
 alias FM_WRITE = "w"
@@ -969,29 +981,23 @@ alias O_CLOEXEC = 524288
 """Constant: O_CLOEXEC."""
 
 # from fcntl.h
-alias O_EXEC = -1
-"""Constant: O_EXEC."""
-alias O_SEARCH = -1
-"""Constant: O_SEARCH."""
-alias O_DIRECTORY = -1
-"""Constant: O_DIRECTORY."""
-alias O_DSYNC = -1
-"""Constant: O_DSYNC."""
-alias O_NOCTTY = -1
-"""Constant: O_NOCTTY."""
-alias O_NOFOLLOW = -1
-"""Constant: O_NOFOLLOW."""
-alias O_RSYNC = -1
-"""Constant: O_RSYNC."""
-alias O_TTY_INIT = -1
-"""Constant: O_TTY_INIT."""
-
-alias STDIN_FILENO = 0
-"""Constant: STDIN_FILENO."""
-alias STDOUT_FILENO = 1
-"""Constant: STDOUT_FILENO."""
-alias STDERR_FILENO = 2
-"""Constant: STDERR_FILENO."""
+# TODO
+# alias O_EXEC = -1
+# """Constant: O_EXEC."""
+# alias O_SEARCH = -1
+# """Constant: O_SEARCH."""
+# alias O_DIRECTORY = -1
+# """Constant: O_DIRECTORY."""
+# alias O_DSYNC = -1
+# """Constant: O_DSYNC."""
+# alias O_NOCTTY = -1
+# """Constant: O_NOCTTY."""
+# alias O_NOFOLLOW = -1
+# """Constant: O_NOFOLLOW."""
+# alias O_RSYNC = -1
+# """Constant: O_RSYNC."""
+# alias O_TTY_INIT = -1
+# """Constant: O_TTY_INIT."""
 
 alias F_DUPFD = 0
 """Constant: F_DUPFD."""
@@ -1025,14 +1031,14 @@ alias F_DUPFD_CLOEXEC = 14
 """Constant: F_DUPFD_CLOEXEC."""
 
 # TODO
-alias FD_CLOEXEC = -1
-"""Constant: FD_CLOEXEC."""
-alias F_RDLCK = -1
-"""Constant: F_RDLCK."""
-alias F_UNLCK = -1
-"""Constant: F_UNLCK."""
-alias F_WRLCK = -1
-"""Constant: F_WRLCK."""
+# alias FD_CLOEXEC = -1
+# """Constant: FD_CLOEXEC."""
+# alias F_RDLCK = -1
+# """Constant: F_RDLCK."""
+# alias F_UNLCK = -1
+# """Constant: F_UNLCK."""
+# alias F_WRLCK = -1
+# """Constant: F_WRLCK."""
 
 alias AT_EACCESS = 512
 """Constant: AT_EACCESS."""
@@ -1056,66 +1062,66 @@ alias AT_RECURSIVE = 32768
 # Logging constants
 # ===----------------------------------------------------------------------=== #
 
-
-alias LOG_PID = -1
-"""Constant: LOG_PID."""
-alias LOG_CONS = -1
-"""Constant: LOG_CONS."""
-alias LOG_NDELAY = -1
-"""Constant: LOG_NDELAY."""
-alias LOG_ODELAY = -1
-"""Constant: LOG_ODELAY."""
-alias LOG_NOWAIT = -1
-"""Constant: LOG_NOWAIT."""
-alias LOG_KERN = -1
-"""Constant: LOG_KERN."""
-alias LOG_USER = -1
-"""Constant: LOG_USER."""
-alias LOG_MAIL = -1
-"""Constant: LOG_MAIL."""
-alias LOG_NEWS = -1
-"""Constant: LOG_NEWS."""
-alias LOG_UUCP = -1
-"""Constant: LOG_UUCP."""
-alias LOG_DAEMON = -1
-"""Constant: LOG_DAEMON."""
-alias LOG_AUTH = -1
-"""Constant: LOG_AUTH."""
-alias LOG_CRON = -1
-"""Constant: LOG_CRON."""
-alias LOG_LPR = -1
-"""Constant: LOG_LPR."""
-alias LOG_LOCAL0 = -1
-"""Constant: LOG_LOCAL0."""
-alias LOG_LOCAL1 = -1
-"""Constant: LOG_LOCAL1."""
-alias LOG_LOCAL2 = -1
-"""Constant: LOG_LOCAL2."""
-alias LOG_LOCAL3 = -1
-"""Constant: LOG_LOCAL3."""
-alias LOG_LOCAL4 = -1
-"""Constant: LOG_LOCAL4."""
-alias LOG_LOCAL5 = -1
-"""Constant: LOG_LOCAL5."""
-alias LOG_LOCAL6 = -1
-"""Constant: LOG_LOCAL6."""
-alias LOG_LOCAL7 = -1
-"""Constant: LOG_LOCAL7."""
-alias LOG_MASK = -1  # (pri)
-"""Constant: LOG_MASK."""
-alias LOG_EMERG = -1
-"""Constant: LOG_EMERG."""
-alias LOG_ALERT = -1
-"""Constant: LOG_ALERT."""
-alias LOG_CRIT = -1
-"""Constant: LOG_CRIT."""
-alias LOG_ERR = -1
-"""Constant: LOG_ERR."""
-alias LOG_WARNING = -1
-"""Constant: LOG_WARNING."""
-alias LOG_NOTICE = -1
-"""Constant: LOG_NOTICE."""
-alias LOG_INFO = -1
-"""Constant: LOG_INFO."""
-alias LOG_DEBUG = -1
-"""Constant: LOG_DEBUG."""
+# TODO
+# alias LOG_PID = -1
+# """Constant: LOG_PID."""
+# alias LOG_CONS = -1
+# """Constant: LOG_CONS."""
+# alias LOG_NDELAY = -1
+# """Constant: LOG_NDELAY."""
+# alias LOG_ODELAY = -1
+# """Constant: LOG_ODELAY."""
+# alias LOG_NOWAIT = -1
+# """Constant: LOG_NOWAIT."""
+# alias LOG_KERN = -1
+# """Constant: LOG_KERN."""
+# alias LOG_USER = -1
+# """Constant: LOG_USER."""
+# alias LOG_MAIL = -1
+# """Constant: LOG_MAIL."""
+# alias LOG_NEWS = -1
+# """Constant: LOG_NEWS."""
+# alias LOG_UUCP = -1
+# """Constant: LOG_UUCP."""
+# alias LOG_DAEMON = -1
+# """Constant: LOG_DAEMON."""
+# alias LOG_AUTH = -1
+# """Constant: LOG_AUTH."""
+# alias LOG_CRON = -1
+# """Constant: LOG_CRON."""
+# alias LOG_LPR = -1
+# """Constant: LOG_LPR."""
+# alias LOG_LOCAL0 = -1
+# """Constant: LOG_LOCAL0."""
+# alias LOG_LOCAL1 = -1
+# """Constant: LOG_LOCAL1."""
+# alias LOG_LOCAL2 = -1
+# """Constant: LOG_LOCAL2."""
+# alias LOG_LOCAL3 = -1
+# """Constant: LOG_LOCAL3."""
+# alias LOG_LOCAL4 = -1
+# """Constant: LOG_LOCAL4."""
+# alias LOG_LOCAL5 = -1
+# """Constant: LOG_LOCAL5."""
+# alias LOG_LOCAL6 = -1
+# """Constant: LOG_LOCAL6."""
+# alias LOG_LOCAL7 = -1
+# """Constant: LOG_LOCAL7."""
+# alias LOG_MASK = -1  # (pri)
+# """Constant: LOG_MASK."""
+# alias LOG_EMERG = -1
+# """Constant: LOG_EMERG."""
+# alias LOG_ALERT = -1
+# """Constant: LOG_ALERT."""
+# alias LOG_CRIT = -1
+# """Constant: LOG_CRIT."""
+# alias LOG_ERR = -1
+# """Constant: LOG_ERR."""
+# alias LOG_WARNING = -1
+# """Constant: LOG_WARNING."""
+# alias LOG_NOTICE = -1
+# """Constant: LOG_NOTICE."""
+# alias LOG_INFO = -1
+# """Constant: LOG_INFO."""
+# alias LOG_DEBUG = -1
+# """Constant: LOG_DEBUG."""

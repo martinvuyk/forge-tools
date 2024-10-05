@@ -22,9 +22,10 @@ fn get_errno() -> C.int:
     else:
         return external_call["__errno_location", UnsafePointer[C.int]]()[]
 
+
 fn set_errno(errnum: C.int):
     """Set the `errno` global variable for the current thread.
-    
+
     Args:
         errnum: The value to set `errno` to.
     """
