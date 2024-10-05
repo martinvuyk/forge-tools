@@ -460,6 +460,10 @@ fn get_current_platform() -> SockPlatform:
     elif info.os_is_windows():
         return SockPlatform.WINDOWS
     else:
+        print(
+            "Platform not specifically supported yet. Using UNIX as default",
+            file=2,
+        )
         return SockPlatform.UNIX
 
 
@@ -662,12 +666,16 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var conn_addr = await self._impl.unsafe_get[
-                Self._linux_s
-            ]().accept()
+            var attempt = await self._impl.unsafe_get[Self._linux_s]().accept()
+            if not attempt:
+                return None
+            var conn_addr = attempt.value()
             return Self(conn_addr[0]), conn_addr[1]
         elif sock_platform is SockPlatform.UNIX:
-            var conn_addr = await self._impl.unsafe_get[Self._unix_s]().accept()
+            var attempt = await self._impl.unsafe_get[Self._unix_s]().accept()
+            if not attempt:
+                return None
+            var conn_addr = attempt.value()
             return Self(conn_addr[0]), conn_addr[1]
         else:
             constrained[False, "Platform not supported yet."]()
@@ -684,10 +692,10 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var s = await Self._linux_s.socketpair()
+            var s = Self._linux_s.socketpair()
             return Self(s[0]), Self(s[1])
         elif sock_platform is SockPlatform.UNIX:
-            var s = await Self._unix_s.socketpair()
+            var s = Self._unix_s.socketpair()
             return Self(s[0]), Self(s[1])
         else:
             constrained[False, "Platform not supported yet."]()

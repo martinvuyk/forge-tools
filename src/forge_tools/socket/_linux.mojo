@@ -23,13 +23,17 @@ struct _LinuxSocket[
     alias _ST = _UnixSocket[sock_family, sock_type, sock_protocol, sock_address]
     var _sock: Self._ST
 
+    alias _ipv4 = _LinuxSocket[
+        SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr
+    ]
+
     fn __init__(inout self) raises:
         """Create a new socket object."""
         self._sock = Self._ST()
 
     fn __init__(inout self, fd: FileDescriptor):
         """Create a new socket object from an open `FileDescriptor`."""
-        self.fd = Self._ST(fd=fd)
+        self._sock = Self._ST(fd=fd)
 
     fn close(owned self) raises:
         """Closes the Socket."""
@@ -58,18 +62,23 @@ struct _LinuxSocket[
 
     async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
-        self._sock.connect(address)
+        await self._sock.connect(address)
 
     async fn accept(self) -> Optional[(Self, sock_address)]:
         """Return a new socket representing the connection, and the address of
         the client."""
-        return await self._sock.accept()
+        var res = await self._sock.accept()
+        if not res:
+            return None
+        var s_a = res.value()
+        return Self(fd=s_a[0].get_fd()), s_a[1]
 
     @staticmethod
     fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
-        return await Self._ST.socketpair()
+        var s_s = Self._ST.socketpair()
+        return Self(fd=s_s[0].get_fd()), Self(fd=s_s[1].get_fd())
 
     fn get_fd(self) -> FileDescriptor:
         """Get the Socket's FileDescriptor."""
@@ -200,14 +209,12 @@ struct _LinuxSocket[
         dualstack_ipv6: Bool,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
-    ) raises -> (
-        Self,
-        _LinuxSocket[SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr],
-    ):
+    ) raises -> (Self, Self._ipv4):
         """Create a socket, bind it to a specified address, and listen."""
-        return Self._ST.create_server(
+        var s_s = Self._ST.create_server(
             address,
             dualstack_ipv6=dualstack_ipv6,
             backlog=backlog,
             reuse_port=reuse_port,
         )
+        return Self(fd=s_s[0].get_fd()), Self._ipv4(fd=s_s[1].get_fd())

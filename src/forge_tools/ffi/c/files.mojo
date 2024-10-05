@@ -1094,20 +1094,20 @@ fn ftello(stream: UnsafePointer[FILE]) -> off_t:
     return external_call["ftello", off_t, UnsafePointer[FILE]](stream)
 
 
-fn fflush(stream: UnsafePointer[FILE]) -> C.int:
-    """Libc POSIX `fflush` function.
+# fn fflush(stream: UnsafePointer[FILE]) -> C.int:
+#     """Libc POSIX `fflush` function.
 
-    Args:
-        stream
+#     Args:
+#         stream
 
-    Returns:
-        Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
+#     Returns:
+#         Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
 
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/fflush.3p.html).
-        Fn signature: `int fflush(FILE *stream)`.
-    """
-    return external_call["fflush", C.int, UnsafePointer[FILE]](stream)
+#     Notes:
+#         [Reference](https://man7.org/linux/man-pages/man3/fflush.3p.html).
+#         Fn signature: `int fflush(FILE *stream)`.
+#     """
+#     return external_call["fflush", C.int, UnsafePointer[FILE]](stream)
 
 
 fn clearerr(stream: UnsafePointer[FILE]):

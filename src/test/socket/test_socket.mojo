@@ -82,7 +82,7 @@ def test_inet_ntoa():
 
 def test_server_sync_ipv4():
     var socket = Socket()
-    socket.bind(("0.0.0.0", 8000))
+    socket.bind(("0.0.0.0", 8001))
     socket.listen()
 
 
@@ -95,7 +95,7 @@ def test_server_sync_ipv4():
 
 
 def test_create_server_sync_ipv4():
-    var server = Socket.create_server(("0.0.0.0", 8000))
+    var server = Socket.create_server(("0.0.0.0", 8002))
     _ = server
 
 

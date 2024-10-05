@@ -80,6 +80,10 @@ struct _UnixSocket[
     alias _sock_type = _get_unix_sock_type_constant(sock_type)
     alias _sock_protocol = _get_unix_sock_protocol_constant(sock_protocol)
 
+    alias _ipv4 = _UnixSocket[
+        SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr
+    ]
+
     fn __init__(inout self) raises:
         """Create a new socket object."""
         var fd = socket(Self._sock_family, Self._sock_type, Self._sock_protocol)
@@ -192,11 +196,9 @@ struct _UnixSocket[
                 if fd == -1:
                     var message = char_ptr_to_string(strerror(get_errno()))
                     raise Error("Failed to create socket: " + message)
-                    return None
                 var sa_family = addr_ptr.bitcast[sa_family_t]()[0]
                 if sa_family != Self._sock_family:
                     raise Error("Wrong Address Family for this socket.")
-                    return None
                 var p = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
                 var addr_str = String(ptr=p.bitcast[UInt8](), len=int(sin_size))
                 return Self(fd=fd), sock_address(addr_str^)
@@ -445,10 +447,7 @@ struct _UnixSocket[
         dualstack_ipv6: Bool,
         backlog: Optional[Int] = None,
         reuse_port: Bool = False,
-    ) raises -> (
-        Self,
-        _UnixSocket[SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr],
-    ):
+    ) raises -> (Self, Self._ipv4):
         """Create a socket, bind it to a specified address, and listen."""
         alias S = _UnixSocket[
             SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr

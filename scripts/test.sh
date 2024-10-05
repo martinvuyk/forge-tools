@@ -21,12 +21,12 @@ BUILD_DIR="${REPO_ROOT}"/build
 echo "Creating build directory for building the Library running the tests in."
 mkdir -p "${BUILD_DIR}"
 
-source "${SCRIPT_DIR}"/package-lib.sh || true
-TEST_PATH="${REPO_ROOT}/test"
+source "${SCRIPT_DIR}"/package-lib.sh
+TEST_PATH="${REPO_ROOT}/src/test"
 if [[ $# -gt 0 ]]; then
   # If an argument is provided, use it as the specific test file or directory
   TEST_PATH=$1
 fi
 
 # Run the tests
-mojo test -I build/ $TEST_PATH || true
+mojo test -I build/ $TEST_PATH

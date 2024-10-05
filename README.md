@@ -11,12 +11,12 @@ The semi-compiled package will be under `./build/forge_tools.mojopkg`
 ## How to run tests
 Test an entire directory or subdirectory or specific file
 ```bash
-magic run ./scripts/test.sh test/
+magic run ./scripts/test.sh src/test/
 ```
 ## How to run benchmarks
 Run an entire directory or subdirectory or specific file (sequentially)
 ```bash
-magic run ./scripts/benchmark.sh benchmarks/
+magic run ./scripts/benchmark.sh src/benchmarks/
 ```
 
 # Packages
