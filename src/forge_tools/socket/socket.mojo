@@ -447,7 +447,7 @@ struct SockPlatform:
 #        ...
 
 
-fn get_current_platform() -> SockPlatform:
+fn current_sock_platform() -> SockPlatform:
     """Get the current platform.
 
     Returns:
@@ -473,13 +473,12 @@ struct Socket[
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
     sock_address: SockAddr = IPv4Addr,
-    sock_platform: SockPlatform = get_current_platform(),
+    sock_platform: SockPlatform = current_sock_platform(),
 ](CollectionElement):
     """Struct for using Sockets. In the future this struct should be able to
-    use any implementation that conforms to the SocketInterface trait, once
-    traits can have attributes and have parameters defined. This will allow the
-    user to implement the interface for whatever functionality is missing and
-    inject the type.
+    use any implementation that conforms to the `SocketInterface` trait, once
+    traits can be parametrized. This will allow the user to implement the
+    interface for whatever functionality is missing and inject the type.
 
     Parameters:
         sock_family: The socket family e.g. `SockFamily.AF_INET`.

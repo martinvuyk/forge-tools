@@ -1,38 +1,12 @@
 # Notes on Socket
-I'll use this document to note down my thoughts as I'm still reading up and
-trying to come up with something worthy.
 
+This is an attempt to design something that will be usable for any use case
+where one would like to connect two machines. The base abstraction layer for all
+communication protocols should be the simple BSD socket API. With some minor
+additions of async where IO has no reason to block the main thread, this
+implementation follows that philosophy.
 
-#### Compatibility with Python
-- How much compatibility and at what API layer do we enforce it?
-    - Is the endgoal ASGI compatibility or that the socket interface remains as
-    similar to Python's as possible ?
-- How do we prepare the infrastructure for those higher level APIs while still
-allowing lower level control if desired for other protocols ?
-- Do we develop an async only interface ?
-
-
-#### Decisions on the choice of kernel IO protocols
-- Should we even develop a syncronous poll model like Python's?
-- Is it worth it using [io_uring](https://kernel.dk/io_uring.pdf) (Linux),
-[kqueue](https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2) (Unix),
-[IOCP](
-https://learn.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports)
-(Windows) ?
-    - How much would we need to deviate from Python's APIs ?
-        - Do we setup a unified async API like [Tigerbeetle's](
-https://tigerbeetle.com/blog/a-friendly-abstraction-over-iouring-and-kqueue) ?
-            - Can we keep mostly the same API as Python's but make it async ?
-    - How do we deal with external C library dependencies like [liburing](
-    https://github.com/axboe/liburing) if we decide to use it ?
-        - Do we wait for everything to be implemented in Mojo ? 
-        ([io_uring project](https://github.com/dmitry-salin/io_uring))
-    - How portable is an async completion model for WASI and microcontrollers
-    (FreeRTOS & others) ?
-        - How do we deal with other platforms without async IO in the kernel ?
-
-
-#### Possible steps to approach this
+#### Current plan
 1. Build scaffolding for most important platforms in an extensible manner.
 2. Setup a Unified socket interface that all platforms adhere to but constraint
 on what is currently supported for each.
@@ -42,9 +16,10 @@ on what is currently supported for each.
     3. Start making things really async under the hood.
     4. Develop other protocols.
 
-
-
 #### Current outlook
+
+Current blocker: no Mojo async, no parametrizable traits.
+
 The idea is for the Socket struct to be the overarching API for any one platform
 specific socket implementation
 ```mojo
@@ -53,13 +28,12 @@ struct Socket[
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
     sock_address: SockAddr = IPv4Addr,
-    sock_platform: SockPlatform = _get_current_platform(),
+    sock_platform: SockPlatform = current_sock_platform(),
 ](CollectionElement):
     """Struct for using Sockets. In the future this struct should be able to
-    use any implementation that conforms to the SocketInterface trait, once
-    traits can have attributes and have parameters defined. This will allow the
-    user to implement the interface for whatever functionality is missing and
-    inject the type.
+    use any implementation that conforms to the `SocketInterface` trait, once
+    traits can be parametrized. This will allow the user to implement the
+    interface for whatever functionality is missing and inject the type.
 
     Parameters:
         sock_family: The socket family e.g. `SockFamily.AF_INET`.
@@ -131,7 +105,7 @@ trait SocketInterface[
         """Connect to a remote socket at address."""
         ...
 
-    async fn accept(self) -> (Self, sock_address):
+    async fn accept(self) -> Optional[(Self, sock_address)]:
         """Return a new socket representing the connection, and the address of
         the client."""
         ...
@@ -145,6 +119,10 @@ trait SocketInterface[
     fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
+        ...
+
+    fn get_fd(self) -> FileDescriptor:
+        """Get the Socket's FileDescriptor."""
         ...
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
@@ -230,9 +208,8 @@ async def main():
 
     with Socket.create_server(("0.0.0.0", 8000)) as server:
         while True:
-            conn, addr = await server.accept()
+            conn, addr = (await server.accept())[]
             ...  # handle new connection
-
 ```
 
 In the future something like this should be possible:
@@ -253,3 +230,18 @@ async def main():
     with Pool() as pool:
         _ = await pool.starmap(handler, server)
 ```
+
+#### On future implementation of kernel async IO protocols
+
+- Is it worth it using [io_uring](https://kernel.dk/io_uring.pdf) (Linux),
+[kqueue](https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2) (Unix),
+[IOCP](
+https://learn.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports)
+(Windows) ?
+    - How much would we need to deviate from Python's APIs ?
+    - How do we deal with external C library dependencies like [liburing](
+    https://github.com/axboe/liburing) if we decide to use it ?
+        - Do we wait for everything to be implemented in Mojo ? 
+        ([io_uring project](https://github.com/dmitry-salin/io_uring))
+- Could we just leave the implementation to the community and setup a solid
+    interface?

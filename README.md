@@ -1,9 +1,12 @@
 # Forge Tools
-Tools to extend the functionality of the Mojo standard library. Hopefully they will all someday be available in the stdlib. The main focus is to only include things that would make sense in such a library.
+Tools to extend the functionality of the Mojo standard library. Hopefully they
+will all someday be available in the stdlib. The main focus is to only include
+things that would make sense in such a library.
 
+**Keep in mind:** Everything is still a Work In Progress and mojo nightly is
+constantly changing.
 
 ## How to Install
-#### Keep in mind: Everything is still a Work In Progress and mojo nightly is constantly changing
 ```bash
 magic run ./scripts/package-lib.sh
 ```
@@ -28,6 +31,10 @@ Error2: This type represents a parametric Error.
 ## collections
 ### array.mojo
 #### Array
+
+**Plans for Array in Mojo's stdlib:** progressively migrate the algorithms to
+List by making use of conditional conformance and other mechanisms.
+
 An Array allocated on the stack with a capacity known at compile
 time.
 
@@ -78,7 +85,12 @@ print(a) # [3, 4, 2]
 print(a.concat(a.reversed() // 2)) # [3, 4, 2, 1, 2, 1]
 ```
 ### result.mojo
+
+**Plans for result.mojo in Mojo's stdlib:** None, after some discussion raising
+functions remain the norm.
+
 ### Result
+
 Defines Result, a type modeling a value which may or may not be present.
 With an Error in the case of failure.
 
@@ -205,48 +217,11 @@ fn do_some_other_thing() -> Result2[String, "OtherError"]:
 ```
 
 
-#### On the interop with raising functions
-Idea: Less magic, but results will not have the same "feel" as raising Errors.
-Very likely fragmentation in API development standards.
-```mojo
-struct Result2:
-    ...
-    fn unwrap(self) raises -> T:
-        if self.err:
-            raise self.err
-        return self.value()
-
-    @staticmethod
-    fn wrap[
-        *A: AnyType,
-        K: StringLiteral = E1,
-        err: Error2[K] = Error2[E1],
-    ](
-        func: fn (A) raises -> T,
-        args: A,
-    ) -> Self:
-        try:
-            return Self(func(*args))
-        except Error as e:
-            return Self(err=err(e))
-
-
-fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
-    ...
-
-# what the developer sees
-fn do_some_other_thing() raises -> String:
-    var a = do_something(-1).unwrap()
-    return "success"
-
-# can call raising functions and they get turned into a Result
-fn do_some_other_thing_2() -> Result[String]:
-    return Result[String].wrap(do_some_other_thing)
-```
-
-
 ## complex
 ### quaternion.mojo
+
+**Plans for quaternion.mojo in Mojo's stdlib:** None, it is a very niche module.
+
 #### Quaternion
 ```mojo
 struct Quaternion[T: DType = DType.float64]:
@@ -326,6 +301,8 @@ struct DualQuaternion[T: DType = DType.float64]:
 
 ## datetime
 
+**Plans for the datetime package in Mojo's stdlib:** Waiting for the Mojo team.
+
 - `DateTime`
     - A structure aware of TimeZone, Calendar, and leap days and seconds.
     - Nanosecond resolution, though when using dunder methods (e.g.
@@ -339,7 +316,8 @@ struct DualQuaternion[T: DType = DType.float64]:
     - By default UTC, highly customizable and options for full or partial
         IANA timezones support.
 - Notes:
-    - The caveats of each implementation are better explained in each struct's docstrings.
+    - The caveats of each implementation are better explained in each struct's
+        docstrings.
 
 Examples:
 
@@ -406,4 +384,91 @@ ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
 parsed = DateT.strptime(vstr, fstr)
 assert_true(parsed)
 assert_equal(ref1, parsed.value())
+```
+
+## socket
+
+**Plans for the socket package in Mojo's stdlib:** Development is still ongoing
+but this will most probably get merged fast once it works.
+
+#### Current outlook
+
+Current blocker: no Mojo async, no parametrizable traits.
+
+The idea is for the Socket struct to be the overarching API for any one platform
+specific socket implementation
+```mojo
+struct Socket[
+    sock_family: SockFamily = SockFamily.AF_INET,
+    sock_type: SockType = SockType.SOCK_STREAM,
+    sock_protocol: SockProtocol = SockProtocol.TCP,
+    sock_address: SockAddr = IPv4Addr,
+    sock_platform: SockPlatform = current_sock_platform(),
+](CollectionElement):
+    """Struct for using Sockets. In the future this struct should be able to
+    use any implementation that conforms to the `SocketInterface` trait, once
+    traits can be parametrized. This will allow the user to implement the
+    interface for whatever functionality is missing and inject the type.
+
+    Parameters:
+        sock_family: The socket family e.g. `SockFamily.AF_INET`.
+        sock_type: The socket type e.g. `SockType.SOCK_STREAM`.
+        sock_protocol: The socket protocol e.g. `SockProtocol.TCP`.
+        sock_address: The address type for the socket.
+        sock_platform: The socket platform e.g. `SockPlatform.LINUX`.
+   """
+   ...
+```
+
+The idea is for the interface to be generic and let each implementation
+constraint at compile time what it supports and what it doesn't.
+
+The Socket struct should be parametrizable with the implementation of the
+socket interface 
+```mojo
+socket_impl: SocketInterface = _LinuxSocket[
+    sock_family, sock_type, sock_protocol, sock_address
+]
+```
+
+What this all will allow is to build higher level pythonic syntax to do servers
+for any protocol and inject whatever implementation for any platform specific
+use case that the user does not find in the stdlib but exists in an external
+library.
+
+Examples:
+
+```mojo
+from forge_tools.socket import Socket
+
+
+async def main():
+    # TODO: once we have async generators:
+    # async for conn_attempt in Socket.create_server(("0.0.0.0", 8000)):
+    #     conn, addr = conn_attempt[]
+    #     ...  # handle new connection
+
+    with Socket.create_server(("0.0.0.0", 8000)) as server:
+        while True:
+            conn, addr = (await server.accept())[]
+            ...  # handle new connection
+```
+
+In the future something like this should be possible:
+```mojo
+from collections import Optional
+from multiprocessing import Pool
+from forge_tools.socket import Socket, IPv4Addr
+
+
+async fn handler(conn_attempt: Optional[Socket, IPv4Addr]):
+    if not conn_attempt:
+        return
+    conn, addr = conn_attempt.value()
+    ...
+
+async def main():
+    server = Socket.create_server(("0.0.0.0", 8000))
+    with Pool() as pool:
+        _ = await pool.starmap(handler, server)
 ```
