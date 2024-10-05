@@ -88,7 +88,6 @@ def test_server_sync_ipv4():
 
 # def test_client_sync_ipv4():
 #     var socket = Socket()
-#     # not sure if this works, should redirect to default gateway
 #     await socket.connect(("0.0.0.0", 8000))
 #     var client_msg = String("123456789")
 #     var bytes_sent = await socket.send(client_msg.as_bytes_span())
@@ -101,8 +100,8 @@ def test_create_server_sync_ipv4():
 
 
 # def test_create_connection_sync_ipv4():
-#     # not sure if this works, should redirect to default gateway
-#     var client = Socket.create_connection(("", 0))
+#     var client = Socket.create_connection(("0.0.0.0", 8000))
+#     _ = client
 
 # async def test_client_server_ipv4():
 #     var server = Socket.create_server(("0.0.0.0", 8000))
@@ -138,7 +137,7 @@ def main():
     test_htonl()
     test_inet_aton()
     test_inet_ntoa()
-    # test_server_sync_ipv4()
+    test_server_sync_ipv4()
     # test_client_sync_ipv4()
     test_create_server_sync_ipv4()
     # test_create_connection_sync_ipv4()

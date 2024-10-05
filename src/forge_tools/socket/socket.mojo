@@ -612,7 +612,15 @@ struct Socket[
 
     async fn connect(self, address: sock_address) raises:
         """Connect to a remote socket at address."""
-        ...
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            await self._impl.unsafe_get[Self._linux_s]().connect(address)
+        elif sock_platform is SockPlatform.UNIX:
+            await self._impl.unsafe_get[Self._unix_s]().connect(address)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to create socket.")
 
     async fn accept(self) raises -> (Self, sock_address):
         """Return a new socket representing the connection, and the address of
@@ -648,6 +656,9 @@ struct Socket[
         if sock_platform is SockPlatform.LINUX:
             var s = await Self._linux_s.socketpair()
             return Self(s[0]), Self(s[1])
+        elif sock_platform is SockPlatform.UNIX:
+            var s = await Self._unix_s.socketpair()
+            return Self(s[0]), Self(s[1])
         else:
             constrained[False, "Platform not supported yet."]()
             return Self(), Self()
@@ -662,9 +673,11 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl.unsafe_get[Self._linux_s]().fd
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl.unsafe_get[Self._unix_s]().fd
         else:
             constrained[False, "Platform not supported yet."]()
-            return FileDescriptor(2)
+            return FileDescriptor(0)
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket.
@@ -679,6 +692,8 @@ struct Socket[
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return await self._impl.unsafe_get[Self._linux_s]().send_fds(fds)
+        elif sock_platform is SockPlatform.UNIX:
+            return await self._impl.unsafe_get[Self._unix_s]().send_fds(fds)
         else:
             constrained[False, "Platform not supported yet."]()
             return False
