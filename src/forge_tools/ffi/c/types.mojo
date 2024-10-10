@@ -60,6 +60,7 @@ alias ssize_t = C.long
 # Utils
 # ===----------------------------------------------------------------------=== #
 
+
 trait _UnsafePtrU8:
     fn unsafe_ptr(self) -> UnsafePointer[UInt8]:
         ...

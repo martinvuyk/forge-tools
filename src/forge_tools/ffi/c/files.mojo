@@ -679,6 +679,21 @@ fn snprintf(
         Fn signature: ``int snprintf(char *restrict s, size_t n,`.
             const char *restrict format, ...)`.
     """
+    # var f = format.unsafe_ptr().bitcast[c_char]()
+    # FIXME: externall_call should handle this
+    # return external_call["snprintf", C.int](s, n, format, extra_args=T)
+    # var num = __mlir_op.`pop.external_call`[
+    #     func = "snprintf".value,
+    #     variadicType = __mlir_attr[
+    #         `(`,
+    #         `!kgen.pointer<scalar<si8>>,`,
+    #         `!pop.scalar<index>, `,
+    #         `!kgen.pointer<scalar<si8>>`,
+    #         `) -> !pop.scalar<si32>`,
+    #     ],
+    #     _type=Int32,
+    # ](str.bitcast[c_char](), size, f, args._get_loaded_kgen_pack())
+    # return int(num)
     return external_call["snprintf", C.int](s, n, format)
 
 

@@ -30,10 +30,15 @@ from .timezone import (
     ZoneStorageDST,
     ZoneStorageNoDST,
 )
-from .calendar import Calendar, UTCCalendar, PythonCalendar, CalendarHashes
+from .calendar import (
+    Calendar,
+    UTCCalendar,
+    Gregorian,
+    CalendarHashes,
+    _Calendarized,
+)
 import .dt_str
 
-alias _calendar = PythonCalendar
 alias _cal_hash = CalendarHashes(64)
 alias _max_delta = (~UInt64(0) // (365 * 24 * 60 * 60 * 1_000_000_000)).cast[
     DType.uint16
@@ -54,6 +59,7 @@ struct DateTime[
     iana: Bool = True,
     pyzoneinfo: Bool = True,
     native: Bool = False,
+    C: _Calendarized = Gregorian[],
 ](Hashable, Stringable):
     """Custom `Calendar` and `TimeZone` may be passed in.
     By default, it uses `PythonCalendar` which is a Gregorian
@@ -82,6 +88,7 @@ struct DateTime[
             at stdlib release time, in the future it should get them
             from the OS). If it fails at compile time, it defaults to
             using the given offsets when the timezone was constructed.
+        C: The type of implementation for Calendar.
 
     - Max Resolution:
         - year: Up to year 65_536.
@@ -123,8 +130,11 @@ struct DateTime[
     alias _tz = TimeZone[dst_storage, no_dst_storage, iana, pyzoneinfo, native]
     var tz: Self._tz
     """Tz."""
-    var calendar: Calendar
+    var calendar: Calendar[C]
     """Calendar."""
+    alias _UnboundCal = DateTime[
+        dst_storage, no_dst_storage, iana, pyzoneinfo, native, _
+    ]
 
     fn __init__[
         T1: _IntCollect = Int,
@@ -148,7 +158,7 @@ struct DateTime[
         u_second: Optional[T8] = None,
         n_second: Optional[T9] = None,
         tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
+        calendar: Calendar[C] = Calendar[C](),
     ):
         """Construct a `DateTime` from valid values.
 
@@ -199,7 +209,9 @@ struct DateTime[
         self.tz = tz.value() if tz else Self._tz()
         self.calendar = calendar
 
-    fn replace(
+    fn replace[
+        T: _Calendarized = C
+    ](
         owned self,
         *,
         year: Optional[UInt16] = None,
@@ -212,9 +224,9 @@ struct DateTime[
         u_second: Optional[UInt16] = None,
         n_second: Optional[UInt16] = None,
         tz: Optional[Self._tz] = None,
-        calendar: Optional[Calendar] = None,
-    ) -> Self:
-        """Replace with give value/s.
+        calendar: Optional[Calendar[T]] = None,
+    ) -> Self._UnboundCal:
+        """Replace with given value/s.
 
         Args:
             year: Year.
@@ -256,13 +268,24 @@ struct DateTime[
         if tz:
             self.tz = tz.value()
         if calendar:
-            self.calendar = calendar.value()
+            return Self._UnboundCal(
+                self.year,
+                self.month,
+                self.day,
+                self.hour,
+                self.minute,
+                self.second,
+                self.m_second,
+                self.u_second,
+                self.n_second,
+                self.tz,
+                calendar.value(),
+            )
         return self
 
-    fn to_calendar(owned self, calendar: Calendar) -> Self:
-        """Translates the `DateTime`'s values to be on the same
-        offset since it's current calendar's epoch to the new
-        calendar's epoch.
+    fn to_calendar(owned self, calendar: Calendar) -> Self._UnboundCal:
+        """Translates the `DateTime`'s values to be on the same offset since
+        its current calendar's epoch to the new calendar's epoch.
 
         Args:
             calendar: The new calendar.
@@ -271,18 +294,14 @@ struct DateTime[
             Self.
         """
 
+        if self.calendar == calendar:
+            return self^.replace(calendar=calendar)
         var year = self.year
-        var tmpcal = self.calendar.from_year(year)
-        self.calendar = tmpcal
-        var ns = self.n_seconds_since_epoch()
-        self.year = calendar.min_year
-        self.month = calendar.min_month
-        self.day = calendar.min_day
-        self.hour = calendar.min_hour
-        self.minute = calendar.min_minute
-        self.second = calendar.min_second
-        self.calendar = calendar
-        return self.add(years=int(year), n_seconds=int(ns))
+        var tmp = self.replace(calendar=self.calendar.from_year(year))
+        var ns = tmp.n_seconds_since_epoch()
+        return Self._UnboundCal(calendar=calendar).add(
+            years=int(year), n_seconds=int(ns)
+        )
 
     fn to_utc(owned self) -> Self:
         """Returns a new instance of `Self` transformed to UTC. If
@@ -338,6 +357,7 @@ struct DateTime[
         )
         return new_self.add(seconds=leapsecs).replace(tz=tz)
 
+    @always_inline
     fn n_seconds_since_epoch(self) -> UInt64:
         """Nanoseconds since the begining of the calendar's epoch.
         Can only represent up to ~ 580 years since epoch start.
@@ -357,6 +377,7 @@ struct DateTime[
             self.n_second,
         )
 
+    @always_inline
     fn seconds_since_epoch(self) -> UInt64:
         """Seconds since the begining of the calendar's epoch.
 
@@ -367,7 +388,7 @@ struct DateTime[
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
 
-    fn delta_s(self, other: Self) -> UInt64:
+    fn delta_s(self, other: Self._UnboundCal) -> UInt64:
         """Calculates the difference in seconds between `self` and other.
 
         Args:
@@ -385,7 +406,9 @@ struct DateTime[
             o = o.to_utc()
         return s.seconds_since_epoch() - o.seconds_since_epoch()
 
-    fn delta_ns(self, other: Self) -> (UInt64, UInt64, UInt16, UInt8):
+    fn delta_ns(
+        self, other: Self._UnboundCal
+    ) -> (UInt64, UInt64, UInt16, UInt8):
         """Calculates the nanoseconds for `self` and other, creating
         a reference calendar to keep nanosecond resolution.
 
@@ -427,15 +450,15 @@ struct DateTime[
     fn add(
         owned self,
         *,
-        years: Int = 0,
-        months: Int = 0,
-        days: Int = 0,
-        hours: Int = 0,
-        minutes: Int = 0,
-        seconds: Int = 0,
-        m_seconds: Int = 0,
-        u_seconds: Int = 0,
-        n_seconds: Int = 0,
+        years: UInt = 0,
+        months: UInt = 0,
+        days: UInt = 0,
+        hours: UInt = 0,
+        minutes: UInt = 0,
+        seconds: UInt = 0,
+        m_seconds: UInt = 0,
+        u_seconds: UInt = 0,
+        n_seconds: UInt = 0,
     ) -> Self:
         """Recursively evaluated function to build a valid `DateTime`
         according to its calendar. Values are added in BigEndian order i.e.
@@ -546,15 +569,15 @@ struct DateTime[
     fn subtract(
         owned self,
         *,
-        years: Int = 0,
-        months: Int = 0,
-        days: Int = 0,
-        hours: Int = 0,
-        minutes: Int = 0,
-        seconds: Int = 0,
-        m_seconds: Int = 0,
-        u_seconds: Int = 0,
-        n_seconds: Int = 0,
+        years: UInt = 0,
+        months: UInt = 0,
+        days: UInt = 0,
+        hours: UInt = 0,
+        minutes: UInt = 0,
+        seconds: UInt = 0,
+        m_seconds: UInt = 0,
+        u_seconds: UInt = 0,
+        n_seconds: UInt = 0,
     ) -> Self:
         """Recursively evaluated function to build a valid `DateTime`
         according to its calendar. Values are subtracted in LittleEndian order
@@ -575,8 +598,8 @@ struct DateTime[
             Self.
 
         Notes:
-            On overflow, the `DateTime` goes to the end of the
-            calendar's epoch and keeps evaluating until valid.
+            On overflow, the `DateTime` goes to the end of the calendar's epoch
+            and keeps evaluating until valid.
         """
 
         var ns = int(self.n_second) - n_seconds
@@ -663,8 +686,8 @@ struct DateTime[
         self = self.add(days=0)  #  to correct days and months
         return self^
 
-    # @always_inline("nodebug")
-    fn add(owned self, other: Self) -> Self:
+    @always_inline
+    fn add(owned self, other: Self._UnboundCal) -> Self:
         """Adds another `DateTime`.
 
         Args:
@@ -685,8 +708,8 @@ struct DateTime[
             n_seconds=int(other.n_second),
         )
 
-    # @always_inline("nodebug")
-    fn subtract(owned self, other: Self) -> Self:
+    @always_inline
+    fn subtract(owned self, other: Self._UnboundCal) -> Self:
         """Subtracts another `DateTime`.
 
         Args:
@@ -707,8 +730,8 @@ struct DateTime[
             n_seconds=int(other.n_second),
         )
 
-    # @always_inline("nodebug")
-    fn __add__(owned self, other: Self) -> Self:
+    @always_inline
+    fn __add__(owned self, other: Self._UnboundCal) -> Self:
         """Add.
 
         Args:
@@ -719,8 +742,8 @@ struct DateTime[
         """
         return self.add(other)
 
-    # @always_inline("nodebug")
-    fn __sub__(owned self, other: Self) -> Self:
+    @always_inline
+    fn __sub__(owned self, other: Self._UnboundCal) -> Self:
         """Subtract.
 
         Args:
@@ -731,8 +754,8 @@ struct DateTime[
         """
         return self.subtract(other)
 
-    # @always_inline("nodebug")
-    fn __iadd__(inout self, owned other: Self):
+    @always_inline
+    fn __iadd__(inout self, owned other: Self._UnboundCal):
         """Add Immediate.
 
         Args:
@@ -740,8 +763,8 @@ struct DateTime[
         """
         self = self.add(other)
 
-    # @always_inline("nodebug")
-    fn __isub__(inout self, owned other: Self):
+    @always_inline
+    fn __isub__(inout self, owned other: Self._UnboundCal):
         """Subtract Immediate.
 
         Args:
@@ -749,27 +772,26 @@ struct DateTime[
         """
         self = self.subtract(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn day_of_week(self) -> UInt8:
         """Calculates the day of the week for a `DateTime`.
 
         Returns:
-            - day: Day of the week: [0, 6] (monday - sunday) (default).
+            Day of the week [monday, sunday]: [0, 6] (Gregorian) [1, 7]
+            (ISOCalendar).
         """
-
         return self.calendar.day_of_week(self.year, self.month, self.day)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn day_of_year(self) -> UInt16:
         """Calculates the day of the year for a `DateTime`.
 
         Returns:
-            - day: Day of the year: [1, 366] (for gregorian calendar).
+            Day of the year: [1, 366] (for Gregorian calendar).
         """
-
         return self.calendar.day_of_year(self.year, self.month, self.day)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn day_of_month(self, day_of_year: Int) -> (UInt8, UInt8):
         """Calculates the month, day of the month for a given day of the year.
 
@@ -777,11 +799,25 @@ struct DateTime[
             day_of_year: The day of the year.
 
         Returns:
-            - month: Month of the year: [1, 12] (for gregorian calendar).
-            - day: Day of the month: [1, 31] (for gregorian calendar).
+            - month: Month of the year: [1, 12] (for Gregorian calendar).
+            - day: Day of the month: [1, 31] (for Gregorian calendar).
         """
-
         return self.calendar.day_of_month(self.year, day_of_year)
+
+    @always_inline
+    fn week_of_year(self) -> UInt8:
+        """Calculates the week of the year for a given date.
+
+        Returns:
+            Week of the year: [0, 52] (Gregorian), [1, 53] (ISOCalendar).
+
+        Notes:
+            Gregorian takes the first day of the year as starting week 0,
+            ISOCalendar follows [ISO 8601](\
+            https://en.wikipedia.org/wiki/ISO_week_date) which takes the first
+            thursday of the year as starting week 1.
+        """
+        return self.calendar.week_of_year(self.year, self.month, self.day)
 
     fn leapsecs_since_epoch(self) -> UInt32:
         """Cumulative leap seconds since the calendar's epoch start.
@@ -793,6 +829,7 @@ struct DateTime[
         var dt = self.to_utc()
         return dt.calendar.leapsecs_since_epoch(dt.year, dt.month, dt.day)
 
+    @always_inline
     fn __hash__(self) -> UInt:
         """Hash.
 
@@ -811,8 +848,8 @@ struct DateTime[
             self.n_second,
         )
 
-    # @always_inline("nodebug")
-    fn __eq__(self, other: Self) -> Bool:
+    @always_inline
+    fn __eq__(self, other: Self._UnboundCal) -> Bool:
         """Eq.
 
         Args:
@@ -826,8 +863,8 @@ struct DateTime[
             return hash(self.to_utc()) == hash(other.to_utc())
         return hash(self) == hash(other)
 
-    # @always_inline("nodebug")
-    fn __ne__(self, other: Self) -> Bool:
+    @always_inline
+    fn __ne__(self, other: Self._UnboundCal) -> Bool:
         """Ne.
 
         Args:
@@ -841,8 +878,8 @@ struct DateTime[
             return hash(self.to_utc()) != hash(other.to_utc())
         return hash(self) != hash(other)
 
-    # @always_inline("nodebug")
-    fn __gt__(self, other: Self) -> Bool:
+    @always_inline
+    fn __gt__(self, other: Self._UnboundCal) -> Bool:
         """Gt.
 
         Args:
@@ -856,8 +893,8 @@ struct DateTime[
             return hash(self.to_utc()) > hash(other.to_utc())
         return hash(self) > hash(other)
 
-    # @always_inline("nodebug")
-    fn __ge__(self, other: Self) -> Bool:
+    @always_inline
+    fn __ge__(self, other: Self._UnboundCal) -> Bool:
         """Ge.
 
         Args:
@@ -871,8 +908,8 @@ struct DateTime[
             return hash(self.to_utc()) >= hash(other.to_utc())
         return hash(self) >= hash(other)
 
-    # @always_inline("nodebug")
-    fn __le__(self, other: Self) -> Bool:
+    @always_inline
+    fn __le__(self, other: Self._UnboundCal) -> Bool:
         """Le.
 
         Args:
@@ -886,8 +923,8 @@ struct DateTime[
             return hash(self.to_utc()) <= hash(other.to_utc())
         return hash(self) <= hash(other)
 
-    # @always_inline("nodebug")
-    fn __lt__(self, other: Self) -> Bool:
+    @always_inline
+    fn __lt__(self, other: Self._UnboundCal) -> Bool:
         """Lt.
 
         Args:
@@ -901,7 +938,7 @@ struct DateTime[
             return hash(self.to_utc()) < hash(other.to_utc())
         return hash(self) < hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __and__[T: Hashable](self, other: T) -> UInt64:
         """And.
 
@@ -916,7 +953,7 @@ struct DateTime[
         """
         return hash(self) & hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __or__[T: Hashable](self, other: T) -> UInt64:
         """Or.
 
@@ -931,7 +968,7 @@ struct DateTime[
         """
         return hash(self) | hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __xor__[T: Hashable](self, other: T) -> UInt64:
         """Xor.
 
@@ -946,7 +983,7 @@ struct DateTime[
         """
         return hash(self) ^ hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __int__(self) -> Int:
         """Int.
 
@@ -955,7 +992,7 @@ struct DateTime[
         """
         return hash(self)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __str__(self) -> String:
         """Str.
 
@@ -965,7 +1002,6 @@ struct DateTime[
         return self.to_iso()
 
     @staticmethod
-    # @always_inline("nodebug")
     fn from_unix_epoch[
         add_leap: Bool = False
     ](seconds: Int, tz: Optional[Self._tz] = None) -> Self:
@@ -986,7 +1022,9 @@ struct DateTime[
         """
 
         var zone = tz.value() if tz else Self._tz()
-        var dt = Self(tz=zone, calendar=UTCCalendar).add(seconds=seconds)
+        var dt = Self._UnboundCal(tz=zone, calendar=UTCCalendar).add(
+            seconds=seconds
+        )
 
         @parameter
         if add_leap:
@@ -994,10 +1032,8 @@ struct DateTime[
         return dt^
 
     @staticmethod
-    # @always_inline("nodebug")
     fn now(
-        tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
+        tz: Optional[Self._tz] = None, calendar: Calendar[C] = Calendar[C]()
     ) -> Self:
         """Construct a datetime from `time.now()`.
 
@@ -1017,7 +1053,7 @@ struct DateTime[
         var dt = Self.from_unix_epoch(s, zone).replace(calendar=calendar)
         return dt.replace(m_second=ms, u_second=us, n_second=UInt16(ns))
 
-    # @always_inline("nodebug")
+    @always_inline
     fn strftime(self, fmt: String) -> String:
         """Formats time into a `String`.
 
@@ -1040,7 +1076,7 @@ struct DateTime[
             self.u_second,
         )
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __format__(self, fmt: String) -> String:
         """Format.
 
@@ -1052,7 +1088,7 @@ struct DateTime[
         """
         return self.strftime(fmt)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
         compliant formatted `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_TZD`
@@ -1078,13 +1114,31 @@ struct DateTime[
             offset.to_iso(),
         )
 
+    @always_inline
+    fn timestamp(self) -> Float64:
+        """Return the POSIX timestamp (time since unix epoch).
+
+        Returns:
+            The POSIX timestamp.
+
+        Notes:
+            This is done by directly replacing the calendar with UTCCalendar,
+            if the date in the current calendar is before the unix epoch
+            (1970, 1, 1) this will return a very big number since it will
+            overflow to the end of the calendar.
+        """
+        alias C = UTCCalendar
+        if self.calendar == C:
+            return self.seconds_since_epoch().cast[DType.float64]()
+        var new_s = self.replace(calendar=C).subtract(years=0).add(years=0)
+        return new_s.seconds_since_epoch().cast[DType.float64]()
+
     @staticmethod
-    # @always_inline("nodebug")
     fn strptime(
         s: String,
         format_str: StringLiteral,
         tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
+        calendar: Calendar[C] = Calendar[C](),
     ) -> Optional[Self]:
         """Parse a `DateTime` from a  `String`.
 
@@ -1118,11 +1172,12 @@ struct DateTime[
         )
 
     @staticmethod
-    # @always_inline("nodebug")
     fn from_iso[
         iso: dt_str.IsoFormat = dt_str.IsoFormat()
     ](
-        s: String, tz: Optional[Self._tz] = None, calendar: Calendar = _calendar
+        s: String,
+        tz: Optional[Self._tz] = None,
+        calendar: Calendar[C] = Calendar[C](),
     ) -> Optional[Self]:
         """Construct a datetime from an
         [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
@@ -1170,11 +1225,10 @@ struct DateTime[
             return None
 
     @staticmethod
-    # @always_inline("nodebug")
     fn from_hash(
         value: Int,
         tz: Optional[Self._tz] = None,
-        calendar: Calendar = _calendar,
+        calendar: Calendar[C] = Calendar[C](),
     ) -> Self:
         """Construct a `DateTime` from a hash made by it.
         Nanoseconds are set to the calendar's minimum.

@@ -191,9 +191,9 @@ struct TimeZone[
         year: UInt16,
         month: UInt8,
         day: UInt8,
-        hour: UInt8,
-        minute: UInt8,
-        second: UInt8,
+        hour: UInt8 = 0,
+        minute: UInt8 = 0,
+        second: UInt8 = 0,
     ) -> Offset:
         """Return the UTC offset for the `TimeZone` at the given date.
 

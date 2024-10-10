@@ -43,7 +43,7 @@ trait _IntCollect(Intable, CollectionElement):
     ...
 
 
-# @value
+@value
 @register_passable("trivial")
 struct DateTime64(Hashable, Stringable):
     """Fast `DateTime64` struct. This is a "normal"
@@ -141,7 +141,7 @@ struct DateTime64(Hashable, Stringable):
             _cal.hash[_cal_h64](y, mon, d, h, m, s, ms)
         )
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __getattr__[name: StringLiteral](self) -> UInt64:
         """Get the attribute.
 
@@ -185,7 +185,6 @@ struct DateTime64(Hashable, Stringable):
             constrained[False, "that attr does not exist"]()
             return 0
 
-    # @always_inline
     fn replace(
         owned self,
         *,
@@ -239,7 +238,7 @@ struct DateTime64(Hashable, Stringable):
         self.hash = (self.hash & ~mask) | h
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn seconds_since_epoch(self) -> UInt64:
         """Seconds since the begining of the calendar's epoch.
 
@@ -248,7 +247,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds // 1000
 
-    # @always_inline("nodebug")
+    @always_inline
     fn m_seconds_since_epoch(self) -> UInt64:
         """Miliseconds since the begining of the calendar's epoch.
 
@@ -257,7 +256,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __add__(owned self, owned other: Self) -> Self:
         """Add.
 
@@ -270,7 +269,7 @@ struct DateTime64(Hashable, Stringable):
         self.m_seconds += other.m_seconds
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __sub__(owned self, owned other: Self) -> Self:
         """Subtract.
 
@@ -283,7 +282,7 @@ struct DateTime64(Hashable, Stringable):
         self.m_seconds -= other.m_seconds
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
@@ -292,7 +291,7 @@ struct DateTime64(Hashable, Stringable):
         """
         self.m_seconds += other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
@@ -301,7 +300,7 @@ struct DateTime64(Hashable, Stringable):
         """
         self.m_seconds -= other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __hash__(self) -> UInt:
         """Hash.
 
@@ -310,7 +309,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return int(self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __eq__(self, other: Self) -> Bool:
         """Eq.
 
@@ -322,7 +321,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds == other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ne__(self, other: Self) -> Bool:
         """Ne.
 
@@ -334,7 +333,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds != other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __gt__(self, other: Self) -> Bool:
         """Gt.
 
@@ -346,7 +345,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds > other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ge__(self, other: Self) -> Bool:
         """Ge.
 
@@ -358,7 +357,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds >= other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __le__(self, other: Self) -> Bool:
         """Le.
 
@@ -370,7 +369,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds <= other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __lt__(self, other: Self) -> Bool:
         """Lt.
 
@@ -382,7 +381,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.m_seconds < other.m_seconds
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __invert__(self) -> Self:
         """Invert.
 
@@ -391,7 +390,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return Self(m_seconds=self.m_seconds, hash_val=~self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __and__[T: Hashable](self, other: T) -> UInt64:
         """And.
 
@@ -406,7 +405,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.hash & hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __or__[T: Hashable](self, other: T) -> UInt64:
         """And.
 
@@ -421,7 +420,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.hash | hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __xor__[T: Hashable](self, other: T) -> UInt64:
         """And.
 
@@ -436,7 +435,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.hash ^ hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __int__(self) -> Int:
         """Int.
 
@@ -445,7 +444,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return hash(self)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __str__(self) -> String:
         """Str.
 
@@ -454,7 +453,7 @@ struct DateTime64(Hashable, Stringable):
         """
         return self.to_iso()
 
-    # @always_inline("nodebug")
+    @always_inline
     fn add(
         owned self,
         years: Int = 0,
@@ -483,7 +482,7 @@ struct DateTime64(Hashable, Stringable):
         ) * 1000 + m_seconds
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn subtract(
         owned self,
         years: Int = 0,
@@ -513,7 +512,7 @@ struct DateTime64(Hashable, Stringable):
         return self
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_unix_epoch(seconds: Int) -> Self:
         """Construct a `DateTime64` from the seconds since the Unix Epoch
         1970-01-01.
@@ -530,7 +529,6 @@ struct DateTime64(Hashable, Stringable):
         return Self().add(seconds=seconds)
 
     @staticmethod
-    # @always_inline("nodebug")
     fn now() -> Self:
         """Construct a `DateTime64` from `time.now()`.
 
@@ -544,7 +542,16 @@ struct DateTime64(Hashable, Stringable):
         var s = ms // 1_000
         return Self.from_unix_epoch(s).add(m_seconds=ms)
 
-    # @always_inline("nodebug")
+    @always_inline
+    fn timestamp(self) -> Float64:
+        """Return the POSIX timestamp (time since unix epoch).
+
+        Returns:
+            The POSIX timestamp.
+        """
+        return self.seconds_since_epoch().cast[DType.float64]()
+
+    @always_inline
     fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
         compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
@@ -564,7 +571,6 @@ struct DateTime64(Hashable, Stringable):
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
-    # @always_inline("nodebug")
     fn from_iso[
         iso: dt_str.IsoFormat = dt_str.IsoFormat(),
     ](s: String) -> Optional[Self]:
@@ -593,7 +599,7 @@ struct DateTime64(Hashable, Stringable):
             return None
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_hash(value: UInt64) -> Self:
         """Construct a `DateTime64` from a hash made by it.
 
@@ -607,7 +613,7 @@ struct DateTime64(Hashable, Stringable):
         return Self(d[0], d[1], d[2], d[3], d[4], d[5], d[6], hash_val=value)
 
 
-# @value
+@value
 @register_passable("trivial")
 struct DateTime32(Hashable, Stringable):
     """Fast `DateTime32 ` struct. This is a "normal" `DateTime`
@@ -698,7 +704,7 @@ struct DateTime32(Hashable, Stringable):
             _cal.hash[_cal_h32](y, mon, d, h, m)
         )
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __getattr__[name: StringLiteral](self) -> UInt32:
         """Get the attribute.
 
@@ -724,7 +730,7 @@ struct DateTime32(Hashable, Stringable):
             constrained[False, "that attr does not exist"]()
             return 0
 
-    # @always_inline("nodebug")
+    @always_inline
     fn seconds_since_epoch(self) -> UInt64:
         """Seconds since the begining of the calendar's epoch.
 
@@ -733,7 +739,6 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.minutes.cast[DType.uint64]() * 60
 
-    # @always_inline
     fn replace(
         owned self,
         *,
@@ -777,7 +782,7 @@ struct DateTime32(Hashable, Stringable):
         self.hash = (self.hash & ~mask) | h
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __add__(owned self, owned other: Self) -> Self:
         """Add.
 
@@ -790,7 +795,7 @@ struct DateTime32(Hashable, Stringable):
         self.minutes += other.minutes
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __sub__(owned self, owned other: Self) -> Self:
         """Subtract.
 
@@ -803,7 +808,7 @@ struct DateTime32(Hashable, Stringable):
         self.minutes -= other.minutes
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
@@ -812,7 +817,7 @@ struct DateTime32(Hashable, Stringable):
         """
         self.minutes += other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
@@ -821,7 +826,7 @@ struct DateTime32(Hashable, Stringable):
         """
         self.minutes -= other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __hash__(self) -> UInt:
         """Hash.
 
@@ -830,7 +835,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return int(self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __eq__(self, other: Self) -> Bool:
         """Eq.
 
@@ -842,7 +847,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.minutes == other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ne__(self, other: Self) -> Bool:
         """Ne.
 
@@ -854,7 +859,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.minutes != other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __gt__(self, other: Self) -> Bool:
         """Gt.
 
@@ -866,7 +871,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.minutes > other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ge__(self, other: Self) -> Bool:
         """Ge.
 
@@ -878,7 +883,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.minutes >= other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __le__(self, other: Self) -> Bool:
         """Le.
 
@@ -890,7 +895,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.minutes <= other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __lt__(self, other: Self) -> Bool:
         """Lt.
 
@@ -902,7 +907,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.minutes < other.minutes
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __invert__(self) -> Self:
         """Invert.
 
@@ -911,7 +916,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return Self(minutes=self.minutes, hash_val=~self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __and__[T: Hashable](self, other: T) -> UInt32:
         """And.
 
@@ -926,7 +931,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.hash & hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __or__[T: Hashable](self, other: T) -> UInt32:
         """And.
 
@@ -941,7 +946,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.hash | hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __xor__[T: Hashable](self, other: T) -> UInt32:
         """And.
 
@@ -956,7 +961,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.hash ^ hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __int__(self) -> Int:
         """Int.
 
@@ -965,7 +970,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return hash(self)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __str__(self) -> String:
         """Str.
 
@@ -974,7 +979,7 @@ struct DateTime32(Hashable, Stringable):
         """
         return self.to_iso()
 
-    # @always_inline("nodebug")
+    @always_inline
     fn add(
         owned self,
         years: Int = 0,
@@ -1001,7 +1006,7 @@ struct DateTime32(Hashable, Stringable):
         ) + seconds // 60
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn subtract(
         owned self,
         years: Int = 0,
@@ -1029,7 +1034,7 @@ struct DateTime32(Hashable, Stringable):
         return self
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_unix_epoch(seconds: Int) -> Self:
         """Construct a `DateTime32` from the seconds since the Unix Epoch
         1970-01-01.
@@ -1046,7 +1051,6 @@ struct DateTime32(Hashable, Stringable):
         return Self().add(seconds=seconds)
 
     @staticmethod
-    # @always_inline("nodebug")
     fn now() -> Self:
         """Construct a `DateTime32` from `time.now()`.
 
@@ -1058,7 +1062,16 @@ struct DateTime32(Hashable, Stringable):
         """
         return Self.from_unix_epoch(time.now() // 1_000_000_000)
 
-    # @always_inline("nodebug")
+    @always_inline
+    fn timestamp(self) -> Float64:
+        """Return the POSIX timestamp (time since unix epoch).
+
+        Returns:
+            The POSIX timestamp.
+        """
+        return self.seconds_since_epoch().cast[DType.float64]()
+
+    @always_inline
     fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
         compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
@@ -1078,7 +1091,6 @@ struct DateTime32(Hashable, Stringable):
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
-    # @always_inline("nodebug")
     fn from_iso[
         iso: dt_str.IsoFormat = dt_str.IsoFormat(),
     ](s: String) -> Optional[Self]:
@@ -1107,7 +1119,7 @@ struct DateTime32(Hashable, Stringable):
             return None
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_hash(value: UInt32) -> Self:
         """Construct a `DateTime32` from a hash made by it.
 
@@ -1121,7 +1133,7 @@ struct DateTime32(Hashable, Stringable):
         return Self(d[0], d[1], d[2], d[3], d[4], value)
 
 
-# @value
+@value
 @register_passable("trivial")
 struct DateTime16(Hashable, Stringable):
     """Fast `DateTime16` struct. This is a `DateTime` with
@@ -1203,7 +1215,7 @@ struct DateTime16(Hashable, Stringable):
             _cal.hash[_cal_h16](y - _cal.min_year, mon, d, h, m, s)
         )
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __getattr__[name: StringLiteral](self) -> UInt16:
         """Get the attribute.
 
@@ -1227,7 +1239,6 @@ struct DateTime16(Hashable, Stringable):
             constrained[False, "that attribute does not exist"]()
             return 0
 
-    # @always_inline
     fn replace(
         owned self,
         *,
@@ -1261,7 +1272,7 @@ struct DateTime16(Hashable, Stringable):
         self.hash = (self.hash & ~mask) | h
         return self
 
-    # @always_inline
+    @always_inline
     fn seconds_since_epoch(self) -> UInt32:
         """Seconds since the begining of the calendar's epoch.
 
@@ -1270,7 +1281,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hours.cast[DType.uint32]() * 60 * 60
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __add__(owned self, owned other: Self) -> Self:
         """Add.
 
@@ -1283,7 +1294,7 @@ struct DateTime16(Hashable, Stringable):
         self.hours += other.hours
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __sub__(owned self, owned other: Self) -> Self:
         """Subtract.
 
@@ -1296,7 +1307,7 @@ struct DateTime16(Hashable, Stringable):
         self.hours -= other.hours
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
@@ -1305,7 +1316,7 @@ struct DateTime16(Hashable, Stringable):
         """
         self.hours += other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
@@ -1314,7 +1325,7 @@ struct DateTime16(Hashable, Stringable):
         """
         self.hours -= other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __hash__(self) -> UInt:
         """Hash.
 
@@ -1323,7 +1334,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return int(self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __eq__(self, other: Self) -> Bool:
         """Eq.
 
@@ -1335,7 +1346,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hours == other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ne__(self, other: Self) -> Bool:
         """Ne.
 
@@ -1347,7 +1358,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hours != other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __gt__(self, other: Self) -> Bool:
         """Gt.
 
@@ -1359,7 +1370,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hours > other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ge__(self, other: Self) -> Bool:
         """Ge.
 
@@ -1371,7 +1382,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hours >= other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __le__(self, other: Self) -> Bool:
         """Le.
 
@@ -1383,7 +1394,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hours <= other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __lt__(self, other: Self) -> Bool:
         """Lt.
 
@@ -1395,7 +1406,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hours < other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __invert__(self) -> Self:
         """Invert.
 
@@ -1404,7 +1415,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return Self(hours=self.hours, hash_val=~self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __and__[T: Hashable](self, other: T) -> UInt16:
         """And.
 
@@ -1419,7 +1430,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hash & hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __or__[T: Hashable](self, other: T) -> UInt16:
         """And.
 
@@ -1434,7 +1445,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hash | hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __xor__[T: Hashable](self, other: T) -> UInt16:
         """And.
 
@@ -1449,7 +1460,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.hash ^ hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __int__(self) -> Int:
         """Int.
 
@@ -1458,7 +1469,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return hash(self)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __str__(self) -> String:
         """Str.
 
@@ -1467,7 +1478,7 @@ struct DateTime16(Hashable, Stringable):
         """
         return self.to_iso()
 
-    # @always_inline("nodebug")
+    @always_inline
     fn add(
         owned self,
         days: Int = 0,
@@ -1490,7 +1501,7 @@ struct DateTime16(Hashable, Stringable):
         self.hours += days * 24 + hours + minutes // 60 + seconds // (60 * 60)
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn subtract(
         owned self,
         days: Int = 0,
@@ -1514,7 +1525,7 @@ struct DateTime16(Hashable, Stringable):
         return self
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_unix_epoch(seconds: Int) -> Self:
         """Construct a `DateTime16` from the seconds since the Unix Epoch
         1970-01-01.
@@ -1531,7 +1542,6 @@ struct DateTime16(Hashable, Stringable):
         return Self().add(seconds=seconds)
 
     @staticmethod
-    # @always_inline("nodebug")
     fn now() -> Self:
         """Construct a `DateTime16` from `time.now()`.
 
@@ -1543,7 +1553,16 @@ struct DateTime16(Hashable, Stringable):
         """
         return Self.from_unix_epoch(time.now() // 1_000_000_000)
 
-    # @always_inline("nodebug")
+    @always_inline
+    fn timestamp(self) -> Float64:
+        """Return the POSIX timestamp (time since unix epoch).
+
+        Returns:
+            The POSIX timestamp.
+        """
+        return self.seconds_since_epoch().cast[DType.float64]()
+
+    @always_inline
     fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
         compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
@@ -1564,7 +1583,6 @@ struct DateTime16(Hashable, Stringable):
         return dt_str.to_iso[iso](y, d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
-    # @always_inline("nodebug")
     fn from_iso[
         iso: dt_str.IsoFormat = dt_str.IsoFormat(),
     ](s: String) -> Optional[Self]:
@@ -1593,7 +1611,7 @@ struct DateTime16(Hashable, Stringable):
             return None
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_hash(value: UInt16) -> Self:
         """Construct a `DateTime16` from a hash made by it.
 
@@ -1608,7 +1626,7 @@ struct DateTime16(Hashable, Stringable):
         return Self(year=y, month=d[1], day=d[2], hour=d[3], hash_val=value)
 
 
-# @value
+@value
 @register_passable("trivial")
 struct DateTime8(Hashable, Stringable):
     """Fast `DateTime8` struct. This is a `DateTime`
@@ -1689,7 +1707,7 @@ struct DateTime8(Hashable, Stringable):
             _cal.hash[_cal_h8](y, mon, d, h, m, s)
         )
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __getattr__[name: StringLiteral](self) -> UInt8:
         """Get the attribute.
 
@@ -1709,7 +1727,6 @@ struct DateTime8(Hashable, Stringable):
             constrained[False, "that attr does not exist"]()
             return 0
 
-    # @always_inline
     fn replace(
         owned self,
         *,
@@ -1739,7 +1756,7 @@ struct DateTime8(Hashable, Stringable):
         self.hash = (self.hash & ~mask) | h
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn seconds_since_epoch(self) -> UInt16:
         """Seconds since the begining of the calendar's epoch.
 
@@ -1748,7 +1765,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hour.cast[DType.uint16]() * 60 * 60
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __add__(owned self, owned other: Self) -> Self:
         """Add.
 
@@ -1761,7 +1778,7 @@ struct DateTime8(Hashable, Stringable):
         self.hours += other.hours
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __sub__(owned self, owned other: Self) -> Self:
         """Subtract.
 
@@ -1774,7 +1791,7 @@ struct DateTime8(Hashable, Stringable):
         self.hours -= other.hours
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
@@ -1783,7 +1800,7 @@ struct DateTime8(Hashable, Stringable):
         """
         self.hours += other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
@@ -1792,7 +1809,7 @@ struct DateTime8(Hashable, Stringable):
         """
         self.hours -= other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __hash__(self) -> UInt:
         """Hash.
 
@@ -1801,7 +1818,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return int(self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __eq__(self, other: Self) -> Bool:
         """Eq.
 
@@ -1813,7 +1830,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hours == other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ne__(self, other: Self) -> Bool:
         """Ne.
 
@@ -1825,7 +1842,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hours != other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __gt__(self, other: Self) -> Bool:
         """Gt.
 
@@ -1837,7 +1854,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hours > other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __ge__(self, other: Self) -> Bool:
         """Ge.
 
@@ -1849,7 +1866,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hours >= other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __le__(self, other: Self) -> Bool:
         """Le.
 
@@ -1861,7 +1878,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hours <= other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __lt__(self, other: Self) -> Bool:
         """Lt.
 
@@ -1873,7 +1890,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hours < other.hours
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __invert__(self) -> Self:
         """Invert.
 
@@ -1882,7 +1899,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return Self(hours=self.hours, hash_val=~self.hash)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __and__[T: Hashable](self, other: T) -> UInt8:
         """And.
 
@@ -1897,7 +1914,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hash & hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __or__[T: Hashable](self, other: T) -> UInt8:
         """And.
 
@@ -1912,7 +1929,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hash | hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __xor__[T: Hashable](self, other: T) -> UInt8:
         """And.
 
@@ -1927,7 +1944,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.hash ^ hash(other)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __int__(self) -> Int:
         """Int.
 
@@ -1936,7 +1953,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return hash(self)
 
-    # @always_inline("nodebug")
+    @always_inline
     fn __str__(self) -> String:
         """Str.
 
@@ -1945,7 +1962,7 @@ struct DateTime8(Hashable, Stringable):
         """
         return self.to_iso()
 
-    # @always_inline("nodebug")
+    @always_inline
     fn add(
         owned self,
         days: Int = 0,
@@ -1968,7 +1985,7 @@ struct DateTime8(Hashable, Stringable):
         self.hours += days * 24 + hours + minutes // 60 + seconds // (60 * 60)
         return self
 
-    # @always_inline("nodebug")
+    @always_inline
     fn subtract(
         owned self,
         days: Int = 0,
@@ -1992,7 +2009,7 @@ struct DateTime8(Hashable, Stringable):
         return self
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_unix_epoch(seconds: Int) -> Self:
         """Construct a `DateTime8` from the seconds since the Unix Epoch
         1970-01-01.
@@ -2009,7 +2026,6 @@ struct DateTime8(Hashable, Stringable):
         return Self().add(seconds=seconds)
 
     @staticmethod
-    # @always_inline("nodebug")
     fn now() -> Self:
         """Construct a `DateTime8` from `time.now()`.
 
@@ -2021,7 +2037,16 @@ struct DateTime8(Hashable, Stringable):
         """
         return Self.from_unix_epoch(time.now() // 1_000_000_000)
 
-    # @always_inline("nodebug")
+    @always_inline
+    fn timestamp(self) -> Float64:
+        """Return the POSIX timestamp (time since unix epoch).
+
+        Returns:
+            The POSIX timestamp.
+        """
+        return self.seconds_since_epoch().cast[DType.float64]()
+
+    @always_inline
     fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
         compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
@@ -2041,7 +2066,6 @@ struct DateTime8(Hashable, Stringable):
         return s
 
     @staticmethod
-    # @always_inline("nodebug")
     fn from_iso[
         iso: dt_str.IsoFormat = dt_str.IsoFormat(),
     ](s: String) -> Optional[Self]:
@@ -2071,7 +2095,7 @@ struct DateTime8(Hashable, Stringable):
             return None
 
     @staticmethod
-    # @always_inline("nodebug")
+    @always_inline
     fn from_hash(value: UInt8) -> Self:
         """Construct a `DateTime8` from a hash made by it.
 
