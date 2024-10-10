@@ -60,6 +60,42 @@ alias ssize_t = C.long
 # Utils
 # ===----------------------------------------------------------------------=== #
 
+trait _UnsafePtrU8:
+    fn unsafe_ptr(self) -> UnsafePointer[UInt8]:
+        ...
+
+
+@always_inline
+fn char_ptr[T: _UnsafePtrU8](item: T) -> UnsafePointer[C.char]:
+    """Get the C.char pointer.
+
+    Parameters:
+        T: The type.
+
+    Args:
+        item: The item.
+
+    Returns:
+        The pointer.
+    """
+    return item.unsafe_ptr().bitcast[C.char]()
+
+
+@always_inline
+fn char_ptr[T: AnyType](ptr: UnsafePointer[T]) -> UnsafePointer[C.char]:
+    """Get the C.char pointer.
+
+    Parameters:
+        T: The type.
+
+    Args:
+        ptr: The pointer.
+
+    Returns:
+        The pointer.
+    """
+    return ptr.bitcast[C.char]()
+
 
 fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     """Create a String **copying** a char pointer.
