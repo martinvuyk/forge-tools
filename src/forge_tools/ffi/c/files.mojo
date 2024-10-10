@@ -21,7 +21,7 @@ fn fcntl(fildes: C.int, cmd: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/close.3p.html).
         Fn signature: `int fcntl(int fildes, int cmd, ...)`.
     """
-    return external_call["fcntl", C.int, C.int, C.int](fildes, cmd)
+    return external_call["fcntl", C.int](fildes, cmd)
 
 
 fn close(fildes: C.int) -> C.int:
@@ -37,7 +37,7 @@ fn close(fildes: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/close.3p.html).
         Fn signature: `int close(int fildes)`.
     """
-    return external_call["close", C.int, C.int](fildes)
+    return external_call["close", C.int](fildes)
 
 
 # FIXME: this should take in  *args: *T
@@ -55,9 +55,7 @@ fn open(path: UnsafePointer[C.char], oflag: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
         Fn signature: `int open(const char *path, int oflag, ...)`.
     """
-    return external_call["open", C.int, UnsafePointer[C.char], C.int](
-        path, oflag
-    )
+    return external_call["open", C.int](path, oflag)
 
 
 # FIXME: this should take in  *args: *T
@@ -76,9 +74,7 @@ fn openat(fd: C.int, path: UnsafePointer[C.char], oflag: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
         Fn signature: `int openat(int fd, const char *path, int oflag, ...)`.
     """
-    return external_call["openat", C.int, C.int, UnsafePointer[C.char], C.int](
-        fd, path, oflag
-    )
+    return external_call["openat", C.int](fd, path, oflag)
 
 
 fn fopen(
@@ -98,12 +94,7 @@ fn fopen(
         Fn signature: `FILE *fopen(const char *restrict pathname,
             const char *restrict mode)`.
     """
-    return external_call[
-        "fopen",
-        UnsafePointer[FILE],
-        UnsafePointer[C.char],
-        UnsafePointer[C.char],
-    ](pathname, mode)
+    return external_call["fopen", UnsafePointer[FILE]](pathname, mode)
 
 
 fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
@@ -121,9 +112,7 @@ fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
         Fn signature: `FILE *fdopen(int fildes, const char *mode)`.
     """
     alias name = "_fdopen" if os_is_windows() else "fdopen"
-    return external_call[
-        name, UnsafePointer[FILE], C.int, UnsafePointer[C.char]
-    ](fildes, mode)
+    return external_call[name, UnsafePointer[FILE]](fildes, mode)
 
 
 fn freopen(
@@ -146,13 +135,7 @@ fn freopen(
         Fn signature: `FILE *freopen(const char *restrict pathname,
             const char *restrict mode, FILE *restrict stream)`.
     """
-    return external_call[
-        "freopen",
-        UnsafePointer[FILE],
-        UnsafePointer[C.char],
-        UnsafePointer[C.char],
-        UnsafePointer[FILE],
-    ](pathname, mode, stream)
+    return external_call["freopen", UnsafePointer[FILE]](pathname, mode, stream)
 
 
 fn fmemopen(
@@ -173,13 +156,7 @@ fn fmemopen(
         Fn signature: `FILE *fmemopen(void *restrict buf, size_t size,
             const char *restrict mode)`.
     """
-    return external_call[
-        "fmemopen",
-        UnsafePointer[FILE],
-        UnsafePointer[C.void],
-        C.u_int,
-        UnsafePointer[C.char],
-    ](buf, size, mode)
+    return external_call["fmemopen", UnsafePointer[FILE]](buf, size, mode)
 
 
 fn creat(path: UnsafePointer[C.char], mode: mode_t) -> C.int:
@@ -196,9 +173,7 @@ fn creat(path: UnsafePointer[C.char], mode: mode_t) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/creat.3p.html).
         Fn signature: `int creat(const char *path, mode_t mode)`.
     """
-    return external_call["creat", C.int, UnsafePointer[C.char], mode_t](
-        path, mode
-    )
+    return external_call["creat", C.int](path, mode)
 
 
 fn fseek(stream: UnsafePointer[FILE], offset: C.long, whence: C.int) -> C.int:
@@ -217,9 +192,7 @@ fn fseek(stream: UnsafePointer[FILE], offset: C.long, whence: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/fseek.3p.html).
         Fn signature: `int fseek(FILE *stream, long offset, int whence)`.
     """
-    return external_call["fseek", C.int, UnsafePointer[FILE], C.long, C.int](
-        stream, offset, whence
-    )
+    return external_call["fseek", C.int](stream, offset, whence)
 
 
 fn fseeko(stream: UnsafePointer[FILE], offset: off_t, whence: C.int) -> C.int:
@@ -238,9 +211,7 @@ fn fseeko(stream: UnsafePointer[FILE], offset: off_t, whence: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/fseek.3p.html).
         Fn signature: `int fseeko(FILE *stream, off_t offset, int whence)`.
     """
-    return external_call["fseeko", C.int, UnsafePointer[FILE], off_t, C.int](
-        stream, offset, whence
-    )
+    return external_call["fseeko", C.int](stream, offset, whence)
 
 
 fn lseek(fildes: C.int, offset: off_t, whence: C.int) -> off_t:
@@ -260,9 +231,7 @@ fn lseek(fildes: C.int, offset: off_t, whence: C.int) -> off_t:
         [Reference](https://man7.org/linux/man-pages/man3/lseek.3p.html).
         Fn signature: `off_t lseek(int fildes, off_t offset, int whence)`.
     """
-    return external_call["lseek", off_t, C.int, off_t, C.int](
-        fildes, offset, whence
-    )
+    return external_call["lseek", off_t](fildes, offset, whence)
 
 
 fn fputc(c: C.int, stream: UnsafePointer[FILE]) -> C.int:
@@ -280,7 +249,7 @@ fn fputc(c: C.int, stream: UnsafePointer[FILE]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/fputc.3p.html).
         Fn signature: `int fputc(int c, FILE *stream)`.
     """
-    return external_call["fputc", C.int, C.int, UnsafePointer[FILE]](c, stream)
+    return external_call["fputc", C.int](c, stream)
 
 
 fn fputs(s: UnsafePointer[C.char], stream: UnsafePointer[FILE]) -> C.int:
@@ -299,9 +268,7 @@ fn fputs(s: UnsafePointer[C.char], stream: UnsafePointer[FILE]) -> C.int:
         Fn signature: `int fputs(const char *restrict s, FILE *restrict stream
         )`.
     """
-    return external_call[
-        "fputs", C.int, UnsafePointer[C.char], UnsafePointer[FILE]
-    ](s, stream)
+    return external_call["fputs", C.int](s, stream)
 
 
 fn fgetc(stream: UnsafePointer[FILE]) -> C.int:
@@ -322,7 +289,7 @@ fn fgetc(stream: UnsafePointer[FILE]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/fgetc.3p.html).
         Fn signature: `int fgetc(FILE *stream)`.
     """
-    return external_call["fgets", C.int, UnsafePointer[FILE]](stream)
+    return external_call["fgets", C.int](stream)
 
 
 fn fgets(
@@ -347,13 +314,7 @@ fn fgets(
         Fn signature: `char *fgets(char *restrict s, int n,
             FILE *restrict stream)`.
     """
-    return external_call[
-        "fgets",
-        UnsafePointer[C.char],
-        UnsafePointer[C.char],
-        C.int,
-        UnsafePointer[FILE],
-    ](s, n, stream)
+    return external_call["fgets", UnsafePointer[C.char]](s, n, stream)
 
 
 # FIXME: this should take in  *args: *T
@@ -373,9 +334,7 @@ fn dprintf(fildes: C.int, format: UnsafePointer[C.char]) -> C.int:
         Fn signature: `int dprintf(int fildes,
             const char *restrict format, ...)`.
     """
-    return external_call["dprintf", C.int, C.int, UnsafePointer[C.char]](
-        fildes, format
-    )
+    return external_call["dprintf", C.int](fildes, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -395,9 +354,7 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: `int fprintf(FILE *restrict stream,
             const char *restrict format, ...)`.
     """
-    return external_call[
-        "fprintf", C.int, UnsafePointer[FILE], UnsafePointer[C.char]
-    ](stream, format)
+    return external_call["fprintf", C.int](stream, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -418,7 +375,7 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
 #     Notes:
 #         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
 #     """
-#     return external_call["printf", C.int, UnsafePointer[C.char], *T](format, *args)
+#     return external_call["printf", C.int](format, args)
 
 # FIXME: this should take in  *args: *T
 # @always_inline
@@ -441,29 +398,25 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
 
 # printf's family function(s) this is used to implement the rest of the printf's family
 fn _printf[callee: StringLiteral](format: UnsafePointer[C.char]) -> C.int:
-    return external_call[callee, C.int, UnsafePointer[C.char]](format)
+    return external_call[callee, C.int](format)
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType
 ](format: UnsafePointer[C.char], arg0: T0) -> C.int:
-    return external_call[callee, C.int, UnsafePointer[C.char], T0](format, arg0)
+    return external_call[callee, C.int](format, arg0)
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType
 ](format: UnsafePointer[C.char], arg0: T0, arg1: T1) -> C.int:
-    return external_call[callee, C.int, UnsafePointer[C.char], T0, T1](
-        format, arg0, arg1
-    )
+    return external_call[callee, C.int](format, arg0, arg1)
 
 
 fn _printf[
     callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType
 ](format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2) -> C.int:
-    return external_call[callee, C.int, UnsafePointer[C.char], T0, T1, T2](
-        format, arg0, arg1, arg2
-    )
+    return external_call[callee, C.int](format, arg0, arg1, arg2)
 
 
 fn _printf[
@@ -471,9 +424,7 @@ fn _printf[
 ](
     format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2, arg3: T3
 ) -> C.int:
-    return external_call[callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3](
-        format, arg0, arg1, arg2, arg3
-    )
+    return external_call[callee, C.int](format, arg0, arg1, arg2, arg3)
 
 
 fn _printf[
@@ -491,9 +442,7 @@ fn _printf[
     arg3: T3,
     arg4: T4,
 ) -> C.int:
-    return external_call[
-        callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3, T4
-    ](format, arg0, arg1, arg2, arg3, arg4)
+    return external_call[callee, C.int](format, arg0, arg1, arg2, arg3, arg4)
 
 
 fn _printf[
@@ -513,9 +462,9 @@ fn _printf[
     arg4: T4,
     arg5: T5,
 ) -> C.int:
-    return external_call[
-        callee, C.int, UnsafePointer[C.char], T0, T1, T2, T3, T4, T5
-    ](format, arg0, arg1, arg2, arg3, arg4, arg5)
+    return external_call[callee, C.int](
+        format, arg0, arg1, arg2, arg3, arg4, arg5
+    )
 
 
 fn _printf[callee: StringLiteral](format: String) -> C.int:
@@ -730,9 +679,7 @@ fn snprintf(
         Fn signature: ``int snprintf(char *restrict s, size_t n,`.
             const char *restrict format, ...)`.
     """
-    return external_call[
-        "snprintf", C.int, UnsafePointer[C.char], C.u_int, UnsafePointer[C.char]
-    ](s, n, format)
+    return external_call["snprintf", C.int](s, n, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -751,9 +698,7 @@ fn sprintf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int sprintf(char *restrict s,`.
             const char *restrict format, ...)`.
     """
-    return external_call[
-        "sprintf", C.int, UnsafePointer[C.char], UnsafePointer[C.char]
-    ](s, format)
+    return external_call["sprintf", C.int](s, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -779,9 +724,7 @@ fn fscanf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int fscanf(FILE *restrict stream,`.
             const char *restrict format, ...)`.
     """
-    return external_call[
-        "fscanf", C.int, UnsafePointer[FILE], UnsafePointer[C.char]
-    ](stream, format)
+    return external_call["fscanf", C.int](stream, format)
 
 
 # FIXME: this should take in  *args: *T
@@ -805,7 +748,7 @@ fn scanf(format: UnsafePointer[C.char]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
         Fn signature: ``int scanf(const char *restrict format, ...)`.`.
     """
-    return external_call["scanf", C.int, UnsafePointer[C.char]](format)
+    return external_call["scanf", C.int](format)
 
 
 fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
@@ -830,9 +773,7 @@ fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int sscanf(const char *restrict s,`.
             const char *restrict format, ...)`.
     """
-    return external_call[
-        "sscanf", C.int, UnsafePointer[C.char], UnsafePointer[C.char]
-    ](s, format)
+    return external_call["sscanf", C.int](s, format)
 
 
 fn fread(
@@ -862,14 +803,7 @@ fn fread(
         Fn signature: `size_t fread(void *restrict ptr, size_t size,
             size_t nitems, FILE *restrict stream)`.
     """
-    return external_call[
-        "fread",
-        C.u_int,
-        UnsafePointer[C.void],
-        C.u_int,
-        C.u_int,
-        UnsafePointer[FILE],
-    ](ptr, size, nitems, stream)
+    return external_call["fread", C.u_int](ptr, size, nitems, stream)
 
 
 fn rewind(stream: UnsafePointer[FILE]):
@@ -882,7 +816,7 @@ fn rewind(stream: UnsafePointer[FILE]):
         [Reference](https://man7.org/linux/man-pages/man3/rewind.3p.html).
         Fn signature: `void rewind(FILE *stream)`.
     """
-    _ = external_call["rewind", C.void, UnsafePointer[FILE]](stream)
+    _ = external_call["rewind", C.void](stream)
 
 
 fn getline(
@@ -912,13 +846,7 @@ fn getline(
         Fn signature: `ssize_t getline(char **restrict lineptr,
             size_t *restrict n, FILE *restrict stream);`.
     """
-    return external_call[
-        "getline",
-        C.u_int,
-        UnsafePointer[UnsafePointer[FILE]],
-        UnsafePointer[C.u_int],
-        UnsafePointer[FILE],
-    ](lineptr, n, stream)
+    return external_call["getline", C.u_int](lineptr, n, stream)
 
 
 fn getdelim(
@@ -948,13 +876,7 @@ fn getdelim(
         Fn signature: `ssize_t getdelim(char **restrict lineptr,
             size_t *restrict n, FILE *restrict stream);`.
     """
-    return external_call[
-        "getdelim",
-        C.u_int,
-        UnsafePointer[UnsafePointer[FILE]],
-        UnsafePointer[C.u_int],
-        UnsafePointer[FILE],
-    ](lineptr, n, stream)
+    return external_call["getdelim", C.u_int](lineptr, n, stream)
 
 
 fn pread(
@@ -976,9 +898,7 @@ fn pread(
         Fn signature: `ssize_t pread(int fildes, void *buf, size_t nbyte,
             off_t offset)`.
     """
-    return external_call[
-        "pread", C.u_int, C.int, UnsafePointer[C.void], C.u_int, off_t
-    ](fildes, buf, nbyte, offset)
+    return external_call["pread", C.u_int](fildes, buf, nbyte, offset)
 
 
 fn read(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
@@ -996,9 +916,7 @@ fn read(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
         [Reference](https://man7.org/linux/man-pages/man3/read.3p.html).
         Fn signature: `sssize_t read(int fildes, void *buf, size_t nbyte)`.
     """
-    return external_call[
-        "read", C.u_int, C.int, UnsafePointer[C.void], C.u_int
-    ](fildes, buf, nbyte)
+    return external_call["read", C.u_int](fildes, buf, nbyte)
 
 
 fn pwrite(
@@ -1020,9 +938,7 @@ fn pwrite(
         Fn signature: `ssize_t pwrite(int fildes, const void *buf, size_t nbyte,
             off_t offset)`.
     """
-    return external_call[
-        "pwrite", C.u_int, C.int, UnsafePointer[C.void], C.u_int, off_t
-    ](fildes, buf, nbyte, offset)
+    return external_call["pwrite", C.u_int](fildes, buf, nbyte, offset)
 
 
 fn write(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
@@ -1041,9 +957,7 @@ fn write(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
         Fn signature: `ssize_t write(int fildes, const void *buf,
             size_t nbyte)`.
     """
-    return external_call[
-        "write", C.u_int, C.int, UnsafePointer[C.void], C.u_int
-    ](fildes, buf, nbyte)
+    return external_call["write", C.u_int](fildes, buf, nbyte)
 
 
 fn fclose(stream: UnsafePointer[FILE]) -> C.int:
@@ -1059,7 +973,7 @@ fn fclose(stream: UnsafePointer[FILE]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/fclose.3p.html).
         Fn signature: `int fclose(FILE *stream)`.
     """
-    return external_call["fclose", C.int, UnsafePointer[FILE]](stream)
+    return external_call["fclose", C.int](stream)
 
 
 fn ftell(stream: UnsafePointer[FILE]) -> C.long:
@@ -1075,7 +989,7 @@ fn ftell(stream: UnsafePointer[FILE]) -> C.long:
         [Reference](https://man7.org/linux/man-pages/man3/ftell.3p.html).
         Fn signature: `long ftell(FILE *stream)`.
     """
-    return external_call["ftell", C.long, UnsafePointer[FILE]](stream)
+    return external_call["ftell", C.long](stream)
 
 
 fn ftello(stream: UnsafePointer[FILE]) -> off_t:
@@ -1091,23 +1005,23 @@ fn ftello(stream: UnsafePointer[FILE]) -> off_t:
         [Reference](https://man7.org/linux/man-pages/man3/ftell.3p.html).
         Fn signature: `off_t ftello(FILE *stream)`.
     """
-    return external_call["ftello", off_t, UnsafePointer[FILE]](stream)
+    return external_call["ftello", off_t](stream)
 
 
-# fn fflush(stream: UnsafePointer[FILE]) -> C.int:
-#     """Libc POSIX `fflush` function.
+fn fflush(stream: UnsafePointer[FILE]) -> C.int:
+    """Libc POSIX `fflush` function.
 
-#     Args:
-#         stream
+    Args:
+        stream
 
-#     Returns:
-#         Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
+    Returns:
+        Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
 
-#     Notes:
-#         [Reference](https://man7.org/linux/man-pages/man3/fflush.3p.html).
-#         Fn signature: `int fflush(FILE *stream)`.
-#     """
-#     return external_call["fflush", C.int, UnsafePointer[FILE]](stream)
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/fflush.3p.html).
+        Fn signature: `int fflush(FILE *stream)`.
+    """
+    return external_call["fflush", C.int](stream)
 
 
 fn clearerr(stream: UnsafePointer[FILE]):
@@ -1120,7 +1034,7 @@ fn clearerr(stream: UnsafePointer[FILE]):
         [Reference](https://man7.org/linux/man-pages/man3/clearerr.3p.html).
         Fn signature: `void clearerr(FILE *stream)`.
     """
-    _ = external_call["clearerr", C.void, UnsafePointer[FILE]](stream)
+    _ = external_call["clearerr", C.void](stream)
 
 
 fn feof(stream: UnsafePointer[FILE]) -> C.int:
@@ -1137,7 +1051,7 @@ fn feof(stream: UnsafePointer[FILE]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/feof.3p.html).
         Fn signature: `int feof(FILE *stream)`.
     """
-    return external_call["feof", C.int, UnsafePointer[FILE]](stream)
+    return external_call["feof", C.int](stream)
 
 
 fn ferror(stream: UnsafePointer[FILE]) -> C.int:
@@ -1154,7 +1068,7 @@ fn ferror(stream: UnsafePointer[FILE]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/ferror.3p.html).
         Fn signature: `int ferror(FILE *stream)`.
     """
-    return external_call["ferror", C.int, UnsafePointer[FILE]](stream)
+    return external_call["ferror", C.int](stream)
 
 
 # FIXME: this should take in  *args: *T
@@ -1174,4 +1088,4 @@ fn ioctl(fildes: C.int, request: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/ioctl.3p.html).
         Fn signature: `int ioctl(int fildes, int request, ... /* arg */)`.
     """
-    return external_call["ioctl", C.int, C.int, C.int](fildes, request)
+    return external_call["ioctl", C.int](fildes, request)

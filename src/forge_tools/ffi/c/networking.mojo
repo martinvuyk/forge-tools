@@ -18,7 +18,7 @@ fn htonl(hostlong: C.u_int) -> C.u_int:
         [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
         Fn signature: `uint32_t htonl(uint32_t hostlong)`.
     """
-    return external_call["htonl", C.u_int, C.u_int](hostlong)
+    return external_call["htonl", C.u_int](hostlong)
 
 
 fn htons(hostshort: C.u_short) -> C.u_short:
@@ -34,7 +34,7 @@ fn htons(hostshort: C.u_short) -> C.u_short:
         [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
         Fn signature: `uint16_t htons(uint16_t hostshort)`.
     """
-    return external_call["htons", C.u_short, C.u_short](hostshort)
+    return external_call["htons", C.u_short](hostshort)
 
 
 fn ntohl(netlong: C.u_int) -> C.u_int:
@@ -50,7 +50,7 @@ fn ntohl(netlong: C.u_int) -> C.u_int:
         [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
         Fn signature: `uint32_t ntohl(uint32_t netlong)`.
     """
-    return external_call["ntohl", C.u_int, C.u_int](netlong)
+    return external_call["ntohl", C.u_int](netlong)
 
 
 fn ntohs(netshort: C.u_short) -> C.u_short:
@@ -66,7 +66,7 @@ fn ntohs(netshort: C.u_short) -> C.u_short:
         [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
         Fn signature: `uint16_t ntohs(uint16_t netshort)`.
     """
-    return external_call["ntohs", C.u_short, C.u_short](netshort)
+    return external_call["ntohs", C.u_short](netshort)
 
 
 fn inet_ntop(
@@ -93,14 +93,7 @@ fn inet_ntop(
         Fn signature: `const char *inet_ntop(int af, const void *restrict src,
             char *restrict dst, socklen_t size)`.
     """
-    return external_call[
-        "inet_ntop",
-        UnsafePointer[C.char],
-        C.int,
-        UnsafePointer[C.void],
-        UnsafePointer[C.char],
-        socklen_t,
-    ](af, src, dst, size)
+    return external_call["inet_ntop", UnsafePointer[C.char]](af, src, dst, size)
 
 
 fn inet_pton(
@@ -123,9 +116,7 @@ fn inet_pton(
         Fn signature: `int inet_pton(int af, const char *restrict src,
             void *restrict dst)`.
     """
-    return external_call[
-        "inet_pton", C.int, C.int, UnsafePointer[C.char], UnsafePointer[C.void]
-    ](af, src, dst)
+    return external_call["inet_pton", C.int](af, src, dst)
 
 
 fn inet_addr(cp: UnsafePointer[C.char]) -> in_addr_t:
@@ -145,7 +136,7 @@ fn inet_addr(cp: UnsafePointer[C.char]) -> in_addr_t:
         [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
         Fn signature: `in_addr_t inet_addr(const char *cp)`.
     """
-    return external_call["inet_addr", in_addr_t, UnsafePointer[C.char]](cp)
+    return external_call["inet_addr", in_addr_t](cp)
 
 
 fn inet_aton(cp: UnsafePointer[C.char], addr: UnsafePointer[in_addr]) -> C.int:
@@ -162,9 +153,7 @@ fn inet_aton(cp: UnsafePointer[C.char], addr: UnsafePointer[in_addr]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3.html).
         Fn signature: `int inet_aton(const char *cp, struct in_addr *inp)`.
     """
-    return external_call[
-        "inet_aton", C.int, UnsafePointer[C.char], UnsafePointer[in_addr]
-    ](cp, addr)
+    return external_call["inet_aton", C.int](cp, addr)
 
 
 fn inet_ntoa(addr: in_addr) -> UnsafePointer[C.char]:
@@ -181,7 +170,7 @@ fn inet_ntoa(addr: in_addr) -> UnsafePointer[C.char]:
         Fn signature: `char *inet_ntoa(struct in_addr in)`.
         Allocated buffer is 16-18 bytes depending on implementation.
     """
-    return external_call["inet_ntoa", UnsafePointer[C.char], in_addr](addr)
+    return external_call["inet_ntoa", UnsafePointer[C.char]](addr)
 
 
 fn socket(domain: C.int, type: C.int, protocol: C.int) -> C.int:
@@ -199,9 +188,33 @@ fn socket(domain: C.int, type: C.int, protocol: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/socket.3p.html).
         Fn signature: `int socket(int domain, int type, int protocol)`.
     """
-    return external_call["socket", C.int, C.int, C.int, C.int](
-        domain, type, protocol
-    )
+    return external_call["socket", C.int](domain, type, protocol)
+
+
+fn socketpair(
+    domain: C.int,
+    type: C.int,
+    protocol: C.int,
+    socket_vector: UnsafePointer[C.int],
+) -> C.int:
+    """Libc POSIX `socketpair` function.
+
+    Args:
+        domain: Address Family see AF_ alises.
+        type: Socket Type see SOCK_ alises.
+        protocol: Protocol see IPPROTO_ alises.
+        socket_vector: A pointer of `C.int` of length 2 to store the file
+            descriptors.
+
+    Returns:
+        Value 0 on success, -1 on error and `errno` is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/socketpair.3p.html).
+        Fn signature: `int socketpair(int domain, int type, int protocol,
+           int socket_vector[2])`.
+    """
+    return external_call["socket", C.int](domain, type, protocol, socket_vector)
 
 
 fn setsockopt(
@@ -228,15 +241,9 @@ fn setsockopt(
         Fn signature: `int setsockopt(int socket, int level, int option_name,
             const void *option_value, socklen_t option_len)`.
     """
-    return external_call[
-        "setsockopt",
-        C.int,
-        C.int,
-        C.int,
-        C.int,
-        UnsafePointer[C.void],
-        socklen_t,
-    ](socket, level, option_name, option_value, option_len)
+    return external_call["setsockopt", C.int](
+        socket, level, option_name, option_value, option_len
+    )
 
 
 fn bind(
@@ -257,9 +264,7 @@ fn bind(
         Fn signature: `int bind(int socket, const struct sockaddr *address,
             socklen_t address_len)`.
     """
-    return external_call[
-        "bind", C.int, C.int, UnsafePointer[sockaddr], socklen_t
-    ](socket, address, address_len)
+    return external_call["bind", C.int](socket, address, address_len)
 
 
 fn listen(socket: C.int, backlog: C.int) -> C.int:
@@ -302,13 +307,7 @@ fn accept(
         Fn signature: `int accept(int socket, struct sockaddr *restrict address,
             socklen_t *restrict address_len);`.
     """
-    return external_call[
-        "accept",
-        C.int,
-        C.int,
-        UnsafePointer[sockaddr],
-        UnsafePointer[socklen_t],
-    ](socket, address, address_len)
+    return external_call["accept", C.int](socket, address, address_len)
 
 
 fn connect(
@@ -329,9 +328,7 @@ fn connect(
         Fn signature: `int connect(int socket, const struct sockaddr *address,
             socklen_t address_len)`.
     """
-    return external_call[
-        "connect", C.int, C.int, UnsafePointer[sockaddr], socklen_t
-    ](socket, address, address_len)
+    return external_call["connect", C.int](socket, address, address_len)
 
 
 fn recv(
@@ -353,9 +350,7 @@ fn recv(
         Fn signature: `ssize_t recv(int socket, void *buffer, size_t length,
             int flags)`.
     """
-    return external_call[
-        "recv", ssize_t, C.int, UnsafePointer[C.void], size_t, C.int
-    ](socket, buffer, length, flags)
+    return external_call["recv", ssize_t](socket, buffer, length, flags)
 
 
 fn recvfrom(
@@ -387,16 +382,9 @@ fn recvfrom(
             size_t length, int flags, struct sockaddr *restrict address,
             socklen_t *restrict address_len)`.
     """
-    return external_call[
-        "recvfrom",
-        ssize_t,
-        C.int,
-        UnsafePointer[C.void],
-        size_t,
-        C.int,
-        UnsafePointer[sockaddr],
-        UnsafePointer[socklen_t],
-    ](socket, buffer, length, flags, address, address_len)
+    return external_call["recvfrom", ssize_t](
+        socket, buffer, length, flags, address, address_len
+    )
 
 
 fn send(
@@ -418,9 +406,7 @@ fn send(
         Fn signature: `ssize_t send(int socket, const void *buffer,
             size_t length, int flags)`.
     """
-    return external_call[
-        "send", ssize_t, C.int, UnsafePointer[C.void], size_t, C.int
-    ](socket, buffer, length, flags)
+    return external_call["send", ssize_t](socket, buffer, length, flags)
 
 
 fn sendto(
@@ -455,16 +441,9 @@ fn sendto(
             size_t length, int flags, const struct sockaddr *dest_addr,
             socklen_t dest_len)`.
     """
-    return external_call[
-        "sendto",
-        ssize_t,
-        C.int,
-        UnsafePointer[C.void],
-        size_t,
-        C.int,
-        UnsafePointer[sockaddr],
-        socklen_t,
-    ](socket, message, length, flags, dest_addr, dest_len)
+    return external_call["sendto", ssize_t](
+        socket, message, length, flags, dest_addr, dest_len
+    )
 
 
 fn shutdown(socket: C.int, how: C.int) -> C.int:
@@ -482,7 +461,7 @@ fn shutdown(socket: C.int, how: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/shutdown.3p.html).
         Fn signature: `int shutdown(int socket, int how)`.
     """
-    return external_call["shutdown", C.int, C.int, C.int](socket, how)
+    return external_call["shutdown", C.int](socket, how)
 
 
 # FIXME: res should be res: UnsafePointer[UnsafePointer[addrinfo]]
@@ -509,14 +488,7 @@ fn getaddrinfo(
             const char *restrict servname, const struct addrinfo *restrict hints
             , struct addrinfo **restrict res)`.
     """
-    return external_call[
-        "getaddrinfo",
-        C.int,
-        UnsafePointer[C.char],
-        UnsafePointer[C.char],
-        UnsafePointer[addrinfo],
-        UnsafePointer[C.ptr_addr],
-    ](nodename, servname, hints, res)
+    return external_call["getaddrinfo", C.int](nodename, servname, hints, res)
 
 
 fn gai_strerror(ecode: C.int) -> UnsafePointer[C.char]:
@@ -533,4 +505,4 @@ fn gai_strerror(ecode: C.int) -> UnsafePointer[C.char]:
         [Reference](https://man7.org/linux/man-pages/man3/gai_strerror.3p.html).
         Fn signature: `const char *gai_strerror(int ecode)`.
     """
-    return external_call["gai_strerror", UnsafePointer[C.char], C.int](ecode)
+    return external_call["gai_strerror", UnsafePointer[C.char]](ecode)

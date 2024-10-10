@@ -50,7 +50,7 @@ https://docs.python.org/3/library/socket.html).
 
 from sys import info
 from collections import Optional
-from memory import UnsafePointer, stack_allocation
+from memory import UnsafePointer, stack_allocation, Arc
 from utils import Variant, Span, StringSlice
 
 from forge_tools.ffi.c import (
@@ -331,17 +331,19 @@ struct SockPlatform:
 #         """Create a new socket object."""
 #         ...
 
-#    fn __init__(inout self, fd: FileDescriptor):
-#        """Create a new socket object from an open `FileDescriptor`."""
+#    fn __init__(inout self, fd: Arc[FileDescriptor]):
+#        """Create a new socket object from an open `Arc[FileDescriptor]`."""
 #        ...
 
 #     fn close(owned self) raises:
-#         """Closes the Socket."""
+#         """Closes the Socket if it's the last reference to its
+#         `Arc[FileDescriptor]`.
+#         """
 #         ...
 
 #     fn __del__(owned self):
 #         """Closes the Socket if it's the last reference to its
-#         `FileDescriptor`.
+#         `Arc[FileDescriptor]`.
 #         """
 #         ...
 
@@ -380,8 +382,8 @@ struct SockPlatform:
 #         platform `socketpair()` function."""
 #         ...
 
-#     fn get_fd(self) -> FileDescriptor:
-#         """Get the Socket's FileDescriptor."""
+#     fn get_fd(self) -> Arc[FileDescriptor]:
+#         """Get the Socket's ARC FileDescriptor."""
 #         ...
 
 #     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
@@ -512,7 +514,7 @@ struct Socket[
     from forge_tools.socket import Socket, IPv4Addr
 
 
-    async fn handler(conn_attempt: Optional[Socket, IPv4Addr]):
+    async fn handler(conn_attempt: Optional[(Socket, IPv4Addr)]):
         if not conn_attempt:
             return
         conn, addr = conn_attempt.value()
@@ -521,7 +523,7 @@ struct Socket[
     async def main():
         server = Socket.create_server(("0.0.0.0", 8000))
         with Pool() as pool:
-            _ = await pool.starmap(handler, server)
+            _ = await pool.map(handler, server)
     ```
     .
     """
@@ -560,8 +562,8 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             self._impl = Self._linux_s()
 
-    fn __init__(inout self, fd: FileDescriptor):
-        """Create a new socket object from an open `FileDescriptor`."""
+    fn __init__(inout self, fd: Arc[FileDescriptor]):
+        """Create a new socket object from an open `Arc[FileDescriptor]`."""
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
@@ -573,12 +575,22 @@ struct Socket[
             self._impl = Self._linux_s(fd)
 
     fn close(owned self) raises:
-        """Closes the Socket."""
-        _ = self^
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
+
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            self._impl[Self._linux_s].close()
+        elif sock_platform is SockPlatform.UNIX:
+            self._impl[Self._unix_s].close()
+        else:
+            constrained[False, "Platform not supported yet."]()
+            raise Error("Failed to close socket.")
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `FileDescriptor`.
+        `Arc[FileDescriptor]`.
         """
         _ = self^
 
@@ -605,11 +617,11 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var conn_addr = self._impl.unsafe_get[Self._linux_s]().setsockopt(
+            var conn_addr = self._impl[Self._linux_s].setsockopt(
                 level, option_name, option_value
             )
         elif sock_platform is SockPlatform.UNIX:
-            var conn_addr = self._impl.unsafe_get[Self._unix_s]().setsockopt(
+            var conn_addr = self._impl[Self._unix_s].setsockopt(
                 level, option_name, option_value
             )
         else:
@@ -621,9 +633,9 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            self._impl.unsafe_get[Self._linux_s]().bind(address)
+            self._impl[Self._linux_s].bind(address)
         elif sock_platform is SockPlatform.UNIX:
-            self._impl.unsafe_get[Self._unix_s]().bind(address)
+            self._impl[Self._unix_s].bind(address)
         else:
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
@@ -636,9 +648,9 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            self._impl.unsafe_get[Self._linux_s]().listen(backlog)
+            self._impl[Self._linux_s].listen(backlog)
         elif sock_platform is SockPlatform.UNIX:
-            self._impl.unsafe_get[Self._unix_s]().listen(backlog)
+            self._impl[Self._unix_s].listen(backlog)
         else:
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
@@ -648,9 +660,9 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            await self._impl.unsafe_get[Self._linux_s]().connect(address)
+            await self._impl[Self._linux_s].connect(address)
         elif sock_platform is SockPlatform.UNIX:
-            await self._impl.unsafe_get[Self._unix_s]().connect(address)
+            await self._impl[Self._unix_s].connect(address)
         else:
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
@@ -665,13 +677,13 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var attempt = await self._impl.unsafe_get[Self._linux_s]().accept()
+            var attempt = await self._impl[Self._linux_s].accept()
             if not attempt:
                 return None
             var conn_addr = attempt.value()
             return Self(conn_addr[0]), conn_addr[1]
         elif sock_platform is SockPlatform.UNIX:
-            var attempt = await self._impl.unsafe_get[Self._unix_s]().accept()
+            var attempt = await self._impl[Self._unix_s].accept()
             if not attempt:
                 return None
             var conn_addr = attempt.value()
@@ -700,21 +712,21 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return Self(), Self()
 
-    fn get_fd(self) -> FileDescriptor:
-        """Get the Socket's FileDescriptor.
+    fn get_fd(self) -> Arc[FileDescriptor]:
+        """Get the Socket's ARC FileDescriptor.
 
         Returns:
-            The Socket's FileDescriptor.
+            The Socket's ARC FileDescriptor.
         """
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]().get_fd()
+            return self._impl[Self._linux_s].get_fd()
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]().get_fd()
+            return self._impl[Self._unix_s].get_fd()
         else:
             constrained[False, "Platform not supported yet."]()
-            return FileDescriptor(0)
+            return Arc(FileDescriptor(0))
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket.
@@ -728,9 +740,9 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]().send_fds(fds)
+            return await self._impl[Self._linux_s].send_fds(fds)
         elif sock_platform is SockPlatform.UNIX:
-            return await self._impl.unsafe_get[Self._unix_s]().send_fds(fds)
+            return await self._impl[Self._unix_s].send_fds(fds)
         else:
             constrained[False, "Platform not supported yet."]()
             return False
@@ -747,7 +759,7 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]().recv_fds(maxfds)
+            return await self._impl[Self._linux_s].recv_fds(maxfds)
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -767,9 +779,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]().send(buf, flags)
+            return await self._impl[Self._linux_s].send(buf, flags)
         elif sock_platform is SockPlatform.UNIX:
-            return await self._impl.unsafe_get[Self._unix_s]().send(buf, flags)
+            return await self._impl[Self._unix_s].send(buf, flags)
         else:
             constrained[False, "Platform not supported yet."]()
             return False
@@ -789,9 +801,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return await self._impl.unsafe_get[Self._linux_s]().recv(buf, flags)
+            return await self._impl[Self._linux_s].recv(buf, flags)
         elif sock_platform is SockPlatform.UNIX:
-            return await self._impl.unsafe_get[Self._unix_s]().recv(buf, flags)
+            return await self._impl[Self._unix_s].recv(buf, flags)
         else:
             constrained[False, "Platform not supported yet."]()
             return 0
@@ -805,9 +817,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]().gethostname()
+            return self._impl[Self._linux_s].gethostname()
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]().gethostname()
+            return self._impl[Self._unix_s].gethostname()
         else:
             constrained[False, "Platform not supported yet."]()
             return ""
@@ -995,9 +1007,9 @@ recv.2.en.html#The_flags_argument).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl.unsafe_get[Self._linux_s]().settimeout(value)
+            return self._impl[Self._linux_s].settimeout(value)
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl.unsafe_get[Self._unix_s]().settimeout(value)
+            return self._impl[Self._unix_s].settimeout(value)
         else:
             constrained[False, "Platform not supported yet."]()
             return False

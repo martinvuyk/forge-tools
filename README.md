@@ -461,7 +461,7 @@ from multiprocessing import Pool
 from forge_tools.socket import Socket, IPv4Addr
 
 
-async fn handler(conn_attempt: Optional[Socket, IPv4Addr]):
+async fn handler(conn_attempt: Optional[(Socket, IPv4Addr)]):
     if not conn_attempt:
         return
     conn, addr = conn_attempt.value()
@@ -470,5 +470,5 @@ async fn handler(conn_attempt: Optional[Socket, IPv4Addr]):
 async def main():
     server = Socket.create_server(("0.0.0.0", 8000))
     with Pool() as pool:
-        _ = await pool.starmap(handler, server)
+        _ = await pool.map(handler, server)
 ```

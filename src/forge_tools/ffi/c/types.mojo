@@ -89,7 +89,7 @@ fn strlen(s: UnsafePointer[C.char]) -> size_t:
         [Reference](https://man7.org/linux/man-pages/man3/strlen.3p.html).
         Fn signature: `size_t strlen(const char *s)`.
     """
-    return external_call["strlen", size_t, UnsafePointer[C.char]](s)
+    return external_call["strlen", size_t](s)
 
 
 fn _c_long_dtype() -> DType:

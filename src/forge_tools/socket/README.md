@@ -72,17 +72,19 @@ trait SocketInterface[
         """Create a new socket object."""
         ...
 
-   fn __init__(inout self, fd: FileDescriptor):
-       """Create a new socket object from an open `FileDescriptor`."""
+   fn __init__(inout self, fd: Arc[FileDescriptor]):
+       """Create a new socket object from an open `Arc[FileDescriptor]`."""
        ...
 
     fn close(owned self) raises:
-        """Closes the Socket."""
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
         ...
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `FileDescriptor`.
+        `Arc[FileDescriptor]`.
         """
         ...
 
@@ -121,8 +123,8 @@ trait SocketInterface[
         platform `socketpair()` function."""
         ...
 
-    fn get_fd(self) -> FileDescriptor:
-        """Get the Socket's FileDescriptor."""
+    fn get_fd(self) -> Arc[FileDescriptor]:
+        """Get the Socket's ARC FileDescriptor."""
         ...
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:

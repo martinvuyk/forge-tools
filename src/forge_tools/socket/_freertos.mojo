@@ -1,5 +1,5 @@
 from collections import Optional
-from memory import UnsafePointer
+from memory import UnsafePointer, Arc
 from sys.intrinsics import _type_is_eq
 from utils import Span
 from .socket import (
@@ -30,19 +30,24 @@ struct _FreeRTOSSocket[
         """Create a new socket object."""
         self._sock = Self._ST()
 
-    fn __init__(inout self, fd: FileDescriptor):
-        """Create a new socket object from an open `FileDescriptor`."""
+    fn __init__(inout self, fd: Arc[FileDescriptor]):
+        """Create a new socket object from an open `Arc[FileDescriptor]`."""
         self._sock = Self._ST(fd=fd)
 
     fn close(owned self) raises:
-        """Closes the Socket."""
-        _ = self^
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
+        self._sock.close()
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `FileDescriptor`.
+        `Arc[FileDescriptor]`.
         """
-        ...
+        try:
+            self.close()
+        except:
+            pass
 
     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
         """Set socket options."""
@@ -79,8 +84,8 @@ struct _FreeRTOSSocket[
         var s_s = Self._ST.socketpair()
         return Self(fd=s_s[0].get_fd()), Self(fd=s_s[1].get_fd())
 
-    fn get_fd(self) -> FileDescriptor:
-        """Get the Socket's FileDescriptor."""
+    fn get_fd(self) -> Arc[FileDescriptor]:
+        """Get the Socket's ARC FileDescriptor."""
         return self._sock.get_fd()
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:

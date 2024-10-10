@@ -17,7 +17,7 @@ fn get_errno() -> C.int:
     @parameter
     if os_is_windows():
         var errno = stack_allocation[1, C.int]()
-        _ = external_call["_get_errno", C.void, UnsafePointer[C.int]](errno)
+        _ = external_call["_get_errno", C.void](errno)
         return errno[]
     else:
         return external_call["__errno_location", UnsafePointer[C.int]]()[]
@@ -32,7 +32,7 @@ fn set_errno(errnum: C.int):
 
     @parameter
     if os_is_windows():
-        _ = external_call["_set_errno", C.int, C.int](errnum)
+        _ = external_call["_set_errno", C.int](errnum)
     else:
         external_call["__errno_location", UnsafePointer[C.int]]()[0] = errnum
 
@@ -50,7 +50,7 @@ fn strerror(errnum: C.int) -> UnsafePointer[C.char]:
         [Reference](https://man7.org/linux/man-pages/man3/strerror.3.html).
         Fn signature: `char *strerror(int errnum)`.
     """
-    return external_call["strerror", UnsafePointer[C.char], C.int](errnum)
+    return external_call["strerror", UnsafePointer[C.char]](errnum)
 
 
 fn perror(s: UnsafePointer[C.char]):
@@ -63,7 +63,7 @@ fn perror(s: UnsafePointer[C.char]):
         [Reference](https://man7.org/linux/man-pages/man3/perror.3.html).
         Fn signature: `char *perror(int errnum)`.
     """
-    _ = external_call["perror", C.void, UnsafePointer[C.char]](s)
+    _ = external_call["perror", C.void](s)
 
 
 fn openlog(ident: UnsafePointer[C.char], logopt: C.int, facility: C.int):
@@ -79,9 +79,7 @@ fn openlog(ident: UnsafePointer[C.char], logopt: C.int, facility: C.int):
         Fn signature: `void openlog(const char *ident, int logopt,
             int facility)`.
     """
-    _ = external_call["openlog", C.void, UnsafePointer[C.char], C.int, C.int](
-        ident, logopt, facility
-    )
+    _ = external_call["openlog", C.void](ident, logopt, facility)
 
 
 # FIXME: this should take in  *args: *T
@@ -97,9 +95,7 @@ fn syslog(priority: C.int, message: UnsafePointer[C.char]):
         Fn signature: `void syslog(int priority, const char *message,
             ... /* arguments */)`.
     """
-    _ = external_call["syslog", C.void, C.int, UnsafePointer[C.char]](
-        priority, message
-    )
+    _ = external_call["syslog", C.void](priority, message)
 
 
 fn setlogmask(maskpri: C.int) -> C.int:
@@ -115,7 +111,7 @@ fn setlogmask(maskpri: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/closelog.3p.html).
         Fn signature: ` int setlogmask(int maskpri)`.
     """
-    return external_call["setlogmask", C.int, C.int](maskpri)
+    return external_call["setlogmask", C.int](maskpri)
 
 
 fn closelog():

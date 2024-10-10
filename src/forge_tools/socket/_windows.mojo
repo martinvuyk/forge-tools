@@ -1,5 +1,5 @@
 from collections import Optional
-from memory import UnsafePointer
+from memory import UnsafePointer, Arc
 from sys.intrinsics import _type_is_eq
 from utils import Span
 from .socket import (
@@ -19,23 +19,25 @@ struct _WindowsSocket[
     sock_address: SockAddr,
 ]:
     var fd: FileDescriptor
-    """The Socket's `FileDescriptor`."""
+    """The Socket's `Arc[FileDescriptor]`."""
 
     fn __init__(inout self) raises:
         """Create a new socket object."""
         raise Error("Failed to create socket.")
 
-    fn __init__(inout self, fd: FileDescriptor):
-        """Create a new socket object from an open `FileDescriptor`."""
+    fn __init__(inout self, fd: Arc[FileDescriptor]):
+        """Create a new socket object from an open `Arc[FileDescriptor]`."""
         self.fd = fd
 
     fn close(owned self) raises:
-        """Closes the Socket."""
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
         ...  # TODO: implement
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `FileDescriptor`.
+        `Arc[FileDescriptor]`.
         """
         try:
             self.close()

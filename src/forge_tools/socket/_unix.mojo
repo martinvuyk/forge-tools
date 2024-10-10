@@ -1,8 +1,8 @@
 from collections import Optional
-from memory import UnsafePointer, stack_allocation
-from utils import Span, StaticTuple, StringSlice
-from sys.intrinsics import _type_is_eq
+from memory import UnsafePointer, stack_allocation, Arc
 from sys import sizeof
+from sys.intrinsics import _type_is_eq
+from utils import Span, StaticTuple, StringSlice
 from .socket import (
     # SocketInterface,
     SockFamily,
@@ -74,8 +74,8 @@ struct _UnixSocket[
 ]:
     """Generic POSIX compliant socket implementation."""
 
-    var fd: FileDescriptor
-    """The Socket's `FileDescriptor`."""
+    var fd: Arc[FileDescriptor]
+    """The Socket's `Arc[FileDescriptor]`."""
     alias _sock_family = _get_unix_sock_family_constant(sock_family)
     alias _sock_type = _get_unix_sock_type_constant(sock_type)
     alias _sock_protocol = _get_unix_sock_protocol_constant(sock_protocol)
@@ -92,23 +92,26 @@ struct _UnixSocket[
             raise Error("Failed to create socket: " + message)
         self.fd = FileDescriptor(int(fd))
 
-    fn __init__(inout self, fd: FileDescriptor):
-        """Create a new socket object from an open `FileDescriptor`."""
+    fn __init__(inout self, fd: Arc[FileDescriptor]):
+        """Create a new socket object from an open `Arc[FileDescriptor]`."""
         self.fd = fd
 
     fn close(owned self) raises:
-        """Closes the Socket."""
-        _ = self^
-
-    fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `FileDescriptor`.
+        `Arc[FileDescriptor]`.
         """
-        try:
+        if self.fd.count() == 1:
             var err = shutdown(self.fd.value, SHUT_RDWR)
             if err == -1:
                 var message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed trying to close the socket: " + message)
+
+    fn __del__(owned self):
+        """Closes the Socket if it's the last reference to its
+        `Arc[FileDescriptor]`.
+        """
+        try:
+            self.close()
         except e:
             print(e, file=STDERR_FILENO)
 
@@ -213,23 +216,24 @@ struct _UnixSocket[
     fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
-        raise Error("Failed to create socket.")
+        var socket_vector = stack_allocation[2, C.int]()
+        var err = socket(
+            Self._sock_family,
+            Self._sock_type,
+            Self._sock_protocol,
+            socket_vector,
+        )
+        if err == -1:
+            var message = char_ptr_to_string(strerror(get_errno()))
+            raise Error("Failed to create socket: " + message)
+        return Self(fd=int(socket_vector[0])), Self(fd=int(socket_vector[1]))
 
-    fn getfd(self) -> FileDescriptor:
+    fn get_fd(self) -> Arc[FileDescriptor]:
         """Get an ARC reference to the Socket's FileDescriptor.
 
         Returns:
-            The ARC pointer to the FileDescriptor.
+            The ARC FileDescriptor.
         """
-        return 0
-
-    @staticmethod
-    async fn fromfd(fd: FileDescriptor) -> Optional[Self]:
-        """Create a socket object from an open file descriptor."""
-        return None
-
-    fn get_fd(self) -> FileDescriptor:
-        """Get the Socket's FileDescriptor."""
         return self.fd
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
