@@ -209,6 +209,43 @@ struct DateTime[
         self.tz = tz.value() if tz else Self._tz()
         self.calendar = calendar
 
+    fn __init__(inout self, *, other: Self):
+        """Construct self with other.
+
+        Args:
+            other: The other.
+        """
+        self.year = other.year
+        self.month = other.month
+        self.day = other.day
+        self.hour = other.hour
+        self.minute = other.minute
+        self.second = other.second
+        self.m_second = other.m_second
+        self.u_second = other.u_second
+        self.n_second = other.n_second
+        self.tz = other.tz
+        self.calendar = other.calendar
+
+    fn __init__(inout self, *, other: Self._UnboundCal, calendar: Calendar[C]):
+        """Construct self with other.
+
+        Args:
+            other: The other.
+            calendar: The calendar for self.
+        """
+        self.year = other.year
+        self.month = other.month
+        self.day = other.day
+        self.hour = other.hour
+        self.minute = other.minute
+        self.second = other.second
+        self.m_second = other.m_second
+        self.u_second = other.u_second
+        self.n_second = other.n_second
+        self.tz = other.tz
+        self.calendar = calendar
+
     fn replace[
         T: _Calendarized = C
     ](
@@ -247,41 +284,19 @@ struct DateTime[
             Self.
         """
 
-        if year:
-            self.year = year.value()
-        if month:
-            self.month = month.value()
-        if day:
-            self.day = day.value()
-        if hour:
-            self.hour = hour.value()
-        if minute:
-            self.minute = minute.value()
-        if second:
-            self.second = second.value()
-        if m_second:
-            self.m_second = m_second.value()
-        if u_second:
-            self.u_second = u_second.value()
-        if n_second:
-            self.n_second = n_second.value()
-        if tz:
-            self.tz = tz.value()
-        if calendar:
-            return Self._UnboundCal(
-                self.year,
-                self.month,
-                self.day,
-                self.hour,
-                self.minute,
-                self.second,
-                self.m_second,
-                self.u_second,
-                self.n_second,
-                self.tz,
-                calendar.value(),
-            )
-        return self
+        self.year = year.or_else(self.year)
+        self.month = month.or_else(self.month)
+        self.day = day.or_else(self.day)
+        self.hour = hour.or_else(self.hour)
+        self.minute = minute.or_else(self.minute)
+        self.second = second.or_else(self.second)
+        self.m_second = m_second.or_else(self.m_second)
+        self.u_second = u_second.or_else(self.u_second)
+        self.n_second = n_second.or_else(self.n_second)
+        self.tz = tz.or_else(self.tz)
+        if not calendar:
+            return Self._UnboundCal(other=self, calendar=self.calendar)
+        return Self._UnboundCal(other=self, calendar=calendar.value())
 
     fn to_calendar(owned self, calendar: Calendar) -> Self._UnboundCal:
         """Translates the `DateTime`'s values to be on the same offset since
@@ -483,85 +498,79 @@ struct DateTime[
             calendar's epoch and keeps evaluating until valid.
         """
 
+        var max_year = int(self.calendar.max_year)
         var y = int(self.year) + years
-        var mon = int(self.month) + months
-        var d = int(self.day) + days
-        var h = int(self.hour) + hours
-        var mi = int(self.minute) + minutes
-        var s = int(self.second) + seconds
-        var ms = int(self.m_second) + m_seconds
-        var us = int(self.u_second) + u_seconds
-        var ns = int(self.n_second) + n_seconds
-
-        var minyear = self.calendar.min_year
-        var maxyear = int(self.calendar.max_year)
-        if y > maxyear:
-            var delta = y - (maxyear + 1)
-            self = self.replace(year=minyear).add(years=delta)
+        if y > max_year:
+            self.year = self.calendar.min_year
+            self = self.add(years=y - (max_year + 1))
         else:
             self.year = y
-        var minmon = self.calendar.min_month
-        var maxmon = int(self.calendar.max_month)
-        if mon > maxmon:
-            var delta = mon - (maxmon + int(minmon))
-            self = self.replace(month=minmon).add(years=1, months=delta)
+
+        var max_mon = int(self.calendar.max_month)
+        var mon = int(self.month) + months
+        if mon > max_mon:
+            self.month = self.calendar.min_month
+            self = self.add(years=1, months=mon - (max_mon + 1))
         else:
             self.month = mon
-        var minday = self.calendar.min_day
-        var maxday = int(self.calendar.max_days_in_month(self.year, self.month))
-        if d > maxday:
-            var delta = d - (maxday + int(minday))
-            self = self.replace(day=minday).add(months=1, days=delta)
+
+        var max_day = int(
+            self.calendar.max_days_in_month(self.year, self.month)
+        )
+        var d = int(self.day) + days
+        if d > max_day:
+            self.day = self.calendar.min_day
+            self = self.add(months=1, days=d - (max_day + 1))
         else:
             self.day = d
-        var minhour = self.calendar.min_hour
-        var maxhour = int(self.calendar.max_hour)
-        if h > maxhour:
-            var delta = h - (maxhour + int(minhour) + 1)
-            self = self.replace(hour=minhour).add(days=1, hours=delta)
+
+        var max_hour = int(self.calendar.max_hour)
+        var h = int(self.hour) + hours
+        if h > max_hour:
+            self.hour = self.calendar.min_hour
+            self = self.add(days=1, hours=h - (max_hour + 1))
         else:
             self.hour = h
-        var minmin = self.calendar.min_minute
-        var maxmin = int(self.calendar.max_minute)
-        if mi > maxmin:
-            var delta = mi - (maxmin + int(minmin) + 1)
-            self = self.replace(minute=minmin).add(hours=1, minutes=delta)
+
+        var max_min = int(self.calendar.max_minute)
+        var mi = int(self.minute) + minutes
+        if mi > max_min:
+            self.minute = self.calendar.min_minute
+            self = self.add(hours=1, minutes=mi - (max_min + 1))
         else:
             self.minute = mi
-        var minsec = self.calendar.min_second
-        var maxsec = self.calendar.max_second(
+
+        var max_sec = self.calendar.max_second(
             self.year, self.month, self.day, self.hour, self.minute
         )
-        if s > int(maxsec):
-            var delta = s - (int(maxsec) + int(minsec) + 1)
-            self = self.replace(second=minsec).add(minutes=1, seconds=delta)
+        var s = int(self.second) + seconds
+        if s > int(max_sec):
+            self.second = self.calendar.min_second
+            self = self.add(minutes=1, seconds=s - (int(max_sec) + 1))
         else:
             self.second = s
-        var minmsec = self.calendar.min_milisecond
-        var maxmsec = int(self.calendar.max_milisecond)
-        if ms > maxmsec:
-            var delta = ms - (maxmsec + int(minmsec) + 1)
-            self = self.replace(m_second=minmsec).add(
-                seconds=1, m_seconds=delta
-            )
+
+        var max_msec = int(self.calendar.max_milisecond)
+        var ms = int(self.m_second) + m_seconds
+        if ms > max_msec:
+            self.m_second = self.calendar.min_milisecond
+            self = self.add(seconds=1, m_seconds=ms - (max_msec + 1))
         else:
             self.m_second = ms
-        var minusec = self.calendar.min_microsecond
-        var maxusec = int(self.calendar.max_microsecond)
-        if us > maxusec:
-            var delta = us - (maxusec + int(minusec) + 1)
-            self = self.replace(u_second=minusec).add(
-                m_seconds=1, u_seconds=delta
-            )
+
+        var max_usec = int(self.calendar.max_microsecond)
+        var us = int(self.u_second) + u_seconds
+        if us > max_usec:
+            self.u_second = self.calendar.min_microsecond
+            self = self.add(m_seconds=1, u_seconds=us - (max_usec + 1))
         else:
             self.u_second = us
-        var minnsec = self.calendar.min_nanosecond
-        var maxnsec = int(self.calendar.max_nanosecond)
-        if ns > maxnsec:
-            var delta = ns - (maxnsec + int(minnsec) + 1)
-            self = self.replace(n_second=minnsec).add(
-                u_seconds=1, n_seconds=delta
-            )
+
+        var max_nsec = int(self.calendar.max_nanosecond)
+        var ns = int(self.n_second) + n_seconds
+        if ns > max_nsec:
+            self.n_second = self.calendar.min_nanosecond
+            self = self.add(u_seconds=1, n_seconds=ns - (max_nsec + 1))
         else:
             self.n_second = ns
         return self^
@@ -602,89 +611,87 @@ struct DateTime[
             and keeps evaluating until valid.
         """
 
+        var min_nsec = int(self.calendar.min_nanosecond)
         var ns = int(self.n_second) - n_seconds
-        var minnsec = int(self.calendar.min_nanosecond)
-        var maxnsec = self.calendar.max_nanosecond
-        if ns < minnsec:
-            var delta = abs(ns - minnsec + 1)
-            self = self.replace(n_second=maxnsec).subtract(
-                u_seconds=1, n_seconds=delta
+        if ns < min_nsec:
+            self.n_second = self.calendar.max_nanosecond
+            self = self.subtract(
+                u_seconds=1, n_seconds=(int(min_nsec) - 1) - ns
             )
         else:
             self.n_second = ns
+
+        var min_usec = int(self.calendar.min_microsecond)
         var us = int(self.u_second) - u_seconds
-        var minusec = int(self.calendar.min_microsecond)
-        var maxusec = self.calendar.max_microsecond
-        if us < minusec:
-            var delta = abs(us - minusec + 1)
-            self = self.replace(u_second=maxusec).subtract(
-                m_seconds=1, u_seconds=delta
+        if us < min_usec:
+            self.u_second = self.calendar.max_microsecond
+            self = self.subtract(
+                m_seconds=1, u_seconds=(int(min_usec) - 1) - us
             )
         else:
             self.u_second = us
+
+        var min_msec = int(self.calendar.min_milisecond)
         var ms = int(self.m_second) - m_seconds
-        var minmsec = int(self.calendar.min_milisecond)
-        var maxmsec = self.calendar.max_milisecond
-        if ms < minmsec:
-            var delta = abs(ms - minmsec + 1)
-            self = self.replace(m_second=maxmsec).subtract(
-                seconds=1, m_seconds=delta
-            )
+        if ms < min_msec:
+            self.m_second = self.calendar.max_milisecond
+            self = self.subtract(seconds=1, m_seconds=(int(min_msec) - 1) - ms)
         else:
             self.m_second = ms
+
+        var min_sec = int(self.calendar.min_second)
         var s = int(self.second) - seconds
-        var minsec = int(self.calendar.min_second)
-        if s < minsec:
-            var delta = abs(s - minsec + 1)
+        if s < min_sec:
             var sec = self.calendar.max_second(
                 self.year, self.month, self.day, self.hour, self.minute
             )
-            self = self.replace(second=sec).subtract(minutes=1, seconds=delta)
+            self.second = sec
+            self = self.subtract(minutes=1, seconds=(int(min_sec) - 1) - s)
         else:
             self.second = s
+
+        var min_min = int(self.calendar.min_minute)
         var mi = int(self.minute) - minutes
-        var minmin = int(self.calendar.min_minute)
-        var maxmin = self.calendar.max_minute
-        if mi < minmin:
-            var delta = abs(mi - minmin + 1)
-            self = self.replace(minute=maxmin).subtract(hours=1, minutes=delta)
+        if mi < min_min:
+            self.minute = self.calendar.max_minute
+            self = self.subtract(hours=1, minutes=(int(min_min) - 1) - mi)
         else:
             self.minute = mi
+
+        var min_hour = int(self.calendar.min_hour)
         var h = int(self.hour) - hours
-        var minhour = int(self.calendar.min_hour)
-        var maxhour = self.calendar.max_hour
-        if h < minhour:
-            var delta = abs(h - minhour + 1)
-            self = self.replace(hour=maxhour).subtract(days=1, hours=delta)
+        if h < min_hour:
+            self.hour = self.calendar.max_hour
+            self = self.subtract(days=1, hours=(int(min_hour) - 1) - h)
         else:
             self.hour = h
+
+        var min_day = int(self.calendar.min_day)
         var d = int(self.day) - days
-        var minday = int(self.calendar.min_day)
-        if d < minday:
+        if d < min_day:
+            self.day = 1
             self = self.subtract(months=1)
-            var max_day = self.calendar.max_days_in_month(self.year, self.month)
-            var delta = abs(d - minday + 1)
-            self = self.replace(day=max_day).subtract(days=delta)
+            self.day = self.calendar.max_days_in_month(self.year, self.month)
+            self = self.subtract(days=(int(min_day) - 1) - d)
         else:
             self.day = d
+
+        var min_month = int(self.calendar.min_month)
         var mon = int(self.month) - months
-        var minmonth = int(self.calendar.min_month)
-        var maxmonth = self.calendar.max_month
-        if mon < minmonth:
-            var delta = abs(mon - minmonth + 1)
-            self = self.replace(month=maxmonth).subtract(years=1, months=delta)
+        if mon < min_month:
+            self.month = self.calendar.max_month
+            self = self.subtract(years=1, months=(int(min_month) - 1) - mon)
         else:
             self.month = mon
+
+        var min_year = int(self.calendar.min_year)
         var y = int(self.year) - years
-        var minyear = int(self.calendar.min_year)
-        var maxyear = self.calendar.max_year
-        if y < minyear:
-            var delta = abs(y - minyear + 1)
-            self = self.replace(year=maxyear).subtract(years=delta)
+        if y < min_year:
+            self.year = self.calendar.max_year
+            self = self.subtract(years=(min_year - 1) - y)
         else:
             self.year = y
-        self = self.add(days=0)  #  to correct days and months
-        return self^
+        return self^.add(days=0)  #  to correct days and months
 
     @always_inline
     fn add(owned self, other: Self._UnboundCal) -> Self:
@@ -849,6 +856,32 @@ struct DateTime[
         )
 
     @always_inline
+    fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
+        var s: UInt
+        var o: UInt
+        if self.tz != other.tz:
+            s, o = hash(self.to_utc()), hash(other.to_utc())
+        else:
+            s, o = hash(self), hash(other)
+
+        @parameter
+        if op == "==":
+            return s == o
+        elif op == "!=":
+            return s != o
+        elif op == ">":
+            return s > o
+        elif op == ">=":
+            return s >= o
+        elif op == "<":
+            return s < o
+        elif op == "<=":
+            return s <= o
+        else:
+            constrained[False, "nonexistent op."]()
+            return False
+
+    @always_inline
     fn __eq__(self, other: Self._UnboundCal) -> Bool:
         """Eq.
 
@@ -858,10 +891,19 @@ struct DateTime[
         Returns:
             Bool.
         """
+        return self._compare["=="](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) == hash(other.to_utc())
-        return hash(self) == hash(other)
+    @always_inline
+    fn __eq__(self, other: Self) -> Bool:
+        """Eq.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["=="](other)
 
     @always_inline
     fn __ne__(self, other: Self._UnboundCal) -> Bool:
@@ -873,10 +915,19 @@ struct DateTime[
         Returns:
             Bool.
         """
+        return self._compare["!="](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) != hash(other.to_utc())
-        return hash(self) != hash(other)
+    @always_inline
+    fn __ne__(self, other: Self) -> Bool:
+        """Ne.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["!="](other)
 
     @always_inline
     fn __gt__(self, other: Self._UnboundCal) -> Bool:
@@ -888,10 +939,19 @@ struct DateTime[
         Returns:
             Bool.
         """
+        return self._compare[">"](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) > hash(other.to_utc())
-        return hash(self) > hash(other)
+    @always_inline
+    fn __gt__(self, other: Self) -> Bool:
+        """Gt.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare[">"](other)
 
     @always_inline
     fn __ge__(self, other: Self._UnboundCal) -> Bool:
@@ -903,14 +963,11 @@ struct DateTime[
         Returns:
             Bool.
         """
-
-        if self.tz != other.tz:
-            return hash(self.to_utc()) >= hash(other.to_utc())
-        return hash(self) >= hash(other)
+        return self._compare[">="](other)
 
     @always_inline
-    fn __le__(self, other: Self._UnboundCal) -> Bool:
-        """Le.
+    fn __ge__(self, other: Self) -> Bool:
+        """Ge.
 
         Args:
             other: Other.
@@ -918,10 +975,7 @@ struct DateTime[
         Returns:
             Bool.
         """
-
-        if self.tz != other.tz:
-            return hash(self.to_utc()) <= hash(other.to_utc())
-        return hash(self) <= hash(other)
+        return self._compare[">="](other)
 
     @always_inline
     fn __lt__(self, other: Self._UnboundCal) -> Bool:
@@ -933,10 +987,43 @@ struct DateTime[
         Returns:
             Bool.
         """
+        return self._compare["<"](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) < hash(other.to_utc())
-        return hash(self) < hash(other)
+    @always_inline
+    fn __lt__(self, other: Self) -> Bool:
+        """Lt.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["<"](other)
+
+    @always_inline
+    fn __le__(self, other: Self._UnboundCal) -> Bool:
+        """Le.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["<="](other)
+
+    @always_inline
+    fn __le__(self, other: Self) -> Bool:
+        """Le.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["<="](other)
 
     @always_inline
     fn __and__[T: Hashable](self, other: T) -> UInt64:
@@ -1045,13 +1132,11 @@ struct DateTime[
             Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var ns = time.now()
-        var us: UInt16 = ns // 1_000
-        var ms: UInt16 = ns // 1_000_000
-        var s = ns // 1_000_000_000
-        var dt = Self.from_unix_epoch(s, zone).replace(calendar=calendar)
-        return dt.replace(m_second=ms, u_second=us, n_second=UInt16(ns))
+        var zone = tz.or_else(Self._tz())
+        var ns = UInt16(time.now())
+        var dt = Self.from_unix_epoch(int(ns // 1_000_000_000), zone)
+        dt.m_second, dt.u_second, dt.n_second = ns // 1_000_000, ns // 1_000, ns
+        return dt^
 
     @always_inline
     fn strftime(self, fmt: String) -> String:

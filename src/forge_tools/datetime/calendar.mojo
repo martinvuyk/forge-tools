@@ -14,6 +14,7 @@
 
 from os import abort
 from utils import Variant
+from sys.intrinsics import likely, unlikely
 
 from ._lists import leapsecs
 
@@ -811,6 +812,9 @@ struct Calendar[T: _Calendarized = Gregorian[]]:
         return not (self == other)
 
 
+alias _m: UInt16 = 2**16 - 1
+
+
 @value
 struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
     """`Gregorian` Calendar.
@@ -843,12 +847,11 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
     alias _min_milisecond: UInt16 = 0
     alias _min_microsecond: UInt16 = 0
     alias _min_nanosecond: UInt16 = 0
-    alias _monthdays: List[UInt8] = List[UInt8](
+    alias _monthdays = List[UInt8](
         0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
     )
-    """An array with the amount of days each month contains without leaps."""
-    alias _days_before_month: List[UInt16] = List[UInt16](
-        0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+    alias _days_before_month = SIMD[DType.uint16, 16](
+        0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, _m, _m, _m
     )
 
     fn __init__(
@@ -1017,9 +1020,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         """
 
         var days = Self._monthdays[int(month)]
-        if month == 2 and Self.is_leapyear(year):
-            return days + 1
-        return days
+        return days + int(unlikely(month == 2 and Self.is_leapyear(year)))
 
     @always_inline
     fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
@@ -1034,9 +1035,24 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             Day of the week [monday, sunday]: [0, 6] (Gregorian) [1, 7]
             (ISOCalendar).
         """
-        return ((self.days_since_epoch(year, month, day) + 6) % 7).cast[
-            DType.uint8
-        ]()
+        return (Self.days_since_epoch(year, month, day) % 7).cast[DType.uint8]()
+
+    @always_inline
+    @staticmethod
+    fn day_of_year(year: UInt16, month: UInt8, day: UInt8) -> UInt16:
+        """Calculates the day of the year for a given date.
+
+        Args:
+            year: Year.
+            month: Month.
+            day: Day.
+
+        Returns:
+            Day of the year: [1, 366] (for Gregorian calendar).
+        """
+        var total: UInt16 = int(month > 2 and Self.is_leapyear(year))
+        total += Self._days_before_month[int(month)].cast[DType.uint16]()
+        return total + day.cast[DType.uint16]()
 
     fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
         """Calculates the day of the year for a given date.
@@ -1049,10 +1065,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         Returns:
             Day of the year: [1, 366] (for Gregorian calendar).
         """
-
-        var total: UInt16 = 1 if month > 2 and self.is_leapyear(year) else 0
-        total += Self._days_before_month[int(month)].cast[DType.uint16]()
-        return total + day.cast[DType.uint16]()
+        return Self.day_of_year(year, month, day)
 
     fn day_of_month(self, year: UInt16, day_of_year: UInt16) -> (UInt8, UInt8):
         """Calculates the month, day of the month for a given day of the year.
@@ -1066,16 +1079,13 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             - day: Day of the month: [1, 31] (for Gregorian calendar).
         """
 
-        var idx: UInt8 = 0
-        for i in range(1, 13):
-            if Self._days_before_month[i] > day_of_year:
-                break
-            idx += 1
-        var rest = (day_of_year - Self._days_before_month[int(idx)])
-        if idx > 2 and Self.is_leapyear(year):
-            rest -= 1
+        var c = (Self._days_before_month < day_of_year).cast[DType.uint8]()
+        var idx = c.reduce_add() - 1
+        var rest = day_of_year - Self._days_before_month[int(idx)]
+        rest -= int(idx > 2 and Self.is_leapyear(year))
         return idx, rest.cast[DType.uint8]()
 
+    @always_inline
     fn week_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
         """Calculates the week of the year for a given date.
 
@@ -1095,6 +1105,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         """
         return (self.day_of_year(year, month, day) // 7).cast[DType.uint8]()
 
+    @always_inline
     fn is_leapyear(self, year: UInt16) -> Bool:
         """Whether the year is a leap year.
 
@@ -1104,7 +1115,6 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         Returns:
             Bool.
         """
-
         return Self.is_leapyear(year)
 
     fn is_leapsec(
@@ -1134,7 +1144,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         if not include_leapsecs:
             return False
 
-        if (
+        if unlikely(
             hour == 23
             and minute == 59
             and second == 59
@@ -1167,20 +1177,51 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         if not include_leapsecs:
             return 0
 
-        if year < 1972:
+        if unlikely(year < 1972):
             return 0
         var size = len(leapsecs)
         alias calh32 = CalendarHashes(CalendarHashes.UINT32)
         var h: UInt32 = self.hash[calh32](year, month, day)
-        if h > leapsecs[size - 1]:
+        var last = leapsecs[size - 1]
+        if h > last:
+            if not self.is_default_calendar() and last < self.hash[calh32](
+                self._min_year, self._min_month, self._min_day
+            ):
+                return 0
             return size
         var amnt = 0
         for i in range(size):
             if h < leapsecs[i]:
                 return amnt
             amnt += 1
-        return size
+        return amnt
 
+    @always_inline
+    @staticmethod
+    fn leapdays_since_epoch(year: UInt16, month: UInt8, day: UInt8) -> UInt32:
+        """Cumulative leap days since the calendar's default epoch start.
+
+        Args:
+            year: Year.
+            month: Month.
+            day: Day.
+
+        Returns:
+            The amount.
+        """
+        var y = int(year - 1)
+        l = Self.is_leapyear(year) and (month > 2 or (month == 2 and day == 29))
+        return y // 4 - y // 100 + y // 400 + int(l)
+
+    @always_inline("nodebug")
+    fn is_default_calendar(self) -> Bool:
+        return likely(
+            self._min_year == Self._default_min_year
+            and self._min_month == Self._default_min_month
+            and self._min_day == Self._default_min_day
+        )
+
+    @always_inline
     fn leapdays_since_epoch(
         self, year: UInt16, month: UInt8, day: UInt8
     ) -> UInt32:
@@ -1194,16 +1235,31 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         Returns:
             The amount.
         """
+        var l1 = Self.leapdays_since_epoch(year, month, day)
+        if self.is_default_calendar():
+            return l1
+        y, m, d = self._min_year, self._min_month, self._min_day
+        return l1 - Self.leapdays_since_epoch(y, m, d)
 
-        var leapdays: UInt32 = 0
-        for i in range(self._min_year, year):
-            if Self.is_leapyear(i):
-                leapdays += 1
-        if Self.is_leapyear(year) and month >= 2:
-            if not (month == 2 and day != 29):
-                leapdays += 1
-        return leapdays
+    @always_inline
+    @staticmethod
+    fn days_since_epoch(year: UInt16, month: UInt8, day: UInt8) -> UInt32:
+        """Cumulative days since the calendar's default epoch start.
 
+        Args:
+            year: Year.
+            month: Month.
+            day: Day.
+
+        Returns:
+            The amount: [0, 9998].
+        """
+        var leapdays1 = Self.leapdays_since_epoch(year, 1, 1)
+        var y_d1 = (year.cast[DType.uint32]() - 1) * 365 + leapdays1
+        var doy = Self.day_of_year(year, month, day).cast[DType.uint32]()
+        return y_d1 + doy - 1
+
+    @always_inline
     fn days_since_epoch(self, year: UInt16, month: UInt8, day: UInt8) -> UInt32:
         """Cumulative days since the calendar's epoch start.
 
@@ -1213,12 +1269,14 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             day: Day.
 
         Returns:
-            The amount.
+            The amount: [0, 9998].
         """
+        var d1 = Self.days_since_epoch(year, month, day)
 
-        var y = int(year - 1)
-        var days_before_year = y * 365 + y // 4 - y // 100 + y // 400
-        return days_before_year + int(self.day_of_year(year, month, day))
+        if self.is_default_calendar():
+            return d1
+        y, m, d = self._min_year, self._min_month, self._min_day
+        return d1 - Self.days_since_epoch(y, m, d)
 
     fn seconds_since_epoch(
         self,
@@ -1253,7 +1311,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         var m = (minute - self._min_minute).cast[DType.uint64]() * min_to_sec
         var s = (second - self._min_second).cast[DType.uint64]()
         var leaps = self.leapsecs_since_epoch(year, month, day)
-        return d * days_to_sec + h + m + s - leaps.cast[DType.uint64]()
+        return (d * days_to_sec + h + m + s) - leaps.cast[DType.uint64]()
 
     fn m_seconds_since_epoch(
         self,
@@ -1665,7 +1723,7 @@ struct UTCFast(_Calendarized):
             day: Day.
 
         Returns:
-            The amount.
+            The amount: [0, 9998].
         """
         return self._greg.days_since_epoch(year, month, day)
 
@@ -1795,7 +1853,7 @@ struct UTCFast(_Calendarized):
             The hash.
         """
 
-        _ = self, u_second, n_second
+        _ = u_second, n_second
         var result: Int = 0
 
         @parameter
@@ -1843,7 +1901,7 @@ struct UTCFast(_Calendarized):
         Returns:
             Tuple containing date data.
         """
-        _ = self
+
         var num8 = UInt8(0)
         var num16 = UInt16(0)
         var result = (num16, num8, num8, num8, num8, num8, num16, num16)
@@ -2094,9 +2152,7 @@ struct ISOCalendar(_Calendarized):
             Day of the week [monday, sunday]: [0, 6] (Gregorian) [1, 7]
             (ISOCalendar).
         """
-        return (self.days_since_epoch(year, month, day) % 7 | 7).cast[
-            DType.uint8
-        ]()
+        return self._greg.day_of_week(year, month, day) + 1
 
     @always_inline
     fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
@@ -2232,7 +2288,7 @@ struct ISOCalendar(_Calendarized):
             day: Day.
 
         Returns:
-            The amount.
+            The amount: [0, 9998].
         """
         return self._greg.days_since_epoch(year, month, day)
 

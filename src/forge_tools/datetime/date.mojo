@@ -150,6 +150,31 @@ struct Date[
         self.tz = tz.value() if tz else Self._tz()
         self.calendar = calendar
 
+    fn __init__(inout self, *, other: Self):
+        """Construct self with other.
+
+        Args:
+            other: The other.
+        """
+        self.year = other.year
+        self.month = other.month
+        self.day = other.day
+        self.tz = other.tz
+        self.calendar = other.calendar
+
+    fn __init__(inout self, *, other: Self._UnboundCal, calendar: Calendar[C]):
+        """Construct self with other.
+
+        Args:
+            other: The other.
+            calendar: The calendar for self.
+        """
+        self.year = other.year
+        self.month = other.month
+        self.day = other.day
+        self.tz = other.tz
+        self.calendar = calendar
+
     fn replace[
         T: _Calendarized = C
     ](
@@ -175,19 +200,14 @@ struct Date[
         Returns:
             Self.
         """
-        if year:
-            self.year = year.value()
-        if month:
-            self.month = month.value()
-        if day:
-            self.day = day.value()
-        if tz:
-            self.tz = tz.value()
-        if calendar:
-            return Self._UnboundCal(
-                self.year, self.month, self.day, self.tz, calendar.value()
-            )
-        return self
+
+        self.year = year.or_else(self.year)
+        self.month = month.or_else(self.month)
+        self.day = day.or_else(self.day)
+        self.tz = tz.or_else(self.tz)
+        if not calendar:
+            return Self._UnboundCal(other=self, calendar=self.calendar)
+        return Self._UnboundCal(other=self, calendar=calendar.value())
 
     fn to_calendar(owned self, calendar: Calendar) -> Self._UnboundCal:
         """Translates the `Date`'s values to be on the same offset since its
@@ -201,7 +221,7 @@ struct Date[
         """
 
         if self.calendar == calendar:
-            return self^.replace(calendar=calendar)
+            return self.replace(calendar=calendar)
         var s = self.seconds_since_epoch()
         return Self._UnboundCal(calendar=calendar).add(seconds=int(s))
 
@@ -309,37 +329,30 @@ struct Date[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        var y = int(self.year) + years
-        var mon = int(self.month) + months
-        var d = (
-            int(self.day)
-            + days
-            + seconds
-            // (
-                (int(self.calendar.max_hour) + 1)
-                * (int(self.calendar.max_minute) + 1)
-                * (int(self.calendar.max_typical_second) + 1)
-            )
-        )
-        var minyear = self.calendar.min_year
-        var maxyear = int(self.calendar.max_year)
-        if y > maxyear:
-            var delta = y - (maxyear + 1)
-            self = self.replace(year=minyear).add(years=delta)
+        var max_year = int(self.calendar.max_year)
+        var y = int(self.year) + int(years)
+        if y > max_year:
+            self.year = self.calendar.min_year
+            self = self.add(years=y - (max_year + 1))
         else:
             self.year = y
-        var minmon = self.calendar.min_month
-        var maxmon = int(self.calendar.max_month)
-        if mon > maxmon:
-            var delta = mon - (maxmon + int(minmon))
-            self = self.replace(month=minmon).add(years=1, months=delta)
+
+        var max_mon = int(self.calendar.max_month)
+        var mon = int(self.month) + int(months)
+        if mon > max_mon:
+            self.month = self.calendar.min_month
+            self = self.add(years=1, months=mon - (max_mon + 1))
         else:
             self.month = mon
-        var minday = self.calendar.min_day
-        var maxday = int(self.calendar.max_days_in_month(self.year, self.month))
-        if d > maxday:
-            var delta = d - (maxday + int(minday))
-            self = self.replace(day=minday).add(months=1, days=delta)
+
+        var max_day = self.calendar.max_days_in_month(self.year, self.month)
+        var s_to_day = int(self.calendar.max_hour + 1) * int(
+            self.calendar.max_minute + 1
+        ) * int(self.calendar.max_typical_second + 1)
+        var d = int(self.day) + int(days) + int(seconds) // s_to_day
+        if d > int(max_day):
+            self.day = self.calendar.min_day
+            self = self^.add(months=1, days=d - (int(max_day) + 1))
         else:
             self.day = d
         return self^
@@ -370,45 +383,38 @@ struct Date[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        var d = (
-            int(self.day)
-            - days
-            - seconds
-            // (
-                int(self.calendar.max_hour + 1)
-                * int(self.calendar.max_minute + 1)
-                * int(self.calendar.max_typical_second + 1)
-            )
-        )
-        var minday = int(self.calendar.min_day)
-        if d < minday:
+        var min_day = self.calendar.min_day
+        var s_to_day = int(self.calendar.max_hour + 1) * int(
+            self.calendar.max_minute + 1
+        ) * int(self.calendar.max_typical_second + 1)
+        var d = int(self.day) - int(days) - int(seconds) // s_to_day
+        if d < int(min_day):
+            self.day = min_day
             self = self.subtract(months=1)
-            var max_day = self.calendar.max_days_in_month(self.year, self.month)
-            var delta = abs(d - minday + 1)
-            self = self.replace(day=max_day).subtract(days=delta)
+            self.day = self.calendar.max_days_in_month(self.year, self.month)
+            self = self.subtract(days=(int(min_day) - 1) - d)
         else:
             self.day = d
-        var minmonth = int(self.calendar.min_month)
-        var maxmonth = self.calendar.max_month
-        var mon = int(self.month) - months
-        if mon < minmonth:
-            var delta = abs(mon - minmonth + 1)
-            self = self.replace(month=maxmonth).subtract(years=1, months=delta)
+
+        var min_month = int(self.calendar.min_month)
+        var mon = int(self.month) - int(months)
+        if mon < min_month:
+            self.month = self.calendar.max_month
+            self = self.subtract(years=1, months=(min_month - 1) - mon)
         else:
             self.month = mon
-        var minyear = int(self.calendar.min_year)
-        var maxyear = self.calendar.max_year
-        var y = int(self.year) - years
-        if y < minyear:
-            var delta = abs(y - minyear + 1)
-            self = self.replace(year=maxyear).subtract(years=delta)
+
+        var min_year = int(self.calendar.min_year)
+        var y = int(self.year) - int(years)
+        if y < min_year:
+            self.year = self.calendar.max_year
+            self = self.subtract(years=(min_year - 1) - y)
         else:
             self.year = y
-        self = self.add(days=0)  #  to correct days and months
-        return self^
+        return self^.add(days=0)  #  to correct days and months
 
     @always_inline
-    fn add(owned self, other: Self._UnboundCal) -> Self:
+    fn add(self, other: Self._UnboundCal) -> Self:
         """Adds another `Date`.
 
         Args:
@@ -422,7 +428,7 @@ struct Date[
         )
 
     @always_inline
-    fn subtract(owned self, other: Self._UnboundCal) -> Self:
+    fn subtract(self, other: Self._UnboundCal) -> Self:
         """Subtracts another `Date`.
 
         Args:
@@ -436,7 +442,7 @@ struct Date[
         )
 
     @always_inline
-    fn __add__(owned self, other: Self._UnboundCal) -> Self:
+    fn __add__(self, other: Self._UnboundCal) -> Self:
         """Add.
 
         Args:
@@ -448,7 +454,31 @@ struct Date[
         return self.add(other)
 
     @always_inline
-    fn __sub__(owned self, other: Self._UnboundCal) -> Self:
+    fn __add__(self, other: Self) -> Self:
+        """Add.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Result.
+        """
+        return self.add(other)
+
+    @always_inline
+    fn __sub__(self, other: Self._UnboundCal) -> Self:
+        """Subtract.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Result.
+        """
+        return self.subtract(other)
+
+    @always_inline
+    fn __sub__(self, other: Self) -> Self:
         """Subtract.
 
         Args:
@@ -544,6 +574,32 @@ struct Date[
         return self.calendar.hash[_cal_hash](self.year, self.month, self.day)
 
     @always_inline
+    fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
+        var s: UInt
+        var o: UInt
+        if self.tz != other.tz:
+            s, o = hash(self.to_utc()), hash(other.to_utc())
+        else:
+            s, o = hash(self), hash(other)
+
+        @parameter
+        if op == "==":
+            return s == o
+        elif op == "!=":
+            return s != o
+        elif op == ">":
+            return s > o
+        elif op == ">=":
+            return s >= o
+        elif op == "<":
+            return s < o
+        elif op == "<=":
+            return s <= o
+        else:
+            constrained[False, "nonexistent op."]()
+            return False
+
+    @always_inline
     fn __eq__(self, other: Self._UnboundCal) -> Bool:
         """Eq.
 
@@ -553,10 +609,19 @@ struct Date[
         Returns:
             Bool.
         """
+        return self._compare["=="](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) == hash(other.to_utc())
-        return hash(self) == hash(other)
+    @always_inline
+    fn __eq__(self, other: Self) -> Bool:
+        """Eq.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["=="](other)
 
     @always_inline
     fn __ne__(self, other: Self._UnboundCal) -> Bool:
@@ -568,10 +633,19 @@ struct Date[
         Returns:
             Bool.
         """
+        return self._compare["!="](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) != hash(other.to_utc())
-        return hash(self) != hash(other)
+    @always_inline
+    fn __ne__(self, other: Self) -> Bool:
+        """Ne.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["!="](other)
 
     @always_inline
     fn __gt__(self, other: Self._UnboundCal) -> Bool:
@@ -583,10 +657,19 @@ struct Date[
         Returns:
             Bool.
         """
+        return self._compare[">"](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) > hash(other.to_utc())
-        return hash(self) > hash(other)
+    @always_inline
+    fn __gt__(self, other: Self) -> Bool:
+        """Gt.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare[">"](other)
 
     @always_inline
     fn __ge__(self, other: Self._UnboundCal) -> Bool:
@@ -598,14 +681,11 @@ struct Date[
         Returns:
             Bool.
         """
-
-        if self.tz != other.tz:
-            return hash(self.to_utc()) >= hash(other.to_utc())
-        return hash(self) >= hash(other)
+        return self._compare[">="](other)
 
     @always_inline
-    fn __le__(self, other: Self._UnboundCal) -> Bool:
-        """Le.
+    fn __ge__(self, other: Self) -> Bool:
+        """Ge.
 
         Args:
             other: Other.
@@ -613,10 +693,7 @@ struct Date[
         Returns:
             Bool.
         """
-
-        if self.tz != other.tz:
-            return hash(self.to_utc()) <= hash(other.to_utc())
-        return hash(self) <= hash(other)
+        return self._compare[">="](other)
 
     @always_inline
     fn __lt__(self, other: Self._UnboundCal) -> Bool:
@@ -628,10 +705,43 @@ struct Date[
         Returns:
             Bool.
         """
+        return self._compare["<"](other)
 
-        if self.tz != other.tz:
-            return hash(self.to_utc()) < hash(other.to_utc())
-        return hash(self) < hash(other)
+    @always_inline
+    fn __lt__(self, other: Self) -> Bool:
+        """Lt.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["<"](other)
+
+    @always_inline
+    fn __le__(self, other: Self._UnboundCal) -> Bool:
+        """Le.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["<="](other)
+
+    @always_inline
+    fn __le__(self, other: Self) -> Bool:
+        """Le.
+
+        Args:
+            other: Other.
+
+        Returns:
+            Bool.
+        """
+        return self._compare["<="](other)
 
     @always_inline
     fn __and__[T: Hashable](self, other: T) -> UInt32:
@@ -743,7 +853,7 @@ struct Date[
 
         var zone = tz.value() if tz else Self._tz()
         var s = time.now() // 1_000_000_000
-        return Date.from_unix_epoch[False](s, zone).replace(calendar=calendar)
+        return Self.from_unix_epoch(s, zone).replace(calendar=calendar)
 
     @always_inline
     fn strftime(self, fmt: String) -> String:

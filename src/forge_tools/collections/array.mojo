@@ -72,7 +72,7 @@ from collections import Optional
 from collections._index_normalization import normalize_index
 from benchmark import clobber_memory
 from memory import UnsafePointer
-from utils import StaticIntTuple
+from utils.static_tuple import StaticTuple
 from os import abort
 
 
@@ -816,21 +816,22 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     fn reverse(inout self):
         """Reverse the order of the items in the array inplace."""
 
-        fn from_range[simd_size: Int]() -> StaticIntTuple[simd_size]:
-            var values = StaticIntTuple[simd_size]()
+        @parameter
+        fn from_range() -> StaticTuple[Int, Self.simd_size]:
+            var values = StaticTuple[Int, Self.simd_size]()
             var idx = 0
 
             @parameter
-            for i in range(capacity - 1, -1, -1):
+            for i in reversed(range(capacity)):
                 values[idx] = i
                 idx += 1
 
             @parameter
-            for i in range(capacity, simd_size):
+            for i in range(capacity, Self.simd_size):
                 values[i] = i
             return values
 
-        var vec = self.vec.shuffle[from_range[Self.simd_size]()]()
+        var vec = self.vec.shuffle[from_range()]()
 
         @parameter
         if static:

@@ -208,7 +208,7 @@ fn test_utcfast_calendar() raises:
     assert_equal(28, res[1])
     res = cal.monthrange(2024, 2)
     assert_equal(3, res[0])
-    assert_equal(28, res[1])
+    assert_equal(29, res[1])
     assert_equal(120, cal.seconds_since_epoch(1970, 1, 1, 0, 2, 0))
     assert_equal(120 * 1_000, cal.m_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0))
     assert_equal(
