@@ -35,10 +35,10 @@ from forge_tools.datetime import DateTime, Calendar, IsoFormat
 from forge_tools.datetime.calendar import PythonCalendar, UTCCalendar
 
 alias DateT = DateTime[iana=False, pyzoneinfo=False, native=False]
-var dt = DateT(2024, 6, 18, 22, 14, 7)
+dt = DateT(2024, 6, 18, 22, 14, 7)
 print(dt) # 2024-06-18T22:14:07+00:00
 alias fstr = IsoFormat(IsoFormat.HH_MM_SS) 
-var iso_str = dt.to_iso[fstr]()
+iso_str = dt.to_iso[fstr]()
 dt = (
     DateT.from_iso[fstr](iso_str, calendar=Calendar(2024, 6, 18))
     .value()
@@ -49,18 +49,18 @@ print(dt) # 2024-06-18T22:14:07+00:00
 
 # TODO: current mojo limitation. Parametrized structs need to be bound to an
 # alias and used for interoperability
-# var customtz = TimeZone[False, False, False]("my_str", 1, 0) 
-var tz_0 = DateT._tz("my_str", 0, 0)
-var tz_1 = DateT._tz("my_str", 1, 0)
+# customtz = TimeZone[False, False, False]("my_str", 1, 0) 
+tz_0 = DateT._tz("my_str", 0, 0)
+tz_1 = DateT._tz("my_str", 1, 0)
 assert_equal(DateT(2024, 6, 18, 0, tz=tz_0), DateT(2024, 6, 18, 1, tz=tz_1))
 
 
 # using python and unix calendar should have no difference in results
 alias pycal = PythonCalendar
 alias unixcal = UTCCalendar
-var tz_0_ = DateT._tz("Etc/UTC", 0, 0)
+tz_0_ = DateT._tz("Etc/UTC", 0, 0)
 tz_1 = DateT._tz("Etc/UTC-1", 1, 0)
-var tz1_ = DateT._tz("Etc/UTC+1", 1, 0, -1)
+tz1_ = DateT._tz("Etc/UTC+1", 1, 0, -1)
 
 dt = DateT(2022, 6, 1, tz=tz_0_, calendar=pycal) + DateT(
     2, 6, 31, tz=tz_0_, calendar=pycal
@@ -73,17 +73,17 @@ assert_equal(dt, offset_p_1)
 assert_equal(dt, offset_n_1)
 
 
-var fstr = "mojo: %Y🔥%m🤯%d"
+fstr = "mojo: %Y🔥%m🤯%d"
 assert_equal("mojo: 0009🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
 fstr = "%Y-%m-%d %H:%M:%S.%f"
-var ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
+ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
 assert_equal("2024-09-09 09:09:09.009009", ref1.strftime(fstr))
 
 
 fstr = "mojo: %Y🔥%m🤯%d"
-var vstr = "mojo: 0009🔥06🤯01"
+vstr = "mojo: 0009🔥06🤯01"
 ref1 = DateT(9, 6, 1)
-var parsed = DateT.strptime(vstr, fstr)
+parsed = DateT.strptime(vstr, fstr)
 assert_true(parsed)
 assert_equal(ref1, parsed.value())
 fstr = "%Y-%m-%d %H:%M:%S.%f"

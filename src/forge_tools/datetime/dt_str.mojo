@@ -49,7 +49,7 @@ struct IsoFormat:
     """e.g. `1970-01-01T00:00:00`"""
     alias YYYY_MM_DD_T_HH_MM_SS_TZD = Self.YYYY_MM_DD + "T" + Self.HH_MM_SS + Self.TZD
     """e.g. `1970-01-01T00:00:00+00:00`"""
-    var selected: StringLiteral
+    selected: StringLiteral
     """The selected IsoFormat."""
 
     fn __init__(
@@ -79,20 +79,20 @@ struct IsoFormat:
 fn _get_strings(
     year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int
 ) -> (String, String, String, String, String, String):
-    var yyyy = str(min(year, 9999))
+    yyyy = str(min(year, 9999))
     if year < 1000:
-        var prefix = "0"
+        prefix = "0"
         if year < 100:
             prefix = "00"
             if year < 10:
                 prefix = "000"
         yyyy = prefix + str(year)
 
-    var mm = str(min(month, 99)) if month > 9 else "0" + str(month)
-    var dd = str(min(day, 99)) if day > 9 else "0" + str(day)
-    var hh = str(min(hour, 99)) if hour > 9 else "0" + str(hour)
-    var m_str = str(min(minute, 99)) if minute > 9 else "0" + str(minute)
-    var ss = str(min(second, 99)) if second > 9 else "0" + str(second)
+    mm = str(min(month, 99)) if month > 9 else "0" + str(month)
+    dd = str(min(day, 99)) if day > 9 else "0" + str(day)
+    hh = str(min(hour, 99)) if hour > 9 else "0" + str(hour)
+    m_str = str(min(minute, 99)) if minute > 9 else "0" + str(minute)
+    ss = str(min(second, 99)) if second > 9 else "0" + str(second)
     return yyyy, mm, dd, hh, m_str, ss
 
 
@@ -138,11 +138,11 @@ fn to_iso[
         String.
     """
 
-    var s = _get_strings(
+    s = _get_strings(
         int(year), int(month), int(day), int(hour), int(minute), int(second)
     )
-    var yyyy_mm_dd = s[0] + "-" + s[1] + "-" + s[2]
-    var hh_mm_ss = s[3] + ":" + s[4] + ":" + s[5]
+    yyyy_mm_dd = s[0] + "-" + s[1] + "-" + s[2]
+    hh_mm_ss = s[3] + ":" + s[4] + ":" + s[5]
 
     @parameter
     if iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS:
@@ -217,8 +217,8 @@ fn from_iso[
         A tuple with the result.
     """
     alias tz = TimeZone[dst_storage, no_dst_storage, iana, pyzoneinfo, native]
-    var num0 = UInt8(0)
-    var result = UInt16(0), num0, num0, num0, num0, num0, tz()
+    num0 = UInt8(0)
+    result = UInt16(0), num0, num0, num0, num0, num0, tz()
 
     @parameter
     if iso.YYYYMMDD in iso.selected:
@@ -254,22 +254,22 @@ fn from_iso[
 
     @parameter
     if iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS_TZD:
-        var sign = 1
+        sign = 1
         if s[19] == "-":
             sign = -1
-        var h = atol(s[20:22])
-        var m = 0
+        h = atol(s[20:22])
+        m = 0
         if s[22] == ":":
             m = atol(s[23:25])
         else:
             m = atol(s[22:24])
         result[6] = tz.from_offset(result[0], result[1], result[2], h, m, sign)
     elif iso.selected == iso.YYYYMMDDHHMMSSTZD:
-        var sign = 1
+        sign = 1
         if s[14] == "-":
             sign = -1
-        var h = atol(s[15:17])
-        var m = 0
+        h = atol(s[15:17])
+        m = 0
         if s[17] == ":":
             m = atol(s[18:20])
         else:
@@ -281,15 +281,15 @@ fn from_iso[
 
 @value
 struct _DateTime:
-    var year: UInt16
-    var month: UInt8
-    var day: UInt8
-    var hour: UInt8
-    var minute: UInt8
-    var second: UInt8
-    var m_second: UInt16
-    var u_second: UInt16
-    var n_second: UInt16
+    year: UInt16
+    month: UInt8
+    day: UInt8
+    hour: UInt8
+    minute: UInt8
+    second: UInt8
+    m_second: UInt16
+    u_second: UInt16
+    n_second: UInt16
 
 
 fn strptime(s: String, format_str: StringLiteral) -> Optional[_DateTime]:
@@ -307,8 +307,8 @@ fn strptime(s: String, format_str: StringLiteral) -> Optional[_DateTime]:
     try:
         from python import Python
 
-        var dt = Python.import_module("datetime")
-        var date = dt.datetime.strptime(s, format_str)
+        dt = Python.import_module("datetime")
+        date = dt.datetime.strptime(s, format_str)
         return _DateTime(
             UInt16(int(date.year)),
             UInt8(int(date.month)),
@@ -367,8 +367,8 @@ fn strftime[
     try:
         from python import Python
 
-        var dt = Python.import_module("datetime")
-        var date = dt.datetime(
+        dt = Python.import_module("datetime")
+        date = dt.datetime(
             int(year),
             int(month),
             int(day),

@@ -20,7 +20,7 @@ struct _BSDSocket[
     sock_address: SockAddr,
 ]:
     alias _ST = _UnixSocket[sock_family, sock_type, sock_protocol, sock_address]
-    var _sock: Self._ST
+    _sock: Self._ST
 
     alias _ipv4 = _BSDSocket[
         SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr
@@ -71,17 +71,17 @@ struct _BSDSocket[
     async fn accept(self) -> Optional[(Self, sock_address)]:
         """Return a new socket representing the connection, and the address of
         the client."""
-        var res = await self._sock.accept()
+        res = await self._sock.accept()
         if not res:
             return None
-        var s_a = res.value()
+        s_a = res.value()
         return Self(fd=s_a[0].get_fd()), s_a[1]
 
     @staticmethod
     fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
-        var s_s = Self._ST.socketpair()
+        s_s = Self._ST.socketpair()
         return Self(fd=s_s[0].get_fd()), Self(fd=s_s[1].get_fd())
 
     fn get_fd(self) -> Arc[FileDescriptor]:
@@ -215,7 +215,7 @@ struct _BSDSocket[
         reuse_port: Bool = False,
     ) raises -> (Self, Self._ipv4):
         """Create a socket, bind it to a specified address, and listen."""
-        var s_s = Self._ST.create_server(
+        s_s = Self._ST.create_server(
             address,
             dualstack_ipv6=dualstack_ipv6,
             backlog=backlog,

@@ -18,7 +18,7 @@ struct _WindowsSocket[
     sock_protocol: SockProtocol,
     sock_address: SockAddr,
 ]:
-    var fd: FileDescriptor
+    fd: FileDescriptor
     """The Socket's `Arc[FileDescriptor]`."""
 
     fn __init__(inout self) raises:

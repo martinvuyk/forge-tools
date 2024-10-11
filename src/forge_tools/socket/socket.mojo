@@ -110,7 +110,7 @@ struct SockFamily:
     """"AF_UART". Notes: This Address Family is not standard since there is
     none.
     """
-    var _selected: StringLiteral
+    _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -170,7 +170,7 @@ struct SockType:
     """SOCK_SEQPACKET."""
 
     # TODO the rest
-    var _selected: StringLiteral
+    _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -222,7 +222,7 @@ struct SockProtocol:
     """Inter Integrated Circuit."""
     alias UART = "UART"  # TODO: implement. inspiration: https://github.com/AndreRenaud/simple_uart
     """Universal Asynchronous Reciever Transmitter."""
-    var _selected: StringLiteral
+    _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -277,7 +277,7 @@ struct SockPlatform:
     alias WINDOWS = "WINDOWS"  # TODO: implement
     """WINDOWS."""
     # TODO other important platforms
-    var _selected: StringLiteral
+    _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -539,7 +539,7 @@ struct Socket[
     ]
     # TODO: need to be able to use SocketInterface trait regardless of type
     alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
-    var _impl: Self._variant
+    _impl: Self._variant
 
     fn __init__(inout self, impl: Self._variant):
         """Construct a socket object from an implementation of the
@@ -617,11 +617,11 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var conn_addr = self._impl[Self._linux_s].setsockopt(
+            conn_addr = self._impl[Self._linux_s].setsockopt(
                 level, option_name, option_value
             )
         elif sock_platform is SockPlatform.UNIX:
-            var conn_addr = self._impl[Self._unix_s].setsockopt(
+            conn_addr = self._impl[Self._unix_s].setsockopt(
                 level, option_name, option_value
             )
         else:
@@ -677,17 +677,17 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var attempt = await self._impl[Self._linux_s].accept()
+            attempt = await self._impl[Self._linux_s].accept()
             if not attempt:
                 return None
-            var conn_addr = attempt.value()
-            return Self(conn_addr[0]), conn_addr[1]
+            conn, addr = attempt.value()
+            return Self(conn), addr
         elif sock_platform is SockPlatform.UNIX:
-            var attempt = await self._impl[Self._unix_s].accept()
+            attempt = await self._impl[Self._unix_s].accept()
             if not attempt:
                 return None
-            var conn_addr = attempt.value()
-            return Self(conn_addr[0]), conn_addr[1]
+            conn, addr = attempt.value()
+            return Self(conn), addr
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -703,11 +703,11 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var s = Self._linux_s.socketpair()
-            return Self(s[0]), Self(s[1])
+            s0, s1 = Self._linux_s.socketpair()
+            return Self(s0), Self(s1)
         elif sock_platform is SockPlatform.UNIX:
-            var s = Self._unix_s.socketpair()
-            return Self(s[0]), Self(s[1])
+            s0, s1 = Self._unix_s.socketpair()
+            return Self(s0), Self(s1)
         else:
             constrained[False, "Platform not supported yet."]()
             return Self(), Self()
@@ -933,8 +933,8 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
-        var ptr = stack_allocation[1, in_addr]()
-        var err = inet_aton(value.unsafe_ptr().bitcast[C.char](), ptr)
+        ptr = stack_allocation[1, in_addr]()
+        err = inet_aton(value.unsafe_ptr().bitcast[C.char](), ptr)
         if err == 0:
             return None
         return ptr[0].s_addr
@@ -949,8 +949,8 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
-        var length = 0
-        var ptr = inet_ntoa(value).bitcast[UInt8]()
+        length = 0
+        ptr = inet_ntoa(value).bitcast[UInt8]()
         for i in range(7, 16):
             if ptr[i] == 0:
                 length = i
@@ -1306,7 +1306,7 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            var res = Self._linux_s.create_server(
+            res = Self._linux_s.create_server(
                 address,
                 backlog=backlog,
                 reuse_port=reuse_port,
@@ -1314,7 +1314,7 @@ nf-ws2tcpip-getaddrinfo).
             )
             return Self(res[0]), S(res[1])
         elif sock_platform is SockPlatform.UNIX:
-            var res = Self._unix_s.create_server(
+            res = Self._unix_s.create_server(
                 address,
                 backlog=backlog,
                 reuse_port=reuse_port,

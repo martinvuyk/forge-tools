@@ -4,9 +4,9 @@ from forge_tools.complex import Quaternion, DualQuaternion
 
 
 fn test_quaternion_ops() raises:
-    var q1 = Quaternion(2, 3, 4, 5)
-    var q2 = Quaternion(2, 3, 4, 5)
-    var q3 = Quaternion(5, 4, 3, 2)
+    q1 = Quaternion(2, 3, 4, 5)
+    q2 = Quaternion(2, 3, 4, 5)
+    q3 = Quaternion(5, 4, 3, 2)
     assert_almost_equal(7.348, q1.__abs__(), rtol=0.1)
     assert_almost_equal(Quaternion(4, 6, 8, 10).vec, (q1 + q2).vec, rtol=0.1)
     assert_almost_equal(Quaternion(0, 0, 0, 0).vec, (q1 - q2).vec, rtol=0.1)
@@ -46,7 +46,7 @@ fn test_quaternion_ops() raises:
 
 fn test_quaternion_matrix() raises:
     # TODO
-    # var q1 = Quaternion(2, 3, 4, 5)
+    # q1 = Quaternion(2, 3, 4, 5)
     # assert_almost_equal(
     #     List(
     #         -14 / 27,
@@ -66,9 +66,9 @@ fn test_quaternion_matrix() raises:
 
 
 fn test_dualquaternion_ops() raises:
-    var q1 = DualQuaternion(2, 3, 4, 5, 6, 7, 8, 9)
-    var q2 = DualQuaternion(2, 3, 4, 5, 6, 7, 8, 9)
-    var q3 = DualQuaternion(9, 8, 7, 6, 5, 4, 3, 2)
+    q1 = DualQuaternion(2, 3, 4, 5, 6, 7, 8, 9)
+    q2 = DualQuaternion(2, 3, 4, 5, 6, 7, 8, 9)
+    q3 = DualQuaternion(9, 8, 7, 6, 5, 4, 3, 2)
     assert_almost_equal(
         DualQuaternion(4, 6, 8, 10, 12, 14, 16, 18).vec, (q1 + q2).vec, rtol=0.1
     )

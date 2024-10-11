@@ -18,7 +18,7 @@ from forge_tools.collections import Array
 fn make_array[
     capacity: Int, static: Bool, T: DType = DType.int64
 ]() -> Array[T, capacity, static]:
-    var a = Array[T, capacity, static](fill=0)
+    a = Array[T, capacity, static](fill=0)
     for i in range(0, capacity):
 
         @parameter
@@ -40,7 +40,7 @@ fn bench_array_init[capacity: Int, static: Bool](inout b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn():
-        var res = Array[DType.int64, capacity, static](fill=0)
+        res = Array[DType.int64, capacity, static](fill=0)
         keep(res)
 
     b.iter[call_fn]()
@@ -51,7 +51,7 @@ fn bench_array_init[capacity: Int, static: Bool](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_insert[capacity: Int, static: Bool](inout b: Bencher) raises:
-    var arr = make_array[capacity, static]()
+    arr = make_array[capacity, static]()
 
     @always_inline
     @parameter
@@ -68,13 +68,13 @@ fn bench_array_insert[capacity: Int, static: Bool](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_lookup[capacity: Int, static: Bool](inout b: Bencher) raises:
-    var arr = make_array[capacity, static]()
+    arr = make_array[capacity, static]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
         for i in range(0, capacity):
-            var res = arr.index(i)
+            res = arr.index(i)
             keep(res._value._impl)
 
     b.iter[call_fn]()
@@ -86,13 +86,13 @@ fn bench_array_lookup[capacity: Int, static: Bool](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_contains[capacity: Int, static: Bool](inout b: Bencher) raises:
-    var arr = make_array[capacity, static]()
+    arr = make_array[capacity, static]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
         for i in range(0, capacity):
-            var res = i in arr
+            res = i in arr
             keep(res)
 
     b.iter[call_fn]()
@@ -104,13 +104,13 @@ fn bench_array_contains[capacity: Int, static: Bool](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_count[capacity: Int, static: Bool](inout b: Bencher) raises:
-    var arr = make_array[capacity, static]()
+    arr = make_array[capacity, static]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
         for i in range(0, capacity):
-            var res = arr.count(i)
+            res = arr.count(i)
             keep(res)
 
     b.iter[call_fn]()
@@ -122,12 +122,12 @@ fn bench_array_count[capacity: Int, static: Bool](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_sum[capacity: Int](inout b: Bencher) raises:
-    var arr = make_array[capacity, False]()
+    arr = make_array[capacity, False]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
-        var res = arr.sum()
+        res = arr.sum()
         keep(res)
 
     b.iter[call_fn]()
@@ -139,7 +139,7 @@ fn bench_array_sum[capacity: Int](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_filter[capacity: Int, static: Bool](inout b: Bencher) raises:
-    var arr = make_array[capacity, static]()
+    arr = make_array[capacity, static]()
 
     fn filterfn(a: Int64) -> Scalar[DType.bool]:
         return a < (capacity // 2)
@@ -147,7 +147,7 @@ fn bench_array_filter[capacity: Int, static: Bool](inout b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn() raises:
-        var res = arr.filter(filterfn)
+        res = arr.filter(filterfn)
         keep(res)
 
     b.iter[call_fn]()
@@ -159,7 +159,7 @@ fn bench_array_filter[capacity: Int, static: Bool](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_apply[capacity: Int, static: Bool](inout b: Bencher) raises:
-    var arr = make_array[capacity, static]()
+    arr = make_array[capacity, static]()
 
     fn applyfn(a: Int64) -> Scalar[DType.int64]:
         if a < Int64.MAX_FINITE // 2:
@@ -180,7 +180,7 @@ fn bench_array_apply[capacity: Int, static: Bool](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_multiply[capacity: Int](inout b: Bencher) raises:
-    var arr = make_array[capacity, False]()
+    arr = make_array[capacity, False]()
 
     @always_inline
     @parameter
@@ -196,7 +196,7 @@ fn bench_array_multiply[capacity: Int](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_reverse[capacity: Int](inout b: Bencher) raises:
-    var arr = make_array[capacity, False, DType.int64]()
+    arr = make_array[capacity, False, DType.int64]()
 
     @always_inline
     @parameter
@@ -213,14 +213,14 @@ fn bench_array_reverse[capacity: Int](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_dot[capacity: Int](inout b: Bencher) raises:
-    var arr1 = make_array[capacity, True, DType.float64]()
-    var arr2 = make_array[capacity, True, DType.float64]()
+    arr1 = make_array[capacity, True, DType.float64]()
+    arr2 = make_array[capacity, True, DType.float64]()
 
     @always_inline
     @parameter
     fn call_fn() raises:
         for _ in range(1_000):
-            var res = arr1.dot(arr2)
+            res = arr1.dot(arr2)
             keep(res)
 
     b.iter[call_fn]()
@@ -233,10 +233,10 @@ fn bench_array_dot[capacity: Int](inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 @parameter
 fn bench_array_cross(inout b: Bencher) raises:
-    var arr1 = Array[DType.float64, 3, True](
+    arr1 = Array[DType.float64, 3, True](
         random_float64(0, 500), random_float64(0, 500), random_float64(0, 500)
     )
-    var arr2 = Array[DType.float64, 3, True](
+    arr2 = Array[DType.float64, 3, True](
         random_float64(0, 500), random_float64(0, 500), random_float64(0, 500)
     )
 
@@ -244,7 +244,7 @@ fn bench_array_cross(inout b: Bencher) raises:
     @parameter
     fn call_fn() raises:
         for _ in range(1_000):
-            var res = arr1.cross(arr2)
+            res = arr1.cross(arr2)
             keep(res)
 
     b.iter[call_fn]()
@@ -257,7 +257,7 @@ fn bench_array_cross(inout b: Bencher) raises:
 # ===----------------------------------------------------------------------===#
 def main():
     seed()
-    var m = Bench(BenchConfig(num_repetitions=5, warmup_iters=100))
+    m = Bench(BenchConfig(num_repetitions=5, warmup_iters=100))
     alias sizes = Tuple(3, 8, 16, 32, 64, 128, 256)
 
     @parameter
@@ -321,10 +321,10 @@ def main():
         # m.bench_function[bench_array_cross](BenchId("bench_array_cross"))
 
     print("")
-    var values = Dict[String, List[Float64]]()
+    values = Dict[String, List[Float64]]()
     for i in m.info_vec:
-        var res = i[].result.mean()
-        var val = values.get(i[].name, List[Float64](0, 0))
+        res = i[].result.mean()
+        val = values.get(i[].name, List[Float64](0, 0))
         values[i[].name] = List[Float64](res + val[0], val[1] + 1)
     for i in values.items():
         print(i[].key, ":", i[].value[0] / i[].value[1])

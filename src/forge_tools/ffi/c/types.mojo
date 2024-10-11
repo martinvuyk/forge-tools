@@ -107,8 +107,8 @@ fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     Returns:
         The String.
     """
-    var l = int(strlen(s)) + 1
-    var buf = UnsafePointer[UInt8].alloc(l)
+    l = int(strlen(s)) + 1
+    buf = UnsafePointer[UInt8].alloc(l)
     memcpy(buf.bitcast[C.char](), s, l)
     return String(ptr=buf, len=l)
 
@@ -172,7 +172,7 @@ alias in_port_t = C.u_short
 struct in_addr:
     """Incoming IPv4 Socket Address."""
 
-    var s_addr: in_addr_t
+    s_addr: in_addr_t
     """Source Address."""
 
 
@@ -181,7 +181,7 @@ struct in_addr:
 struct in6_addr:
     """Incoming IPv6 Socket Address."""
 
-    var s6_addr: StaticTuple[C.char, 16]
+    s6_addr: StaticTuple[C.char, 16]
     """Source IPv6 Address."""
 
 
@@ -190,9 +190,9 @@ struct in6_addr:
 struct sockaddr:
     """Socket Address."""
 
-    var sa_family: sa_family_t
+    sa_family: sa_family_t
     """Socket Address Family."""
-    var sa_data: StaticTuple[C.char, 14]
+    sa_data: StaticTuple[C.char, 14]
     """Socket Address."""
 
 
@@ -201,13 +201,13 @@ struct sockaddr:
 struct sockaddr_in:
     """Incoming Socket Address."""
 
-    var sin_family: sa_family_t
+    sin_family: sa_family_t
     """Socket Address Family."""
-    var sin_port: in_port_t
+    sin_port: in_port_t
     """Socket Address Port."""
-    var sin_addr: in_addr
+    sin_addr: in_addr
     """Socket Address."""
-    var sin_zero: StaticTuple[C.char, 8]
+    sin_zero: StaticTuple[C.char, 8]
     """Socket zero padding."""
 
 
@@ -216,15 +216,15 @@ struct sockaddr_in:
 struct sockaddr_in6:
     """Incoming IPv6 Socket Address."""
 
-    var sin6_family: sa_family_t
+    sin6_family: sa_family_t
     """Socket Address Family."""
-    var sin6_port: in_port_t
+    sin6_port: in_port_t
     """Socket Address Port."""
-    var sin6_flowinfo: C.u_int
+    sin6_flowinfo: C.u_int
     """Flow Information."""
-    var sin6_addr: in6_addr
+    sin6_addr: in6_addr
     """Socket Address."""
-    var sin6_scope_id: C.u_int
+    sin6_scope_id: C.u_int
     """Scope ID."""
 
 
@@ -233,27 +233,27 @@ struct sockaddr_in6:
 struct addrinfo:
     """Address Information."""
 
-    var ai_flags: C.int
+    ai_flags: C.int
     """Address Information Flags."""
-    var ai_family: C.int
+    ai_family: C.int
     """Address Family."""
-    var ai_socktype: C.int
+    ai_socktype: C.int
     """Socket Type."""
-    var ai_protocol: C.int
+    ai_protocol: C.int
     """Socket Protocol."""
-    var ai_addrlen: socklen_t
+    ai_addrlen: socklen_t
     """Socket Address Length."""
-    var ai_addr: UnsafePointer[sockaddr]
+    ai_addr: UnsafePointer[sockaddr]
     """Address Information."""
-    var ai_canonname: UnsafePointer[C.char]
+    ai_canonname: UnsafePointer[C.char]
     """Canon Name."""
     # FIXME: This should be UnsafePointer[addrinfo]
-    var ai_next: UnsafePointer[C.void]
+    ai_next: UnsafePointer[C.void]
     """Next Address Information struct."""
 
     fn __init__(inout self):
         """Construct an empty addrinfo struct."""
-        var p0 = UnsafePointer[sockaddr]()
+        p0 = UnsafePointer[sockaddr]()
         self = Self(0, 0, 0, 0, 0, p0, UnsafePointer[C.char](), NULL)
 
 

@@ -71,9 +71,9 @@ struct DateTime64(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    var m_seconds: UInt64
+    m_seconds: UInt64
     """Miliseconds since epoch."""
-    var hash: UInt64
+    hash: UInt64
     """Hash."""
 
     fn __init__(inout self, m_seconds: UInt64, hash_val: UInt64):
@@ -129,13 +129,13 @@ struct DateTime64(Hashable, Stringable):
             hash_val: Hash_val.
         """
 
-        var y = int(year.take()) if year else int(_cal.min_year)
-        var mon = int(month.take()) if month else int(_cal.min_month)
-        var d = int(day.take()) if day else int(_cal.min_day)
-        var h = int(hour.take()) if hour else int(_cal.min_hour)
-        var m = int(minute.take()) if minute else int(_cal.min_minute)
-        var s = int(second.take()) if second else int(_cal.min_second)
-        var ms = int(m_second.take()) if m_second else int(_cal.min_milisecond)
+        y = int(year.take()) if year else int(_cal.min_year)
+        mon = int(month.take()) if month else int(_cal.min_month)
+        d = int(day.take()) if day else int(_cal.min_day)
+        h = int(hour.take()) if hour else int(_cal.min_hour)
+        m = int(minute.take()) if minute else int(_cal.min_minute)
+        s = int(second.take()) if second else int(_cal.min_second)
+        ms = int(m_second.take()) if m_second else int(_cal.min_milisecond)
         self.m_seconds = _cal.m_seconds_since_epoch(y, mon, d, h, m, s, ms)
         self.hash = int(hash_val.take()) if hash_val else int(
             _cal.hash[_cal_h64](y, mon, d, h, m, s, ms)
@@ -210,7 +210,7 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             Self.
         """
-        var mask: UInt64 = 0b0
+        mask: UInt64 = 0b0
         alias offset = _cal_h64.shift_64_ms
         if year:
             mask |= _cal_h64.mask_64_y << (_cal_h64.shift_64_y - offset)
@@ -226,7 +226,7 @@ struct DateTime64(Hashable, Stringable):
             mask |= _cal_h64.mask_64_s << (_cal_h64.shift_64_s - offset)
         if m_second:
             mask |= _cal_h64.mask_64_ms << (_cal_h64.shift_64_ms - offset)
-        var h = _cal.hash[_cal_h64](
+        h = _cal.hash[_cal_h64](
             year.or_else(0),
             month.or_else(0),
             day.or_else(0),
@@ -538,8 +538,8 @@ struct DateTime64(Hashable, Stringable):
         Notes:
             This builds an instance with a hash set to default UTC epoch start.
         """
-        var ms = time.now() // 1_000_000
-        var s = ms // 1_000
+        ms = time.now() // 1_000_000
+        s = ms // 1_000
         return Self.from_unix_epoch(s).add(m_seconds=ms)
 
     @always_inline
@@ -567,7 +567,7 @@ struct DateTime64(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        var d = _cal.from_hash[_cal_h64](int(self.hash))
+        d = _cal.from_hash[_cal_h64](int(self.hash))
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -590,10 +590,10 @@ struct DateTime64(Hashable, Stringable):
             An Optional[Self].
         """
         try:
-            var p = dt_str.from_iso[
+            p = dt_str.from_iso[
                 iso, iana=False, pyzoneinfo=False, native=False
             ](s)
-            var dt = Self(p[0], p[1], p[2], p[3], p[4], p[5])
+            dt = Self(p[0], p[1], p[2], p[3], p[4], p[5])
             return dt
         except:
             return None
@@ -609,7 +609,7 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             Self.
         """
-        var d = _cal.from_hash[_cal_h64](int(value))
+        d = _cal.from_hash[_cal_h64](int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], d[5], d[6], hash_val=value)
 
 
@@ -638,9 +638,9 @@ struct DateTime32(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    var minutes: UInt32
+    minutes: UInt32
     """Minutes since epoch."""
-    var hash: UInt32
+    hash: UInt32
     """Hash."""
 
     fn __init__(inout self, minutes: UInt32, hash_val: UInt32):
@@ -691,11 +691,11 @@ struct DateTime32(Hashable, Stringable):
             minute: Minute.
             hash_val: Hash_val.
         """
-        var y = int(year.take()) if year else int(_cal.min_year)
-        var mon = int(month.take()) if month else int(_cal.min_month)
-        var d = int(day.take()) if day else int(_cal.min_day)
-        var h = int(hour.take()) if hour else int(_cal.min_hour)
-        var m = int(minute.take()) if minute else int(_cal.min_minute)
+        y = int(year.take()) if year else int(_cal.min_year)
+        mon = int(month.take()) if month else int(_cal.min_month)
+        d = int(day.take()) if day else int(_cal.min_day)
+        h = int(hour.take()) if hour else int(_cal.min_hour)
+        m = int(minute.take()) if minute else int(_cal.min_minute)
         self.minutes = (
             _cal.seconds_since_epoch(y, mon, d, h, m, int(_cal.min_second))
             // 60
@@ -761,7 +761,7 @@ struct DateTime32(Hashable, Stringable):
             Self.
         """
 
-        var mask: UInt32 = 0b0
+        mask: UInt32 = 0b0
         if year:
             mask |= _cal_h32.mask_32_y << _cal_h32.shift_32_y
         if month:
@@ -772,7 +772,7 @@ struct DateTime32(Hashable, Stringable):
             mask |= _cal_h32.mask_32_h << _cal_h32.shift_32_h
         if minute:
             mask |= _cal_h32.mask_32_m << _cal_h32.shift_32_m
-        var h = _cal.hash[_cal_h32](
+        h = _cal.hash[_cal_h32](
             year.or_else(0),
             month.or_else(0),
             day.or_else(0),
@@ -1087,7 +1087,7 @@ struct DateTime32(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        var d = _cal.from_hash[_cal_h32](int(self.hash))
+        d = _cal.from_hash[_cal_h32](int(self.hash))
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -1110,10 +1110,10 @@ struct DateTime32(Hashable, Stringable):
             An Optional[Self].
         """
         try:
-            var p = dt_str.from_iso[
+            p = dt_str.from_iso[
                 iso, iana=False, pyzoneinfo=False, native=False
             ](s)
-            var dt = Self(p[0], p[1], p[2], p[3], p[4])
+            dt = Self(p[0], p[1], p[2], p[3], p[4])
             return dt
         except:
             return None
@@ -1129,7 +1129,7 @@ struct DateTime32(Hashable, Stringable):
         Returns:
             Self.
         """
-        var d = _cal.from_hash[_cal_h32](int(value))
+        d = _cal.from_hash[_cal_h32](int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], value)
 
 
@@ -1157,9 +1157,9 @@ struct DateTime16(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    var hours: UInt16
+    hours: UInt16
     """Hours since epoch."""
-    var hash: UInt16
+    hash: UInt16
     """Hash."""
 
     fn __init__(inout self, hours: UInt16, hash_val: UInt16):
@@ -1202,12 +1202,12 @@ struct DateTime16(Hashable, Stringable):
             hour: Hour.
             hash_val: Hash_val.
         """
-        var y = int(year.take()) if year else int(_cal.min_year)
-        var mon = int(month.take()) if month else int(_cal.min_month)
-        var d = int(day.take()) if day else int(_cal.min_day)
-        var h = int(hour.take()) if hour else int(_cal.min_hour)
-        var m = int(_cal.min_minute)
-        var s = int(_cal.min_second)
+        y = int(year.take()) if year else int(_cal.min_year)
+        mon = int(month.take()) if month else int(_cal.min_month)
+        d = int(day.take()) if day else int(_cal.min_day)
+        h = int(hour.take()) if hour else int(_cal.min_hour)
+        m = int(_cal.min_minute)
+        s = int(_cal.min_second)
         self.hours = int(
             _cal.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         )
@@ -1257,14 +1257,14 @@ struct DateTime16(Hashable, Stringable):
             Self.
         """
 
-        var mask: UInt16 = 0b0
+        mask: UInt16 = 0b0
         if year:
             mask |= _cal_h16.mask_16_d << _cal_h16.shift_16_d
         if day:
             mask |= _cal_h16.mask_16_d << _cal_h16.shift_16_d
         if hour:
             mask |= _cal_h16.mask_16_h << _cal_h16.shift_16_h
-        var h = _cal.hash[_cal_h16](
+        h = _cal.hash[_cal_h16](
             (year.value() - _cal.min_year if year else 0),
             day.or_else(0),
             hour.or_else(0),
@@ -1578,8 +1578,8 @@ struct DateTime16(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        var d = _cal.from_hash[_cal_h16](int(self.hash))
-        var y = d[0] + _cal.min_year
+        d = _cal.from_hash[_cal_h16](int(self.hash))
+        y = d[0] + _cal.min_year
         return dt_str.to_iso[iso](y, d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -1602,10 +1602,10 @@ struct DateTime16(Hashable, Stringable):
             An Optional[Self].
         """
         try:
-            var p = dt_str.from_iso[
+            p = dt_str.from_iso[
                 iso, iana=False, pyzoneinfo=False, native=False
             ](s)
-            var dt = Self(p[0], p[1], p[2], p[3])
+            dt = Self(p[0], p[1], p[2], p[3])
             return dt
         except:
             return None
@@ -1621,8 +1621,8 @@ struct DateTime16(Hashable, Stringable):
         Returns:
             Self.
         """
-        var d = _cal.from_hash[_cal_h16](int(value))
-        var y = d[0] + _cal.min_year
+        d = _cal.from_hash[_cal_h16](int(value))
+        y = d[0] + _cal.min_year
         return Self(year=y, month=d[1], day=d[2], hour=d[3], hash_val=value)
 
 
@@ -1649,9 +1649,9 @@ struct DateTime8(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    var hours: UInt8
+    hours: UInt8
     """Hours since epoch."""
-    var hash: UInt8
+    hash: UInt8
     """Hash."""
 
     fn __init__(inout self, hours: UInt8, hash_val: UInt8):
@@ -1694,12 +1694,12 @@ struct DateTime8(Hashable, Stringable):
             hour: Hour.
             hash_val: Hash_val.
         """
-        var y = int(year.take()) if year else int(_cal.min_year)
-        var mon = int(month.take()) if month else int(_cal.min_month)
-        var d = int(day.take()) if day else int(_cal.min_day)
-        var h = int(hour.take()) if hour else int(_cal.min_hour)
-        var m = int(_cal.min_minute)
-        var s = int(_cal.min_second)
+        y = int(year.take()) if year else int(_cal.min_year)
+        mon = int(month.take()) if month else int(_cal.min_month)
+        d = int(day.take()) if day else int(_cal.min_day)
+        h = int(hour.take()) if hour else int(_cal.min_hour)
+        m = int(_cal.min_minute)
+        s = int(_cal.min_second)
         self.hours = (
             _cal.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         ).cast[DType.uint8]()
@@ -1743,12 +1743,12 @@ struct DateTime8(Hashable, Stringable):
             Self.
         """
 
-        var mask: UInt8 = 0b0
+        mask: UInt8 = 0b0
         if day:
             mask |= _cal_h8.mask_8_d << _cal_h8.shift_8_d
         if hour:
             mask |= _cal_h8.mask_8_h << _cal_h8.shift_8_h
-        var h = _cal.hash[_cal_h8](
+        h = _cal.hash[_cal_h8](
             0,
             day.or_else(0),
             hour.or_else(0),
@@ -2062,7 +2062,7 @@ struct DateTime8(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        var s = dt_str.to_iso[iso](1970, 1, self.day, self.hour, 0, 0)
+        s = dt_str.to_iso[iso](1970, 1, self.day, self.hour, 0, 0)
         return s
 
     @staticmethod
@@ -2086,10 +2086,10 @@ struct DateTime8(Hashable, Stringable):
         """
 
         try:
-            var p = dt_str.from_iso[
+            p = dt_str.from_iso[
                 iso, iana=False, pyzoneinfo=False, native=False
             ](s)
-            var dt = Self(p[0], p[1], p[2], p[3])
+            dt = Self(p[0], p[1], p[2], p[3])
             return dt
         except:
             return None
@@ -2106,5 +2106,5 @@ struct DateTime8(Hashable, Stringable):
             Self.
         """
 
-        var d = _cal.from_hash[_cal_h8](int(value))
+        d = _cal.from_hash[_cal_h8](int(value))
         return Self(day=int(d[2]), hash_val=value).add(hours=int(d[3]))

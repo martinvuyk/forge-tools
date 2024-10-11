@@ -15,16 +15,16 @@ fn test_add() raises:
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
     alias TZ = date._tz
-    var tz_0_ = TZ("Etc/UTC", 0, 0)
-    var tz_1 = TZ("Etc/UTC-1", 1, 0)
-    var tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
+    tz_0_ = TZ("Etc/UTC", 0, 0)
+    tz_1 = TZ("Etc/UTC-1", 1, 0)
+    tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
 
     # test february leapyear
-    var result = date(2024, 2, 28, tz_0_, pycal) + date(0, 0, 1, tz_0_, pycal)
-    var offset_0 = date(2024, 2, 29, tz_0_, unixcal)
-    var offset_p_1 = date(2024, 2, 29, tz_1, unixcal)
-    var offset_n_1 = date(2024, 2, 29, tz1_, unixcal)
-    var add_seconds = date(2024, 2, 28, tz_0_, unixcal).add(seconds=24 * 3600)
+    result = date(2024, 2, 28, tz_0_, pycal) + date(0, 0, 1, tz_0_, pycal)
+    offset_0 = date(2024, 2, 29, tz_0_, unixcal)
+    offset_p_1 = date(2024, 2, 29, tz_1, unixcal)
+    offset_n_1 = date(2024, 2, 29, tz1_, unixcal)
+    add_seconds = date(2024, 2, 28, tz_0_, unixcal).add(seconds=24 * 3600)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
     assert_equal(result, offset_n_1)
@@ -105,16 +105,16 @@ fn test_subtract() raises:
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
     alias TZ = date._tz
-    var tz_0_ = TZ("Etc/UTC", 0, 0)
-    var tz_1 = TZ("Etc/UTC-1", 1, 0)
-    var tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
+    tz_0_ = TZ("Etc/UTC", 0, 0)
+    tz_1 = TZ("Etc/UTC-1", 1, 0)
+    tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
 
     # test february leapyear
-    var result = date(2024, 3, 1, tz_0_, pycal) - date(0, 0, 1, tz_0_, pycal)
-    var offset_0 = date(2024, 2, 29, tz_0_, unixcal)
-    var offset_p_1 = date(2024, 2, 29, tz_1, unixcal)
-    var offset_n_1 = date(2024, 2, 29, tz1_, unixcal)
-    var sub_seconds = date(2024, 3, 1, tz_0_, unixcal).subtract(days=1)
+    result = date(2024, 3, 1, tz_0_, pycal) - date(0, 0, 1, tz_0_, pycal)
+    offset_0 = date(2024, 2, 29, tz_0_, unixcal)
+    offset_p_1 = date(2024, 2, 29, tz_1, unixcal)
+    offset_n_1 = date(2024, 2, 29, tz1_, unixcal)
+    sub_seconds = date(2024, 3, 1, tz_0_, unixcal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
     assert_equal(result, offset_n_1)
@@ -195,11 +195,11 @@ fn test_logic() raises:
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
     alias TZ = date._tz
-    var tz_0_ = TZ("Etc/UTC", 0, 0)
-    var tz_1 = TZ("Etc/UTC-1", 1, 0)
-    var tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
+    tz_0_ = TZ("Etc/UTC", 0, 0)
+    tz_1 = TZ("Etc/UTC-1", 1, 0)
+    tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
 
-    var ref1 = date(1970, 1, 1, tz_0_, pycal)
+    ref1 = date(1970, 1, 1, tz_0_, pycal)
     assert_true(ref1 == date(1970, 1, 1, tz_0_, unixcal))
     assert_true(ref1 != date(1970, 1, 2, tz_0_, unixcal))
     assert_true(ref1 == date(1970, 1, 1, tz_1, unixcal))
@@ -216,11 +216,11 @@ fn test_bitwise() raises:
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
     alias TZ = date._tz
-    var tz_0_ = TZ("Etc/UTC", 0, 0)
-    var tz_1 = TZ("Etc/UTC-1", 1, 0)
-    var tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
+    tz_0_ = TZ("Etc/UTC", 0, 0)
+    tz_1 = TZ("Etc/UTC-1", 1, 0)
+    tz1_ = TZ("Etc/UTC+1", 1, 0, -1)
 
-    var ref1 = date(1970, 1, 1, tz_0_, pycal)
+    ref1 = date(1970, 1, 1, tz_0_, pycal)
     assert_true((ref1 ^ date(1970, 1, 1, tz_0_, unixcal)) == 0)
     assert_true((ref1 ^ date(1970, 1, 1, tz_1, unixcal)) == 0)
     assert_true((ref1 ^ date(1969, 12, 31, tz1_, pycal)) != 0)
@@ -236,10 +236,10 @@ fn test_iso() raises:
     alias unixcal = UTCCalendar
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
     alias TZ = date._tz
-    var tz_0_ = TZ("Etc/UTC", 0, 0)
+    tz_0_ = TZ("Etc/UTC", 0, 0)
 
-    var ref1 = date(1970, 1, 1, tz_0_, unixcal)
-    var iso_str = "1970-01-01T00:00:00+00:00"
+    ref1 = date(1970, 1, 1, tz_0_, unixcal)
+    iso_str = "1970-01-01T00:00:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_equal(ref1, date.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
@@ -272,9 +272,9 @@ fn test_iso() raises:
 
 fn test_time() raises:
     alias date = Date[iana=False, pyzoneinfo=False, native=False]
-    var start = date.now()
+    start = date.now()
     time.sleep(0.1)
-    var end = date.now()
+    end = date.now()
     assert_equal(start, end)
 
 
@@ -283,21 +283,21 @@ fn test_hash() raises:
     alias unixcal = UTCCalendar
     alias dt = Date[iana=False, pyzoneinfo=False, native=False]
     alias TZ = dt._tz
-    var tz_0_ = TZ("Etc/UTC", 0, 0)
-    var ref1 = dt(1970, 1, 1, tz_0_, pycal)
-    var data = hash(ref1)
-    var parsed = dt.from_hash(data, tz_0_)
+    tz_0_ = TZ("Etc/UTC", 0, 0)
+    ref1 = dt(1970, 1, 1, tz_0_, pycal)
+    data = hash(ref1)
+    parsed = dt.from_hash(data, tz_0_)
     assert_true(ref1 == parsed)
-    var ref2 = dt(1970, 1, 1, tz_0_, unixcal)
-    var data2 = hash(ref2)
-    var parsed2 = dt.from_hash(data2, tz_0_)
+    ref2 = dt(1970, 1, 1, tz_0_, unixcal)
+    data2 = hash(ref2)
+    parsed2 = dt.from_hash(data2, tz_0_)
     assert_true(ref2 == parsed2)
     # both should be the same
     assert_true(ref1 == ref2)
 
 
 fn test_strftime() raises:
-    var fstr = "mojo: %Y🔥%m🤯%d"
+    fstr = "mojo: %Y🔥%m🤯%d"
     alias dt = Date[iana=False, pyzoneinfo=False, native=False]
     assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
     fstr = "%Y-%m-%d %H:%M:%S.%f"
@@ -305,11 +305,11 @@ fn test_strftime() raises:
 
 
 fn test_strptime() raises:
-    var fstr = "mojo: %Y🔥%m🤯%d"
-    var vstr = "mojo: 0009🔥06🤯01"
+    fstr = "mojo: %Y🔥%m🤯%d"
+    vstr = "mojo: 0009🔥06🤯01"
     alias dt = Date[iana=False, pyzoneinfo=False, native=False]
-    var ref1 = dt(9, 6, 1)
-    var parsed = dt.strptime(vstr, fstr)
+    ref1 = dt(9, 6, 1)
+    parsed = dt.strptime(vstr, fstr)
     assert_true(parsed)
     assert_equal(ref1, parsed.value())
     fstr = "%Y-%m-%d %H:%M:%S.%f"

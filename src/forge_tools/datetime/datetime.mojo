@@ -108,29 +108,29 @@ struct DateTime[
         - The Default `DateTime` hash has only Microsecond resolution.
     """
 
-    var year: UInt16
+    year: UInt16
     """Year."""
-    var month: UInt8
+    month: UInt8
     """Month."""
-    var day: UInt8
+    day: UInt8
     """Day."""
-    var hour: UInt8
+    hour: UInt8
     """Hour."""
-    var minute: UInt8
+    minute: UInt8
     """Minute."""
-    var second: UInt8
+    second: UInt8
     """Second."""
-    var m_second: UInt16
+    m_second: UInt16
     """M_second."""
-    var u_second: UInt16
+    u_second: UInt16
     """U_second."""
-    var n_second: UInt16
+    n_second: UInt16
     """N_second."""
     # TODO: tz and calendar should be references
     alias _tz = TimeZone[dst_storage, no_dst_storage, iana, pyzoneinfo, native]
-    var tz: Self._tz
+    tz: Self._tz
     """Tz."""
-    var calendar: Calendar[C]
+    calendar: Calendar[C]
     """Calendar."""
     alias _UnboundCal = DateTime[
         dst_storage, no_dst_storage, iana, pyzoneinfo, native, _
@@ -311,9 +311,9 @@ struct DateTime[
 
         if self.calendar == calendar:
             return self^.replace(calendar=calendar)
-        var year = self.year
-        var tmp = self.replace(calendar=self.calendar.from_year(year))
-        var ns = tmp.n_seconds_since_epoch()
+        year = self.year
+        tmp = self.replace(calendar=self.calendar.from_year(year))
+        ns = tmp.n_seconds_since_epoch()
         return Self._UnboundCal(calendar=calendar).add(
             years=int(year), n_seconds=int(ns)
         )
@@ -326,14 +326,14 @@ struct DateTime[
             Self.
         """
 
-        var TZ_UTC = Self._tz()
+        TZ_UTC = Self._tz()
         if self.tz == TZ_UTC:
             return self
-        var offset = self.tz.offset_at(
+        offset = self.tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
-        var of_h = int(offset.hour)
-        var of_m = int(offset.minute)
+        of_h = int(offset.hour)
+        of_m = int(offset.minute)
         if offset.sign == -1:
             self = self.add(hours=of_h, minutes=of_m)
         else:
@@ -352,20 +352,20 @@ struct DateTime[
             Self.
         """
 
-        var TZ_UTC = Self._tz()
+        TZ_UTC = Self._tz()
         if tz == TZ_UTC:
             return self
-        var offset = tz.offset_at(
+        offset = tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
-        var h = int(offset.hour)
-        var m = int(offset.minute)
-        var new_self: Self
+        h = int(offset.hour)
+        m = int(offset.minute)
+        new_self: Self
         if offset.sign == 1:
             new_self = self.add(hours=h, minutes=m)
         else:
             new_self = self.subtract(hours=h, minutes=m)
-        var leapsecs = int(
+        leapsecs = int(
             new_self.calendar.leapsecs_since_epoch(
                 new_self.year, new_self.month, new_self.day
             )
@@ -413,8 +413,8 @@ struct DateTime[
             `self.seconds_since_epoch() - other.seconds_since_epoch()`.
         """
 
-        var s = self
-        var o = other.replace(calendar=self.calendar)
+        s = self
+        o = other.replace(calendar=self.calendar)
 
         if s.tz != o.tz:
             s = s.to_utc()
@@ -438,15 +438,15 @@ struct DateTime[
                 in years is bigger than ~ 580 (Gregorian years).
             - sign: {1, -1} if the overflow was added or subtracted.
         """
-        var s = self
-        var o = other
+        s = self
+        o = other
         if s.tz != o.tz:
             s = s.to_utc()
             o = o.to_utc()
 
-        var overflow: UInt16 = 0
-        var sign: UInt8 = 1
-        var year = s.year
+        overflow: UInt16 = 0
+        sign: UInt8 = 1
+        year = s.year
         if s.year < o.year:
             sign = -1
             while o.year - year > _max_delta:
@@ -457,9 +457,9 @@ struct DateTime[
                 year -= _max_delta
                 overflow += _max_delta
 
-        var cal = self.calendar.from_year(year)
-        var self_ns = s.replace(calendar=cal).n_seconds_since_epoch()
-        var other_ns = o.replace(calendar=cal).n_seconds_since_epoch()
+        cal = self.calendar.from_year(year)
+        self_ns = s.replace(calendar=cal).n_seconds_since_epoch()
+        other_ns = o.replace(calendar=cal).n_seconds_since_epoch()
         return self_ns, other_ns, overflow, sign
 
     fn add(
@@ -498,76 +498,76 @@ struct DateTime[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        var max_year = int(self.calendar.max_year)
-        var y = int(self.year) + years
+        max_year = int(self.calendar.max_year)
+        y = int(self.year) + years
         if y > max_year:
             self.year = self.calendar.min_year
             self = self.add(years=y - (max_year + 1))
         else:
             self.year = y
 
-        var max_mon = int(self.calendar.max_month)
-        var mon = int(self.month) + months
+        max_mon = int(self.calendar.max_month)
+        mon = int(self.month) + months
         if mon > max_mon:
             self.month = self.calendar.min_month
             self = self.add(years=1, months=mon - (max_mon + 1))
         else:
             self.month = mon
 
-        var max_day = int(
+        max_day = int(
             self.calendar.max_days_in_month(self.year, self.month)
         )
-        var d = int(self.day) + days
+        d = int(self.day) + days
         if d > max_day:
             self.day = self.calendar.min_day
             self = self.add(months=1, days=d - (max_day + 1))
         else:
             self.day = d
 
-        var max_hour = int(self.calendar.max_hour)
-        var h = int(self.hour) + hours
+        max_hour = int(self.calendar.max_hour)
+        h = int(self.hour) + hours
         if h > max_hour:
             self.hour = self.calendar.min_hour
             self = self.add(days=1, hours=h - (max_hour + 1))
         else:
             self.hour = h
 
-        var max_min = int(self.calendar.max_minute)
-        var mi = int(self.minute) + minutes
+        max_min = int(self.calendar.max_minute)
+        mi = int(self.minute) + minutes
         if mi > max_min:
             self.minute = self.calendar.min_minute
             self = self.add(hours=1, minutes=mi - (max_min + 1))
         else:
             self.minute = mi
 
-        var max_sec = self.calendar.max_second(
+        max_sec = self.calendar.max_second(
             self.year, self.month, self.day, self.hour, self.minute
         )
-        var s = int(self.second) + seconds
+        s = int(self.second) + seconds
         if s > int(max_sec):
             self.second = self.calendar.min_second
             self = self.add(minutes=1, seconds=s - (int(max_sec) + 1))
         else:
             self.second = s
 
-        var max_msec = int(self.calendar.max_milisecond)
-        var ms = int(self.m_second) + m_seconds
+        max_msec = int(self.calendar.max_milisecond)
+        ms = int(self.m_second) + m_seconds
         if ms > max_msec:
             self.m_second = self.calendar.min_milisecond
             self = self.add(seconds=1, m_seconds=ms - (max_msec + 1))
         else:
             self.m_second = ms
 
-        var max_usec = int(self.calendar.max_microsecond)
-        var us = int(self.u_second) + u_seconds
+        max_usec = int(self.calendar.max_microsecond)
+        us = int(self.u_second) + u_seconds
         if us > max_usec:
             self.u_second = self.calendar.min_microsecond
             self = self.add(m_seconds=1, u_seconds=us - (max_usec + 1))
         else:
             self.u_second = us
 
-        var max_nsec = int(self.calendar.max_nanosecond)
-        var ns = int(self.n_second) + n_seconds
+        max_nsec = int(self.calendar.max_nanosecond)
+        ns = int(self.n_second) + n_seconds
         if ns > max_nsec:
             self.n_second = self.calendar.min_nanosecond
             self = self.add(u_seconds=1, n_seconds=ns - (max_nsec + 1))
@@ -611,8 +611,8 @@ struct DateTime[
             and keeps evaluating until valid.
         """
 
-        var min_nsec = int(self.calendar.min_nanosecond)
-        var ns = int(self.n_second) - n_seconds
+        min_nsec = int(self.calendar.min_nanosecond)
+        ns = int(self.n_second) - n_seconds
         if ns < min_nsec:
             self.n_second = self.calendar.max_nanosecond
             self = self.subtract(
@@ -621,8 +621,8 @@ struct DateTime[
         else:
             self.n_second = ns
 
-        var min_usec = int(self.calendar.min_microsecond)
-        var us = int(self.u_second) - u_seconds
+        min_usec = int(self.calendar.min_microsecond)
+        us = int(self.u_second) - u_seconds
         if us < min_usec:
             self.u_second = self.calendar.max_microsecond
             self = self.subtract(
@@ -631,18 +631,18 @@ struct DateTime[
         else:
             self.u_second = us
 
-        var min_msec = int(self.calendar.min_milisecond)
-        var ms = int(self.m_second) - m_seconds
+        min_msec = int(self.calendar.min_milisecond)
+        ms = int(self.m_second) - m_seconds
         if ms < min_msec:
             self.m_second = self.calendar.max_milisecond
             self = self.subtract(seconds=1, m_seconds=(int(min_msec) - 1) - ms)
         else:
             self.m_second = ms
 
-        var min_sec = int(self.calendar.min_second)
-        var s = int(self.second) - seconds
+        min_sec = int(self.calendar.min_second)
+        s = int(self.second) - seconds
         if s < min_sec:
-            var sec = self.calendar.max_second(
+            sec = self.calendar.max_second(
                 self.year, self.month, self.day, self.hour, self.minute
             )
             self.second = sec
@@ -650,24 +650,24 @@ struct DateTime[
         else:
             self.second = s
 
-        var min_min = int(self.calendar.min_minute)
-        var mi = int(self.minute) - minutes
+        min_min = int(self.calendar.min_minute)
+        mi = int(self.minute) - minutes
         if mi < min_min:
             self.minute = self.calendar.max_minute
             self = self.subtract(hours=1, minutes=(int(min_min) - 1) - mi)
         else:
             self.minute = mi
 
-        var min_hour = int(self.calendar.min_hour)
-        var h = int(self.hour) - hours
+        min_hour = int(self.calendar.min_hour)
+        h = int(self.hour) - hours
         if h < min_hour:
             self.hour = self.calendar.max_hour
             self = self.subtract(days=1, hours=(int(min_hour) - 1) - h)
         else:
             self.hour = h
 
-        var min_day = int(self.calendar.min_day)
-        var d = int(self.day) - days
+        min_day = int(self.calendar.min_day)
+        d = int(self.day) - days
         if d < min_day:
             self.day = 1
             self = self.subtract(months=1)
@@ -676,16 +676,16 @@ struct DateTime[
         else:
             self.day = d
 
-        var min_month = int(self.calendar.min_month)
-        var mon = int(self.month) - months
+        min_month = int(self.calendar.min_month)
+        mon = int(self.month) - months
         if mon < min_month:
             self.month = self.calendar.max_month
             self = self.subtract(years=1, months=(int(min_month) - 1) - mon)
         else:
             self.month = mon
 
-        var min_year = int(self.calendar.min_year)
-        var y = int(self.year) - years
+        min_year = int(self.calendar.min_year)
+        y = int(self.year) - years
         if y < min_year:
             self.year = self.calendar.max_year
             self = self.subtract(years=(min_year - 1) - y)
@@ -833,7 +833,7 @@ struct DateTime[
             The amount.
         """
 
-        var dt = self.to_utc()
+        dt = self.to_utc()
         return dt.calendar.leapsecs_since_epoch(dt.year, dt.month, dt.day)
 
     @always_inline
@@ -857,8 +857,8 @@ struct DateTime[
 
     @always_inline
     fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
-        var s: UInt
-        var o: UInt
+        s: UInt
+        o: UInt
         if self.tz != other.tz:
             s, o = hash(self.to_utc()), hash(other.to_utc())
         else:
@@ -1108,8 +1108,8 @@ struct DateTime[
             Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var dt = Self._UnboundCal(tz=zone, calendar=UTCCalendar).add(
+        zone = tz.value() if tz else Self._tz()
+        dt = Self._UnboundCal(tz=zone, calendar=UTCCalendar).add(
             seconds=seconds
         )
 
@@ -1132,9 +1132,9 @@ struct DateTime[
             Self.
         """
 
-        var zone = tz.or_else(Self._tz())
-        var ns = UInt16(time.now())
-        var dt = Self.from_unix_epoch(int(ns // 1_000_000_000), zone)
+        zone = tz.or_else(Self._tz())
+        ns = UInt16(time.now())
+        dt = Self.from_unix_epoch(int(ns // 1_000_000_000), zone)
         dt.m_second, dt.u_second, dt.n_second = ns // 1_000_000, ns // 1_000, ns
         return dt^
 
@@ -1186,7 +1186,7 @@ struct DateTime[
             String.
         """
 
-        var offset = self.tz.offset_at(
+        offset = self.tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
         return dt_str.to_iso[iso](
@@ -1215,7 +1215,7 @@ struct DateTime[
         alias C = UTCCalendar
         if self.calendar == C:
             return self.seconds_since_epoch().cast[DType.float64]()
-        var new_s = self.replace(calendar=C).subtract(years=0).add(years=0)
+        new_s = self.replace(calendar=C).subtract(years=0).add(years=0)
         return new_s.seconds_since_epoch().cast[DType.float64]()
 
     @staticmethod
@@ -1237,11 +1237,11 @@ struct DateTime[
             An Optional Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var parsed = dt_str.strptime(s, format_str)
+        zone = tz.value() if tz else Self._tz()
+        parsed = dt_str.strptime(s, format_str)
         if not parsed:
             return None
-        var p = parsed.value()
+        p = parsed.value()
         return Self(
             p.year,
             p.month,
@@ -1284,13 +1284,13 @@ struct DateTime[
         """
 
         try:
-            var p = dt_str.from_iso[
+            p = dt_str.from_iso[
                 iso, dst_storage, no_dst_storage, iana, pyzoneinfo, native
             ](s)
 
-            var year = p[0]
-            var month = p[1]
-            var day = p[2]
+            year = p[0]
+            month = p[1]
+            day = p[2]
 
             @parameter
             if iso.selected in (iso.HHMMSS, iso.HH_MM_SS):
@@ -1298,11 +1298,11 @@ struct DateTime[
                 month = calendar.min_month
                 day = calendar.min_day
 
-            var dt = Self(
+            dt = Self(
                 year, month, day, p[3], p[4], p[5], tz=p[6], calendar=calendar
             )
             if tz:
-                var t = tz.value()
+                t = tz.value()
                 if t != dt.tz:
                     return dt.to_utc().from_utc(t)
             return dt
@@ -1327,9 +1327,9 @@ struct DateTime[
             Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var d = calendar.from_hash(value)
-        var ns = calendar.min_nanosecond
+        zone = tz.value() if tz else Self._tz()
+        d = calendar.from_hash(value)
+        ns = calendar.min_nanosecond
         return Self(
             d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], ns, zone, calendar
         )

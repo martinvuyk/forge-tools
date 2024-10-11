@@ -32,7 +32,7 @@ struct Quaternion[T: DType = DType.float64]:
 
     alias _vec_type = SIMD[T, 4]
     alias _scalar_type = Scalar[T]
-    var vec: Self._vec_type
+    vec: Self._vec_type
     """The underlying SIMD vector."""
 
     fn __init__(
@@ -87,12 +87,12 @@ struct Quaternion[T: DType = DType.float64]:
 
         alias msg = "Quaternions can only be expressed with floating point types"
         constrained[T.is_floating_point(), msg=msg]()
-        var vec = Self._vec_type(0, x, y, z)
+        vec = Self._vec_type(0, x, y, z)
         if not is_normalized:
             vec = vec / sqrt((vec**2).reduce_add())
 
-        var sin_a = sin(theta * 0.5)
-        var cos_a = cos(theta * 0.5)
+        sin_a = sin(theta * 0.5)
+        cos_a = cos(theta * 0.5)
         self.vec = vec * sin_a
         self.vec[0] = cos_a
         self.normalize()
@@ -195,7 +195,7 @@ struct Quaternion[T: DType = DType.float64]:
 
         if is_normalized:
             return self.conjugate()
-        var qr_1 = self.conjugate()
+        qr_1 = self.conjugate()
         return Self(qr_1.vec / ((self.vec**2).reduce_add()))
 
     fn __invert__(self) -> Self:
@@ -232,11 +232,11 @@ struct Quaternion[T: DType = DType.float64]:
         alias sign1 = Self._vec_type(1, 1, 1, -1)
         alias sign2 = Self._vec_type(1, -1, 1, 1)
         alias sign3 = Self._vec_type(1, 1, -1, 1)
-        var rev = other.vec.shuffle[3, 2, 1, 0]()
-        var w = self.dot(other.vec * sign0)
-        var i = self.dot(rev.rotate_right[2]() * sign1)
-        var j = self.dot(other.vec.rotate_right[2]() * sign2)
-        var k = self.dot(rev * sign3)
+        rev = other.vec.shuffle[3, 2, 1, 0]()
+        w = self.dot(other.vec * sign0)
+        i = self.dot(rev.rotate_right[2]() * sign1)
+        j = self.dot(other.vec.rotate_right[2]() * sign2)
+        k = self.dot(rev * sign3)
         return Self(w, i, j, k)
 
     fn __imul__(inout self, other: Self):
@@ -284,8 +284,8 @@ struct Quaternion[T: DType = DType.float64]:
         Returns:
             The unit vector.
         """
-        var v = self.v()
-        var v_magn = sqrt((v**2).reduce_add())
+        v = self.v()
+        v_magn = sqrt((v**2).reduce_add())
         return v / v_magn
 
     fn phi(self) -> Self._scalar_type:
@@ -306,8 +306,8 @@ struct Quaternion[T: DType = DType.float64]:
             The result.
         """
 
-        var vec_magn = (self.v() ** 2).reduce_add()
-        var vec = self.vec * (sqrt((self.__abs__() - self.w) / 2) / vec_magn)
+        vec_magn = (self.v() ** 2).reduce_add()
+        vec = self.vec * (sqrt((self.__abs__() - self.w) / 2) / vec_magn)
         return Self(sqrt((self.__abs__() + self.w) / 2), vec[1], vec[2], vec[3])
 
     fn exp(self) -> Self:
@@ -316,10 +316,10 @@ struct Quaternion[T: DType = DType.float64]:
         Returns:
             The result.
         """
-        var v = self.v()
-        var v_magn = sqrt((v**2).reduce_add())
-        var w = exp(self.w) * cos(v_magn)
-        var v_new = v * (sin(v_magn) / v_magn)
+        v = self.v()
+        v_magn = sqrt((v**2).reduce_add())
+        w = exp(self.w) * cos(v_magn)
+        v_new = v * (sin(v_magn) / v_magn)
         return Self(w, v_new[1], v_new[2], v_new[3])
 
     fn ln(self) -> Self:
@@ -328,10 +328,10 @@ struct Quaternion[T: DType = DType.float64]:
         Returns:
             The result.
         """
-        var v = self.v()
-        var v_magn = sqrt((v**2).reduce_add())
-        var w = log(self.__abs__())
-        var v_new = v * (acos(self.w / self.__abs__()) / v_magn)
+        v = self.v()
+        v_magn = sqrt((v**2).reduce_add())
+        w = log(self.__abs__())
+        v_new = v * (acos(self.w / self.__abs__()) / v_magn)
         return Self(w, v_new[1], v_new[2], v_new[3])
 
     fn __pow__(self, value: Int) -> Self:
@@ -346,12 +346,12 @@ struct Quaternion[T: DType = DType.float64]:
 
         # we could use the self.n() and self.phi() functions
         # for readability but this is more efficient
-        var v = self.v()
-        var q_magn = self.__abs__()
-        var q_norm = self / Self._vec_type(q_magn)
-        var phi = acos(q_norm.w)
-        var w = q_magn**value * cos(value * phi)
-        var v_new = v * ((q_magn ** (value - 1)) / sin(value * phi))
+        v = self.v()
+        q_magn = self.__abs__()
+        q_norm = self / Self._vec_type(q_magn)
+        phi = acos(q_norm.w)
+        w = q_magn**value * cos(value * phi)
+        v_new = v * ((q_magn ** (value - 1)) / sin(value * phi))
         return Self(w, v_new[1], v_new[2], v_new[3])
 
     fn __ipow__(inout self, value: Int):
@@ -369,26 +369,26 @@ struct Quaternion[T: DType = DType.float64]:
     #     Returns:
     #         The resulting 3x3 Matrix.
     #     """
-    #     var vec = (~self).vec
-    #     var wxyz_x = vec * vec[1]
-    #     var wxyz_y = vec * vec[2]
-    #     var wxyz_z = vec * vec[3]
-    #     var wx = wxyz_x[0]
-    #     var xx = wxyz_x[1]
-    #     var yx = wxyz_x[2]
-    #     var zx = wxyz_x[3]
+    #     vec = (~self).vec
+    #     wxyz_x = vec * vec[1]
+    #     wxyz_y = vec * vec[2]
+    #     wxyz_z = vec * vec[3]
+    #     wx = wxyz_x[0]
+    #     xx = wxyz_x[1]
+    #     yx = wxyz_x[2]
+    #     zx = wxyz_x[3]
 
-    #     var wy = wxyz_y[0]
-    #     var xy = wxyz_y[1]
-    #     var yy = wxyz_y[2]
-    #     var zy = wxyz_y[3]
+    #     wy = wxyz_y[0]
+    #     xy = wxyz_y[1]
+    #     yy = wxyz_y[2]
+    #     zy = wxyz_y[3]
 
-    #     var wz = wxyz_z[0]
-    #     var xz = wxyz_z[1]
-    #     var yz = wxyz_z[2]
-    #     var zz = wxyz_z[3]
+    #     wz = wxyz_z[0]
+    #     xz = wxyz_z[1]
+    #     yz = wxyz_z[2]
+    #     zz = wxyz_z[3]
 
-    #     var mat = Matrix[T, 3, 3](
+    #     mat = Matrix[T, 3, 3](
     #         1 - 2 * (yy + zz),
     #         2 * (xy + wz),
     #         2 * (zx - wy),
@@ -413,7 +413,7 @@ struct Quaternion[T: DType = DType.float64]:
         return (self.vec == other.vec).reduce_and()
 
     fn __str__(self) -> String:
-        var s: String = "["
+        s: String = "["
 
         @parameter
         for i in range(8):
@@ -443,7 +443,7 @@ struct DualQuaternion[T: DType = DType.float64]:
 
     alias _vec_type = SIMD[T, 8]
     alias _scalar_type = Scalar[T]
-    var vec: Self._vec_type
+    vec: Self._vec_type
     """The underlying SIMD vector."""
 
     fn __init__(
@@ -514,17 +514,17 @@ struct DualQuaternion[T: DType = DType.float64]:
         alias msg = "DualQuaternions can only be expressed with floating point types"
         constrained[T.is_floating_point(), msg=msg]()
 
-        var cos_theta_2 = cos(dual_angle[0] * 0.5)
-        var w = cos_theta_2
-        var sin_theta_2 = sin(dual_angle[0] * 0.5)
-        var d_2 = dual_angle[1] * 0.5
-        var ew = -d_2 * sin_theta_2
-        var sin_theta_2_vec = SIMD[T, 8](sin_theta_2)
-        var l_d_cos_vec = screw_vec.slice[4]() * (d_2 * cos_theta_2)
-        var l_vec = SIMD[T, 8](
+        cos_theta_2 = cos(dual_angle[0] * 0.5)
+        w = cos_theta_2
+        sin_theta_2 = sin(dual_angle[0] * 0.5)
+        d_2 = dual_angle[1] * 0.5
+        ew = -d_2 * sin_theta_2
+        sin_theta_2_vec = SIMD[T, 8](sin_theta_2)
+        l_d_cos_vec = screw_vec.slice[4]() * (d_2 * cos_theta_2)
+        l_vec = SIMD[T, 8](
             0, 0, 0, ew, l_d_cos_vec[0], l_d_cos_vec[1], l_d_cos_vec[2], w
         )
-        var sin_vec = screw_vec * sin_theta_2_vec
+        sin_vec = screw_vec * sin_theta_2_vec
         self = Self((sin_vec + l_vec).rotate_right[1]())
 
     fn __getattr__[name: StringLiteral](self) -> Self._scalar_type:
@@ -608,10 +608,10 @@ struct DualQuaternion[T: DType = DType.float64]:
         """
 
         alias Quat = Quaternion[T]
-        var a = Quat(self.vec.slice[4]())
-        var b = Quat(self.vec.slice[4, offset=4]())
-        var c = Quat(other.vec.slice[4]())
-        var d = Quat(other.vec.slice[4, offset=4]())
+        a = Quat(self.vec.slice[4]())
+        b = Quat(self.vec.slice[4, offset=4]())
+        c = Quat(other.vec.slice[4]())
+        d = Quat(other.vec.slice[4, offset=4]())
         return Self((a * c).vec.join((a * d + b * c).vec))
 
     fn __imul__(inout self, other: Self):
@@ -659,8 +659,8 @@ struct DualQuaternion[T: DType = DType.float64]:
             The inverse.
         """
 
-        var qr = Quaternion[T](self.vec.slice[4]()).inverse()
-        var qd = Quaternion[T](self.vec.slice[4, offset=4]() * -1)
+        qr = Quaternion[T](self.vec.slice[4]()).inverse()
+        qd = Quaternion[T](self.vec.slice[4, offset=4]() * -1)
         return Self(qr, qr * (qd * qr))
 
     fn __abs__(self) -> Self._scalar_type:
@@ -723,9 +723,9 @@ struct DualQuaternion[T: DType = DType.float64]:
             Tuple[Quaternion[T], Quaternion[T])]: (r, t).
         """
 
-        var r = Quaternion[T](self.vec.slice[4]())
-        var rest = self.vec / r.vec.join(SIMD[T, 4](0))
-        var d = Quaternion[T](rest.slice[4, offset=4]()) * SIMD[T, 4](2)
+        r = Quaternion[T](self.vec.slice[4]())
+        rest = self.vec / r.vec.join(SIMD[T, 4](0))
+        d = Quaternion[T](rest.slice[4, offset=4]()) * SIMD[T, 4](2)
         return r, d
 
     fn to_screw(self) -> (SIMD[T, 8], SIMD[T, 2]):
@@ -740,15 +740,15 @@ struct DualQuaternion[T: DType = DType.float64]:
             Tuple[SIMD[T, 8], SIMD[T, 2])]: (screw_vec, dual_angle).
         """
 
-        var theta = acos(self.w) * 2
-        var sin_theta_2 = sin(theta * 0.5)
-        var cos_theta_2 = cos(theta * 0.5)
-        var d = 2 * self.ew / (-sin_theta_2)
-        var q1 = SIMD[T, 4](self.i, self.j, self.k, 0)
-        var q2 = SIMD[T, 4](self.ei, self.ej, self.ek, 0)
-        var l = q1 / sin_theta_2
-        var l_dual = l * (d * 0.5 * cos_theta_2)
-        var m = (q2 - l_dual) / sin_theta_2
+        theta = acos(self.w) * 2
+        sin_theta_2 = sin(theta * 0.5)
+        cos_theta_2 = cos(theta * 0.5)
+        d = 2 * self.ew / (-sin_theta_2)
+        q1 = SIMD[T, 4](self.i, self.j, self.k, 0)
+        q2 = SIMD[T, 4](self.ei, self.ej, self.ek, 0)
+        l = q1 / sin_theta_2
+        l_dual = l * (d * 0.5 * cos_theta_2)
+        m = (q2 - l_dual) / sin_theta_2
         return l.join(m), SIMD[T, 2](theta, d)
 
     fn __pow__(self, value: Int) -> Self:
@@ -764,9 +764,9 @@ struct DualQuaternion[T: DType = DType.float64]:
             The result.
         """
 
-        var screw = self.to_screw()
-        var screw_vec = screw[0]
-        var dual_angle = screw[1]
+        screw = self.to_screw()
+        screw_vec = screw[0]
+        dual_angle = screw[1]
         return Self(screw_vec, dual_angle * value)
 
     # TODO: need Matrix[T, 4, 4]
@@ -779,20 +779,20 @@ struct DualQuaternion[T: DType = DType.float64]:
     #         The resulting 4x4 Matrix.
     #     """
 
-    #     var qs = self.to_quaternions()
-    #     var r = qs[0]
-    #     var d = qs[1]
-    #     var m = Matrix[T, 4, 4]
-    #     var wk = 2 * (r.w * r.k)
-    #     var wi = 2 * (r.w * r.i)
-    #     var wj = 2 * (r.w * r.j)
-    #     var ij = 2 * (r.i * r.j)
-    #     var ik = 2 * (r.i * r.k)
-    #     var jk = 2 * (r.j * r.k)
-    #     var r2 = r**2
-    #     var i1 = (r2 * SIMD[T, 4](1, 1, -1, -1)).reduce_add()
-    #     var i2 = (r2 * SIMD[T, 4](1, -1, 1, -1)).reduce_add()
-    #     var i3 = (r2 * SIMD[T, 4](1, -1, -1, 1)).reduce_add()
+    #     qs = self.to_quaternions()
+    #     r = qs[0]
+    #     d = qs[1]
+    #     m = Matrix[T, 4, 4]
+    #     wk = 2 * (r.w * r.k)
+    #     wi = 2 * (r.w * r.i)
+    #     wj = 2 * (r.w * r.j)
+    #     ij = 2 * (r.i * r.j)
+    #     ik = 2 * (r.i * r.k)
+    #     jk = 2 * (r.j * r.k)
+    #     r2 = r**2
+    #     i1 = (r2 * SIMD[T, 4](1, 1, -1, -1)).reduce_add()
+    #     i2 = (r2 * SIMD[T, 4](1, -1, 1, -1)).reduce_add()
+    #     i3 = (r2 * SIMD[T, 4](1, -1, -1, 1)).reduce_add()
     #     m[0] = (1, 0, 0, 0)
     #     m[1] = (d.i, i1, ij - wk, ik + wj)
     #     m[2] = (d.j, ij + wk, i2, jk - wi)
@@ -811,13 +811,13 @@ struct DualQuaternion[T: DType = DType.float64]:
             The DualQuaternion value.
         """
 
-        var qs = self.to_quaternions()
-        var r = qs[0]
-        var t = qs[1]
-        var half_4 = SIMD[T, 4](0.5)
-        var half_8 = SIMD[T, 8](0.5)
-        var q1 = w * r
-        var q2 = (v + (t * w) * half_4) * r
+        qs = self.to_quaternions()
+        r = qs[0]
+        t = qs[1]
+        half_4 = SIMD[T, 4](0.5)
+        half_8 = SIMD[T, 8](0.5)
+        q1 = w * r
+        q2 = (v + (t * w) * half_4) * r
         return Self(q1.vec.join(q2.vec) * half_8)
 
     # TODO: capturing closures cannot be materialized as runtime values
@@ -860,9 +860,9 @@ struct DualQuaternion[T: DType = DType.float64]:
 
     #     @parameter
     #     fn closure(tau: Int) -> Self:
-    #         var w = 1 - tau
-    #         var vec_t = SIMD[T, 8](0, tau, tau, tau, tau, tau, tau, tau)
-    #         var vec = (~self * other).vec * vec_t
+    #         w = 1 - tau
+    #         vec_t = SIMD[T, 8](0, tau, tau, tau, tau, tau, tau, tau)
+    #         vec = (~self * other).vec * vec_t
     #         vec[0] = w
     #         return vec / sqrt((vec**2).reduce_add())
 
@@ -880,7 +880,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         return (self.vec == other.vec).reduce_and()
 
     fn __str__(self) -> String:
-        var s: String = "["
+        s: String = "["
 
         @parameter
         for i in range(8):

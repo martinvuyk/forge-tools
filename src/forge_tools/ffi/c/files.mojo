@@ -679,10 +679,10 @@ fn snprintf(
         Fn signature: ``int snprintf(char *restrict s, size_t n,`.
             const char *restrict format, ...)`.
     """
-    # var f = format.unsafe_ptr().bitcast[c_char]()
+    # f = format.unsafe_ptr().bitcast[c_char]()
     # FIXME: externall_call should handle this
     # return external_call["snprintf", C.int](s, n, format, extra_args=T)
-    # var num = __mlir_op.`pop.external_call`[
+    # num = __mlir_op.`pop.external_call`[
     #     func = "snprintf".value,
     #     variadicType = __mlir_attr[
     #         `(`,

@@ -74,13 +74,13 @@ struct TimeZone[
             using the given offsets when the timezone was constructed.
     """
 
-    var tz_str: StringLiteral
+    tz_str: StringLiteral
     """[`TZ identifier`](
         https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)."""
-    var has_dst: Bool
+    has_dst: Bool
     """Whether the `TimeZone` has Daylight Saving Time."""
-    var _dst: dst_storage
-    var _no_dst: no_dst_storage
+    _dst: dst_storage
+    _no_dst: no_dst_storage
 
     fn __init__(
         inout self,
@@ -120,12 +120,12 @@ struct TimeZone[
         self._dst = dst_storage()
         self._no_dst = no_dst_storage()
         if not has_dst:
-            var s = -1 if sign == -1 and not (
+            s = -1 if sign == -1 and not (
                 offset_h == 0 and offset_m == 0
             ) else 1
             self._no_dst.add(tz_str, Offset(offset_h, offset_m, s))
 
-        var z = zoneinfo
+        z = zoneinfo
 
         @parameter
         if native:
@@ -136,14 +136,14 @@ struct TimeZone[
 
         @parameter
         if iana:
-            var zi = z.value()
+            zi = z.value()
             if has_dst:
-                var dst = zi.with_dst.get(tz_str)
+                dst = zi.with_dst.get(tz_str)
                 if not dst:
                     return
                 self._dst.add(tz_str, dst.value())
                 return
-            var tz = zi.with_no_dst.get(tz_str)
+            tz = zi.with_no_dst.get(tz_str)
             if not tz:
                 return
             self._no_dst.add(tz_str, tz.value())
@@ -165,14 +165,14 @@ struct TimeZone[
             constrained[False, "there is no such attribute"]()
             return 0
 
-        var offset: Offset
+        offset: Offset
         if self.has_dst:
-            var data = self._dst.get(self.tz_str)
+            data = self._dst.get(self.tz_str)
             if not data:
                 raise Error("ZoneInfo not found")
             offset = data.value().from_hash()[2]
         else:
-            var data = self._no_dst.get(self.tz_str)
+            data = self._no_dst.get(self.tz_str)
             if not data:
                 raise Error("ZoneInfo not found")
             offset = data.value()
@@ -211,27 +211,27 @@ struct TimeZone[
 
         @parameter
         if iana and native:
-            var tz = self._dst.get(self.tz_str)
-            var offset = offset_at(tz, year, month, day, hour, minute, second)
+            tz = self._dst.get(self.tz_str)
+            offset = offset_at(tz, year, month, day, hour, minute, second)
             if offset:
                 return offset.value()
         elif iana and pyzoneinfo:
             try:
                 from python import Python
 
-                var zoneinfo = Python.import_module("zoneinfo")
-                var dt = Python.import_module("datetime")
-                var zone = zoneinfo.ZoneInfo(self.tz_str)
-                var local = dt.datetime(year, month, day, hour, tzinfo=zone)
-                var offset = local.utcoffset()
-                var sign = 1 if offset.days == -1 else -1
-                var hours = int(offset.seconds) // (60 * 60) - int(hour)
-                var minutes = int(offset.seconds) % 60
+                zoneinfo = Python.import_module("zoneinfo")
+                dt = Python.import_module("datetime")
+                zone = zoneinfo.ZoneInfo(self.tz_str)
+                local = dt.datetime(year, month, day, hour, tzinfo=zone)
+                offset = local.utcoffset()
+                sign = 1 if offset.days == -1 else -1
+                hours = int(offset.seconds) // (60 * 60) - int(hour)
+                minutes = int(offset.seconds) % 60
                 return Offset(hours, minutes, sign)
             except:
                 pass
 
-        var data = self._no_dst.get(self.tz_str)
+        data = self._no_dst.get(self.tz_str)
         if data:
             return data.value()
         return Offset(0, 0, 1)

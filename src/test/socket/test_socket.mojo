@@ -8,8 +8,8 @@ from forge_tools.socket import Socket
 
 
 def test_ntohs():
-    var value = UInt16(1 << 15)
-    var res = Socket.ntohs(value)
+    value = UInt16(1 << 15)
+    res = Socket.ntohs(value)
 
     @parameter
     if is_big_endian():
@@ -19,8 +19,8 @@ def test_ntohs():
 
 
 def test_ntohl():
-    var value = UInt32(1 << 31)
-    var res = Socket.ntohl(value)
+    value = UInt32(1 << 31)
+    res = Socket.ntohl(value)
 
     @parameter
     if is_big_endian():
@@ -30,8 +30,8 @@ def test_ntohl():
 
 
 def test_htons():
-    var value = UInt16(1 << 15)
-    var res = Socket.htons(value)
+    value = UInt16(1 << 15)
+    res = Socket.htons(value)
 
     @parameter
     if is_big_endian():
@@ -41,8 +41,8 @@ def test_htons():
 
 
 def test_htonl():
-    var value = UInt32(1 << 31)
-    var res = Socket.htonl(value)
+    value = UInt32(1 << 31)
+    res = Socket.htonl(value)
 
     @parameter
     if is_big_endian():
@@ -52,80 +52,80 @@ def test_htonl():
 
 
 def test_inet_aton():
-    var res = Socket.inet_aton(String("123.45.67.89"))
+    res = Socket.inet_aton(String("123.45.67.89"))
     assert_true(res)
-    var value: UInt32 = 0b01111011001011010100001101011001
+    value: UInt32 = 0b01111011001011010100001101011001
 
     @parameter
     if not is_big_endian():
-        var b0 = (value << 24)
-        var b1 = ((value << 8) & 0xFF_00_00)
-        var b2 = ((value >> 8) & 0xFF_00)
-        var b3 = (value >> 24)
+        b0 = (value << 24)
+        b1 = ((value << 8) & 0xFF_00_00)
+        b2 = ((value >> 8) & 0xFF_00)
+        b3 = (value >> 24)
         value = b0 | b1 | b2 | b3
     assert_equal(value, res.value())
 
 
 def test_inet_ntoa():
-    var value: UInt32 = 0b01111011001011010100001101011001
+    value: UInt32 = 0b01111011001011010100001101011001
 
     @parameter
     if not is_big_endian():
-        var b0 = (value << 24)
-        var b1 = ((value << 8) & 0xFF_00_00)
-        var b2 = ((value >> 8) & 0xFF_00)
-        var b3 = (value >> 24)
+        b0 = (value << 24)
+        b1 = ((value << 8) & 0xFF_00_00)
+        b2 = ((value >> 8) & 0xFF_00)
+        b3 = (value >> 24)
         value = b0 | b1 | b2 | b3
-    var res = Socket.inet_ntoa(value)
+    res = Socket.inet_ntoa(value)
     assert_equal(String("123.45.67.89"), res)
 
 
 def test_server_sync_ipv4():
-    var socket = Socket()
+    socket = Socket()
     socket.bind(("0.0.0.0", 8001))
     socket.listen()
 
 
 # def test_client_sync_ipv4():
-#     var socket = Socket()
+#     socket = Socket()
 #     await socket.connect(("0.0.0.0", 8000))
-#     var client_msg = String("123456789")
-#     var bytes_sent = await socket.send(client_msg.as_bytes_span())
+#     client_msg = String("123456789")
+#     bytes_sent = await socket.send(client_msg.as_bytes_span())
 #     _ = socket
 
 
 def test_create_server_sync_ipv4():
-    var server = Socket.create_server(("0.0.0.0", 8002))
+    server = Socket.create_server(("0.0.0.0", 8002))
     _ = server
 
 
 # def test_create_connection_sync_ipv4():
-#     var client = Socket.create_connection(("0.0.0.0", 8000))
+#     client = Socket.create_connection(("0.0.0.0", 8000))
 #     _ = client
 
 # async def test_client_server_ipv4():
-#     var server = Socket.create_server(("0.0.0.0", 8000))
-#     var client = Socket.create_connection(("0.0.0.0", 8000))
+#     server = Socket.create_server(("0.0.0.0", 8000))
+#     client = Socket.create_connection(("0.0.0.0", 8000))
 
-#     var client_msg = String("123456789")
-#     var bytes_sent = client.send(client_msg.as_bytes_span())
-#     var conn = (await server.accept())[0]
+#     client_msg = String("123456789")
+#     bytes_sent = client.send(client_msg.as_bytes_span())
+#     conn = (await server.accept())[0]
 #     assert_equal(9, await bytes_sent^)
 
 #     alias Life = ImmutableAnyLifetime
-#     var server_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
-#     var server_buf = Span[UInt8, Life](unsafe_ptr=server_ptr, len=10)
-#     var server_bytes_recv = await conn.recv(server_buf)
+#     server_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
+#     server_buf = Span[UInt8, Life](unsafe_ptr=server_ptr, len=10)
+#     server_bytes_recv = await conn.recv(server_buf)
 #     assert_equal(9, server_bytes_recv)
 #     assert_equal(client_msg, String(ptr=server_ptr, len=10))
 
-#     var server_msg = String("987654321")
-#     var server_sent = await conn.send(server_msg.as_bytes_span())
+#     server_msg = String("987654321")
+#     server_sent = await conn.send(server_msg.as_bytes_span())
 #     assert_equal(9, server_sent)
 
-#     var client_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
-#     var client_buf = Span[UInt8, Life](unsafe_ptr=client_ptr, len=10)
-#     var client_bytes_recv = await client.recv(client_buf)
+#     client_ptr = UnsafePointer[UInt8](stack_allocation[10, UInt8]())
+#     client_buf = Span[UInt8, Life](unsafe_ptr=client_ptr, len=10)
+#     client_bytes_recv = await client.recv(client_buf)
 #     assert_equal(9, client_bytes_recv)
 #     assert_equal(server_msg, String(ptr=client_ptr, len=10))
 

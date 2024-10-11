@@ -74,7 +74,7 @@ struct _UnixSocket[
 ]:
     """Generic POSIX compliant socket implementation."""
 
-    var fd: Arc[FileDescriptor]
+    fd: Arc[FileDescriptor]
     """The Socket's `Arc[FileDescriptor]`."""
     alias _sock_family = _get_unix_sock_family_constant(sock_family)
     alias _sock_type = _get_unix_sock_type_constant(sock_type)
@@ -86,9 +86,9 @@ struct _UnixSocket[
 
     fn __init__(inout self) raises:
         """Create a new socket object."""
-        var fd = socket(Self._sock_family, Self._sock_type, Self._sock_protocol)
+        fd = socket(Self._sock_family, Self._sock_type, Self._sock_protocol)
         if fd == -1:
-            var message = char_ptr_to_string(strerror(get_errno()))
+            message = char_ptr_to_string(strerror(get_errno()))
             raise Error("Failed to create socket: " + message)
         self.fd = FileDescriptor(int(fd))
 
@@ -101,9 +101,9 @@ struct _UnixSocket[
         `Arc[FileDescriptor]`.
         """
         if self.fd.count() == 1:
-            var err = shutdown(self.fd.value, SHUT_RDWR)
+            err = shutdown(self.fd.value, SHUT_RDWR)
             if err == -1:
-                var message = char_ptr_to_string(strerror(get_errno()))
+                message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed trying to close the socket: " + message)
 
     fn __del__(owned self):
@@ -117,12 +117,12 @@ struct _UnixSocket[
 
     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
         """Set socket options."""
-        var ptr = stack_allocation[1, Int]()
+        ptr = stack_allocation[1, Int]()
         ptr[0] = option_value
-        var cvoid = ptr.bitcast[C.void]()
-        var s = sizeof[Int]()
+        cvoid = ptr.bitcast[C.void]()
+        s = sizeof[Int]()
         if setsockopt(self.fd.value, level, option_name, cvoid, s) == -1:
-            var message = char_ptr_to_string(strerror(get_errno()))
+            message = char_ptr_to_string(strerror(get_errno()))
             raise Error("Failed to set socket options: " + message)
 
     fn bind(self, address: sock_address) raises:
@@ -130,20 +130,20 @@ struct _UnixSocket[
 
         @parameter
         if _type_is_eq[sock_address, IPv4Addr]():
-            var addr = rebind[IPv4Addr](address)
-            var port = htons(addr.port)
-            var ip_buf = stack_allocation[4, C.void]()
-            var ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
-            var err = inet_pton(Self._sock_family, ip_ptr, ip_buf)
+            addr = rebind[IPv4Addr](address)
+            port = htons(addr.port)
+            ip_buf = stack_allocation[4, C.void]()
+            ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
+            err = inet_pton(Self._sock_family, ip_ptr, ip_buf)
             if err == 0:
                 raise Error("Invalid Address.")
-            var ip = ip_buf.bitcast[C.u_int]().load()
-            var zero = StaticTuple[C.char, 8]()
-            var ai = sockaddr_in(Self._sock_family, port, ip, zero)
-            var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
+            ip = ip_buf.bitcast[C.u_int]().load()
+            zero = StaticTuple[C.char, 8]()
+            ai = sockaddr_in(Self._sock_family, port, ip, zero)
+            ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if bind(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                var message = char_ptr_to_string(strerror(get_errno()))
+                message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed to bind the socket: " + message)
             _ = ai
         else:
@@ -156,7 +156,7 @@ struct _UnixSocket[
         new connections. If `backlog == 0`, a default value is chosen.
         """
         if listen(self.fd.value, C.int(backlog)) == -1:
-            var message = char_ptr_to_string(strerror(get_errno()))
+            message = char_ptr_to_string(strerror(get_errno()))
             raise Error("Failed to listen on socket: " + message)
 
     async fn connect(self, address: sock_address) raises:
@@ -164,20 +164,20 @@ struct _UnixSocket[
 
         @parameter
         if _type_is_eq[sock_address, IPv4Addr]():
-            var addr = rebind[IPv4Addr](address)
-            var port = htons(addr.port)
-            var ip_buf = stack_allocation[4, C.void]()
-            var ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
-            var err = inet_pton(Self._sock_family, ip_ptr, ip_buf)
+            addr = rebind[IPv4Addr](address)
+            port = htons(addr.port)
+            ip_buf = stack_allocation[4, C.void]()
+            ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
+            err = inet_pton(Self._sock_family, ip_ptr, ip_buf)
             if err == 0:
                 raise Error("Invalid Address.")
-            var ip = ip_buf.bitcast[C.u_int]().load()
-            var zero = StaticTuple[C.char, 8]()
-            var ai = sockaddr_in(Self._sock_family, port, ip, zero)
-            var ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
+            ip = ip_buf.bitcast[C.u_int]().load()
+            zero = StaticTuple[C.char, 8]()
+            ai = sockaddr_in(Self._sock_family, port, ip, zero)
+            ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if connect(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
                 _ = ai
-                var message = char_ptr_to_string(strerror(get_errno()))
+                message = char_ptr_to_string(strerror(get_errno()))
                 raise Error("Failed to create socket: " + message)
             _ = ai
         else:
@@ -192,18 +192,18 @@ struct _UnixSocket[
         @parameter
         if _type_is_eq[sock_address, IPv4Addr]():
             try:
-                var addr_ptr = stack_allocation[1, sockaddr]()
-                var sin_size = socklen_t(sizeof[socklen_t]())
-                var size_ptr = UnsafePointer[socklen_t].address_of(sin_size)
-                var fd = int(accept(self.fd.value, addr_ptr, size_ptr))
+                addr_ptr = stack_allocation[1, sockaddr]()
+                sin_size = socklen_t(sizeof[socklen_t]())
+                size_ptr = UnsafePointer[socklen_t].address_of(sin_size)
+                fd = int(accept(self.fd.value, addr_ptr, size_ptr))
                 if fd == -1:
-                    var message = char_ptr_to_string(strerror(get_errno()))
+                    message = char_ptr_to_string(strerror(get_errno()))
                     raise Error("Failed to create socket: " + message)
-                var sa_family = addr_ptr.bitcast[sa_family_t]()[0]
+                sa_family = addr_ptr.bitcast[sa_family_t]()[0]
                 if sa_family != Self._sock_family:
                     raise Error("Wrong Address Family for this socket.")
-                var p = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
-                var addr_str = String(ptr=p.bitcast[UInt8](), len=int(sin_size))
+                p = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
+                addr_str = String(ptr=p.bitcast[UInt8](), len=int(sin_size))
                 return Self(fd=fd), sock_address(addr_str^)
             except e:
                 print(str(e), file=STDERR_FILENO)
@@ -216,15 +216,15 @@ struct _UnixSocket[
     fn socketpair() raises -> (Self, Self):
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
-        var socket_vector = stack_allocation[2, C.int]()
-        var err = socket(
+        socket_vector = stack_allocation[2, C.int]()
+        err = socket(
             Self._sock_family,
             Self._sock_type,
             Self._sock_protocol,
             socket_vector,
         )
         if err == -1:
-            var message = char_ptr_to_string(strerror(get_errno()))
+            message = char_ptr_to_string(strerror(get_errno()))
             raise Error("Failed to create socket: " + message)
         return Self(fd=int(socket_vector[0])), Self(fd=int(socket_vector[1]))
 
@@ -246,16 +246,16 @@ struct _UnixSocket[
 
     async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
-        var ptr = buf.unsafe_ptr().bitcast[C.void]()
-        var sent = int(send(self.fd.value, ptr, len(buf), flags))
+        ptr = buf.unsafe_ptr().bitcast[C.void]()
+        sent = int(send(self.fd.value, ptr, len(buf), flags))
         if sent == -1:
             print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
         return sent
 
     async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Receive up to `len(buf)` bytes into the buffer."""
-        var ptr = buf.unsafe_ptr().bitcast[C.void]()
-        var recvd = int(recv(self.fd.value, ptr, len(buf), flags))
+        ptr = buf.unsafe_ptr().bitcast[C.void]()
+        recvd = int(recv(self.fd.value, ptr, len(buf), flags))
         if recvd == -1:
             print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
         return recvd
@@ -307,41 +307,41 @@ struct _UnixSocket[
             [Reference](\
             https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
         """
-        var info = List[
+        info = List[
             Tuple[SockFamily, SockType, SockProtocol, String, sock_address]
         ]()
-        var hints = addrinfo()
+        hints = addrinfo()
         hints.ai_family = Self._sock_family
         hints.ai_socktype = Self._sock_type
         hints.ai_flags = flags
         hints.ai_protocol = Self._sock_protocol
-        var hints_p = UnsafePointer[addrinfo].address_of(hints)
-        var nodename = str(address)
-        var nodename_p = nodename.unsafe_ptr().bitcast[C.char]()
-        var servname_p = NULL.bitcast[C.char]()
-        var result = addrinfo()
+        hints_p = UnsafePointer[addrinfo].address_of(hints)
+        nodename = str(address)
+        nodename_p = nodename.unsafe_ptr().bitcast[C.char]()
+        servname_p = NULL.bitcast[C.char]()
+        result = addrinfo()
         alias UP = UnsafePointer
-        var res_p = C.ptr_addr(int(UP[addrinfo].address_of(result)))
-        var res_p_p = UP[C.ptr_addr].address_of(res_p)
-        var err = getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
+        res_p = C.ptr_addr(int(UP[addrinfo].address_of(result)))
+        res_p_p = UP[C.ptr_addr].address_of(res_p)
+        err = getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
         if err != 0:
-            var msg = char_ptr_to_string(strerror(err))
+            msg = char_ptr_to_string(strerror(err))
             raise Error("Error in getaddrinfo(). Code: " + msg)
-        var next_addr = NULL
-        var first = True
+        next_addr = NULL
+        first = True
         while first or next_addr != NULL:
             first = False
-            var af = _parse_unix_sock_family_constant(int(result.ai_family))
-            var st = _parse_unix_sock_type_constant(int(result.ai_socktype))
-            var pt = _parse_unix_sock_protocol_constant(int(result.ai_protocol))
-            var addrlen = int(result.ai_addrlen)
-            var addr_ptr = result.ai_addr.bitcast[UInt8]()
+            af = _parse_unix_sock_family_constant(int(result.ai_family))
+            st = _parse_unix_sock_type_constant(int(result.ai_socktype))
+            pt = _parse_unix_sock_protocol_constant(int(result.ai_protocol))
+            addrlen = int(result.ai_addrlen)
+            addr_ptr = result.ai_addr.bitcast[UInt8]()
             alias S = StringSlice[ImmutableAnyLifetime]
-            var addr = String(S(unsafe_from_utf8_ptr=addr_ptr, len=addrlen))
-            var can = String()
+            addr = String(S(unsafe_from_utf8_ptr=addr_ptr, len=addrlen))
+            can = String()
             if flags != 0:
-                var p = result.ai_canonname
-                var l = int(strlen(p))
+                p = result.ai_canonname
+                l = int(strlen(p))
                 can = String(S(unsafe_from_utf8_ptr=p.bitcast[UInt8](), len=l))
             info.append((af, st, pt, can^, sock_address(addr^)))
             result = next_addr.bitcast[addrinfo]()[0]
@@ -360,12 +360,12 @@ struct _UnixSocket[
         address."""
         alias cond = _type_is_eq[sock_address, IPv4Addr]()
         constrained[cond, "sock_address must be IPv4Addr"]()
-        var errors = List[String]()
-        var idx = 0
-        var time = timeout.value() if timeout else Self.getdefaulttimeout()
+        errors = List[String]()
+        idx = 0
+        time = timeout.value() if timeout else Self.getdefaulttimeout()
         for res in Self.getaddrinfo(rebind[sock_address](address)):
             try:
-                var socket = Self()
+                socket = Self()
                 _ = socket.settimeout(time)
                 socket.bind(rebind[sock_address](source_address))
                 await socket.connect(res[][4])
@@ -389,12 +389,12 @@ struct _UnixSocket[
         address."""
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
-        var errors = List[String]()
-        var idx = 0
-        var time = timeout.value() if timeout else Self.getdefaulttimeout()
+        errors = List[String]()
+        idx = 0
+        time = timeout.value() if timeout else Self.getdefaulttimeout()
         for res in Self.getaddrinfo(rebind[sock_address](address)):
             try:
-                var socket = Self()
+                socket = Self()
                 _ = socket.settimeout(time)
                 socket.bind(rebind[sock_address](source_address))
                 await socket.connect(res[][4])
@@ -416,7 +416,7 @@ struct _UnixSocket[
         """Create a socket, bind it to a specified address, and listen."""
         alias cond = _type_is_eq[sock_address, IPv4Addr]()
         constrained[cond, "sock_address must be IPv4Addr"]()
-        var socket = Self()
+        socket = Self()
         socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         if reuse_port:
             socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
@@ -435,7 +435,7 @@ struct _UnixSocket[
         no dual stack IPv6."""
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
-        var socket = Self()
+        socket = Self()
         socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
         if reuse_port:
@@ -458,7 +458,7 @@ struct _UnixSocket[
         ]
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
-        var ipv6_sock = Self()
+        ipv6_sock = Self()
         ipv6_sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         if dualstack_ipv6:
             ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)

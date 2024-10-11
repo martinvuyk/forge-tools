@@ -21,14 +21,14 @@ Examples:
 
 ```mojo
 from forge_tools.collections import Result
-var a = Result(1)
-var b = Result[Int]()
+a = Result(1)
+b = Result[Int]()
 if a:
     print(a.value())  # prints 1
 if b:  # bool(b) is False, so no print
     print(b.value())
-var c = a.or_else(2)
-var d = b.or_else(2)
+c = a.or_else(2)
+d = b.or_else(2)
 print(c)  # prints 1
 print(d)  # prints 2
 ```
@@ -37,10 +37,10 @@ And if more information about the returned Error is wanted it is available.
 
 ```mojo
 from forge_tools.collections import Result
-var a = Result(1)
-var b = Result[Int](err=Error("something went wrong"))
-var c = Result[Int](None, Error("error 1"))
-var d = Result[Int](err=Error("error 2"))
+a = Result(1)
+b = Result[Int](err=Error("something went wrong"))
+c = Result[Int](None, Error("error 1"))
+d = Result[Int](err=Error("error 2"))
 if a:
     print(a.err)  # prints ""
 if not b:
@@ -63,14 +63,14 @@ fn func_that_can_err[A: CollectionElement]() -> Result[A]:
     ...
 
 fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T]:
-    var result: Result[A] = func_that_can_err[A]()
+    result: Result[A] = func_that_can_err[A]()
     if not result:
         # the internal err gets transferred to a Result[T]
         return result
         # its also possible to do:
         # return None, Error("func_that_can_err failed")
-    var val = result.value()
-    var final_result: T
+    val = result.value()
+    final_result: T
     ...
     return final_result
 ```
@@ -105,14 +105,14 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 
     ```mojo
     from forge_tools.collections import Result
-    var a = Result(1)
-    var b = Result[Int]()
+    a = Result(1)
+    b = Result[Int]()
     if a:
         print(a.value())  # prints 1
     if b:  # bool(b) is False, so no print
         print(b.value())
-    var c = a.or_else(2)
-    var d = b.or_else(2)
+    c = a.or_else(2)
+    d = b.or_else(2)
     print(c)  # prints 1
     print(d)  # prints 2
     ```
@@ -121,10 +121,10 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 
     ```mojo
     from forge_tools.collections import Result
-    var a = Result(1)
-    var b = Result[Int](err=Error("something went wrong"))
-    var c = Result[Int](None, Error("error 1"))
-    var d = Result[Int](err=Error("error 2"))
+    a = Result(1)
+    b = Result[Int](err=Error("something went wrong"))
+    c = Result[Int](None, Error("error 1"))
+    d = Result[Int](err=Error("error 2"))
     if a:
         print(a.err)  # prints ""
     if not b:
@@ -147,14 +147,14 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         return Error("failed")
 
     fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T]:
-        var result: Result[A] = func_that_can_err[A]()
+        result: Result[A] = func_that_can_err[A]()
         if not result:
             # the internal err gets transferred to a Result[T]
             return result
             # its also possible to do:
             # return None, Error("func_that_can_err failed")
-        var val = result.value()
-        var final_result: T
+        val = result.value()
+        final_result: T
         ...
         return final_result
     ```
@@ -164,8 +164,8 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     # NoneType comes first so its index is 0.
     # This means that Results that are 0-initialized will be None.
     alias _type = Variant[NoneType, T]
-    var _value: Self._type
-    var err: Error
+    _value: Self._type
+    err: Error
     """The Error inside the `Result`."""
 
     @always_inline("nodebug")
@@ -385,7 +385,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         return 1
 
     fn do_some_other_thing() -> Result2[String, "OtherError"]:
-        var a = do_something(-1)
+        a = do_something(-1)
         if a.err:
             print(a.err) # IndexError: index out of bounds: -1
             return a # error message ("index out of bounds: -1") gets transferred
@@ -395,9 +395,9 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
     """
 
     alias _type = Variant[NoneType, T]
-    var _value: Self._type
+    _value: Self._type
     alias _err_type = Error2[E]
-    var err: Self._err_type
+    err: Self._err_type
     """The Error inside the `Result`."""
 
     @always_inline("nodebug")

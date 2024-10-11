@@ -16,7 +16,7 @@ fn get_errno() -> C.int:
 
     @parameter
     if os_is_windows():
-        var errno = stack_allocation[1, C.int]()
+        errno = stack_allocation[1, C.int]()
         _ = external_call["_get_errno", C.void](errno)
         return errno[]
     else:

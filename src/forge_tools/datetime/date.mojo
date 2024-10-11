@@ -103,17 +103,17 @@ struct Date[
             the same day.
     """
 
-    var year: UInt16
+    year: UInt16
     """Year."""
-    var month: UInt8
+    month: UInt8
     """Month."""
-    var day: UInt8
+    day: UInt8
     """Day."""
     # TODO: tz and calendar should be references
     alias _tz = TimeZone[dst_storage, no_dst_storage, iana, pyzoneinfo, native]
-    var tz: Self._tz
+    tz: Self._tz
     """Tz."""
-    var calendar: Calendar[C]
+    calendar: Calendar[C]
     """Calendar."""
     alias _UnboundCal = Date[
         dst_storage, no_dst_storage, iana, pyzoneinfo, native, _
@@ -222,7 +222,7 @@ struct Date[
 
         if self.calendar == calendar:
             return self.replace(calendar=calendar)
-        var s = self.seconds_since_epoch()
+        s = self.seconds_since_epoch()
         return Self._UnboundCal(calendar=calendar).add(seconds=int(s))
 
     fn to_utc(owned self) -> Self:
@@ -234,11 +234,11 @@ struct Date[
             Self with tz casted to UTC.
         """
 
-        var TZ_UTC = Self._tz()
+        TZ_UTC = Self._tz()
         if self.tz == TZ_UTC:
             return self^
-        var offset = self.tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
-        var beyond_day = 12 + offset.hour + offset.minute / 60 > 24
+        offset = self.tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
+        beyond_day = 12 + offset.hour + offset.minute / 60 > 24
         if beyond_day and offset.sign == -1:
             self = self.add(days=1)
         elif beyond_day and offset.sign == 1:
@@ -257,20 +257,20 @@ struct Date[
         Returns:
             Self with tz casted to given tz.
         """
-        var TZ_UTC = Self._tz()
+        TZ_UTC = Self._tz()
         if tz == TZ_UTC:
             return self^
-        var maxmin = self.calendar.max_minute
-        var maxsec = self.calendar.max_typical_second
-        var offset = tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
-        var of_h = int(offset.hour)
-        var of_m = int(offset.minute)
-        var amnt = int(of_h * maxmin * maxsec + of_m * maxsec)
+        maxmin = self.calendar.max_minute
+        maxsec = self.calendar.max_typical_second
+        offset = tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
+        of_h = int(offset.hour)
+        of_m = int(offset.minute)
+        amnt = int(of_h * maxmin * maxsec + of_m * maxsec)
         if offset.sign == 1:
             self = self.add(seconds=amnt)
         else:
             self = self.subtract(seconds=amnt)
-        var leapsecs = int(
+        leapsecs = int(
             self.calendar.leapsecs_since_epoch(self.year, self.month, self.day)
         )
         return self.add(seconds=leapsecs).replace(tz=tz)
@@ -295,8 +295,8 @@ struct Date[
             `self.seconds_since_epoch() - other.seconds_since_epoch()`.
         """
 
-        var s = self
-        var o = other.replace(calendar=self.calendar)
+        s = self
+        o = other.replace(calendar=self.calendar)
 
         if s.tz != o.tz:
             s = s.to_utc()
@@ -329,27 +329,27 @@ struct Date[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        var max_year = int(self.calendar.max_year)
-        var y = int(self.year) + int(years)
+        max_year = int(self.calendar.max_year)
+        y = int(self.year) + int(years)
         if y > max_year:
             self.year = self.calendar.min_year
             self = self.add(years=y - (max_year + 1))
         else:
             self.year = y
 
-        var max_mon = int(self.calendar.max_month)
-        var mon = int(self.month) + int(months)
+        max_mon = int(self.calendar.max_month)
+        mon = int(self.month) + int(months)
         if mon > max_mon:
             self.month = self.calendar.min_month
             self = self.add(years=1, months=mon - (max_mon + 1))
         else:
             self.month = mon
 
-        var max_day = self.calendar.max_days_in_month(self.year, self.month)
-        var s_to_day = int(self.calendar.max_hour + 1) * int(
+        max_day = self.calendar.max_days_in_month(self.year, self.month)
+        s_to_day = int(self.calendar.max_hour + 1) * int(
             self.calendar.max_minute + 1
         ) * int(self.calendar.max_typical_second + 1)
-        var d = int(self.day) + int(days) + int(seconds) // s_to_day
+        d = int(self.day) + int(days) + int(seconds) // s_to_day
         if d > int(max_day):
             self.day = self.calendar.min_day
             self = self^.add(months=1, days=d - (int(max_day) + 1))
@@ -383,11 +383,11 @@ struct Date[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        var min_day = self.calendar.min_day
-        var s_to_day = int(self.calendar.max_hour + 1) * int(
+        min_day = self.calendar.min_day
+        s_to_day = int(self.calendar.max_hour + 1) * int(
             self.calendar.max_minute + 1
         ) * int(self.calendar.max_typical_second + 1)
-        var d = int(self.day) - int(days) - int(seconds) // s_to_day
+        d = int(self.day) - int(days) - int(seconds) // s_to_day
         if d < int(min_day):
             self.day = min_day
             self = self.subtract(months=1)
@@ -396,16 +396,16 @@ struct Date[
         else:
             self.day = d
 
-        var min_month = int(self.calendar.min_month)
-        var mon = int(self.month) - int(months)
+        min_month = int(self.calendar.min_month)
+        mon = int(self.month) - int(months)
         if mon < min_month:
             self.month = self.calendar.max_month
             self = self.subtract(years=1, months=(min_month - 1) - mon)
         else:
             self.month = mon
 
-        var min_year = int(self.calendar.min_year)
-        var y = int(self.year) - int(years)
+        min_year = int(self.calendar.min_year)
+        y = int(self.year) - int(years)
         if y < min_year:
             self.year = self.calendar.max_year
             self = self.subtract(years=(min_year - 1) - y)
@@ -561,7 +561,7 @@ struct Date[
             The amount.
         """
 
-        var dt = self.to_utc()
+        dt = self.to_utc()
         return dt.calendar.leapsecs_since_epoch(dt.year, dt.month, dt.day)
 
     @always_inline
@@ -575,8 +575,8 @@ struct Date[
 
     @always_inline
     fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
-        var s: UInt
-        var o: UInt
+        s: UInt
+        o: UInt
         if self.tz != other.tz:
             s, o = hash(self.to_utc()), hash(other.to_utc())
         else:
@@ -826,8 +826,8 @@ struct Date[
             Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var dt = Self._UnboundCal(tz=zone, calendar=UTCCalendar).add(
+        zone = tz.value() if tz else Self._tz()
+        dt = Self._UnboundCal(tz=zone, calendar=UTCCalendar).add(
             seconds=seconds
         )
 
@@ -851,8 +851,8 @@ struct Date[
             Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var s = time.now() // 1_000_000_000
+        zone = tz.value() if tz else Self._tz()
+        s = time.now() // 1_000_000_000
         return Self.from_unix_epoch(s, zone).replace(calendar=calendar)
 
     @always_inline
@@ -882,7 +882,7 @@ struct Date[
             String.
         """
         y, m, d = self.year, self.month, self.day
-        var offset = self.tz.offset_at(y, m, d)
+        offset = self.tz.offset_at(y, m, d)
         return dt_str.to_iso[iso](y, m, d, 0, 0, 0, offset.to_iso())
 
     @always_inline
@@ -901,7 +901,7 @@ struct Date[
         alias C = UTCCalendar
         if self.calendar == C:
             return self.seconds_since_epoch().cast[DType.float64]()
-        var new_s = self.replace(calendar=C).subtract(years=0).add(years=0)
+        new_s = self.replace(calendar=C).subtract(years=0).add(years=0)
         return new_s.seconds_since_epoch().cast[DType.float64]()
 
     @staticmethod
@@ -923,12 +923,12 @@ struct Date[
             An Optional Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var parsed = dt_str.strptime(s, format_str)
+        zone = tz.value() if tz else Self._tz()
+        parsed = dt_str.strptime(s, format_str)
         if not parsed:
             return None
-        var p = parsed.value()
-        var dt = Self(p.year, p.month, p.day, zone, calendar)
+        p = parsed.value()
+        dt = Self(p.year, p.month, p.day, zone, calendar)
         return dt^
 
     @staticmethod
@@ -959,7 +959,7 @@ struct Date[
         """
 
         try:
-            var p = dt_str.from_iso[
+            p = dt_str.from_iso[
                 iso, dst_storage, no_dst_storage, iana, pyzoneinfo, native
             ](s)
             year, month, day = p[0], p[1], p[2]
@@ -970,9 +970,9 @@ struct Date[
                 month = calendar.min_month
                 day = calendar.min_day
 
-            var dt = Self(year, month, day, tz=p[6], calendar=calendar)
+            dt = Self(year, month, day, tz=p[6], calendar=calendar)
             if tz:
-                var t = tz.value()
+                t = tz.value()
                 if t != dt.tz:
                     return dt.to_utc().from_utc(t)
             return dt
@@ -996,6 +996,6 @@ struct Date[
             Self.
         """
 
-        var zone = tz.value() if tz else Self._tz()
-        var d = calendar.from_hash[_cal_hash](int(value))
+        zone = tz.value() if tz else Self._tz()
+        d = calendar.from_hash[_cal_hash](int(value))
         return Self(d[0], d[1], d[2], zone, calendar)

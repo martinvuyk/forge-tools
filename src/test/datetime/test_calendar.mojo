@@ -15,7 +15,7 @@ from forge_tools.datetime.calendar import (
 
 
 fn _get_dates_as_lists(t1: _date, t2: _date) -> (List[Int], List[Int]):
-    var l1 = List[Int](
+    l1 = List[Int](
         int(t1[0]),
         int(t1[1]),
         int(t1[2]),
@@ -25,7 +25,7 @@ fn _get_dates_as_lists(t1: _date, t2: _date) -> (List[Int], List[Int]):
         int(t1[6]),
         int(t1[7]),
     )
-    var l2 = List[Int](
+    l2 = List[Int](
         int(t2[0]),
         int(t2[1]),
         int(t2[2]),
@@ -44,17 +44,17 @@ fn test_calendar_hashes() raises:
     alias calh16 = CalendarHashes(CalendarHashes.UINT16)
     alias calh8 = CalendarHashes(CalendarHashes.UINT8)
 
-    var greg = Gregorian()
-    var d = _date(9999, 12, 31, 23, 59, 59, 999, 999)
-    var h = greg.hash[calh64](d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
-    var result = _get_dates_as_lists(d, greg.from_hash[calh64](h))
+    greg = Gregorian()
+    d = _date(9999, 12, 31, 23, 59, 59, 999, 999)
+    h = greg.hash[calh64](d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
+    result = _get_dates_as_lists(d, greg.from_hash[calh64](h))
     assert_equal(result[0].__str__(), result[1].__str__())
     d = _date(4095, 12, 31, 0, 0, 0, 0, 0)
     h = greg.hash[calh32](d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
     result = _get_dates_as_lists(d, greg.from_hash[calh32](h))
     assert_equal(result[0].__str__(), result[1].__str__())
 
-    var utcfast = UTCFast()
+    utcfast = UTCFast()
     d = _date(9999, 12, 31, 23, 59, 59, 999, 0)
     h = utcfast.hash[calh64](d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7])
     result = _get_dates_as_lists(d, utcfast.from_hash[calh64](h))
@@ -91,7 +91,7 @@ fn test_python_calendar() raises:
             assert_equal(28, cal.max_days_in_month(i, 2))
 
     assert_equal(27, cal.leapsecs_since_epoch(2017, 1, 2))
-    var res = cal.monthrange(2023, 2)
+    res = cal.monthrange(2023, 2)
     assert_equal(2, res[0])
     assert_equal(28, res[1])
     res = cal.monthrange(2024, 2)
@@ -129,8 +129,8 @@ fn test_python_calendar() raises:
     assert_equal(
         int(120 * 1e9), cal.n_seconds_since_epoch(1, 1, 1, 0, 2, 0, 0, 0, 0)
     )
-    var d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
-    var d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
+    d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
+    d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
     assert_equal(120, d1 - d2)
     d1 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0)
     d2 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0)
@@ -159,7 +159,7 @@ fn test_gregorian_utc_calendar() raises:
     assert_equal(166, cal.day_of_year(2023, 6, 15))
     assert_equal(167, cal.day_of_year(2024, 6, 15))
     assert_equal(27, cal.leapsecs_since_epoch(2017, 1, 2))
-    var res = cal.monthrange(2023, 2)
+    res = cal.monthrange(2023, 2)
     assert_equal(2, res[0])
     assert_equal(28, res[1])
     res = cal.monthrange(2024, 2)
@@ -170,8 +170,8 @@ fn test_gregorian_utc_calendar() raises:
     assert_equal(
         int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
     )
-    var d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
-    var d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
+    d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
+    d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
     assert_equal(120, d1 - d2)
     d1 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0)
     d2 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0)
@@ -203,7 +203,7 @@ fn test_utcfast_calendar() raises:
     assert_equal(366, cal.day_of_year(2024, 12, 31))
 
     assert_equal(0, cal.leapsecs_since_epoch(2017, 1, 2))
-    var res = cal.monthrange(2023, 2)
+    res = cal.monthrange(2023, 2)
     assert_equal(2, res[0])
     assert_equal(28, res[1])
     res = cal.monthrange(2024, 2)
@@ -214,8 +214,8 @@ fn test_utcfast_calendar() raises:
     assert_equal(
         int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
     )
-    var d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
-    var d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
+    d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
+    d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
     assert_equal(120, d1 - d2)
     d1 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0)
     d2 = cal.m_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0)

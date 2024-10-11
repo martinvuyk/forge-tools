@@ -27,8 +27,8 @@ Examples:
 ```mojo
 from forge_tools.collections import Array
 alias Arr = Array[DType.int8, 3]
-var a = Arr(1, 2, 3)
-var b = Arr(1, 2, 3)
+a = Arr(1, 2, 3)
+b = Arr(1, 2, 3)
 print(a.max()) # 3
 print(a.min()) # 1
 print((a - b).sum()) # 0
@@ -94,8 +94,8 @@ struct _ArrayIter[
         forward: The iteration direction. `False` is backwards.
     """
 
-    var index: Int
-    var src: Array[T, capacity, static]
+    index: Int
+    src: Array[T, capacity, static]
 
     fn __iter__(self) -> Self:
         return self
@@ -138,8 +138,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     ```mojo
     from forge_tools.collections import Array
     alias Arr = Array[DType.int8, 3]
-    var a = Arr(1, 2, 3)
-    var b = Arr(1, 2, 3)
+    a = Arr(1, 2, 3)
+    b = Arr(1, 2, 3)
     print(a.max()) # 3
     print(a.min()) # 1
     print((a - b).sum()) # 0
@@ -192,10 +192,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     alias simd_size = bit_ceil(capacity)
     """The size of the underlying SIMD vector."""
     alias _vec_type = SIMD[T, Self.simd_size]
-    var vec: Self._vec_type
+    vec: Self._vec_type
     """The underlying SIMD vector."""
     alias _scalar = Scalar[T]
-    var capacity_left: UInt8
+    capacity_left: UInt8
     """The current capacity left."""
     alias _slice_simd_size = Self.simd_size if (
         Self.simd_size * T.bitwidth() <= info.simdbitwidth()
@@ -226,7 +226,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     @always_inline
     fn __init__(inout self, *, fill: Self._scalar):
         """Constructs an Array by filling it with the
-        given value. Sets the capacity_left var to 0.
+        given value. Sets the capacity_left to 0.
 
         Args:
             fill: The value to populate the Array with.
@@ -405,12 +405,12 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         if unsafe_simd_size:
-            var ptr = unsafe_pointer
+            ptr = unsafe_pointer
             self.vec = ptr.load[width = Self.simd_size]()
             self.capacity_left = capacity - length
             return
 
-        var s = min(capacity, length)
+        s = min(capacity, length)
         self.vec = Self._vec_type(0)
         for i in range(s):  # FIXME: is there no faster way?
             self.vec[i] = unsafe_pointer[i]
@@ -542,7 +542,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
             @parameter
             if static and Self._slice_simd_size == capacity:
-                var vec = self.vec
+                vec = self.vec
                 Self._mask_vec_size[T, 1](vec, len(self))
                 return (vec == value).reduce_or()
             for i in range(len(self)):
@@ -587,7 +587,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         alias Arr = Array[T, capacity + cap, False]
-        var arr = Arr(self.vec, length=len(self))
+        arr = Arr(self.vec, length=len(self))
         arr.append(Arr(other.vec, length=len(other)))
         return arr
 
@@ -609,14 +609,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
         # we do a rough estimation of the number of chars that we'll see
         # in the final string, we assume that str(x) will be at least one char.
-        var minimum_capacity = (
+        minimum_capacity = (
             2  # '[' and ']'
             + len(self) * 3  # str(x) and ", "
             - 2  # remove the last ", "
         )
-        var string_buffer = List[UInt8](capacity=minimum_capacity)
+        string_buffer = List[UInt8](capacity=minimum_capacity)
         string_buffer.append(0)  # Null terminator
-        var result = String(string_buffer^)
+        result = String(string_buffer^)
         result += "["
         for i in range(len(self)):
             result += str(self.vec[i])
@@ -635,7 +635,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         ```mojo
         from forge_tools.collections import Array
-        var my_array = Array[DType.uint8, 3](1, 2, 3)
+        my_array = Array[DType.uint8, 3](1, 2, 3)
         print(repr(my_array)) # [1, 2, 3]
         %# from testing import assert_equal
         %# assert_equal(str(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
@@ -657,11 +657,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         debug_assert(
             abs(i) < capacity or i == -1 * capacity, "insert index out of range"
         )
-        var norm_idx = min(i, capacity - 1) if i > -1 else max(0, capacity + i)
+        norm_idx = min(i, capacity - 1) if i > -1 else max(0, capacity + i)
 
-        var previous = value
+        previous = value
         for i in range(norm_idx, capacity):
-            var tmp = self.vec[i]
+            tmp = self.vec[i]
             self.vec[i] = previous
             previous = tmp
         if self.capacity_left > 0:
@@ -683,13 +683,13 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         constrained[not static, "The Array can't be static."]()
-        var size = len(self)
+        size = len(self)
         debug_assert(abs(i) < size or i == -1 * size, "pop index out of range")
-        var norm_idx = min(i, size - 1) if i > -1 else max(0, size + i)
+        norm_idx = min(i, size - 1) if i > -1 else max(0, size + i)
         self.capacity_left += 1
-        var val = self.vec[norm_idx]
+        val = self.vec[norm_idx]
         for i in range(size - norm_idx):
-            var offset = norm_idx + i
+            offset = norm_idx + i
             if offset == size:
                 self.vec[norm_idx] = 0
                 break
@@ -710,15 +710,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         ```mojo
         from forge_tools.collections import Array
-        var item = Array[DType.uint8, 3](1, 2, 3).index(2)
+        item = Array[DType.uint8, 3](1, 2, 3).index(2)
         print(item.or_else(-1)) # prints `1`
         ```
         .
         """
 
         fn from_range[simd_size: Int]() -> SIMD[DType.uint8, simd_size]:
-            var vec = SIMD[DType.uint8, simd_size]()
-            var idx = 0
+            vec = SIMD[DType.uint8, simd_size]()
+            idx = 0
 
             @parameter
             for i in range(simd_size - 1, -1, -1):
@@ -728,7 +728,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         alias indices = from_range[Self.simd_size]()
         alias size = Self._slice_simd_size
-        var idx: UInt8
+        idx: UInt8
 
         @parameter
         if size == Self.simd_size:
@@ -736,16 +736,16 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 (self.vec == value).cast[DType.uint8]() * indices
             ).reduce_max()
         else:
-            var idxes = SIMD[DType.uint8, Self.simd_size // size](0)
+            idxes = SIMD[DType.uint8, Self.simd_size // size](0)
 
             @parameter
             for i in range(Self.simd_size // size):
-                var ind = indices.slice[size, offset = i * size]()
-                var vec = self.vec.slice[size, offset = i * size]() == value
+                ind = indices.slice[size, offset = i * size]()
+                vec = self.vec.slice[size, offset = i * size]() == value
                 idxes[i] = (ind * vec.cast[DType.uint8]()).reduce_max()
 
             idx = idxes.reduce_max()
-        var res = Self.simd_size - int(idx.cast[DType.uint64]())
+        res = Self.simd_size - int(idx.cast[DType.uint64]())
 
         if idx == 0:
             return None
@@ -782,19 +782,19 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         ```mojo
         from forge_tools.collections import Array
-        var item = Array[DType.uint8, 3](1, 2, 3).index(2, start=1)
+        item = Array[DType.uint8, 3](1, 2, 3).index(2, start=1)
         print(item.or_else(-1)) # prints `1`
         ```
         .
         """
 
-        var start_norm = normalize_index["Array"](start, self)
-        var stop_norm = min(len(self) + 1, stop) if stop > -1 else (
+        start_norm = normalize_index["Array"](start, self)
+        stop_norm = min(len(self) + 1, stop) if stop > -1 else (
             len(self) + stop
         )
         if start_norm == stop_norm:
             return None
-        var vec = self.vec == value
+        vec = self.vec == value
         for i in range(start_norm, stop_norm):
             if vec[i]:
                 return i
@@ -809,7 +809,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Constraints:
             The Array can't be static.
         """
-        var idx = self.index(value)
+        idx = self.index(value)
         if idx:
             _ = self.pop(idx.value())
 
@@ -818,8 +818,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         fn from_range() -> IndexList[Self.simd_size]:
-            var values = IndexList[Self.simd_size]()
-            var idx = 0
+            values = IndexList[Self.simd_size]()
+            idx = 0
 
             @parameter
             for i in reversed(range(capacity)):
@@ -831,7 +831,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 values[i] = i
             return values
 
-        var vec = self.vec.shuffle[mask=from_range()]()
+        vec = self.vec.shuffle[mask=from_range()]()
 
         @parameter
         if static:
@@ -873,16 +873,16 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             A new array containing the array at the specified span.
         """
 
-        var start: Int
-        var end: Int
-        var step: Int
+        start: Int
+        end: Int
+        step: Int
         start, end, step = span.indices(len(self))
-        var r = range(start, end, step)
+        r = range(start, end, step)
 
         if not len(r):
             return Self()
 
-        var res = Self()
+        res = Self()
         for i in r:
             res.append(self[i])
 
@@ -896,8 +896,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             idx: The index of the element.
             value: The value to assign.
         """
-        # var norm_idx = normalize_index["Array"](idx, self)
-        var norm_idx = idx if idx > -1 else len(self) + idx
+        # norm_idx = normalize_index["Array"](idx, self)
+        norm_idx = idx if idx > -1 else len(self) + idx
         self.vec[norm_idx] = value
 
     @always_inline
@@ -910,7 +910,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             A copy of the element at the given index.
         """
-        var norm_idx = normalize_index["Array"](idx, self)
+        norm_idx = normalize_index["Array"](idx, self)
         return self.vec[norm_idx]
 
     fn count(self, value: Self._scalar) -> Int:
@@ -926,27 +926,27 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         ```mojo
         from forge_tools.collections import Array
-        var my_array = Array[DType.uint8, 3](1, 2, 3)
+        my_array = Array[DType.uint8, 3](1, 2, 3)
         print(my_array.count(1)) # 1
         ```
         .
         """
 
         alias size = Self._slice_simd_size
-        var amnt: UInt8 = 0
+        amnt: UInt8 = 0
         if value == 0:
             alias delta: UInt8 = Self.simd_size - capacity
-            var null_amnt = self.capacity_left + delta
+            null_amnt = self.capacity_left + delta
 
             @parameter
             for i in range(Self.simd_size // size):
-                var vec = self.vec.slice[size, offset = i * size]() == value
+                vec = self.vec.slice[size, offset = i * size]() == value
                 amnt += vec.cast[DType.uint8]().reduce_add()
             return int(amnt - null_amnt)
 
         @parameter
         for i in range(Self.simd_size // size):
-            var vec = self.vec.slice[size, offset = i * size]() == value
+            vec = self.vec.slice[size, offset = i * size]() == value
             amnt += vec.cast[DType.uint8]().reduce_add()
         return int(amnt)
 
@@ -957,7 +957,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             An UnsafePointer to a copy of the SIMD vector.
         """
-        var ptr = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
+        ptr = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
         alias size = Self._slice_simd_size
 
         @parameter
@@ -1048,7 +1048,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             The result.
         """
 
-        var vec = self.vec
+        vec = self.vec
 
         @parameter
         if T.is_floating_point():
@@ -1083,13 +1083,13 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 i is min(self[i], other[i]).
         """
         alias delta = Self.capacity - other.capacity
-        var vec: Self._vec_type
+        vec: Self._vec_type
 
         @parameter
         if delta == 0:
             vec = min(self.vec, rebind[Self._vec_type](other.vec))
         elif delta > 0:
-            var o = Self(other=other)
+            o = Self(other=other)
             vec = min(self.vec, o.vec)
         else:
             vec = min(self.vec, other.vec.slice[Self.simd_size]())
@@ -1115,13 +1115,13 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 i is max(self[i], other[i]).
         """
         alias delta = Self.capacity - other.capacity
-        var vec: Self._vec_type
+        vec: Self._vec_type
 
         @parameter
         if delta == 0:
             vec = max(self.vec, rebind[Self._vec_type](other.vec))
         elif delta > 0:
-            var o = Self(other=other)
+            o = Self(other=other)
             vec = max(self.vec, o.vec)
         else:
             vec = max(self.vec, other.vec.slice[Self.simd_size]())
@@ -1371,11 +1371,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if static:
-            var vec = Self._vec_type(value)
+            vec = Self._vec_type(value)
             Self._mask_vec_capacity_delta(vec)
             return Self(self.vec + vec)
         else:
-            var arr = Self(Self._vec_type(value), length=len(self))
+            arr = Self(Self._vec_type(value), length=len(self))
             return Self(self.vec + arr.vec, length=len(self))
 
     @always_inline
@@ -1408,11 +1408,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if static:
-            var vec = Self._vec_type(value)
+            vec = Self._vec_type(value)
             Self._mask_vec_capacity_delta(vec)
             return Self(self.vec - vec)
         else:
-            var arr = Self(Self._vec_type(value), length=len(self))
+            arr = Self(Self._vec_type(value), length=len(self))
             return Self(self.vec - arr.vec, length=len(self))
 
     @always_inline("nodebug")
@@ -1435,11 +1435,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if static:
-            var vec = Self._vec_type(value)
+            vec = Self._vec_type(value)
             Self._mask_vec_capacity_delta(vec)
             self.vec += vec
         else:
-            var arr = Self(Self._vec_type(value), length=len(self))
+            arr = Self(Self._vec_type(value), length=len(self))
             self.vec += arr.vec
 
     @always_inline("nodebug")
@@ -1462,11 +1462,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if static:
-            var vec = Self._vec_type(value)
+            vec = Self._vec_type(value)
             Self._mask_vec_capacity_delta(vec)
             self.vec -= vec
         else:
-            var arr = Self(Self._vec_type(value), length=len(self))
+            arr = Self(Self._vec_type(value), length=len(self))
             self.vec -= arr.vec
 
     fn clear(inout self):
@@ -1600,7 +1600,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             The reduced Array.
         """
-        var vec = self.vec
+        vec = self.vec
         Self._mask_vec_size[T, 1](vec, len(self))
 
         @parameter
@@ -1614,7 +1614,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             The reduced Array.
         """
-        var vec = self.vec
+        vec = self.vec
 
         @parameter
         if T.is_floating_point():
@@ -1648,18 +1648,18 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if T.is_floating_point():
-            var magn1 = (self.vec.cast[f]() ** 2).reduce_add()
-            var magn2 = (other.vec.cast[f]() ** 2).reduce_add()
+            magn1 = (self.vec.cast[f]() ** 2).reduce_add()
+            magn2 = (other.vec.cast[f]() ** 2).reduce_add()
             return rebind[Float64](self.dot[f](other) / (magn1 * magn2))
         elif T.is_signed():
-            var magn1 = (self.vec.cast[DType.int64]() ** 2).reduce_add()
-            var magn2 = (other.vec.cast[DType.int64]() ** 2).reduce_add()
+            magn1 = (self.vec.cast[DType.int64]() ** 2).reduce_add()
+            magn2 = (other.vec.cast[DType.int64]() ** 2).reduce_add()
             return rebind[Float64](
                 (self.dot[DType.int64](other) / (magn1 * magn2)).cast[f]()
             )
         else:
-            var magn1 = (self.vec.cast[DType.uint64]() ** 2).reduce_add()
-            var magn2 = (other.vec.cast[DType.uint64]() ** 2).reduce_add()
+            magn1 = (self.vec.cast[DType.uint64]() ** 2).reduce_add()
+            magn2 = (other.vec.cast[DType.uint64]() ** 2).reduce_add()
             return rebind[Float64](
                 (self.dot[DType.uint64](other) / (magn1 * magn2)).cast[f]()
             )
@@ -1696,33 +1696,33 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if capacity == 3:
-            var s = self.vec.shuffle[1, 2, 0, 3]()
-            var o = other.vec.shuffle[2, 0, 1, 3]()
+            s = self.vec.shuffle[1, 2, 0, 3]()
+            o = other.vec.shuffle[2, 0, 1, 3]()
             return s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
         elif capacity == size:
-            var x0 = self.vec.rotate_left[1]()
-            var y0 = other.vec.rotate_left[2]()
-            var vec0 = x0.join(y0)
-            var x1 = self.vec.rotate_left[2]()
-            var y1 = other.vec.rotate_left[1]()
-            var vec1 = x1.join(y1)
+            x0 = self.vec.rotate_left[1]()
+            y0 = other.vec.rotate_left[2]()
+            vec0 = x0.join(y0)
+            x1 = self.vec.rotate_left[2]()
+            y1 = other.vec.rotate_left[1]()
+            vec1 = x1.join(y1)
             return vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
         else:
-            var s_vec_l = self.vec
-            var o_vec_l = other.vec
+            s_vec_l = self.vec
+            o_vec_l = other.vec
 
             @parameter
             for i in range(2):
                 s_vec_l[capacity + i] = self.vec[i]
                 o_vec_l[capacity + i] = other.vec[i]
 
-            var x0 = s_vec_l.shift_left[1]()
-            var y1 = o_vec_l.shift_left[1]()
+            x0 = s_vec_l.shift_left[1]()
+            y1 = o_vec_l.shift_left[1]()
 
-            var y0 = o_vec_l.shift_left[2]()
-            var vec0 = x0.join(y0)
-            var x1 = s_vec_l.shift_left[2]()
-            var vec1 = x1.join(y1)
+            y0 = o_vec_l.shift_left[2]()
+            vec0 = x0.join(y0)
+            x1 = s_vec_l.shift_left[2]()
+            vec1 = x1.join(y1)
             return vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
 
     fn map[
@@ -1748,7 +1748,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         fn mapfunc(a: Int8) -> Scalar[DType.bool]:
             return a < 3
 
-        var arr = Array[DType.int8, 3](3, 2, 1)
+        arr = Array[DType.int8, 3](3, 2, 1)
         print(arr.map(mapfunc)) # [False, True, True]
         %# from testing import assert_equal
         %# assert_equal(str(arr.map(mapfunc)), "[False, True, True]")
@@ -1759,30 +1759,30 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         @parameter
         if D != T:
             # FIXME: experimental
-            var res_p = UnsafePointer[Scalar[D]].alloc(Self.simd_size)
+            res_p = UnsafePointer[Scalar[D]].alloc(Self.simd_size)
             alias size = Self._slice_simd_size
 
             for i in range(len(self), Self.simd_size):
                 res_p[i] = Scalar[D](0)
-            var s_p = self.unsafe_ptr()
+            s_p = self.unsafe_ptr()
 
             for i in range(len(self)):
                 res_p[i] = func(s_p[i])
 
-            var res = Array[D, capacity, static](
+            res = Array[D, capacity, static](
                 unsafe_pointer=res_p, length=len(self), unsafe_simd_size=True
             )
             res_p.free()
             s_p.free()
             return res
 
-        var res = Array[D, capacity, static](fill=0)
+        res = Array[D, capacity, static](fill=0)
         alias size = Self._slice_simd_size
 
         @parameter
         for i in range(Self.simd_size // size):
             alias offset = i * size
-            var sliced = self.vec.slice[size, offset=offset]()
+            sliced = self.vec.slice[size, offset=offset]()
 
             @parameter
             if static:
@@ -1812,7 +1812,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Examples:
         ```mojo
         from forge_tools.collections.array import Array
-        var arr = Array[DType.int8, 3](3, 2, 1)
+        arr = Array[DType.int8, 3](3, 2, 1)
         fn applyfunc(a: Int8) -> Int8:
             return a * 2
         arr.apply(applyfunc)
@@ -1844,7 +1844,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Examples:
         ```mojo
         from forge_tools.collections.array import Array
-        var arr = Array[DType.int8, 3](3, 2, 1)
+        arr = Array[DType.int8, 3](3, 2, 1)
 
         fn filterfunc(a: Int8) -> Scalar[DType.bool]:
             return a < 3
@@ -1860,8 +1860,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         .
         """
 
-        var res1 = self.map(func).vec
-        var res2 = self.map(where).vec
+        res1 = self.map(func).vec
+        res2 = self.map(where).vec
         self.vec *= (~res2).cast[T]()
         self.vec += res1 * (res2).cast[T]()
 
@@ -1882,7 +1882,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         fn filterfunc(a: Int8) -> Scalar[DType.bool]:
             return a < 3
 
-        var arr = Array[DType.int8, 3](3, 2, 1)
+        arr = Array[DType.int8, 3](3, 2, 1)
         print(arr.filter(filterfunc)) # [2, 1]
         %# from testing import assert_equal
         %# assert_equal(str(arr.filter(filterfunc)), "[2, 1]")
@@ -1890,21 +1890,21 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         .
         """
 
-        var res_p = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
+        res_p = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
         alias size = Self._slice_simd_size
 
         @parameter
         for i in range(Self.simd_size // size):
             res_p.store(i * size, SIMD[T, size](0))
-        var s_p = self.unsafe_ptr()
-        var idx = 0
+        s_p = self.unsafe_ptr()
+        idx = 0
         for i in range(len(self)):
-            var val = s_p[i]
+            val = s_p[i]
             if func(val):
                 res_p[idx] = val
                 idx += 1
 
-        var res = Array[T, capacity, False](
+        res = Array[T, capacity, False](
             unsafe_pointer=res_p, length=(idx + 1), unsafe_simd_size=True
         )
         res_p.free()

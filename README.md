@@ -50,8 +50,8 @@ Examples:
 ```mojo
 from forge_tools.collections import Array
 alias Arr = Array[DType.int8, 3]
-var a = Arr(1, 2, 3)
-var b = Arr(1, 2, 3)
+a = Arr(1, 2, 3)
+b = Arr(1, 2, 3)
 print(a.max()) # 3
 print(a.min()) # 1
 print((a - b).sum()) # 0
@@ -101,14 +101,14 @@ and explicitly extract the value to get it out.
 Examples:
 
 ```mojo
-var a = Result(1)
-var b = Result[Int]()
+a = Result(1)
+b = Result[Int]()
 if a:
     print(a.value())  # prints 1
 if b:  # bool(b) is False, so no print
     print(b.value())
-var c = a.or_else(2)
-var d = b.or_else(2)
+c = a.or_else(2)
+d = b.or_else(2)
 print(c)  # prints 1
 print(d)  # prints 2
 ```
@@ -116,10 +116,10 @@ print(d)  # prints 2
 And if more information about the returned Error is wanted it is available.
 
 ```mojo
-var a = Result(1)
-var b = Result[Int](err=Error("something went wrong"))
-var c = Result[Int](None, Error("error 1"))
-var d = Result[Int](err=Error("error 2"))
+a = Result(1)
+b = Result[Int](err=Error("something went wrong"))
+c = Result[Int](None, Error("error 1"))
+d = Result[Int](err=Error("error 2"))
 if a:
     print(a.err)  # prints ""
 if not b:
@@ -142,14 +142,14 @@ fn func_that_can_err[A: CollectionElement]() -> Result[A]:
     return Error("failed")
 
 fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T]:
-    var result: Result[A] = func_that_can_err[A]()
+    result: Result[A] = func_that_can_err[A]()
     if not result:
         # the internal err gets transferred to a Result[T]
         return result
         # its also possible to do:
         # return None, Error("func_that_can_err failed")
-    var val = result.value()
-    var final_result: T
+    val = result.value()
+    final_result: T
     ...
     return final_result
 ```
@@ -164,7 +164,7 @@ struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
 
     alias kind = T
     """The kind of Error."""
-    var message: String
+    message: String
     """The Error message."""
       ...
     fn __eq__(self, value: StringLiteral) -> Bool:
@@ -191,7 +191,7 @@ struct Result2[
     E4: StringLiteral = "AnyError",
 ](Boolable):
     alias _type = Variant[NoneType, T]
-    var _value: Self._type
+    _value: Self._type
     alias _err_type = Variant[
         Error2["AnyError"],
         Error2[E1],
@@ -206,7 +206,7 @@ fn do_something(i: Int) -> Result2[Int, "IndexError", "OtherError"]:
     ...
 
 fn do_some_other_thing() -> Result2[String, "OtherError"]:
-    var a = do_something(-1)
+    a = do_something(-1)
     if a.err == "OtherError":
         return a # error gets transferred
     elif a.err == "IndexError":
@@ -235,7 +235,7 @@ struct Quaternion[T: DType = DType.float64]:
 
     alias _vec_type = SIMD[T, 4]
     alias _scalar_type = Scalar[T]
-    var vec: Self._vec_type
+    vec: Self._vec_type
     """The underlying SIMD vector."""
 
     ...
@@ -254,11 +254,11 @@ struct Quaternion[T: DType = DType.float64]:
         alias sign1 = Self._vec_type(1, 1, 1, -1)
         alias sign2 = Self._vec_type(1, -1, 1, 1)
         alias sign3 = Self._vec_type(1, 1, -1, 1)
-        var rev = other.vec.shuffle[3, 2, 1, 0]()
-        var w = self.dot(other.vec * sign0)
-        var i = self.dot(rev.rotate_right[2]() * sign1)
-        var j = self.dot(other.vec.rotate_right[2]() * sign2)
-        var k = self.dot(rev * sign3)
+        rev = other.vec.shuffle[3, 2, 1, 0]()
+        w = self.dot(other.vec * sign0)
+        i = self.dot(rev.rotate_right[2]() * sign1)
+        j = self.dot(other.vec.rotate_right[2]() * sign2)
+        k = self.dot(rev * sign3)
         return Self(w, i, j, k)
 ```
 
@@ -276,7 +276,7 @@ struct DualQuaternion[T: DType = DType.float64]:
 
     alias _vec_type = SIMD[T, 8]
     alias _scalar_type = Scalar[T]
-    var vec: Self._vec_type
+    vec: Self._vec_type
     """The underlying SIMD vector."""
 
     ...
@@ -292,10 +292,10 @@ struct DualQuaternion[T: DType = DType.float64]:
         """
 
         alias Quat = Quaternion[T]
-        var a = Quat(self.vec.slice[4]())
-        var b = Quat(self.vec.slice[4, offset=4]())
-        var c = Quat(other.vec.slice[4]())
-        var d = Quat(other.vec.slice[4, offset=4]())
+        a = Quat(self.vec.slice[4]())
+        b = Quat(self.vec.slice[4, offset=4]())
+        c = Quat(other.vec.slice[4]())
+        d = Quat(other.vec.slice[4, offset=4]())
         return Self((a * c).vec.join((a * d + b * c).vec))
 ```
 
@@ -327,10 +327,10 @@ from forge_tools.datetime import DateTime, Calendar, IsoFormat
 from forge_tools.datetime.calendar import PythonCalendar, UTCCalendar
 
 alias DateT = DateTime[iana=False, pyzoneinfo=False, native=False]
-var dt = DateT(2024, 6, 18, 22, 14, 7)
+dt = DateT(2024, 6, 18, 22, 14, 7)
 print(dt) # 2024-06-18T22:14:07+00:00
 alias fstr = IsoFormat(IsoFormat.HH_MM_SS) 
-var iso_str = dt.to_iso[fstr]()
+iso_str = dt.to_iso[fstr]()
 dt = (
     DateT.from_iso[fstr](iso_str, calendar=Calendar(2024, 6, 18))
     .value()
@@ -341,18 +341,18 @@ print(dt) # 2024-06-18T22:14:07+00:00
 
 # TODO: current mojo limitation. Parametrized structs need to be bound to an
 # alias and used for interoperability
-# var customtz = TimeZone[False, False, False]("my_str", 1, 0) 
-var tz_0 = DateT._tz("my_str", 0, 0)
-var tz_1 = DateT._tz("my_str", 1, 0)
+# customtz = TimeZone[False, False, False]("my_str", 1, 0) 
+tz_0 = DateT._tz("my_str", 0, 0)
+tz_1 = DateT._tz("my_str", 1, 0)
 assert_equal(DateT(2024, 6, 18, 0, tz=tz_0), DateT(2024, 6, 18, 1, tz=tz_1))
 
 
 # using python and unix calendar should have no difference in results
 alias pycal = PythonCalendar
 alias unixcal = UTCCalendar
-var tz_0_ = DateT._tz("Etc/UTC", 0, 0)
+tz_0_ = DateT._tz("Etc/UTC", 0, 0)
 tz_1 = DateT._tz("Etc/UTC-1", 1, 0)
-var tz1_ = DateT._tz("Etc/UTC+1", 1, 0, -1)
+tz1_ = DateT._tz("Etc/UTC+1", 1, 0, -1)
 
 dt = DateT(2022, 6, 1, tz=tz_0_, calendar=pycal) + DateT(
     2, 6, 31, tz=tz_0_, calendar=pycal
@@ -365,17 +365,17 @@ assert_equal(dt, offset_p_1)
 assert_equal(dt, offset_n_1)
 
 
-var fstr = "mojo: %Y🔥%m🤯%d"
+fstr = "mojo: %Y🔥%m🤯%d"
 assert_equal("mojo: 0009🔥06🤯01", DateT(9, 6, 1).strftime(fstr))
 fstr = "%Y-%m-%d %H:%M:%S.%f"
-var ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
+ref1 = DateT(2024, 9, 9, 9, 9, 9, 9, 9)
 assert_equal("2024-09-09 09:09:09.009009", ref1.strftime(fstr))
 
 
 fstr = "mojo: %Y🔥%m🤯%d"
-var vstr = "mojo: 0009🔥06🤯01"
+vstr = "mojo: 0009🔥06🤯01"
 ref1 = DateT(9, 6, 1)
-var parsed = DateT.strptime(vstr, fstr)
+parsed = DateT.strptime(vstr, fstr)
 assert_true(parsed)
 assert_equal(ref1, parsed.value())
 fstr = "%Y-%m-%d %H:%M:%S.%f"
