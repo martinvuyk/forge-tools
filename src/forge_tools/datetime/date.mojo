@@ -103,17 +103,17 @@ struct Date[
             the same day.
     """
 
-    year: UInt16
+    var year: UInt16
     """Year."""
-    month: UInt8
+    var month: UInt8
     """Month."""
-    day: UInt8
+    var day: UInt8
     """Day."""
     # TODO: tz and calendar should be references
     alias _tz = TimeZone[dst_storage, no_dst_storage, iana, pyzoneinfo, native]
-    tz: Self._tz
+    var tz: Self._tz
     """Tz."""
-    calendar: Calendar[C]
+    var calendar: Calendar[C]
     """Calendar."""
     alias _UnboundCal = Date[
         dst_storage, no_dst_storage, iana, pyzoneinfo, native, _
@@ -346,9 +346,11 @@ struct Date[
             self.month = mon
 
         max_day = self.calendar.max_days_in_month(self.year, self.month)
-        s_to_day = int(self.calendar.max_hour + 1) * int(
-            self.calendar.max_minute + 1
-        ) * int(self.calendar.max_typical_second + 1)
+        s_to_day = (
+            int(self.calendar.max_hour + 1)
+            * int(self.calendar.max_minute + 1)
+            * int(self.calendar.max_typical_second + 1)
+        )
         d = int(self.day) + int(days) + int(seconds) // s_to_day
         if d > int(max_day):
             self.day = self.calendar.min_day
@@ -384,9 +386,11 @@ struct Date[
         """
 
         min_day = self.calendar.min_day
-        s_to_day = int(self.calendar.max_hour + 1) * int(
-            self.calendar.max_minute + 1
-        ) * int(self.calendar.max_typical_second + 1)
+        s_to_day = (
+            int(self.calendar.max_hour + 1)
+            * int(self.calendar.max_minute + 1)
+            * int(self.calendar.max_typical_second + 1)
+        )
         d = int(self.day) - int(days) - int(seconds) // s_to_day
         if d < int(min_day):
             self.day = min_day
@@ -575,8 +579,8 @@ struct Date[
 
     @always_inline
     fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
-        s: UInt
-        o: UInt
+        var s: UInt
+        var o: UInt
         if self.tz != other.tz:
             s, o = hash(self.to_utc()), hash(other.to_utc())
         else:

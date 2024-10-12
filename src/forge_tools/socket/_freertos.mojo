@@ -20,7 +20,7 @@ struct _FreeRTOSSocket[
     sock_address: SockAddr,
 ]:
     alias _ST = _UnixSocket[sock_family, sock_type, sock_protocol, sock_address]
-    _sock: Self._ST
+    var _sock: Self._ST
 
     alias _ipv4 = _FreeRTOSSocket[
         SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr

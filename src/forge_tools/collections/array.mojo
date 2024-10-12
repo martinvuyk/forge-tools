@@ -94,8 +94,8 @@ struct _ArrayIter[
         forward: The iteration direction. `False` is backwards.
     """
 
-    index: Int
-    src: Array[T, capacity, static]
+    var index: Int
+    var src: Array[T, capacity, static]
 
     fn __iter__(self) -> Self:
         return self
@@ -192,10 +192,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     alias simd_size = bit_ceil(capacity)
     """The size of the underlying SIMD vector."""
     alias _vec_type = SIMD[T, Self.simd_size]
-    vec: Self._vec_type
+    var vec: Self._vec_type
     """The underlying SIMD vector."""
     alias _scalar = Scalar[T]
-    capacity_left: UInt8
+    var capacity_left: UInt8
     """The current capacity left."""
     alias _slice_simd_size = Self.simd_size if (
         Self.simd_size * T.bitwidth() <= info.simdbitwidth()
@@ -490,23 +490,20 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec[len(self)] = value
         self.capacity_left -= 1
 
-    @always_inline
-    fn append[cap: Int](inout self, other: Array[T, cap, static]):
-        """Appends the values of another Array up to Self.capacity.
+    # FIXME
+    # fn append(inout self, other: Array[T, *_]):
+    #     """Appends the values of another Array up to Self.capacity.
 
-        Parameters:
-            cap: The capacity of the other Array.
+    #     Args:
+    #         other: The Array to append.
 
-        Args:
-            other: The Array to append.
+    #     Constraints:
+    #         Array can't be static.
+    #     """
 
-        Constraints:
-            Array can't be static.
-        """
-
-        constrained[not static, "Array can't be static."]()
-        for i in range(min(self.capacity_left, len(other))):
-            self.append(other[i])
+    #     constrained[not static, "Array can't be static."]()
+    #     for i in range(min(self.capacity_left, len(other))):
+    #         self.append(other.vec[i])
 
     fn __iter__(
         self,
@@ -588,7 +585,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         alias Arr = Array[T, capacity + cap, False]
         arr = Arr(self.vec, length=len(self))
-        arr.append(Arr(other.vec, length=len(other)))
+        for i in range(len(other)):
+            arr.append(other.vec[i])
         return arr
 
     fn __str__(self) -> String:
@@ -728,7 +726,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         alias indices = from_range[Self.simd_size]()
         alias size = Self._slice_simd_size
-        idx: UInt8
+        var idx: UInt8
 
         @parameter
         if size == Self.simd_size:
@@ -831,7 +829,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 values[i] = i
             return values
 
-        vec = self.vec.shuffle[mask=from_range()]()
+        vec = self.vec.shuffle[mask = from_range()]()
 
         @parameter
         if static:
@@ -873,9 +871,6 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             A new array containing the array at the specified span.
         """
 
-        start: Int
-        end: Int
-        step: Int
         start, end, step = span.indices(len(self))
         r = range(start, end, step)
 
@@ -933,7 +928,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         alias size = Self._slice_simd_size
-        amnt: UInt8 = 0
+        amnt = UInt8(0)
         if value == 0:
             alias delta: UInt8 = Self.simd_size - capacity
             null_amnt = self.capacity_left + delta
@@ -1083,7 +1078,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 i is min(self[i], other[i]).
         """
         alias delta = Self.capacity - other.capacity
-        vec: Self._vec_type
+        var vec: Self._vec_type
 
         @parameter
         if delta == 0:
@@ -1115,7 +1110,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 i is max(self[i], other[i]).
         """
         alias delta = Self.capacity - other.capacity
-        vec: Self._vec_type
+        var vec: Self._vec_type
 
         @parameter
         if delta == 0:
@@ -1644,24 +1639,25 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             The result.
         """
 
-        alias f = DType.float64
+        alias i = DType.uint64
 
         @parameter
         if T.is_floating_point():
-            magn1 = (self.vec.cast[f]() ** 2).reduce_add()
-            magn2 = (other.vec.cast[f]() ** 2).reduce_add()
+            alias f = DType.float64
+            var magn1: Scalar[f] = (self.vec.cast[f]() ** 2).reduce_add()
+            var magn2: Scalar[f] = (other.vec.cast[f]() ** 2).reduce_add()
             return rebind[Float64](self.dot[f](other) / (magn1 * magn2))
         elif T.is_signed():
-            magn1 = (self.vec.cast[DType.int64]() ** 2).reduce_add()
-            magn2 = (other.vec.cast[DType.int64]() ** 2).reduce_add()
-            return rebind[Float64](
-                (self.dot[DType.int64](other) / (magn1 * magn2)).cast[f]()
+            var magn1: Scalar[i] = (self.vec.cast[i]() ** 2).reduce_add()
+            var magn2: Scalar[i] = (other.vec.cast[i]() ** 2).reduce_add()
+            return (
+                (self.dot[i](other) / (magn1 * magn2)).cast[DType.float64]()
             )
         else:
-            magn1 = (self.vec.cast[DType.uint64]() ** 2).reduce_add()
-            magn2 = (other.vec.cast[DType.uint64]() ** 2).reduce_add()
-            return rebind[Float64](
-                (self.dot[DType.uint64](other) / (magn1 * magn2)).cast[f]()
+            var magn1: Scalar[i] = (self.vec.cast[i]() ** 2).reduce_add()
+            var magn2: Scalar[i] = (other.vec.cast[i]() ** 2).reduce_add()
+            return (
+                (self.dot[i](other) / (magn1 * magn2)).cast[DType.float64]()
             )
 
     @always_inline("nodebug")

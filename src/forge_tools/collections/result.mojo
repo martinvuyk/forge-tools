@@ -164,8 +164,8 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     # NoneType comes first so its index is 0.
     # This means that Results that are 0-initialized will be None.
     alias _type = Variant[NoneType, T]
-    _value: Self._type
-    err: Error
+    var _value: Self._type
+    var err: Error
     """The Error inside the `Result`."""
 
     @always_inline("nodebug")
@@ -395,9 +395,9 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
     """
 
     alias _type = Variant[NoneType, T]
-    _value: Self._type
+    var _value: Self._type
     alias _err_type = Error2[E]
-    err: Self._err_type
+    var err: Self._err_type
     """The Error inside the `Result`."""
 
     @always_inline("nodebug")

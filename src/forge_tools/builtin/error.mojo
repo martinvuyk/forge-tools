@@ -23,7 +23,7 @@ struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
 
     alias kind = T
     """The kind of Error."""
-    message: String
+    var message: String
     """The Error message."""
 
     @always_inline("nodebug")

@@ -34,13 +34,13 @@ struct Offset:
     and an [Antarctica research station](
         https://es.wikipedia.org/wiki/Base_Troll ))."""
 
-    hour: UInt8
+    var hour: UInt8
     """Hour: [0, 15]."""
-    minute: UInt8
+    var minute: UInt8
     """Minute: {0, 30, 45}."""
-    sign: Int8
+    var sign: Int8
     """Sign: {1, -1}. Positive means east of UTC."""
-    buf: UInt8
+    var buf: UInt8
     """Buffer."""
 
     fn __init__(inout self, buf: UInt8):
@@ -95,16 +95,12 @@ struct Offset:
             ),
         )
 
-        self.hour = hour
-        self.minute = minute
-        self.sign = sign
-        m: UInt8 = 0
+        self.hour, self.minute, self.sign, m = hour, minute, sign, UInt8(0)
         if minute == 30:
             m = 1
         elif minute == 45:
             m = 2
-        s: UInt8 = 0 if sign == 1 else -1
-        self.buf = (s << 7) | (hour << 3) | (m << 1) | 0
+        self.buf = (0 if sign == 1 else -1 << 7) | (hour << 3) | (m << 1) | 0
 
     fn __init__(
         inout self,
@@ -120,17 +116,17 @@ struct Offset:
         try:
             sign = 0 if iso_tzd_std[0] == "+" else 1
 
-            std_h: UInt8 = atol(iso_tzd_std[1:2])
-            dst_h: UInt8 = atol(iso_tzd_dst[1:2])
+            std_h = UInt8(atol(iso_tzd_std[1:2]))
+            dst_h = UInt8(atol(iso_tzd_dst[1:2]))
 
-            std_m: UInt8 = atol(iso_tzd_std[4:6])
-            dst_m: UInt8 = atol(iso_tzd_std[4:6])
+            std_m = UInt8(atol(iso_tzd_std[4:6]))
+            dst_m = UInt8(atol(iso_tzd_std[4:6]))
 
             self.hour = std_h
             self.minute = std_m
             self.sign = 1 if iso_tzd_std[0] == "+" else -1
 
-            jumps_2hours: UInt8 = 0
+            jumps_2hours = UInt8(0)
             if std_m - dst_m == 30:  # "Australia/Lord_Howe"
                 dst_m = 3  # jumps 30 minutes
             elif (dst_h - std_h) ^ 0b10 == 0:  # "Antarctica/Troll"
@@ -191,21 +187,21 @@ struct Offset:
 struct TzDT:
     """`TzDT` stores the rules for DST start/end."""
 
-    month: UInt8
+    var month: UInt8
     """Month: Month: [1, 12]."""
-    dow: UInt8
+    var dow: UInt8
     """Dow: Day of week: [0, 6] (monday - sunday)."""
-    eomon: UInt8
+    var eomon: UInt8
     """Eomon: End of month: {0, 1} Whether to count from the
     beginning of the month or the end."""
-    week: UInt8
+    var week: UInt8
     """Week: {0, 1} If week=0 -> first week of the month,
     if it's week=1 -> second week. In the case that
     eomon=1, fw=0 -> last week of the month
     and fw=1 -> second to last."""
-    hour: UInt8
+    var hour: UInt8
     """Hour: {20, 21, 22, 23, 0, 1, 2, 3} Hour at which DST starts/ends."""
-    buf: UInt16
+    var buf: UInt16
     """Buffer."""
 
     fn __init__(
@@ -289,7 +285,7 @@ struct ZoneDST:
     """`ZoneDST` stores both start and end dates, and
     the offset for a timezone with DST."""
 
-    buf: UInt32
+    var buf: UInt32
     """Buffer."""
 
     fn __init__(inout self, dst_start: TzDT, dst_end: TzDT, offset: Offset):
@@ -341,7 +337,7 @@ struct ZoneInfoFile32(CollectionElement):
     happen.
     """
 
-    _file: Path
+    var _file: Path
 
     fn __init__(inout self):
         """Construct a `ZoneInfoFile`."""
@@ -390,7 +386,7 @@ struct ZoneInfoFile32(CollectionElement):
         """
 
         try:
-            value: UInt32
+            var value: UInt32
             with open(self._file, "rb") as f:
                 _ = f.seek(Self.hash(key) * 4)
                 bufs = f.read_bytes(4)
@@ -424,7 +420,7 @@ struct ZoneInfoFile8(CollectionElement):
     might happen.
     """
 
-    _file: Path
+    var _file: Path
 
     fn __init__(inout self):
         """Construct a `ZoneInfoFile`."""
@@ -466,7 +462,7 @@ struct ZoneInfoFile8(CollectionElement):
         """
 
         try:
-            value: UInt8
+            var value: UInt8
             with open(self._file, "rb") as f:
                 _ = f.seek(Self.hash(key))
                 value = f.read_bytes(1)[0]
@@ -490,7 +486,7 @@ struct ZoneInfoFile8(CollectionElement):
 struct ZoneInfoMem32(CollectionElement):
     """`ZoneInfo` that lives in memory. For zones that have DST."""
 
-    _zones: Dict[StringLiteral, UInt32]
+    var _zones: Dict[StringLiteral, UInt32]
 
     fn __init__(inout self):
         """Construct a `ZoneInfoMem32`."""
@@ -529,7 +525,7 @@ struct ZoneInfoMem32(CollectionElement):
 struct ZoneInfoMem8(CollectionElement):
     """`ZoneInfo` that lives in memory. For zones that have no DST."""
 
-    _zones: Dict[StringLiteral, UInt8]
+    var _zones: Dict[StringLiteral, UInt8]
 
     fn __init__(inout self):
         """Construct a `ZoneInfoMem8`."""
@@ -607,11 +603,11 @@ struct Leapsecs:
     https://en.wikipedia.org/wiki/International_Atomic_Time).
     """
 
-    day: UInt8
+    var day: UInt8
     """Day in which the leap second was added."""
-    month: UInt8
+    var month: UInt8
     """Month in which the leap second was added."""
-    year: UInt16
+    var year: UInt16
     """Year in which the leap second was added."""
 
     fn __init__(inout self, year: Int, month: Int, day: Int):
@@ -758,9 +754,9 @@ struct ZoneInfo[T: ZoneStorageDST, A: ZoneStorageNoDST]:
             no Daylight Saving Time.
     """
 
-    with_dst: T
+    var with_dst: T
     """Zoneinfo for Zones with Daylight Saving Time."""
-    with_no_dst: A
+    var with_no_dst: A
     """Zoneinfo for Zones with no Daylight Saving Time."""
 
 
@@ -911,8 +907,8 @@ fn offset_at(
     dst_start = items[0]
     dst_end = items[1]
     offset = items[2]
-    sign: Int8 = offset.sign
-    m: UInt8 = offset.minute
+    sign = Int8(offset.sign)
+    m = UInt8(offset.minute)
     dst_h = offset.hour + 1
     std_m = m
     dst_m = m
@@ -941,7 +937,7 @@ fn offset_at(
         dow = _cal.day_of_week(year, month, day)
         amnt_weeks_target = data.week
         is_later = hour > data.hour and minute > 0 and second >= 0
-        accum: UInt8 = 0
+        accum = UInt8(0)
         for i in iterable:
             if _cal.day_of_week(year, month, i) == dow_target:
                 if accum != amnt_weeks_target:

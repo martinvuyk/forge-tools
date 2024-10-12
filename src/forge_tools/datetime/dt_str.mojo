@@ -49,7 +49,7 @@ struct IsoFormat:
     """e.g. `1970-01-01T00:00:00`"""
     alias YYYY_MM_DD_T_HH_MM_SS_TZD = Self.YYYY_MM_DD + "T" + Self.HH_MM_SS + Self.TZD
     """e.g. `1970-01-01T00:00:00+00:00`"""
-    selected: StringLiteral
+    var selected: StringLiteral
     """The selected IsoFormat."""
 
     fn __init__(
@@ -281,15 +281,15 @@ fn from_iso[
 
 @value
 struct _DateTime:
-    year: UInt16
-    month: UInt8
-    day: UInt8
-    hour: UInt8
-    minute: UInt8
-    second: UInt8
-    m_second: UInt16
-    u_second: UInt16
-    n_second: UInt16
+    var year: UInt16
+    var month: UInt8
+    var day: UInt8
+    var hour: UInt8
+    var minute: UInt8
+    var second: UInt8
+    var m_second: UInt16
+    var u_second: UInt16
+    var n_second: UInt16
 
 
 fn strptime(s: String, format_str: StringLiteral) -> Optional[_DateTime]:

@@ -74,13 +74,13 @@ struct TimeZone[
             using the given offsets when the timezone was constructed.
     """
 
-    tz_str: StringLiteral
+    var tz_str: StringLiteral
     """[`TZ identifier`](
         https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)."""
-    has_dst: Bool
+    var has_dst: Bool
     """Whether the `TimeZone` has Daylight Saving Time."""
-    _dst: dst_storage
-    _no_dst: no_dst_storage
+    var _dst: dst_storage
+    var _no_dst: no_dst_storage
 
     fn __init__(
         inout self,
@@ -120,9 +120,10 @@ struct TimeZone[
         self._dst = dst_storage()
         self._no_dst = no_dst_storage()
         if not has_dst:
-            s = -1 if sign == -1 and not (
-                offset_h == 0 and offset_m == 0
-            ) else 1
+            s = (
+                -1 if sign == -1
+                and not (offset_h == 0 and offset_m == 0) else 1
+            )
             self._no_dst.add(tz_str, Offset(offset_h, offset_m, s))
 
         z = zoneinfo
@@ -165,14 +166,14 @@ struct TimeZone[
             constrained[False, "there is no such attribute"]()
             return 0
 
-        offset: Offset
+        var offset: Offset
         if self.has_dst:
-            data = self._dst.get(self.tz_str)
+            var data = self._dst.get(self.tz_str)
             if not data:
                 raise Error("ZoneInfo not found")
             offset = data.value().from_hash()[2]
         else:
-            data = self._no_dst.get(self.tz_str)
+            var data = self._no_dst.get(self.tz_str)
             if not data:
                 raise Error("ZoneInfo not found")
             offset = data.value()
@@ -212,7 +213,7 @@ struct TimeZone[
         @parameter
         if iana and native:
             tz = self._dst.get(self.tz_str)
-            offset = offset_at(tz, year, month, day, hour, minute, second)
+            var offset = offset_at(tz, year, month, day, hour, minute, second)
             if offset:
                 return offset.value()
         elif iana and pyzoneinfo:

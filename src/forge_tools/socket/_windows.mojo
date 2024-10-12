@@ -18,7 +18,7 @@ struct _WindowsSocket[
     sock_protocol: SockProtocol,
     sock_address: SockAddr,
 ]:
-    fd: FileDescriptor
+    var fd: Arc[FileDescriptor]
     """The Socket's `Arc[FileDescriptor]`."""
 
     fn __init__(inout self) raises:
@@ -90,22 +90,6 @@ struct _WindowsSocket[
     async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Receive up to `len(buf)` bytes into the buffer."""
         return -1
-
-    async fn send(self, buf: UnsafePointer[UInt8], length: UInt) -> UInt:
-        """Send a buffer of bytes to the socket."""
-        return 0
-
-    async fn send(self, buf: List[UInt8]) -> UInt:
-        """Send a list of bytes to the socket."""
-        return 0
-
-    async fn recv(self, buf: UnsafePointer[UInt8], max_len: UInt) -> UInt:
-        """Receive up to max_len bytes into the buffer."""
-        return 0
-
-    async fn recv(self, max_len: UInt) -> List[UInt8]:
-        """Receive up to max_len bytes."""
-        return List[UInt8]()
 
     @staticmethod
     fn gethostname() -> Optional[String]:

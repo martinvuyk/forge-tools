@@ -110,7 +110,7 @@ struct SockFamily:
     """"AF_UART". Notes: This Address Family is not standard since there is
     none.
     """
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -170,7 +170,7 @@ struct SockType:
     """SOCK_SEQPACKET."""
 
     # TODO the rest
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -222,7 +222,7 @@ struct SockProtocol:
     """Inter Integrated Circuit."""
     alias UART = "UART"  # TODO: implement. inspiration: https://github.com/AndreRenaud/simple_uart
     """Universal Asynchronous Reciever Transmitter."""
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -277,7 +277,7 @@ struct SockPlatform:
     alias WINDOWS = "WINDOWS"  # TODO: implement
     """WINDOWS."""
     # TODO other important platforms
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -539,7 +539,7 @@ struct Socket[
     ]
     # TODO: need to be able to use SocketInterface trait regardless of type
     alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
-    _impl: Self._variant
+    var _impl: Self._variant
 
     fn __init__(inout self, impl: Self._variant):
         """Construct a socket object from an implementation of the

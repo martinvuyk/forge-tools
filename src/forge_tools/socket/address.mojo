@@ -14,7 +14,7 @@ struct TIPCAddrType:
     """TIPC_ADDR_NAME."""
     alias TIPC_ADDR_ID = "TIPC_ADDR_ID"
     """TIPC_ADDR_ID."""
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -54,7 +54,7 @@ struct TIPCScope:
     """TIPC_CLUSTER_SCOPE."""
     alias TIPC_NODE_SCOPE = "TIPC_NODE_SCOPE"
     """TIPC_NODE_SCOPE."""
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -98,7 +98,7 @@ struct EtherProto:
     alias VLAN = "VLAN"
     """VLAN."""
 
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -144,7 +144,7 @@ struct EtherPacket:
     alias OUTGOING = "OUTGOING"
     """OUTGOING."""
 
-    _selected: StringLiteral
+    var _selected: StringLiteral
 
     fn __init__(inout self, selected: StringLiteral):
         """Construct an instance.
@@ -259,9 +259,9 @@ struct IPv4Addr(SockAddr):
         port: The port.
     """
 
-    host: String
+    var host: String
     """The host."""
-    port: UInt
+    var port: UInt
     """The port."""
 
     fn __init__(inout self: IPv4Addr, host: String = "", port: UInt = 0):
@@ -338,13 +338,13 @@ struct IPv6Addr(SockAddr):
         scope_id: The scope_id.
     """
 
-    host: String
+    var host: String
     """The host."""
-    port: UInt
+    var port: UInt
     """The port."""
-    flowinfo: UInt
+    var flowinfo: UInt
     """The flowinfo."""
-    scope_id: UInt
+    var scope_id: UInt
     """The scope_id."""
 
     fn __init__(
@@ -399,7 +399,7 @@ struct UnixAddr(SockAddr):
         [Reference](https://man7.org/linux/man-pages/man7/unix.7.html).
     """
 
-    host: String
+    var host: String
     """The sun_path (maximum of 108 bytes)."""
 
     fn from_host(inout self: UnixAddr, host: String):
@@ -439,9 +439,9 @@ struct NETLINKAddr(SockAddr):
         groups: The groups.
     """
 
-    pid: UInt
+    var pid: UInt
     """The pid."""
-    groups: UInt
+    var groups: UInt
     """The groups."""
 
     fn __init__(inout self: NETLINKAddr, pid: UInt, groups: UInt):
@@ -484,15 +484,15 @@ struct TIPCAddr(SockAddr):
         scope: The scope.
     """
 
-    addr_type: TIPCAddrType
+    var addr_type: TIPCAddrType
     """The addr_type."""
-    v1: UInt
+    var v1: UInt
     """The v1."""
-    v2: UInt
+    var v2: UInt
     """The v2."""
-    v3: UInt
+    var v3: UInt
     """The v3."""
-    scope: TIPCScope
+    var scope: TIPCScope
     """The scope."""
 
     fn __init__(
@@ -546,11 +546,11 @@ struct CANISOTPAddr(SockAddr):
         tx_addr: The tx_addr.
     """
 
-    interface: String
+    var interface: String
     """The interface."""
-    rx_addr: UInt32
+    var rx_addr: UInt32
     """The rx_addr."""
-    tx_addr: UInt32
+    var tx_addr: UInt32
     """The tx_addr."""
 
     fn __init__(
@@ -599,13 +599,13 @@ struct CANJ1939Addr(SockAddr):
         addr: The address.
     """
 
-    interface: String
+    var interface: String
     """The interface."""
-    name: UInt64
+    var name: UInt64
     """The ECU name."""
-    pgn: UInt32
+    var pgn: UInt32
     """The Parameter Group Number."""
-    addr: UInt8
+    var addr: UInt8
     """The address."""
 
     fn __init__(
@@ -655,9 +655,9 @@ struct BTL2CAPAddr(SockAddr):
         psm: The psm.
     """
 
-    bdaddr: String
+    var bdaddr: String
     """The Bluetooth address."""
-    psm: UInt
+    var psm: UInt
     """The psm."""
 
     fn __init__(inout self: BTL2CAPAddr, bdaddr: String, psm: UInt):
@@ -697,9 +697,9 @@ struct BTRFCOMMAddr(SockAddr):
         channel: The channel.
     """
 
-    bdaddr: String
+    var bdaddr: String
     """The Bluetooth address."""
-    channel: UInt
+    var channel: UInt
     """The channel."""
 
     fn __init__(inout self: BTRFCOMMAddr, bdaddr: String, channel: UInt):
@@ -738,7 +738,7 @@ struct BTHCIAddr(SockAddr):
         device_id: The device_id.
     """
 
-    device_id: UInt
+    var device_id: UInt
     """The device_id."""
 
     fn __init__(inout self: BTHCIAddr, device_id: UInt):
@@ -775,7 +775,7 @@ struct BTSCOAddr(SockAddr):
         bdaddr: The Bluetooth address.
     """
 
-    bdaddr: UInt
+    var bdaddr: UInt
     """The Bluetooth address."""
 
     fn __init__(inout self: BTSCOAddr, bdaddr: UInt):
@@ -816,13 +816,13 @@ struct ALGAddr(SockAddr):
         mask: The mask.
     """
 
-    type: String
+    var type: String
     """The algorithm type as string, e.g. `aead`, `hash`, `skcipher`."""
-    name: String
+    var name: String
     """The algorithm name and operation mode as string, e.g. `sha256`."""
-    feat: UInt32
+    var feat: UInt32
     """The features."""
-    mask: UInt32
+    var mask: UInt32
     """The mask."""
 
     fn __init__(
@@ -873,9 +873,9 @@ struct VSOCKAddr(SockAddr):
         port: The port.
     """
 
-    CID: UInt
+    var CID: UInt
     """The Context ID."""
-    port: UInt
+    var port: UInt
     """The port."""
 
     fn __init__(inout self: VSOCKAddr, CID: UInt, port: UInt):
@@ -918,15 +918,15 @@ struct PACKETAddr(SockAddr):
         addr: The hardware physical address.
     """
 
-    ifname: String
+    var ifname: String
     """The device name."""
-    proto: EtherProto
+    var proto: EtherProto
     """The Ethernet protocol number."""
-    pkttype: EtherPacket
+    var pkttype: EtherPacket
     """The packet type."""
-    hatype: UInt
+    var hatype: UInt
     """The ARP hardware address type."""
-    addr: UInt
+    var addr: UInt
     """The hardware physical address."""
 
     fn __init__(
@@ -979,9 +979,9 @@ struct QIPCRTRAddr(SockAddr):
         port: The port.
     """
 
-    node: UInt
+    var node: UInt
     """The node."""
-    port: UInt
+    var port: UInt
     """The port."""
 
     fn __init__(inout self: QIPCRTRAddr, node: UInt, port: UInt):
@@ -1021,9 +1021,9 @@ struct HYPERVAddr(SockAddr):
         service_id: The service identifier of the registered service.
     """
 
-    vm_id: String
+    var vm_id: String
     """The virtual machine identifier."""
-    service_id: String
+    var service_id: String
     """The service identifier of the registered service."""
 
     fn __init__(inout self: HYPERVAddr, vm_id: String, service_id: String):
@@ -1073,22 +1073,22 @@ struct SPIAddr(SockAddr):
         This struct is not a standard socket address since there is none.
     """
 
-    interface: String
+    var interface: String
     """The interface (e.g. `"COM1"` on Windows, or `"/dev/ttyUSB0"` on Linux).
     """
-    address: UInt
+    var address: UInt
     """The address."""
-    frequency_hz: UInt
+    var frequency_hz: UInt
     """The frequency in Hz of the connection."""
-    mode: UInt8
+    var mode: UInt8
     """The SPI mode: {0, 1, 2, 3}."""
-    SCLK: UInt
+    var SCLK: UInt
     """The Serial Clock (pin number)."""
-    MOSI: UInt
+    var MOSI: UInt
     """The Master Out Slave In (pin number)."""
-    MISO: UInt
+    var MISO: UInt
     """The Master In Slave Out (pin number)."""
-    CS: UInt
+    var CS: UInt
     """The Chip Select (pin number)."""
 
     fn __init__(
@@ -1159,18 +1159,18 @@ struct I2CAddr(SockAddr):
         This struct is not a standard socket address since there is none.
     """
 
-    interface: String
+    var interface: String
     """The interface (e.g. `"COM1"` on Windows, or `"/dev/ttyUSB0"` on Linux).
     """
-    address: UInt
+    var address: UInt
     """The address."""
-    bitrate: UInt
+    var bitrate: UInt
     """The bitrate."""
-    mode: String
+    var mode: String
     """The mode: {"Sm", "Fm", "Fm+", "Hs", "UFm"}."""
-    SDA: UInt
+    var SDA: UInt
     """The Serial Data line Address (pin number)."""
-    SCL: UInt
+    var SCL: UInt
     """The Serial Clock Line (pin number)."""
 
     fn __init__(
@@ -1234,16 +1234,16 @@ struct UARTAddr(SockAddr):
         This struct is not a standard socket address since there is none.
     """
 
-    interface: String
+    var interface: String
     """The interface (e.g. `"COM1"` on Windows, or `"/dev/ttyUSB0"` on Linux).
     """
-    baudrate: UInt
+    var baudrate: UInt
     """The baudrate."""
-    mode: String
+    var mode: String
     """The mode."""
-    rx_addr: UInt32
+    var rx_addr: UInt32
     """The rx_addr."""
-    tx_addr: UInt32
+    var tx_addr: UInt32
     """The tx_addr."""
 
     fn __init__(

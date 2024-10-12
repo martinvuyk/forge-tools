@@ -74,7 +74,7 @@ struct _UnixSocket[
 ]:
     """Generic POSIX compliant socket implementation."""
 
-    fd: Arc[FileDescriptor]
+    var fd: Arc[FileDescriptor]
     """The Socket's `Arc[FileDescriptor]`."""
     alias _sock_family = _get_unix_sock_family_constant(sock_family)
     alias _sock_type = _get_unix_sock_type_constant(sock_type)

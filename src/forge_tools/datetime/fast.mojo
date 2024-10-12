@@ -71,9 +71,9 @@ struct DateTime64(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    m_seconds: UInt64
+    var m_seconds: UInt64
     """Miliseconds since epoch."""
-    hash: UInt64
+    var hash: UInt64
     """Hash."""
 
     fn __init__(inout self, m_seconds: UInt64, hash_val: UInt64):
@@ -210,7 +210,7 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             Self.
         """
-        mask: UInt64 = 0b0
+        mask = UInt64(0b0)
         alias offset = _cal_h64.shift_64_ms
         if year:
             mask |= _cal_h64.mask_64_y << (_cal_h64.shift_64_y - offset)
@@ -638,9 +638,9 @@ struct DateTime32(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    minutes: UInt32
+    var minutes: UInt32
     """Minutes since epoch."""
-    hash: UInt32
+    var hash: UInt32
     """Hash."""
 
     fn __init__(inout self, minutes: UInt32, hash_val: UInt32):
@@ -761,7 +761,7 @@ struct DateTime32(Hashable, Stringable):
             Self.
         """
 
-        mask: UInt32 = 0b0
+        mask = UInt32(0b0)
         if year:
             mask |= _cal_h32.mask_32_y << _cal_h32.shift_32_y
         if month:
@@ -1157,9 +1157,9 @@ struct DateTime16(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    hours: UInt16
+    var hours: UInt16
     """Hours since epoch."""
-    hash: UInt16
+    var hash: UInt16
     """Hash."""
 
     fn __init__(inout self, hours: UInt16, hash_val: UInt16):
@@ -1257,7 +1257,7 @@ struct DateTime16(Hashable, Stringable):
             Self.
         """
 
-        mask: UInt16 = 0b0
+        mask = UInt16(0b0)
         if year:
             mask |= _cal_h16.mask_16_d << _cal_h16.shift_16_d
         if day:
@@ -1649,9 +1649,9 @@ struct DateTime8(Hashable, Stringable):
             shouldn't be used since they are invalid.
     """
 
-    hours: UInt8
+    var hours: UInt8
     """Hours since epoch."""
-    hash: UInt8
+    var hash: UInt8
     """Hash."""
 
     fn __init__(inout self, hours: UInt8, hash_val: UInt8):
@@ -1743,7 +1743,7 @@ struct DateTime8(Hashable, Stringable):
             Self.
         """
 
-        mask: UInt8 = 0b0
+        mask = UInt8(0b0)
         if day:
             mask |= _cal_h8.mask_8_d << _cal_h8.shift_8_d
         if hour:

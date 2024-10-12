@@ -71,9 +71,7 @@ fn test_zonedst() raises:
                                         month, dow, eomon, week, hours[hour]
                                     )
                                     of = Offset(i, minutes[j], sign)
-                                    parsed = ZoneDST(
-                                        tzdt, tzdt, of
-                                    ).from_hash()
+                                    parsed = ZoneDST(tzdt, tzdt, of).from_hash()
                                     assert_equal(tzdt.buf, parsed[0].buf)
                                     assert_equal(tzdt.buf, parsed[1].buf)
                                     assert_equal(of.buf, parsed[2].buf)

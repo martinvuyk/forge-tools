@@ -108,29 +108,29 @@ struct DateTime[
         - The Default `DateTime` hash has only Microsecond resolution.
     """
 
-    year: UInt16
+    var year: UInt16
     """Year."""
-    month: UInt8
+    var month: UInt8
     """Month."""
-    day: UInt8
+    var day: UInt8
     """Day."""
-    hour: UInt8
+    var hour: UInt8
     """Hour."""
-    minute: UInt8
+    var minute: UInt8
     """Minute."""
-    second: UInt8
+    var second: UInt8
     """Second."""
-    m_second: UInt16
+    var m_second: UInt16
     """M_second."""
-    u_second: UInt16
+    var u_second: UInt16
     """U_second."""
-    n_second: UInt16
+    var n_second: UInt16
     """N_second."""
     # TODO: tz and calendar should be references
     alias _tz = TimeZone[dst_storage, no_dst_storage, iana, pyzoneinfo, native]
-    tz: Self._tz
+    var tz: Self._tz
     """Tz."""
-    calendar: Calendar[C]
+    var calendar: Calendar[C]
     """Calendar."""
     alias _UnboundCal = DateTime[
         dst_storage, no_dst_storage, iana, pyzoneinfo, native, _
@@ -358,9 +358,8 @@ struct DateTime[
         offset = tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
-        h = int(offset.hour)
-        m = int(offset.minute)
-        new_self: Self
+        h, m = int(offset.hour), int(offset.minute)
+        var new_self: Self
         if offset.sign == 1:
             new_self = self.add(hours=h, minutes=m)
         else:
@@ -413,12 +412,10 @@ struct DateTime[
             `self.seconds_since_epoch() - other.seconds_since_epoch()`.
         """
 
-        s = self
-        o = other.replace(calendar=self.calendar)
+        s, o = self, other.replace(calendar=self.calendar)
 
         if s.tz != o.tz:
-            s = s.to_utc()
-            o = o.to_utc()
+            s, o = s.to_utc(), o.to_utc()
         return s.seconds_since_epoch() - o.seconds_since_epoch()
 
     fn delta_ns(
@@ -438,15 +435,12 @@ struct DateTime[
                 in years is bigger than ~ 580 (Gregorian years).
             - sign: {1, -1} if the overflow was added or subtracted.
         """
-        s = self
-        o = other
-        if s.tz != o.tz:
-            s = s.to_utc()
-            o = o.to_utc()
 
-        overflow: UInt16 = 0
-        sign: UInt8 = 1
-        year = s.year
+        s, o = self, other
+        if self.tz != other.tz:
+            s, o = self.to_utc(), other.to_utc()
+
+        overflow, sign, year = UInt16(0), UInt8(1), s.year
         if s.year < o.year:
             sign = -1
             while o.year - year > _max_delta:
@@ -514,9 +508,7 @@ struct DateTime[
         else:
             self.month = mon
 
-        max_day = int(
-            self.calendar.max_days_in_month(self.year, self.month)
-        )
+        max_day = int(self.calendar.max_days_in_month(self.year, self.month))
         d = int(self.day) + days
         if d > max_day:
             self.day = self.calendar.min_day
@@ -857,8 +849,8 @@ struct DateTime[
 
     @always_inline
     fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
-        s: UInt
-        o: UInt
+        var s: UInt
+        var o: UInt
         if self.tz != other.tz:
             s, o = hash(self.to_utc()), hash(other.to_utc())
         else:

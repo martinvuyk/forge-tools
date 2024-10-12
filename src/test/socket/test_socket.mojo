@@ -58,10 +58,10 @@ def test_inet_aton():
 
     @parameter
     if not is_big_endian():
-        b0 = (value << 24)
-        b1 = ((value << 8) & 0xFF_00_00)
-        b2 = ((value >> 8) & 0xFF_00)
-        b3 = (value >> 24)
+        b0 = value << 24
+        b1 = (value << 8) & 0xFF_00_00
+        b2 = (value >> 8) & 0xFF_00
+        b3 = value >> 24
         value = b0 | b1 | b2 | b3
     assert_equal(value, res.value())
 
@@ -71,10 +71,10 @@ def test_inet_ntoa():
 
     @parameter
     if not is_big_endian():
-        b0 = (value << 24)
-        b1 = ((value << 8) & 0xFF_00_00)
-        b2 = ((value >> 8) & 0xFF_00)
-        b3 = (value >> 24)
+        b0 = value << 24
+        b1 = (value << 8) & 0xFF_00_00
+        b2 = (value >> 8) & 0xFF_00
+        b3 = value >> 24
         value = b0 | b1 | b2 | b3
     res = Socket.inet_ntoa(value)
     assert_equal(String("123.45.67.89"), res)

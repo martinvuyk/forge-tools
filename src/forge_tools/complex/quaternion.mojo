@@ -32,7 +32,7 @@ struct Quaternion[T: DType = DType.float64]:
 
     alias _vec_type = SIMD[T, 4]
     alias _scalar_type = Scalar[T]
-    vec: Self._vec_type
+    var vec: Self._vec_type
     """The underlying SIMD vector."""
 
     fn __init__(
@@ -413,7 +413,7 @@ struct Quaternion[T: DType = DType.float64]:
         return (self.vec == other.vec).reduce_and()
 
     fn __str__(self) -> String:
-        s: String = "["
+        s = String("[")
 
         @parameter
         for i in range(8):
@@ -443,7 +443,7 @@ struct DualQuaternion[T: DType = DType.float64]:
 
     alias _vec_type = SIMD[T, 8]
     alias _scalar_type = Scalar[T]
-    vec: Self._vec_type
+    var vec: Self._vec_type
     """The underlying SIMD vector."""
 
     fn __init__(
@@ -880,7 +880,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         return (self.vec == other.vec).reduce_and()
 
     fn __str__(self) -> String:
-        s: String = "["
+        s = String("[")
 
         @parameter
         for i in range(8):

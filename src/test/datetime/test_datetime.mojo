@@ -14,7 +14,8 @@ from forge_tools.datetime.calendar import (
 from forge_tools.datetime.dt_str import IsoFormat
 
 
-fn test_add() raises:
+
+def test_add():
     # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
@@ -143,9 +144,7 @@ fn test_subtract() raises:
     offset_0 = dt(2024, 2, 29, tz=tz_0_, calendar=unixcal)
     offset_p_1 = dt(2024, 2, 29, hour=1, tz=tz_1, calendar=unixcal)
     offset_n_1 = dt(2024, 2, 28, hour=23, tz=tz1_, calendar=unixcal)
-    sub_seconds = dt(2024, 3, 1, tz=tz_0_, calendar=unixcal).subtract(
-        days=1
-    )
+    sub_seconds = dt(2024, 3, 1, tz=tz_0_, calendar=unixcal).subtract(days=1)
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
     assert_equal(result, offset_n_1)
