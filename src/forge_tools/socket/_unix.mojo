@@ -51,7 +51,6 @@ from forge_tools.ffi.c import (
     sa_family_t,
     IPPROTO_IPV6,
     IPV6_V6ONLY,
-    NULL,
     setsockopt,
     addrinfo,
     getaddrinfo,
@@ -318,7 +317,7 @@ struct _UnixSocket[
         hints_p = UnsafePointer[addrinfo].address_of(hints)
         nodename = str(address)
         nodename_p = nodename.unsafe_ptr().bitcast[C.char]()
-        servname_p = NULL.bitcast[C.char]()
+        servname_p = C.NULL.bitcast[C.char]()
         result = addrinfo()
         alias UP = UnsafePointer
         res_p = C.ptr_addr(int(UP[addrinfo].address_of(result)))
@@ -327,9 +326,9 @@ struct _UnixSocket[
         if err != 0:
             msg = char_ptr_to_string(strerror(err))
             raise Error("Error in getaddrinfo(). Code: " + msg)
-        next_addr = NULL
+        next_addr = C.NULL
         first = True
-        while first or next_addr != NULL:
+        while first or next_addr != C.NULL:
             first = False
             af = _parse_unix_sock_family_constant(int(result.ai_family))
             st = _parse_unix_sock_type_constant(int(result.ai_socktype))

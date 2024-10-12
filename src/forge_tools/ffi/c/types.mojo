@@ -45,17 +45,17 @@ struct C:
     """Type: `double`."""
     alias void = Int8
     """Type: `void`."""
+    alias NULL = UnsafePointer[Self.void]()
+    """Null pointer."""
     alias ptr_addr = Int
     """Type: A Pointer Address."""
 
 
-alias NULL = UnsafePointer[C.void]()
-"""Null pointer."""
 
 alias size_t = C.u_long
-"""Type: size_t."""
+"""Type: `size_t`."""
 alias ssize_t = C.long
-"""Type: ssize_t."""
+"""Type: `ssize_t`."""
 # ===----------------------------------------------------------------------=== #
 # Utils
 # ===----------------------------------------------------------------------=== #
@@ -254,7 +254,7 @@ struct addrinfo:
     fn __init__(inout self):
         """Construct an empty addrinfo struct."""
         p0 = UnsafePointer[sockaddr]()
-        self = Self(0, 0, 0, 0, 0, p0, UnsafePointer[C.char](), NULL)
+        self = Self(0, 0, 0, 0, 0, p0, UnsafePointer[C.char](), C.NULL)
 
 
 # ===----------------------------------------------------------------------=== #
