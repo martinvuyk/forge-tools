@@ -14,7 +14,7 @@ from forge_tools.datetime.calendar import (
 )
 
 
-fn _get_dates_as_lists(t1: _date, t2: _date) -> (List[Int], List[Int]):
+def _get_dates_as_lists(t1: _date, t2: _date) -> (List[Int], List[Int]):
     l1 = List[Int](
         int(t1[0]),
         int(t1[1]),
@@ -38,7 +38,7 @@ fn _get_dates_as_lists(t1: _date, t2: _date) -> (List[Int], List[Int]):
     return l1^, l2^
 
 
-fn test_calendar_hashes() raises:
+def test_calendar_hashes():
     alias calh64 = CalendarHashes(CalendarHashes.UINT64)
     alias calh32 = CalendarHashes(CalendarHashes.UINT32)
     alias calh16 = CalendarHashes(CalendarHashes.UINT16)
@@ -73,7 +73,7 @@ fn test_calendar_hashes() raises:
     assert_equal(result[0].__str__(), result[1].__str__())
 
 
-fn test_python_calendar() raises:
+def test_python_calendar():
     alias cal = PythonCalendar
     assert_equal(3, cal.day_of_week(2023, 6, 15))
     assert_equal(5, cal.day_of_week(2024, 6, 15))
@@ -152,7 +152,7 @@ fn test_python_calendar() raises:
     assert_equal(1 * day_to_sec * sec_to_nano, d2 - d1)
 
 
-fn test_gregorian_utc_calendar() raises:
+def test_gregorian_utc_calendar():
     alias cal = UTCCalendar
     assert_equal(3, cal.day_of_week(2023, 6, 15))
     assert_equal(5, cal.day_of_week(2024, 6, 15))
@@ -193,7 +193,7 @@ fn test_gregorian_utc_calendar() raises:
     assert_equal(1 * day_to_sec * sec_to_nano, d2 - d1)
 
 
-fn test_utcfast_calendar() raises:
+def test_utcfast_calendar():
     alias cal = UTCFastCal
     assert_equal(3, cal.day_of_week(2023, 6, 15))
     assert_equal(5, cal.day_of_week(2024, 6, 15))
@@ -237,7 +237,7 @@ fn test_utcfast_calendar() raises:
     assert_equal(1 * day_to_sec * sec_to_nano, d2 - d1)
 
 
-fn main() raises:
+def main():
     test_calendar_hashes()
     test_python_calendar()
     test_gregorian_utc_calendar()

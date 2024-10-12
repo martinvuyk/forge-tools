@@ -127,7 +127,7 @@ def test_add():
     assert_equal(result, add_seconds)
 
 
-fn test_subtract() raises:
+def test_subtract():
     # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
@@ -230,7 +230,7 @@ fn test_subtract() raises:
     assert_equal(result, sub_seconds)
 
 
-fn test_logic() raises:
+def test_logic():
     # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
@@ -250,7 +250,7 @@ fn test_logic() raises:
     assert_true(ref1 >= dt(1969, 12, 31, tz=tz_0_, calendar=pycal))
 
 
-fn test_bitwise() raises:
+def test_bitwise():
     # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
@@ -272,7 +272,7 @@ fn test_bitwise() raises:
     # assert_true(~(hash(ref1) ^ ~hash(ref1)) == 0)
 
 
-fn test_iso() raises:
+def test_iso():
     alias pycal = PythonCalendar
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
     alias TZ = dt._tz
@@ -312,7 +312,7 @@ fn test_iso() raises:
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
-fn test_time() raises:
+def test_time():
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
 
     start = dt.now()
@@ -321,7 +321,7 @@ fn test_time() raises:
     assert_true(start.n_second != end.n_second)
 
 
-fn test_hash() raises:
+def test_hash():
     alias pycal = PythonCalendar
     alias unixcal = UTCCalendar
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
@@ -334,7 +334,7 @@ fn test_hash() raises:
     assert_equal(ref1, ref2)
 
 
-fn test_strftime() raises:
+def test_strftime():
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
     fstr = "mojo: %Y🔥%m🤯%d"
     assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
@@ -343,7 +343,7 @@ fn test_strftime() raises:
     assert_equal("2024-09-09 09:09:09.009009", ref1.strftime(fstr))
 
 
-fn test_strptime() raises:
+def test_strptime():
     fstr = "mojo: %Y🔥%m🤯%d"
     vstr = "mojo: 0009🔥06🤯01"
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
@@ -359,7 +359,7 @@ fn test_strptime() raises:
     assert_equal(ref1, parsed.value())
 
 
-fn main() raises:
+def main():
     test_add()
     test_subtract()
     test_logic()

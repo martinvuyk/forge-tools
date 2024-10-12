@@ -10,7 +10,7 @@ from forge_tools.datetime.timezone import (
 )
 
 
-fn test_tz_no_iana() raises:
+def test_tz_no_iana():
     alias TZ = TimeZone[iana=False, pyzoneinfo=False, native=False]
     tz0 = TZ("Etc/UTC", 0, 0)
     tz_1 = TZ("Etc/UTC-1", 1, 0)
@@ -52,19 +52,19 @@ fn test_tz_no_iana() raises:
     assert_equal(tz3__of.sign, -1)
 
 
-fn test_tz_iana_dst() raises:
+def test_tz_iana_dst():
     # TODO: test from positive and negative UTC
     # TODO: test transitions to and from DST
     # TODO: test for Australia/Lord_Howe and Antarctica/Troll base
     pass
 
 
-fn test_tz_iana_no_dst() raises:
+def test_tz_iana_no_dst():
     # TODO: test from positive and negative UTC
     pass
 
 
-fn main() raises:
+def main():
     test_tz_no_iana()
     test_tz_iana_dst()
     test_tz_iana_no_dst()

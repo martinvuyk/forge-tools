@@ -11,7 +11,7 @@ from memory import UnsafePointer
 from forge_tools.collections.array import Array
 
 
-fn test_array() raises:
+def test_array():
     array = Array[DType.int8, 5]()
 
     for i in range(5):
@@ -84,7 +84,7 @@ fn test_array() raises:
     assert_equal(7, arr[-1])
 
 
-fn test_array_with_default() raises:
+def test_array_with_default():
     array = Array[DType.int8, 10]()
 
     for i in range(5):
@@ -114,7 +114,7 @@ fn test_array_with_default() raises:
     assert_equal(0, len(array))
 
 
-fn test_mojo_issue_698() raises:
+def test_mojo_issue_698():
     arr = Array[DType.float64, 5]()
     for i in range(5):
         arr.append(i)
@@ -126,7 +126,7 @@ fn test_mojo_issue_698() raises:
     assert_equal(4.0, arr[4])
 
 
-fn test_array_to_bool_conversion() raises:
+def test_array_to_bool_conversion():
     assert_false(Array[DType.int8, 2]())
     assert_true(Array[DType.int8, 2](0))
     assert_true(Array[DType.int8, 2](0, 1))
@@ -137,7 +137,7 @@ fn test_array_to_bool_conversion() raises:
     assert_true(Array[DType.int8, 256](1))
 
 
-fn test_array_pop() raises:
+def test_array_pop():
     arr = Array[DType.int8, 6]()
     # Test pop with index
     for i in range(6):
@@ -166,7 +166,7 @@ fn test_array_pop() raises:
     assert_equal(0, len(arr))
 
 
-fn test_array_variadic_constructor() raises:
+def test_array_variadic_constructor():
     l = Array[DType.int8, 4](2, 4, 6)
     assert_equal(3, len(l))
     assert_equal(2, l[0])
@@ -178,7 +178,7 @@ fn test_array_variadic_constructor() raises:
     assert_equal(8, l[3])
 
 
-fn test_array_insert() raises:
+def test_array_insert():
     v1 = Array[DType.int8, 4](0, 0, 0, 0)
     v1.insert(0, 4)
     v1.insert(0, 3)
@@ -205,7 +205,7 @@ fn test_array_insert() raises:
     assert_equal(v2[4], 5)
 
 
-fn test_array_index() raises:
+def test_array_index():
     test_array_a = Array[DType.int8, 5](10, 20, 30, 40, 50)
 
     # Basic Functionality Tests
@@ -281,7 +281,7 @@ fn test_array_index() raises:
     assert_false(test_array_b.index(20, start=4, stop=5))
 
 
-fn test_array_extend() raises:
+def test_array_extend():
     #
     # Test extending the list [1, 2, 3] with itself
     #
@@ -309,14 +309,14 @@ fn test_array_extend() raises:
     assert_equal(vec[5], 3)
 
 
-fn test_array_iter() raises:
+def test_array_iter():
     vs = Array[DType.index, 3]()
     vs.append(1)
     vs.append(2)
     vs.append(3)
 
     # Borrow immutably
-    fn sum(vs: Array[DType.index, 3]) -> Int:
+    def sum(vs: Array[DType.index, 3]) -> Int:
         sum = 0
         for v in vs:
             sum += int(v)
@@ -325,7 +325,7 @@ fn test_array_iter() raises:
     assert_equal(6, sum(vs))
 
 
-fn test_array_iter_not_mutable() raises:
+def test_array_iter_not_mutable():
     vs = Array[DType.int8, 3](1, 2, 3)
 
     # should not mutate
@@ -337,7 +337,7 @@ fn test_array_iter_not_mutable() raises:
     assert_equal(6, sum)
 
 
-fn test_array_span() raises:
+def test_array_span():
     vs = Array[DType.int8, 3](1, 2, 3)
 
     es = vs[1:]
@@ -367,7 +367,7 @@ fn test_array_span() raises:
     assert_equal(len(es), 3)
 
 
-fn test_constructor_from_pointer() raises:
+def test_constructor_from_pointer():
     new_pointer = UnsafePointer[Int8].alloc(5)
     new_pointer[0] = 0
     new_pointer[1] = 1
@@ -381,7 +381,7 @@ fn test_constructor_from_pointer() raises:
     assert_equal(len(some_array), 3)
 
 
-fn test_constructor_from_other_list() raises:
+def test_constructor_from_other_list():
     initial_list = List[UInt8](0, 1, 2)
     size = len(initial_list)
     capacity = initial_list.capacity
@@ -393,7 +393,7 @@ fn test_constructor_from_other_list() raises:
     assert_equal(some_array.capacity, capacity)
 
 
-fn test_constructor_from_other_list_through_pointer() raises:
+def test_constructor_from_other_list_through_pointer():
     initial_list = List[UInt8](0, 1, 2)
     size = len(initial_list)
     capacity = initial_list.capacity
@@ -408,14 +408,14 @@ fn test_constructor_from_other_list_through_pointer() raises:
     _ = initial_list
 
 
-fn test_array_to_string() raises:
+def test_array_to_string():
     my_array = Array[DType.int8, 3](1, 2, 3)
     assert_equal(str(my_array), "[1, 2, 3]")
     my_array4 = Array[DType.uint64, 10](0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
     assert_equal(str(my_array4), "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]")
 
 
-fn test_array_count() raises:
+def test_array_count():
     arr1 = Array[DType.int8, 55](1, 2, 3, 2, 5, 6, 7, 8, 9, 10)
     assert_equal(1, arr1.count(1))
     assert_equal(2, arr1.count(2))
@@ -426,7 +426,7 @@ fn test_array_count() raises:
     assert_equal(0, arr2.count(1))
 
 
-fn test_array_concat() raises:
+def test_array_concat():
     a = Array[DType.int8, 6](1, 2, 3)
     b = Array[DType.int8, 3](4, 5, 6)
     assert_equal(len(a), 3)
@@ -451,8 +451,8 @@ fn test_array_concat() raises:
     assert_equal(len(l), 3)
 
 
-fn test_array_contains() raises:
-    fn test[T: DType]() raises:
+def test_array_contains():
+    def test[T: DType]():
         x = Array[T, 21](1, 2, 3)
         assert_false(0 in x)
         assert_true(1 in x)
@@ -475,7 +475,7 @@ fn test_array_contains() raises:
     test[DType.float64]()
 
 
-fn test_indexing() raises:
+def test_indexing():
     l = Array[DType.int8, 3](1, 2, 3)
     assert_equal(l[int(1)], 2)
     assert_equal(l[False], 1)
@@ -483,7 +483,7 @@ fn test_indexing() raises:
     assert_equal(l[2], 3)
 
 
-fn test_array_unsafe_set_and_get() raises:
+def test_array_unsafe_set_and_get():
     arr = Array[DType.int8, 5]()
 
     for i in range(5):
@@ -506,7 +506,7 @@ fn test_array_unsafe_set_and_get() raises:
     assert_equal(0, len(arr))
 
 
-fn test_array_broadcast_ops() raises:
+def test_array_broadcast_ops():
     alias arr = Array[DType.uint8, 3]
     vs = arr(1, 2, 3)
     # should apply to all
@@ -521,7 +521,7 @@ fn test_array_broadcast_ops() raises:
     assert_equal(4 * 3, (arr(2, 2, 2) ** 2).sum())
 
 
-fn test_min() raises:
+def test_min():
     arr1 = Array[DType.uint8, 53](
         1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
     )
@@ -532,7 +532,7 @@ fn test_min() raises:
     assert_equal(arr2.min(), 1)
 
 
-fn test_max() raises:
+def test_max():
     arr1 = Array[DType.uint8, 53](
         1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
     )
@@ -543,7 +543,7 @@ fn test_max() raises:
     assert_equal(arr2.max(), 19)
 
 
-fn test_dot() raises:
+def test_dot():
     arr1 = Array[DType.uint8, 53](
         1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 19
     )
@@ -558,8 +558,8 @@ fn test_dot() raises:
     assert_equal(arr3.dot(arr3), 2832)
 
 
-fn test_array_add() raises:
-    fn test[T: DType]() raises:
+def test_array_add():
+    def test[T: DType]():
         arr = Array[T, 53](
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
@@ -578,8 +578,8 @@ fn test_array_add() raises:
     test[DType.float64]()
 
 
-fn test_array_sub() raises:
-    fn test[T: DType]() raises:
+def test_array_sub():
+    def test[T: DType]():
         arr = Array[T, 53](
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
@@ -598,8 +598,8 @@ fn test_array_sub() raises:
     test[DType.float64]()
 
 
-fn test_cos() raises:
-    fn test[T: DType]() raises:
+def test_cos():
+    def test[T: DType]():
         arr0 = Array[T, 3](0, 0, 1)
         assert_almost_equal(arr0.cos(arr0), 1, rtol=0.1)
         arr1 = Array[T, 3](0, 1, 0)
@@ -635,10 +635,10 @@ fn test_cos() raises:
     test[DType.float64]()
 
 
-fn test_theta() raises:
+def test_theta():
     from math import pi
 
-    fn test[T: DType]() raises:
+    def test[T: DType]():
         arr0 = Array[T, 3](0, 0, 1)
         assert_almost_equal(arr0.theta(arr0), 0, rtol=0.1)
         arr1 = Array[T, 3](0, 1, 0)
@@ -667,8 +667,8 @@ fn test_theta() raises:
     test[DType.float64]()
 
 
-fn test_cross() raises:
-    fn test[T: DType]() raises:
+def test_cross():
+    def test[T: DType]():
         alias Arr = Array[T, 3, True]
         arr0 = Arr(1, 2, 3)
         assert_true((arr0.cross(arr0) == Arr(0, 0, 0)).reduce_and())
@@ -690,8 +690,8 @@ fn test_cross() raises:
     test[DType.float64]()
 
 
-fn test_reverse() raises:
-    fn test[T: DType]() raises:
+def test_reverse():
+    def test[T: DType]():
         arr = Array[T, 53](
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
@@ -722,11 +722,11 @@ fn test_reverse() raises:
     test[DType.float64]()
 
 
-fn test_apply() raises:
-    fn mult[T: DType](x: Scalar[T]) -> Scalar[T]:
+def test_apply():
+    def mult[T: DType](x: Scalar[T]) -> Scalar[T]:
         return x * Scalar[T](2)
 
-    fn test[T: DType]() raises:
+    def test[T: DType]():
         arr = Array[T, 53](
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
@@ -747,11 +747,11 @@ fn test_apply() raises:
     test[DType.float64]()
 
 
-fn test_map() raises:
-    fn func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
+def test_map():
+    def func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
         return x == 1
 
-    fn test[T: DType]() raises:
+    def test[T: DType]():
         arr = Array[T, 53](
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
@@ -772,11 +772,11 @@ fn test_map() raises:
     test[DType.float64]()
 
 
-fn test_filter() raises:
-    fn func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
+def test_filter():
+    def func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
         return x < 11
 
-    fn test[T: DType]() raises:
+    def test[T: DType]():
         arr = Array[T, 53](
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
@@ -798,7 +798,7 @@ fn test_filter() raises:
     test[DType.float64]()
 
 
-fn main() raises:
+def main():
     test_array()
     test_array_with_default()
     test_mojo_issue_698()

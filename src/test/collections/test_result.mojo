@@ -5,21 +5,21 @@ from collections import Dict
 from forge_tools.collections.result import Result, Result2, Error2
 
 
-fn _returning_err[T: CollectionElement](value: T) raises -> Result[T]:
+def _returning_err[T: CollectionElement](value: T) raises -> Result[T]:
     result = Result[T](err=Error("something"))
     if not result:
         return result
     raise Error("shouldn't get here")
 
 
-fn _returning_ok[T: CollectionElement](value: T) raises -> Result[T]:
+def _returning_ok[T: CollectionElement](value: T) raises -> Result[T]:
     result = Result[T](value)
     if result:
         return result
     raise Error("shouldn't get here")
 
 
-fn _returning_transferred_err[
+def _returning_transferred_err[
     T: CollectionElement
 ](value: T) raises -> Result[T]:
     # this value and err at the same time will never happen, just for testing
@@ -31,7 +31,7 @@ fn _returning_transferred_err[
     raise Error("shouldn't get here")
 
 
-fn _returning_none_err[T: CollectionElement](value: T) raises -> Result[T]:
+def _returning_none_err[T: CollectionElement](value: T) raises -> Result[T]:
     res1 = Result[String](err=Error("some error"))
     if res1.err:
         return None, res1.err
@@ -166,13 +166,13 @@ def test_result_isnot():
     assert_false(a is not None)
 
 
-fn _do_something(i: Int) -> Result2[Int, "IndexError"]:
+def _do_something(i: Int) -> Result2[Int, "IndexError"]:
     if i < 0:
         return None, Error2["IndexError"]("index out of bounds: " + str(i))
     return 1
 
 
-fn _do_some_other_thing() -> Result2[String, "OtherError"]:
+def _do_some_other_thing() -> Result2[String, "OtherError"]:
     a = _do_something(-1)
     if a.err:
         print(str(a.err))  # IndexError: index out of bounds: -1

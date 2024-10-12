@@ -3,7 +3,7 @@ from testing import assert_equal, assert_false, assert_true, assert_almost_equal
 from forge_tools.complex import Quaternion, DualQuaternion
 
 
-fn test_quaternion_ops() raises:
+def test_quaternion_ops():
     q1 = Quaternion(2, 3, 4, 5)
     q2 = Quaternion(2, 3, 4, 5)
     q3 = Quaternion(5, 4, 3, 2)
@@ -44,7 +44,7 @@ fn test_quaternion_ops() raises:
     # assert_almost_equal(..., q1.phi())
 
 
-fn test_quaternion_matrix() raises:
+def test_quaternion_matrix():
     # TODO
     # q1 = Quaternion(2, 3, 4, 5)
     # assert_almost_equal(
@@ -65,7 +65,7 @@ fn test_quaternion_matrix() raises:
     pass
 
 
-fn test_dualquaternion_ops() raises:
+def test_dualquaternion_ops():
     q1 = DualQuaternion(2, 3, 4, 5, 6, 7, 8, 9)
     q2 = DualQuaternion(2, 3, 4, 5, 6, 7, 8, 9)
     q3 = DualQuaternion(9, 8, 7, 6, 5, 4, 3, 2)
@@ -95,17 +95,17 @@ fn test_dualquaternion_ops() raises:
     # assert_almost_equal(..., q1**3)
 
 
-fn test_dualquaternion_matrix() raises:
+def test_dualquaternion_matrix():
     # TODO
     pass
 
 
-fn test_dualquaternion_screw() raises:
+def test_dualquaternion_screw():
     # TODO
     pass
 
 
-fn main() raises:
+def main():
     test_quaternion_ops()
     test_quaternion_matrix()
     test_dualquaternion_ops()

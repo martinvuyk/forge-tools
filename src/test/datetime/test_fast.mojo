@@ -13,7 +13,7 @@ from forge_tools.datetime.fast import (
 from forge_tools.datetime.dt_str import IsoFormat
 
 
-fn test_add64() raises:
+def test_add64():
     # test february leapyear
     result = DateTime64(2024, 2, 28).add(days=1)
     offset_0 = DateTime64(2024, 2, 29)
@@ -48,7 +48,7 @@ fn test_add64() raises:
     assert_equal(result.m_seconds, offset_0.m_seconds)
 
 
-fn test_add32() raises:
+def test_add32():
     # test february leapyear
     result = DateTime32(2024, 2, 28).add(days=1)
     offset_0 = DateTime32(2024, 2, 29)
@@ -83,7 +83,7 @@ fn test_add32() raises:
     assert_equal(result, offset_0)
 
 
-fn test_subtract64() raises:
+def test_subtract64():
     # test february leapyear
     result = DateTime64(2024, 3, 1).subtract(days=1)
     offset_0 = DateTime64(2024, 2, 29)
@@ -118,7 +118,7 @@ fn test_subtract64() raises:
     assert_equal(result, offset_0)
 
 
-fn test_subtract32() raises:
+def test_subtract32():
     # test february leapyear
     result = DateTime32(2024, 3, 1).subtract(days=1)
     offset_0 = DateTime32(2024, 2, 29)
@@ -153,7 +153,7 @@ fn test_subtract32() raises:
     assert_equal(result, offset_0)
 
 
-fn test_logic64() raises:
+def test_logic64():
     ref1 = DateTime64(2000, 1, 1)
     assert_true(ref1 == DateTime64(2000, 1, 1))
     assert_true(ref1 != DateTime64(1999, 12, 31))
@@ -163,7 +163,7 @@ fn test_logic64() raises:
     assert_true(ref1 >= DateTime64(1999, 12, 31))
 
 
-fn test_logic32() raises:
+def test_logic32():
     ref1 = DateTime32(2000, 1, 1)
     assert_true(ref1 == DateTime32(2000, 1, 1))
     assert_true(ref1 != DateTime32(1999, 12, 31))
@@ -173,7 +173,7 @@ fn test_logic32() raises:
     assert_true(ref1 >= DateTime32(1999, 12, 31))
 
 
-fn test_logic16() raises:
+def test_logic16():
     ref1 = DateTime16(2000, 1, 1)
     assert_true(ref1 == DateTime16(2000, 1, 1))
     assert_true(ref1 != DateTime16(1999, 12, 31))
@@ -183,7 +183,7 @@ fn test_logic16() raises:
     assert_true(ref1 >= DateTime16(1999, 12, 31))
 
 
-fn test_logic8() raises:
+def test_logic8():
     ref1 = DateTime8(2000, 1, 1)
     assert_true(ref1 == DateTime8(2000, 1, 1))
     assert_true(ref1 != DateTime8(1999, 12, 31))
@@ -193,7 +193,7 @@ fn test_logic8() raises:
     assert_true(ref1 >= DateTime8(1999, 12, 31))
 
 
-fn test_bitwise64() raises:
+def test_bitwise64():
     ref1 = DateTime64(2000, 1, 1)
     assert_true((ref1 ^ DateTime64(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime64(2000, 1, 2) & 0)) == hash(ref1))
@@ -201,7 +201,7 @@ fn test_bitwise64() raises:
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 
-fn test_bitwise32() raises:
+def test_bitwise32():
     ref1 = DateTime32(2000, 1, 1)
     assert_true((ref1 ^ DateTime32(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime32(2000, 1, 2) & 0)) == hash(ref1))
@@ -209,7 +209,7 @@ fn test_bitwise32() raises:
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 
-fn test_bitwise16() raises:
+def test_bitwise16():
     ref1 = DateTime16(2000, 1, 1)
     assert_true((ref1 ^ DateTime16(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime16(2000, 1, 2) & 0)) == hash(ref1))
@@ -217,7 +217,7 @@ fn test_bitwise16() raises:
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 
-fn test_bitwise8() raises:
+def test_bitwise8():
     ref1 = DateTime8(2000, 1, 1)
     assert_true((ref1 ^ DateTime8(2000, 1, 2)) != 0)
     assert_true((ref1 | (DateTime8(2000, 1, 2) & 0)) == hash(ref1))
@@ -225,7 +225,7 @@ fn test_bitwise8() raises:
     assert_true(~(ref1 ^ ~ref1) == 0)
 
 
-fn test_iso64() raises:
+def test_iso64():
     ref1 = DateTime64(2024, 6, 16, 18, 51, 20)
     iso_str = "2024-06-16T18:51:20+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
@@ -264,7 +264,7 @@ fn test_iso64() raises:
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
-fn test_iso32() raises:
+def test_iso32():
     ref1 = DateTime32(2024, 6, 16, 18, 51)
     iso_str = "2024-06-16T18:51:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
@@ -301,7 +301,7 @@ fn test_iso32() raises:
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
-fn test_iso16() raises:
+def test_iso16():
     ref1 = DateTime16(1973, 6, 16, 18)
     iso_str = "1973-06-16T18:00:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
@@ -336,7 +336,7 @@ fn test_iso16() raises:
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
-fn test_iso8() raises:
+def test_iso8():
     ref1 = DateTime8(1970, 1, 6, 18)
     iso_str = "1970-01-06T18:00:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
@@ -371,34 +371,34 @@ fn test_iso8() raises:
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
 
-fn test_time64() raises:
+def test_time64():
     start = DateTime64.now()
     time.sleep(1e-3)  # milisecond resolution
     end = DateTime64.now()
     assert_true(start != end)
 
 
-fn test_hash64() raises:
+def test_hash64():
     ref1 = DateTime64(9999, 12, 31, 23, 59, 59, 999)
     assert_equal(ref1.m_seconds, DateTime64.from_hash(hash(ref1)).m_seconds)
 
 
-fn test_hash32() raises:
+def test_hash32():
     ref1 = DateTime32(4095, 12, 31, 23, 59)
     assert_equal(ref1.minutes, DateTime32.from_hash(hash(ref1)).minutes)
 
 
-fn test_hash16() raises:
+def test_hash16():
     ref1 = DateTime16(1973, 12, 31, 23)
     assert_equal(ref1.hours, DateTime16.from_hash(hash(ref1)).hours)
 
 
-fn test_hash8() raises:
+def test_hash8():
     ref1 = DateTime8(1970, 1, 6, 23)
     assert_equal(ref1.hours, DateTime8.from_hash(hash(ref1)).hours)
 
 
-fn main() raises:
+def main():
     test_add64()
     test_subtract64()
     test_logic64()

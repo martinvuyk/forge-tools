@@ -18,7 +18,7 @@ from forge_tools.datetime.zoneinfo import (
 )
 
 
-fn test_offset() raises:
+def test_offset():
     alias minutes = SIMD[DType.uint8, 4](0, 30, 45, 0)
     for k in range(2):
         sign = 1 if k == 0 else -1
@@ -34,7 +34,7 @@ fn test_offset() raises:
                 assert_equal(of.sign, sign)
 
 
-fn test_tzdst() raises:
+def test_tzdst():
     alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
     for month in range(1, 13):
         for dow in range(2):
@@ -55,7 +55,7 @@ fn test_tzdst() raises:
                         assert_equal(tzdt.hour, hours[hour])
 
 
-fn test_zonedst() raises:
+def test_zonedst():
     alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
     alias minutes = SIMD[DType.uint8, 4](0, 30, 45, 0)
     for month in range(1, 13):
@@ -77,7 +77,7 @@ fn test_zonedst() raises:
                                     assert_equal(of.buf, parsed[2].buf)
 
 
-fn test_zoneinfomem32() raises:
+def test_zoneinfomem32():
     storage = ZoneInfoMem32()
     tz0 = "tz0"
     tz1 = "tz1"
@@ -121,7 +121,7 @@ fn test_zoneinfomem32() raises:
     assert_equal(tz45_read.buf, tz45_of.buf)
 
 
-fn test_zoneinfomem8() raises:
+def test_zoneinfomem8():
     storage = ZoneInfoMem8()
     tz0 = "tz0"
     tz1 = "tz1"
@@ -166,7 +166,7 @@ fn test_zoneinfomem8() raises:
 
 
 # FIXME
-# fn test_zoneinfofile32() raises:
+# def test_zoneinfofile32():
 #     storage = ZoneInfoFile32()
 #     tz0 = "tz0"
 #     tz1 = "tz1"
@@ -211,7 +211,7 @@ fn test_zoneinfomem8() raises:
 
 
 # FIXME
-# fn test_zoneinfofile8() raises:
+# def test_zoneinfofile8():
 #     storage = ZoneInfoFile8()
 #     tz0 = "tz0"
 #     tz1 = "tz1"
@@ -265,32 +265,32 @@ fn test_zoneinfomem8() raises:
 #     assert_equal(tz45_read.buf, tz45_of.buf)
 
 
-fn test_get_zoneinfo() raises:
+def test_get_zoneinfo():
     # TODO
     pass
 
 
-fn test_get_leapsecs() raises:
+def test_get_leapsecs():
     # TODO
     pass
 
 
-fn test_parse_iana_leapsecs() raises:
+def test_parse_iana_leapsecs():
     # TODO
     pass
 
 
-fn test_parse_iana_zonenow() raises:
+def test_parse_iana_zonenow():
     # TODO
     pass
 
 
-fn test_parse_iana_dst_transitions() raises:
+def test_parse_iana_dst_transitions():
     # TODO
     pass
 
 
-fn main() raises:
+def main():
     test_offset()
     test_tzdst()
     test_zonedst()
