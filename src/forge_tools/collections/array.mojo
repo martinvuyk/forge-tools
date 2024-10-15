@@ -1650,15 +1650,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         elif T.is_signed():
             var magn1: Scalar[i] = (self.vec.cast[i]() ** 2).reduce_add()
             var magn2: Scalar[i] = (other.vec.cast[i]() ** 2).reduce_add()
-            return (
-                (self.dot[i](other) / (magn1 * magn2)).cast[DType.float64]()
-            )
+            return (self.dot[i](other) / (magn1 * magn2)).cast[DType.float64]()
         else:
             var magn1: Scalar[i] = (self.vec.cast[i]() ** 2).reduce_add()
             var magn2: Scalar[i] = (other.vec.cast[i]() ** 2).reduce_add()
-            return (
-                (self.dot[i](other) / (magn1 * magn2)).cast[DType.float64]()
-            )
+            return (self.dot[i](other) / (magn1 * magn2)).cast[DType.float64]()
 
     @always_inline("nodebug")
     fn theta(self, other: Self) -> Float64:

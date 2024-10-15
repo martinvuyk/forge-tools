@@ -96,10 +96,13 @@ assert_equal(ref1, parsed.value())
 .
 """
 
-from .calendar import Calendar
+from .calendar import Calendar, ZeroCalendar
 from .date import Date
-from .datetime import DateTime
+from .datetime import DateTime, timedelta
 from .dt_str import IsoFormat
 from .fast import DateTime64, DateTime32, DateTime16, DateTime8
 from .timezone import TimeZone
 from .zoneinfo import get_zoneinfo
+
+alias datetime = DateTime
+"""An alias for Python code not to break."""

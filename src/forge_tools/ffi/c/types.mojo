@@ -46,10 +46,9 @@ struct C:
     alias void = Int8
     """Type: `void`."""
     alias NULL = UnsafePointer[Self.void]()
-    """Null pointer."""
+    """Constant: NULL pointer."""
     alias ptr_addr = Int
     """Type: A Pointer Address."""
-
 
 
 alias size_t = C.u_long
@@ -68,7 +67,7 @@ trait _UnsafePtrU8:
 
 @always_inline
 fn char_ptr[T: _UnsafePtrU8](item: T) -> UnsafePointer[C.char]:
-    """Get the C.char pointer.
+    """Get the `C.char` pointer.
 
     Parameters:
         T: The type.
@@ -84,7 +83,7 @@ fn char_ptr[T: _UnsafePtrU8](item: T) -> UnsafePointer[C.char]:
 
 @always_inline
 fn char_ptr[T: AnyType](ptr: UnsafePointer[T]) -> UnsafePointer[C.char]:
-    """Get the C.char pointer.
+    """Get the `C.char` pointer.
 
     Parameters:
         T: The type.

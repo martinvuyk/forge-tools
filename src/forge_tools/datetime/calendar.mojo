@@ -18,7 +18,6 @@ from sys.intrinsics import likely, unlikely
 
 from ._lists import leapsecs
 
-# TODO: other calendars besides Gregorian
 alias PythonCalendar = Calendar()
 """The default Python proleptic Gregorian calendar, goes from [0001-01-01,
 9999-12-31]."""
@@ -28,6 +27,8 @@ alias UTCCalendar = Calendar(Gregorian(min_year=1970))
 alias UTCFastCal = Calendar(UTCFast())
 """UTC calendar for the fast module. Leap day aware, goes from [1970-01-01,
 9999-12-31]."""
+alias ZeroCalendar = Calendar(min_year=0, min_month=0, min_day=0)
+"""Calendar for working with timedelta-like logic."""
 alias _date = (UInt16, UInt8, UInt8, UInt8, UInt8, UInt8, UInt16, UInt16)
 """Alias for the date type. Up to microsecond resolution."""
 

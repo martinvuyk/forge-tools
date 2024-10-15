@@ -14,7 +14,6 @@ from forge_tools.datetime.calendar import (
 from forge_tools.datetime.dt_str import IsoFormat
 
 
-
 def test_add():
     # using python and unix calendar should have no difference in results
     alias pycal = PythonCalendar

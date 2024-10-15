@@ -1325,3 +1325,69 @@ struct DateTime[
         return Self(
             d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], ns, zone, calendar
         )
+
+
+fn timedelta[
+    dst_storage: ZoneStorageDST = ZoneInfoMem32,
+    no_dst_storage: ZoneStorageNoDST = ZoneInfoMem8,
+    iana: Bool = True,
+    pyzoneinfo: Bool = True,
+    native: Bool = False,
+](
+    years: UInt = 0,
+    months: UInt = 0,
+    days: UInt = 0,
+    hours: UInt = 0,
+    minutes: UInt = 0,
+    seconds: UInt = 0,
+    m_seconds: UInt = 0,
+    u_seconds: UInt = 0,
+    n_seconds: UInt = 0,
+    tz: Optional[
+        DateTime[
+            dst_storage=dst_storage,
+            no_dst_storage=no_dst_storage,
+            iana=iana,
+            pyzoneinfo=pyzoneinfo,
+            native=native,
+        ]._tz
+    ] = None,
+) -> DateTime[
+    dst_storage=dst_storage,
+    no_dst_storage=no_dst_storage,
+    iana=iana,
+    pyzoneinfo=pyzoneinfo,
+    native=native,
+] as output:
+    """Return a `DateTime` with `ZeroCalendar`.
+
+    Args:
+        years: The years.
+        months: The months.
+        days: The days.
+        hours: The hours.
+        minutes: The minutes.
+        seconds: The seconds.
+        m_seconds: The miliseconds.
+        u_seconds: The microseconds.
+        n_seconds: The nanoseconds.
+        tz: The TimeZone for the timedelta object.
+
+    Returns:
+        A `DateTime` with a calendar set to using 0000-00-00 as epoch start.
+        Beware this `DateTime` kind should only be used for adding/subtracting
+        for instances in the same timezone.
+    """
+    output = __type_of(output)(
+        int(years),
+        int(months),
+        int(days),
+        int(hours),
+        int(minutes),
+        int(seconds),
+        int(m_seconds),
+        int(u_seconds),
+        int(n_seconds),
+        tz,
+        ZeroCalendar,
+    )
