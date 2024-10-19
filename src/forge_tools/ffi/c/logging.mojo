@@ -82,8 +82,9 @@ fn openlog(ident: UnsafePointer[C.char], logopt: C.int, facility: C.int):
     _ = external_call["openlog", C.void](ident, logopt, facility)
 
 
-# FIXME: this should take in  *args: *T
-fn syslog(priority: C.int, message: UnsafePointer[C.char]):
+fn syslog[
+    *T: AnyType
+](priority: C.int, message: UnsafePointer[C.char], *args: *T):
     """Libc POSIX `syslog` function.
 
     Args:
@@ -95,7 +96,19 @@ fn syslog(priority: C.int, message: UnsafePointer[C.char]):
         Fn signature: `void syslog(int priority, const char *message,
             ... /* arguments */)`.
     """
-    _ = external_call["syslog", C.void](priority, message)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    _ = __mlir_op.`pop.external_call`[
+        func = "syslog".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!pop.scalar<si32>,`,
+            `!kgen.pointer<scalar<si8>>`,
+            `) -> !pop.scalar<si8>`,
+        ],
+        _type = C.void,
+    ](priority, message, a)
 
 
 fn setlogmask(maskpri: C.int) -> C.int:

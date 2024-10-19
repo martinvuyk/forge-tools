@@ -1,27 +1,12 @@
 """Libc POSIX file syscalls."""
 
 from sys.ffi import external_call
-from sys.info import os_is_windows
+from sys.info import os_is_windows, triple_is_nvidia_cuda
 from memory import UnsafePointer
 from .types import *
 
-
-# FIXME: this should take in  *args: *T
-fn fcntl(fildes: C.int, cmd: C.int) -> C.int:
-    """Libc POSIX `fcntl` function.
-
-    Args:
-        fildes: A File Descriptor to close.
-        cmd: A command to execute.
-
-    Returns:
-        Value 0 on success, -1 on error and `errno` is set.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/close.3p.html).
-        Fn signature: `int fcntl(int fildes, int cmd, ...)`.
-    """
-    return external_call["fcntl", C.int](fildes, cmd)
+# FIXME: this shouldn't be needed
+from builtin.builtin_list import _LITRefPackHelper
 
 
 fn close(fildes: C.int) -> C.int:
@@ -40,13 +25,17 @@ fn close(fildes: C.int) -> C.int:
     return external_call["close", C.int](fildes)
 
 
-# FIXME: this should take in  *args: *T
-fn open(path: UnsafePointer[C.char], oflag: C.int) -> C.int:
+fn open(
+    path: UnsafePointer[C.char],
+    oflag: C.int,
+    args: VariadicPack[element_trait=AnyType],
+) -> C.int:
     """Libc POSIX `open` function.
 
     Args:
         path: A path to a file.
         oflag: A flag to open the file with.
+        args: The extra arguments for the open function.
 
     Returns:
         A File Descriptor. Otherwise -1 and `errno` is set.
@@ -55,17 +44,58 @@ fn open(path: UnsafePointer[C.char], oflag: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
         Fn signature: `int open(const char *path, int oflag, ...)`.
     """
-    return external_call["open", C.int](path, oflag)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    return __mlir_op.`pop.external_call`[
+        func = "open".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!kgen.pointer<scalar<si8>>,`,
+            `!pop.scalar<si32>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](path, oflag, a)
 
 
-# FIXME: this should take in  *args: *T
-fn openat(fd: C.int, path: UnsafePointer[C.char], oflag: C.int) -> C.int:
+@always_inline
+fn open[
+    *T: AnyType
+](path: UnsafePointer[C.char], oflag: C.int, *args: *T) -> C.int:
     """Libc POSIX `open` function.
+
+    Parameters:
+        T: The type of the arguments.
+
+    Args:
+        path: A path to a file.
+        oflag: A flag to open the file with.
+        args: The extra arguments for the open function.
+
+    Returns:
+        A File Descriptor. Otherwise -1 and `errno` is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
+        Fn signature: `int open(const char *path, int oflag, ...)`.
+    """
+    return open(path, oflag, args)
+
+
+fn openat(
+    fd: C.int,
+    path: UnsafePointer[C.char],
+    oflag: C.int,
+    args: VariadicPack[element_trait=AnyType],
+) -> C.int:
+    """Libc POSIX `openat` function.
 
     Args:
         fd: A File Descriptor to open the file with.
         path: A path to a file.
         oflag: A flag to open the file with.
+        args: The extra arguments for the open function.
 
     Returns:
         A File Descriptor. Otherwise -1 and `errno` is set.
@@ -74,7 +104,45 @@ fn openat(fd: C.int, path: UnsafePointer[C.char], oflag: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
         Fn signature: `int openat(int fd, const char *path, int oflag, ...)`.
     """
-    return external_call["openat", C.int](fd, path, oflag)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    return __mlir_op.`pop.external_call`[
+        func = "openat".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!pop.scalar<si32>,`,
+            `!kgen.pointer<scalar<si8>>,`,
+            `!pop.scalar<si32>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](fd, path, oflag, a)
+
+
+@always_inline
+fn openat[
+    *T: AnyType
+](fd: C.int, path: UnsafePointer[C.char], oflag: C.int, *args: *T) -> C.int:
+    """Libc POSIX `openat` function.
+
+    Parameters:
+        T: The type of the arguments.
+
+    Args:
+        fd: A File Descriptor to open the file with.
+        path: A path to a file.
+        oflag: A flag to open the file with.
+        args: The extra arguments for the open function.
+
+    Returns:
+        A File Descriptor. Otherwise -1 and `errno` is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
+        Fn signature: `int openat(int fd, const char *path, int oflag, ...)`.
+    """
+    return openat(fd, path, oflag, args)
 
 
 fn fopen(
@@ -113,6 +181,22 @@ fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
     """
     alias name = "_fdopen" if os_is_windows() else "fdopen"
     return external_call[name, UnsafePointer[FILE]](fildes, mode)
+
+
+fn fclose(stream: UnsafePointer[FILE]) -> C.int:
+    """Libc POSIX `fclose` function.
+
+    Args:
+        stream: A pointer to a stream.
+
+    Returns:
+        Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/fclose.3p.html).
+        Fn signature: `int fclose(FILE *stream)`.
+    """
+    return external_call["fclose", C.int](stream)
 
 
 fn freopen(
@@ -317,33 +401,17 @@ fn fgets(
     return external_call["fgets", UnsafePointer[C.char]](s, n, stream)
 
 
-# FIXME: this should take in  *args: *T
-fn dprintf(fildes: C.int, format: UnsafePointer[C.char]) -> C.int:
-    """Libc POSIX `dprintf` function.
-
-    Args:
-        fildes: A File Descriptor to open the file with.
-        format: A format string.
-
-    Returns:
-        The number of bytes transmitted. Otherwise a negative value and `errno`
-        is set.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
-        Fn signature: `int dprintf(int fildes,
-            const char *restrict format, ...)`.
-    """
-    return external_call["dprintf", C.int](fildes, format)
-
-
-# FIXME: this should take in  *args: *T
-fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
+fn fprintf(
+    stream: UnsafePointer[FILE],
+    format: UnsafePointer[C.char],
+    args: VariadicPack[element_trait=AnyType],
+) -> C.int:
     """Libc POSIX `fprintf` function.
 
     Args:
         stream: A pointer to a stream.
         format: A format string.
+        args: The arguments to be added into the format string.
 
     Returns:
         The number of bytes transmitted. Otherwise a negative value and `errno`
@@ -354,321 +422,201 @@ fn fprintf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: `int fprintf(FILE *restrict stream,
             const char *restrict format, ...)`.
     """
-    return external_call["fprintf", C.int](stream, format)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    return __mlir_op.`pop.external_call`[
+        func = "KGEN_CompilerRT_fprintf".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!kgen.pointer<none>,`,
+            `!kgen.pointer<scalar<si8>>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](stream, format, a)
 
 
-# FIXME: this should take in  *args: *T
-# @always_inline
-# fn printf[
-#     *T: AnyType
-# ](format: UnsafePointer[C.char], *args: *T) -> C.int:
-#     """Libc POSIX `printf` function.
-
-#     Args:
-#         format: The format string.
-#         args: The args to send to the `printf` function.
-
-#     Returns:
-#        The number of bytes transmitted. Otherwise a negative value and `errno`
-#        is set.
-
-#     Notes:
-#         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
-#     """
-#     return external_call["printf", C.int](format, args)
-
-# FIXME: this should take in  *args: *T
-# @always_inline
-# fn printf[*T: AnyType](format: String, *args: *T) -> C.int:
-#     """Libc POSIX `printf` function.
-
-#     Args:
-#         format: The format string.
-#         args: The args to send to the `printf` function.
-
-#     Returns:
-#        The number of bytes transmitted. Otherwise a negative value and `errno`
-#        is set.
-
-#     Notes:
-#         [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
-#     """
-#     return printf(format.unsafe_ptr().bitcast[C.char](), args)
-
-
-# printf's family function(s) this is used to implement the rest of the printf's family
-fn _printf[callee: StringLiteral](format: UnsafePointer[C.char]) -> C.int:
-    return external_call[callee, C.int](format)
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType
-](format: UnsafePointer[C.char], arg0: T0) -> C.int:
-    return external_call[callee, C.int](format, arg0)
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType, T1: AnyType
-](format: UnsafePointer[C.char], arg0: T0, arg1: T1) -> C.int:
-    return external_call[callee, C.int](format, arg0, arg1)
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType
-](format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2) -> C.int:
-    return external_call[callee, C.int](format, arg0, arg1, arg2)
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
+@always_inline
+fn fprintf[
+    *T: AnyType
 ](
-    format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2, arg3: T3
+    stream: UnsafePointer[FILE], format: UnsafePointer[C.char], *args: *T
 ) -> C.int:
-    return external_call[callee, C.int](format, arg0, arg1, arg2, arg3)
+    """Libc POSIX `fprintf` function.
+
+    Parameters:
+        T: The type of the arguments.
+
+    Args:
+        stream: A pointer to a stream.
+        format: A format string.
+        args: The arguments to be added into the format string.
+
+    Returns:
+        The number of bytes transmitted. Otherwise a negative value and `errno`
+        is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
+        Fn signature: `int fprintf(FILE *restrict stream,
+            const char *restrict format, ...)`.
+    """
+    return fprintf(stream, format, args)
 
 
-fn _printf[
-    callee: StringLiteral,
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-](
+@always_inline
+fn dprintf(
+    fildes: C.int,
     format: UnsafePointer[C.char],
-    arg0: T0,
-    arg1: T1,
-    arg2: T2,
-    arg3: T3,
-    arg4: T4,
+    args: VariadicPack[element_trait=AnyType],
 ) -> C.int:
-    return external_call[callee, C.int](format, arg0, arg1, arg2, arg3, arg4)
+    """Libc POSIX `dprintf` function.
+
+    Args:
+        fildes: A File Descriptor to open the file with.
+        format: A format string.
+        args: The arguments to be added into the format string.
+
+    Returns:
+        The number of bytes transmitted. Otherwise a negative value and `errno`
+        is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
+        Fn signature: `int dprintf(int fildes,
+            const char *restrict format, ...)`.
+    """
+
+    stream = fdopen(fildes, char_ptr("a"))
+    num = fprintf(stream, format, args)
+    _ = fclose(stream)
+    return num
 
 
-fn _printf[
-    callee: StringLiteral,
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-    T5: AnyTrivialRegType,
-](
+@always_inline
+fn dprintf[
+    *T: AnyType
+](fildes: C.int, format: UnsafePointer[C.char], *args: *T) -> C.int:
+    """Libc POSIX `dprintf` function.
+
+    Parameters:
+        T: The type of the arguments.
+
+    Args:
+        fildes: A File Descriptor to open the file with.
+        format: A format string.
+        args: The arguments to be added into the format string.
+
+    Returns:
+        The number of bytes transmitted. Otherwise a negative value and `errno`
+        is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
+        Fn signature: `int dprintf(int fildes,
+            const char *restrict format, ...)`.
+    """
+    return dprintf(fildes, format, args)
+
+
+fn printf(
     format: UnsafePointer[C.char],
-    arg0: T0,
-    arg1: T1,
-    arg2: T2,
-    arg3: T3,
-    arg4: T4,
-    arg5: T5,
+    args: VariadicPack[element_trait=AnyType],
+    file: C.int = STDOUT_FILENO,
 ) -> C.int:
-    return external_call[callee, C.int](
-        format, arg0, arg1, arg2, arg3, arg4, arg5
-    )
+    """Libc POSIX `printf` function.
+
+    Args:
+        format: The format string.
+        args: The arguments to be added into the format string.
+        file: The file descriptor to send to.
+
+    Returns:
+       The number of bytes transmitted. Otherwise a negative value and `errno`
+       is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+    """
+
+    @parameter
+    if triple_is_nvidia_cuda():
+        # FIXME: externall_call should handle this
+        a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+        _ = external_call["vprintf", Int32](format, Pointer.address_of(a))
+    else:
+        return dprintf(file, format, args)
 
 
-fn _printf[callee: StringLiteral](format: String) -> C.int:
-    return _printf[callee](format.unsafe_ptr().bitcast[C.char]())
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType
-](format: String, arg0: T0) -> C.int:
-    return _printf[callee, T0](format.unsafe_ptr().bitcast[C.char](), arg0)
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType, T1: AnyType
-](format: String, arg0: T0, arg1: T1) -> C.int:
-    return _printf[callee, T0, T1](
-        format.unsafe_ptr().bitcast[C.char](), arg0, arg1
-    )
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType
-](format: String, arg0: T0, arg1: T1, arg2: T2) -> C.int:
-    return _printf[callee, T0, T1, T2](
-        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2
-    )
-
-
-fn _printf[
-    callee: StringLiteral, T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
-](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3) -> C.int:
-    return _printf[callee, T0, T1, T2, T3](
-        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3
-    )
-
-
-fn _printf[
-    callee: StringLiteral,
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4) -> C.int:
-    return _printf[callee, T0, T1, T2, T3, T4](
-        format.unsafe_ptr().bitcast[C.char](), arg0, arg1, arg2, arg3, arg4
-    )
-
-
-fn _printf[
-    callee: StringLiteral,
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-    T5: AnyTrivialRegType,
+@always_inline
+fn printf[
+    *T: AnyType
 ](
-    format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5
+    format: UnsafePointer[C.char], *args: *T, file: C.int = STDOUT_FILENO
 ) -> C.int:
-    return _printf[callee, T0, T1, T2, T3, T4, T5](
-        format.unsafe_ptr().bitcast[C.char](),
-        arg0,
-        arg1,
-        arg2,
-        arg3,
-        arg4,
-        arg5,
-    )
+    """Libc POSIX `printf` function.
+
+    Parameters:
+        T: The type of the arguments.
+
+    Args:
+        format: The format string.
+        args: The arguments to be added into the format string.
+        file: The file descriptor to send to.
+
+    Returns:
+       The number of bytes transmitted. Otherwise a negative value and `errno`
+       is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+    """
+    return printf(format, args, file=file)
 
 
-fn printf(format: UnsafePointer[C.char]) -> C.int:
-    return _printf["printf"](format)
-
-
-fn printf[T0: AnyType](format: UnsafePointer[C.char], arg0: T0) -> C.int:
-    return _printf["printf", T0](format, arg0)
-
-
+@always_inline
 fn printf[
-    T0: AnyType, T1: AnyType
-](format: UnsafePointer[C.char], arg0: T0, arg1: T1) -> C.int:
-    return _printf["printf", T0, T1](format, arg0, arg1)
+    *T: AnyType
+](format: String, *args: *T, file: C.int = STDOUT_FILENO) -> C.int:
+    """Libc POSIX `printf` function.
+
+    Parameters:
+        T: The type of the arguments.
+
+    Args:
+        format: The format string.
+        args: The args to send to the `printf` function.
+        file: The file descriptor to send to.
+
+    Returns:
+       The number of bytes transmitted. Otherwise a negative value and `errno`
+       is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+    """
+    return printf(char_ptr(format), args, file=file)
 
 
-fn printf[
-    T0: AnyType, T1: AnyType, T2: AnyType
-](format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2) -> C.int:
-    return _printf["printf", T0, T1, T2](format, arg0, arg1, arg2)
-
-
-fn printf[
-    T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
+fn snprintf[
+    *T: AnyType
 ](
-    format: UnsafePointer[C.char], arg0: T0, arg1: T1, arg2: T2, arg3: T3
-) -> C.int:
-    return _printf["printf", T0, T1, T2, T3](format, arg0, arg1, arg2, arg3)
-
-
-fn printf[
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-](
-    format: UnsafePointer[C.char],
-    arg0: T0,
-    arg1: T1,
-    arg2: T2,
-    arg3: T3,
-    arg4: T4,
-) -> C.int:
-    return _printf["printf", T0, T1, T2, T3, T4](
-        format, arg0, arg1, arg2, arg3, arg4
-    )
-
-
-fn printf[
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-    T5: AnyTrivialRegType,
-](
-    format: UnsafePointer[C.char],
-    arg0: T0,
-    arg1: T1,
-    arg2: T2,
-    arg3: T3,
-    arg4: T4,
-    arg5: T5,
-) -> C.int:
-    return _printf["printf", T0, T1, T2, T3, T4, T5](
-        format, arg0, arg1, arg2, arg3, arg4, arg5
-    )
-
-
-fn printf(format: String) -> C.int:
-    return _printf["printf"](format)
-
-
-fn printf[T0: AnyType](format: String, arg0: T0) -> C.int:
-    return _printf["printf", T0](format, arg0)
-
-
-fn printf[
-    T0: AnyType, T1: AnyType
-](format: String, arg0: T0, arg1: T1) -> C.int:
-    return _printf["printf", T0, T1](format, arg0, arg1)
-
-
-fn printf[
-    T0: AnyType, T1: AnyType, T2: AnyType
-](format: String, arg0: T0, arg1: T1, arg2: T2) -> C.int:
-    return _printf["printf", T0, T1, T2](format, arg0, arg1, arg2)
-
-
-fn printf[
-    T0: AnyType, T1: AnyType, T2: AnyType, T3: AnyType
-](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3) -> C.int:
-    return _printf["printf", T0, T1, T2, T3](format, arg0, arg1, arg2, arg3)
-
-
-fn printf[
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-](format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4) -> C.int:
-    return _printf["printf", T0, T1, T2, T3, T4](
-        format, arg0, arg1, arg2, arg3, arg4
-    )
-
-
-fn printf[
-    T0: AnyTrivialRegType,
-    T1: AnyTrivialRegType,
-    T2: AnyTrivialRegType,
-    T3: AnyTrivialRegType,
-    T4: AnyTrivialRegType,
-    T5: AnyTrivialRegType,
-](
-    format: String, arg0: T0, arg1: T1, arg2: T2, arg3: T3, arg4: T4, arg5: T5
-) -> C.int:
-    return _printf["printf", T0, T1, T2, T3, T4, T5](
-        format, arg0, arg1, arg2, arg3, arg4, arg5
-    )
-
-
-# FIXME: this should take in  *args: *T
-fn snprintf(
     s: UnsafePointer[C.char],
     n: C.u_int,
     format: UnsafePointer[C.char],
+    *args: *T,
 ) -> C.int:
     """Libc POSIX `snprintf` function.
+
+    Parameters:
+        T: The type of the arguments.
 
     Args:
         s: A pointer to a buffer to store the read string.
         n: The maximum number of characters to read.
         format: A format string.
+        args: The arguments to be added into the format string.
 
     Returns:
         The number of bytes that would be written to s had n been sufficiently
@@ -679,31 +627,35 @@ fn snprintf(
         Fn signature: ``int snprintf(char *restrict s, size_t n,`.
             const char *restrict format, ...)`.
     """
-    # f = format.unsafe_ptr().bitcast[c_char]()
+
     # FIXME: externall_call should handle this
-    # return external_call["snprintf", C.int](s, n, format, extra_args=T)
-    # num = __mlir_op.`pop.external_call`[
-    #     func = "snprintf".value,
-    #     variadicType = __mlir_attr[
-    #         `(`,
-    #         `!kgen.pointer<scalar<si8>>,`,
-    #         `!pop.scalar<index>, `,
-    #         `!kgen.pointer<scalar<si8>>`,
-    #         `) -> !pop.scalar<si32>`,
-    #     ],
-    #     _type=Int32,
-    # ](str.bitcast[c_char](), size, f, args._get_loaded_kgen_pack())
-    # return int(num)
-    return external_call["snprintf", C.int](s, n, format)
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    num = __mlir_op.`pop.external_call`[
+        func = "snprintf".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!kgen.pointer<scalar<si8>>,`,
+            `!pop.scalar<index>, `,
+            `!kgen.pointer<scalar<si8>>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](s, n, format, a)
+    return int(num)
 
 
-# FIXME: this should take in  *args: *T
-fn sprintf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
+fn sprintf[
+    *T: AnyType
+](s: UnsafePointer[C.char], format: UnsafePointer[C.char], *args: *T) -> C.int:
     """Libc POSIX `sprintf` function.
+
+    Parameters:
+        T: The type of the arguments.
 
     Args:
         s: A pointer to a buffer to store the read string.
         format: A format string.
+        args: The arguments to be added into the format string.
 
     Returns:
         The number of bytes written to s, excluding the terminating null byte.
@@ -713,16 +665,37 @@ fn sprintf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int sprintf(char *restrict s,`.
             const char *restrict format, ...)`.
     """
-    return external_call["sprintf", C.int](s, format)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    num = __mlir_op.`pop.external_call`[
+        func = "sprintf".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!kgen.pointer<scalar<si8>>,`,
+            `!kgen.pointer<scalar<si8>>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](s, format, a)
+    return int(num)
 
 
-# FIXME: this should take in  *args: *T
-fn fscanf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
+fn fscanf[
+    *T: AnyType
+](
+    stream: UnsafePointer[FILE], format: UnsafePointer[C.char], *args: *T
+) -> C.int:
     """Libc POSIX `fscanf` function.
+
+    Parameters:
+        T: The type of the arguments.
 
     Args:
         stream: A pointer to a stream.
         format: A format string.
+        args: The set of pointer arguments indicating where the converted input
+            should be stored.
 
     Returns:
         The number of successfully matched and assigned input items; this number
@@ -739,15 +712,31 @@ fn fscanf(stream: UnsafePointer[FILE], format: UnsafePointer[C.char]) -> C.int:
         Fn signature: ``int fscanf(FILE *restrict stream,`.
             const char *restrict format, ...)`.
     """
-    return external_call["fscanf", C.int](stream, format)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    return __mlir_op.`pop.external_call`[
+        func = "fscanf".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!kgen.pointer<none>,`,
+            `!kgen.pointer<scalar<si8>>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](stream, format, a)
 
 
-# FIXME: this should take in  *args: *T
-fn scanf(format: UnsafePointer[C.char]) -> C.int:
+fn scanf[*T: AnyType](format: UnsafePointer[C.char], *args: *T) -> C.int:
     """Libc POSIX `scanf` function.
+
+    Parameters:
+        T: The type of the arguments.
 
     Args:
         format: A format string.
+        args: The set of pointer arguments indicating where the converted input
+            should be stored.
 
     Returns:
         The number of successfully matched and assigned input items; this number
@@ -763,7 +752,18 @@ fn scanf(format: UnsafePointer[C.char]) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
         Fn signature: ``int scanf(const char *restrict format, ...)`.`.
     """
-    return external_call["scanf", C.int](format)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    return __mlir_op.`pop.external_call`[
+        func = "scanf".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!kgen.pointer<scalar<si8>>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](format, a)
 
 
 fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
@@ -784,8 +784,8 @@ fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
         indicator for the stream shall be set.
 
     Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
-        Fn signature: ``int sscanf(const char *restrict s,`.
+        [Reference](https://man7.org/linux/man-pages/man3/sscanf.3p.html).
+        Fn signature: `int sscanf(const char *restrict s,
             const char *restrict format, ...)`.
     """
     return external_call["sscanf", C.int](s, format)
@@ -834,8 +834,9 @@ fn rewind(stream: UnsafePointer[FILE]):
     _ = external_call["rewind", C.void](stream)
 
 
+# FIXME: stream should be UnsafePointer[UnsafePointer[FILE]]
 fn getline(
-    lineptr: UnsafePointer[UnsafePointer[FILE]],
+    lineptr: UnsafePointer[C.ptr_addr],
     n: UnsafePointer[C.u_int],
     stream: UnsafePointer[FILE],
 ) -> C.u_int:
@@ -864,8 +865,9 @@ fn getline(
     return external_call["getline", C.u_int](lineptr, n, stream)
 
 
+# FIXME: lineptr should be UnsafePointer[addrinfo]
 fn getdelim(
-    lineptr: UnsafePointer[UnsafePointer[FILE]],
+    lineptr: UnsafePointer[C.ptr_addr],
     n: UnsafePointer[C.u_int],
     stream: UnsafePointer[FILE],
 ) -> C.u_int:
@@ -975,22 +977,6 @@ fn write(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
     return external_call["write", C.u_int](fildes, buf, nbyte)
 
 
-fn fclose(stream: UnsafePointer[FILE]) -> C.int:
-    """Libc POSIX `fclose` function.
-
-    Args:
-        stream: A pointer to a stream.
-
-    Returns:
-       Value 0 on success, `EOF` (usually -1) and `errno` is set.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/fclose.3p.html).
-        Fn signature: `int fclose(FILE *stream)`.
-    """
-    return external_call["fclose", C.int](stream)
-
-
 fn ftell(stream: UnsafePointer[FILE]) -> C.long:
     """Libc POSIX `ftell` function.
 
@@ -1086,9 +1072,43 @@ fn ferror(stream: UnsafePointer[FILE]) -> C.int:
     return external_call["ferror", C.int](stream)
 
 
-# FIXME: this should take in  *args: *T
-fn ioctl(fildes: C.int, request: C.int) -> C.int:
+fn fcntl[*T: AnyType](fildes: C.int, cmd: C.int, *args: *T) -> C.int:
+    """Libc POSIX `fcntl` function.
+
+    Parameters:
+        T: The types of the arguments.
+
+    Args:
+        fildes: A File Descriptor to close.
+        cmd: A command to execute.
+
+    Returns:
+        Value 0 on success, -1 on error and `errno` is set.
+
+    Notes:
+        [Reference](https://man7.org/linux/man-pages/man3/fcntl.3p.html).
+        Fn signature: `int fcntl(int fildes, int cmd, ...)`.
+    """
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    return __mlir_op.`pop.external_call`[
+        func = "fcntl".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!pop.scalar<si32>,`,
+            `!pop.scalar<si32>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](fildes, cmd, a)
+
+
+fn ioctl[*T: AnyType](fildes: C.int, request: C.int, *args: *T) -> C.int:
     """Libc POSIX `ioctl` function.
+
+    Parameters:
+        T: The types of the arguments.
 
     Args:
         fildes: A File Descriptor to open the file with.
@@ -1103,4 +1123,16 @@ fn ioctl(fildes: C.int, request: C.int) -> C.int:
         [Reference](https://man7.org/linux/man-pages/man3/ioctl.3p.html).
         Fn signature: `int ioctl(int fildes, int request, ... /* arg */)`.
     """
-    return external_call["ioctl", C.int](fildes, request)
+
+    # FIXME: externall_call should handle this
+    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    return __mlir_op.`pop.external_call`[
+        func = "ioctl".value,
+        variadicType = __mlir_attr[
+            `(`,
+            `!pop.scalar<si32>,`,
+            `!pop.scalar<si32>`,
+            `) -> !pop.scalar<si32>`,
+        ],
+        _type = C.int,
+    ](fildes, request, a)

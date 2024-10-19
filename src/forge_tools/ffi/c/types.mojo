@@ -51,13 +51,39 @@ struct C:
     """Type: A Pointer Address."""
 
 
-alias size_t = C.u_long
+alias size_t = UInt
 """Type: `size_t`."""
-alias ssize_t = C.long
+alias ssize_t = Int
 """Type: `ssize_t`."""
+
+
 # ===----------------------------------------------------------------------=== #
 # Utils
 # ===----------------------------------------------------------------------=== #
+
+
+fn _c_long_dtype() -> DType:
+    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
+
+    @parameter
+    if is_64bit() and os_is_windows():
+        return DType.int32  # LLP64
+    elif is_64bit():
+        return DType.int64  # LP64
+    else:
+        return DType.int32  # ILP32
+
+
+fn _c_u_long_dtype() -> DType:
+    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
+
+    @parameter
+    if is_64bit() and os_is_windows():
+        return DType.uint32  # LLP64
+    elif is_64bit():
+        return DType.uint64  # LP64
+    else:
+        return DType.uint32  # ILP32
 
 
 trait _UnsafePtrU8:
@@ -126,30 +152,6 @@ fn strlen(s: UnsafePointer[C.char]) -> size_t:
         Fn signature: `size_t strlen(const char *s)`.
     """
     return external_call["strlen", size_t](s)
-
-
-fn _c_long_dtype() -> DType:
-    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
-
-    @parameter
-    if is_64bit() and os_is_windows():
-        return DType.int32  # LLP64
-    elif is_64bit():
-        return DType.int64  # LP64
-    else:
-        return DType.int32  # ILP32
-
-
-fn _c_u_long_dtype() -> DType:
-    # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
-
-    @parameter
-    if is_64bit() and os_is_windows():
-        return DType.uint32  # LLP64
-    elif is_64bit():
-        return DType.uint64  # LP64
-    else:
-        return DType.uint32  # ILP32
 
 
 # ===----------------------------------------------------------------------=== #
@@ -268,4 +270,6 @@ alias mode_t = UInt32
 
 @register_passable("trivial")
 struct FILE:
+    """Type: `FILE`."""
+
     pass
