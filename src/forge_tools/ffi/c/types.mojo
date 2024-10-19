@@ -133,11 +133,11 @@ fn _c_long_dtype() -> DType:
 
     @parameter
     if is_64bit() and os_is_windows():
-        return DType.uint32  # LLP64
+        return DType.int32  # LLP64
     elif is_64bit():
-        return DType.uint64  # LP64
+        return DType.int64  # LP64
     else:
-        return DType.uint32  # ILP32
+        return DType.int32  # ILP32
 
 
 fn _c_u_long_dtype() -> DType:

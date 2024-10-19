@@ -105,4 +105,6 @@ from .timezone import TimeZone
 from .zoneinfo import get_zoneinfo
 
 alias datetime = DateTime
-"""An alias for Python code not to break."""
+"""A `DateTime` alias for Python code not to break to much."""
+alias date = Date
+"""A `Date` alias for Python code not to break too much."""
