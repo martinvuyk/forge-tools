@@ -4,11 +4,10 @@ from sys.intrinsics import _type_is_eq
 from utils import Span
 from .socket import (
     # SocketInterface,
-    SockFamily,
     SockType,
     SockProtocol,
 )
-from .address import SockAddr, IPv4Addr, IPv6Addr
+from .address import SockFamily, SockAddr, IPv4Addr, IPv6Addr
 from ._unix import _UnixSocket
 
 
