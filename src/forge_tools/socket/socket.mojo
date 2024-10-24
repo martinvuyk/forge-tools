@@ -65,93 +65,10 @@ from forge_tools.ffi.c import (
     in_addr_t,
 )
 
-from .address import SockAddr, IPv4Addr, IPv6Addr
+from .address import SockFamily, SockAddr, IPv4Addr, IPv6Addr
 from ._linux import _LinuxSocket
 from ._unix import _UnixSocket
 from ._windows import _WindowsSocket
-
-
-# TODO enum
-@register_passable("trivial")
-struct SockFamily:
-    """Socket Address Family."""
-
-    alias AF_INET = "AF_INET"
-    """AF_INET."""
-    alias AF_INET6 = "AF_INET6"  # TODO: implement
-    """AF_INET6."""
-    alias AF_UNIX = "AF_UNIX"  # TODO: implement
-    """AF_UNIX."""
-    alias AF_NETLINK = "AF_NETLINK"  # TODO: implement
-    """AF_NETLINK."""
-    alias AF_TIPC = "AF_TIPC"  # TODO: implement
-    """AF_TIPC."""
-    alias AF_CAN = "AF_CAN"  # TODO: implement
-    """AF_CAN."""
-    alias AF_BLUETOOTH = "AF_BLUETOOTH"  # TODO: implement
-    """AF_BLUETOOTH."""
-    alias AF_ALG = "AF_ALG"  # TODO: implement
-    """AF_ALG."""
-    alias AF_VSOCK = "AF_VSOCK"  # TODO: implement
-    """AF_VSOCK."""
-    alias AF_PACKET = "AF_PACKET"  # TODO: implement
-    """AF_PACKET."""
-    alias AF_QIPCRTR = "AF_QIPCRTR"  # TODO: implement
-    """AF_QIPCRTR."""
-    alias AF_HYPERV = "AF_HYPERV"  # TODO: implement
-    """AF_HYPERV."""
-    alias AF_SPI = "AF_SPI"  # TODO: implement
-    """"AF_SPI". Notes: This Address Family is not standard since there is none.
-    """
-    alias AF_I2C = "AF_I2C"  # TODO: implement
-    """"AF_I2C". Notes: This Address Family is not standard since there is none.
-    """
-    alias AF_UART = "AF_UART"  # TODO: implement
-    """"AF_UART". Notes: This Address Family is not standard since there is
-    none.
-    """
-    var _selected: StringLiteral
-
-    fn __init__(inout self, selected: StringLiteral):
-        """Construct an instance.
-
-        Args:
-            selected: The selected value.
-        """
-        debug_assert(
-            selected
-            in (
-                Self.AF_INET,
-                Self.AF_INET6,
-                Self.AF_UNIX,
-                Self.AF_NETLINK,
-                Self.AF_TIPC,
-                Self.AF_CAN,
-                Self.AF_BLUETOOTH,
-                Self.AF_ALG,
-                Self.AF_VSOCK,
-                Self.AF_PACKET,
-                Self.AF_QIPCRTR,
-                Self.AF_HYPERV,
-                Self.AF_SPI,
-                Self.AF_I2C,
-                Self.AF_UART,
-            ),
-            "selected value is not valid",
-        )
-        self._selected = selected
-
-    fn __is__(self, value: StringLiteral) -> Bool:
-        """Whether the selected value is the given value.
-
-        Args:
-            value: The value.
-
-        Returns:
-            The result.
-        """
-        return self._selected == value
-
 
 # TODO enum
 @register_passable("trivial")
