@@ -5,11 +5,10 @@ from sys.intrinsics import _type_is_eq
 from utils import Span, StaticTuple, StringSlice
 from .socket import (
     # SocketInterface,
-    SockFamily,
     SockType,
     SockProtocol,
 )
-from .address import SockAddr, IPv4Addr, IPv6Addr
+from .address import SockFamily, SockAddr, IPv4Addr, IPv6Addr
 from forge_tools.ffi.c import (
     AF_INET,
     AF_INET6,
