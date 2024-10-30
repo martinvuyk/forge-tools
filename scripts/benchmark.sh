@@ -22,14 +22,14 @@ echo "Creating build directory for building the Library running the tests in."
 mkdir -p "${BUILD_DIR}"
 
 source "${SCRIPT_DIR}"/package-lib.sh
-TEST_PATH="${REPO_ROOT}/src/benchmarks"
+BENCHMARK_PATH="${REPO_ROOT}/src/benchmarks"
 if [[ $# -gt 0 ]]; then
   # If an argument is provided, use it as the specific test file or directory
-  TEST_PATH=$1
+  BENCHMARK_PATH=$1
 fi
 
 # Run the benchmarks
-for f in $(find $TEST_PATH | grep -E ".mojo|.🔥"); do 
+for f in $(find $BENCHMARK_PATH | grep -E ".mojo|.🔥"); do 
   echo "-------------------- BENCHMARK START ${f} --------------------"
   mojo run -I build/ $f
   echo "-------------------- BENCHMARK END ${f} --------------------"

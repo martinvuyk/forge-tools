@@ -7,10 +7,18 @@ things that would make sense in such a library.
 constantly changing.
 
 ## How to Install
+
+Clone the repo and run the package script
+
 ```bash
 magic run ./scripts/package-lib.sh
 ```
 The semi-compiled package will be under `./build/forge_tools.mojopkg`
+
+If you have any issues during packaging, then fork and delete everything except
+the modules you need then try again. Just rebase to upstream whenever you need
+an update. I try to keep it updated to latest nightly.
+
 ## How to run tests
 Test an entire directory or subdirectory or specific file
 ```bash
