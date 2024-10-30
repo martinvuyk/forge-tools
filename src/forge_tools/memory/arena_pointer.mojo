@@ -5,135 +5,160 @@ from collections import Optional
 from utils import Span
 from sys.info import bitwidthof, simdwidthof
 from os import abort
-from .pointer import Pointer
+from .arc_pointer import ArcPointer
 
 
-@value
-struct ArenaPointer[
+struct GladiatorPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
-    """Arena Pointer.
+    """Gladiator Pointer that resides in an Arena."""
 
-    Safety:
-        This is not thread safe.
-    """
+    alias _P = UnsafePointer[type, address_space]
+    var _ptr: Self._P
+    """The Master data pointer."""
+    var _start: Int
+    """The absolute starting offset from the master pointer."""
+    var _len: Int
+    """The length of the pointer."""
+    var _master_is_alive: ArcPointer[UnsafePointer[Bool]]
+    """A pointer to determine whether the master is alive."""
+    var _free_slots: UnsafePointer[Byte]
+    """The pointer to the ArenaMasterPointer's free slots."""
+
+    # TODO: __getitem__ should check whether _master_is_alive etc.
+
+    fn __init__(inout self):
+        self._free_slots = UnsafePointer[Byte]()
+        self._start = 0
+        self._len = 0
+        self._ptr = Self._P()
+        self._master_is_alive = UnsafePointer[Bool].alloc(1)
+        self._master_is_alive[0] = False
+
+    fn __init__(
+        inout self,
+        *,
+        ptr: Self._P,
+        start: Int,
+        length: Int,
+        master_is_alive: ArcPointer[UnsafePointer[Bool]],
+        free_slots: UnsafePointer[Byte],
+    ):
+        """Constructs a GladiatorPointer from a Pointer.
+
+        Args:
+            ptr: The Master data pointer.
+            start: The absolute starting offset from the master pointer.
+            length: The length of the pointer.
+            master_is_alive: A pointer to determine whether the master is alive.
+            free_slots: The pointer to the ArenaMasterPointer's free slots.
+        """
+
+        self._ptr = ptr
+        self._start = start
+        self._len = length
+        self._master_is_alive = master_is_alive
+        self._free_slots = free_slots
+
+    @staticmethod
+    @always_inline
+    fn alloc(count: Int) -> Self:
+        """Allocate memory according to the pointer's logic.
+
+        Args:
+            count: The number of elements in the buffer.
+
+        Returns:
+            The pointer to the newly allocated buffer.
+        """
+        return Self(ptr=Self._P.alloc(count), length=count)
+
+    fn __del__(owned self):
+        """Free the memory referenced by the pointer or ignore."""
+        if not self._master_is_alive:
+            return
+        elif not self._master_is_alive[0]:
+            return
+        p0 = self._free_slots - self._start
+        full_byte_start = self._start // 8
+        full_byte_end = self._len // 8
+        memset(p0 + full_byte_start, 0xFF, full_byte_end)
+        mask = 0
+        for i in range(full_byte_end, full_byte_end + self._start % 8):
+            mask |= 1 << (bitwidthof[Int]() - i)
+        p0[full_byte_end] = p0[full_byte_end] | mask
+
+    fn __int__(self) -> Int:
+        return int(self._ptr)
+
+    fn __bool__(self) -> Bool:
+        return bool(self._ptr)
+
+
+@value
+struct ArenaMasterPointer[
+    is_mutable: Bool, //,
+    type: AnyType,
+    origin: Origin[is_mutable].type,
+    address_space: AddressSpace = AddressSpace.GENERIC,
+]:
+    """Arena Master Pointer that deallocates the arena when deleted."""
 
     var _free_slots: UnsafePointer[Byte]
     """Bits indicating whether the slot is free."""
     var _len: Int
-    """In the case of a parent ArenaPointer, this is the amount of bits set in
-    the _free_slots pointer. In the case of a child ArenaPointer, it is the
-    length of its given _ptr."""
-    alias _P = Pointer[type, origin, address_space]
+    """The amount of bits set in the _free_slots pointer."""
+    alias _P = UnsafePointer[type, address_space]
     var _ptr: Self._P
     """The data."""
-    var parent: Optional[UnsafePointer[Int]]
-    """The address of the parent ArenaPointer's free slots."""
-
-    # TODO: __getitem__ should check whether parent is alive (self.parent.value())
+    var _master_is_alive: ArcPointer[UnsafePointer[Bool]]
+    """A pointer to determine whether the master is alive."""
+    alias _G = GladiatorPointer[type, origin, address_space]
 
     fn __init__(inout self):
-        self.parent = None
         self._free_slots = UnsafePointer[Byte]()
         self._len = 0
-        self._ptr = Pointer[type, origin, address_space]()
+        self._ptr = Self._P()
+        self._master_is_alive = UnsafePointer[Bool].alloc(1)
+        self._master_is_alive[0] = True
 
     @doc_private
     @always_inline("nodebug")
-    fn __init__(
-        inout self,
-        *,
-        ptr: UnsafePointer[type, address_space],
-        is_allocated: Bool,
-        in_registers: Bool,
-        is_initialized: Bool,
-        length: Int,
-    ):
+    fn __init__(inout self, *, ptr: Self._P, length: Int):
         """Constructs an ArenaPointer from an UnsafePointer.
 
         Args:
             ptr: The UnsafePointer.
-            is_allocated: Whether the pointer's memory is allocated.
-            in_registers: Whether the pointer is allocated in registers.
-            is_initialized: Whether the memory is initialized.
             length: The length of the pointer.
         """
-        self._ptr = Self._P(
-            ptr=ptr,
-            is_allocated=is_allocated,
-            in_registers=in_registers,
-            is_initialized=is_initialized,
-            self_is_owner=True,
-        )
+        self._ptr = ptr
         amnt = length // 8 + int(length < 8)
         p = UnsafePointer[Byte].alloc(amnt)
         memset(p, 0xFF, amnt)
         self._free_slots = p
         self._len = length // 8 + length % 8
-        self.parent = None
-
-    fn __init__(inout self, *, ptr: Self._P, length: Int, parent: Int):
-        """Constructs an ArenaPointer from a Pointer.
-
-        Args:
-            ptr: The Pointer.
-            length: The length of the pointer.
-            parent: The parent pointer.
-        """
-
-        p = rebind[Pointer[type, MutableAnyOrigin, address_space]](ptr)
-        self._ptr = Self._P(
-            ptr=p.unsafe_ptr(),
-            is_allocated=ptr.is_allocated,
-            in_registers=ptr.in_registers,
-            is_initialized=ptr.is_initialized,
-            self_is_owner=False,
-        )
-        self._free_slots = UnsafePointer[Byte]()
-        self._len = length
-        par = UnsafePointer[Int].alloc(1)
-        par.init_pointee_copy(parent)
-        self.parent = par
+        self._master_is_alive = UnsafePointer[Bool].alloc(1)
+        self._master_is_alive[0] = True
 
     @staticmethod
     @always_inline
-    fn alloc[
-        O: MutableOrigin
-    ](count: Int) -> ArenaPointer[type, O, address_space]:
-        """Allocate an array with specified or default alignment.
-
-        Parameters:
-            O: The origin of the Pointer.
+    fn alloc(count: Int) -> Self:
+        """Allocate memory according to the pointer's logic.
 
         Args:
-            count: The number of elements in the array.
+            count: The number of elements in the buffer.
 
         Returns:
-            The pointer to the newly allocated array.
+            The pointer to the newly allocated buffer.
         """
-        return ArenaPointer[type, O, address_space](
-            ptr=UnsafePointer[type]
-            .alloc(count)
-            .bitcast[address_space=address_space, origin=O](),
-            is_allocated=True,
-            in_registers=False,
-            is_initialized=False,
-            length=count,
-        )
+        return Self(ptr=Self._P.alloc(count), length=count)
 
     @always_inline
-    fn alloc[
-        O: MutableOrigin
-    ](
-        inout self: ArenaPointer[type, O, address_space], count: Int
-    ) -> __type_of(self):
+    fn alloc(inout self, count: Int) -> Self._G:
         """Allocate an array with specified or default alignment.
-
-        Parameters:
-            O: The origin of the Pointer.
 
         Args:
             count: The number of elements in the array.
@@ -141,8 +166,7 @@ struct ArenaPointer[
         Returns:
             The pointer to the newly allocated array.
         """
-        if self.parent:
-            return __type_of(self).alloc[O](count)
+
         alias int_bitwidth = bitwidthof[Int]()
         alias int_simdwidth = simdwidthof[Int]()
         mask = Scalar[DType.index](0)
@@ -176,7 +200,7 @@ struct ArenaPointer[
             abort("support for realloc is still in development")
 
         if start == num_bytes:
-            return __type_of(self)()
+            return GladiatorPointer[type, origin, address_space]()
 
         p = self._free_slots.offset(start // 8)
         mask = ~mask
@@ -199,17 +223,17 @@ struct ArenaPointer[
         )
         p.store(0, new_value.cast[DType.uint8]())
 
-        return __type_of(self)(
-            ptr=__type_of(self)._P(
-                ptr=self._ptr.unsafe_ptr() + start,
-                is_allocated=self._ptr.is_allocated,
-                in_registers=self._ptr.in_registers,
-                is_initialized=self._ptr.is_initialized,
-                self_is_owner=False,
-            ),
+        return __type_of(self)._G(
+            ptr=self._ptr,
+            start=start,
             length=count,
-            parent=int(self),
+            master_is_alive=self._master_is_alive,
+            free_slots=self._free_slots,
         )
+
+    fn unsafe_ptr(self) -> UnsafePointer[type, address_space]:
+        alias P = Pointer[type, MutableAnyOrigin, address_space]
+        return self._ptr.bitcast[address_space=address_space]()
 
     fn __int__(self) -> Int:
         return int(self._ptr)
@@ -219,22 +243,37 @@ struct ArenaPointer[
 
     fn __del__(owned self):
         """Free the memory referenced by the pointer or ignore."""
-
         self._free_slots.free()
+        self._master_is_alive[0] = False  # mark as deleted first
+        self._ptr.free()
 
-        @parameter
-        if not (address_space is AddressSpace.GENERIC and is_mutable):
-            return  # self._ptr frees itself
-        if not self.parent:
-            return  # self._ptr frees itself
-        p = self.parent.value()
-        parent_free_slots_addr = 0
-        if not p:
-            return  # parent is dead
-        else:
-            parent_free_slots_addr = p[0]
-            p.free()
-        s = int(self)
-        self_start = s // 8 + s % 8
-        self_end = self._len
-        # TODO: mark as freed
+
+@value
+struct ArenaRcPointer[
+    is_mutable: Bool, //,
+    type: AnyType,
+    origin: Origin[is_mutable].type,
+    address_space: AddressSpace = AddressSpace.GENERIC,
+]:
+    """Arena Reference Counted Pointer that deallocates the arena when it's the
+    last one.
+
+    Safety:
+        This is not thread safe.
+    """
+
+    ...
+
+
+@value
+struct ArenaArcPointer[
+    is_mutable: Bool, //,
+    type: AnyType,
+    origin: Origin[is_mutable].type,
+    address_space: AddressSpace = AddressSpace.GENERIC,
+]:
+    """Arena Atomic Reference Counted Pointer that deallocates the arena when
+    it's the last one.
+    """
+
+    ...

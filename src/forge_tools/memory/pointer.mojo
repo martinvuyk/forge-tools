@@ -8,12 +8,19 @@ from os import abort
 trait SmartPointer:
     """Trait for generic smart pointers."""
 
-    # TODO: this needs parametrized __getitem__ etc.
+    # TODO: this needs parametrized __getitem__, unsafe_ptr() etc.
 
     @staticmethod
     @always_inline
     fn alloc(count: Int) -> Self:
-        """Allocate memory according to the pointer logic."""
+        """Allocate memory according to the pointer's logic.
+
+        Args:
+            count: The number of elements in the buffer.
+
+        Returns:
+            The pointer to the newly allocated buffer.
+        """
         ...
 
     fn __del__(owned self):
@@ -30,11 +37,10 @@ struct Pointer[
 ]:
     """Defines a safe pointer.
 
-    Parameters:
-        is_mutable: Whether the pointee data may be mutated through this.
-        type: Type of the underlying data.
-        origin: The origin of the pointer.
-        address_space: The address space of the pointee data.
+    Safety:
+        This is not thread safe. This is not reference counted. When doing an
+        explicit copy from another pointer, the self_is_owner flag is set to
+        False.
     """
 
     alias _mlir_type = __mlir_type[
@@ -131,7 +137,7 @@ struct Pointer[
             other: The `Pointer` to copy.
         """
         self._mlir_value = other._mlir_value
-        self._flags = other._flags
+        self._flags = other._flags & 0b1110_1111
 
     @doc_private
     @always_inline("nodebug")
@@ -166,13 +172,13 @@ struct Pointer[
     @staticmethod
     @always_inline
     fn alloc(count: Int) -> Self:
-        """Allocate memory.
+        """Allocate memory according to the pointer's logic.
 
         Args:
-            count: The number of elements in the array.
+            count: The number of elements in the buffer.
 
         Returns:
-            The pointer to the newly allocated array.
+            The pointer to the newly allocated buffer.
         """
         return Self(
             ptr=UnsafePointer[type, address_space]
@@ -239,15 +245,8 @@ struct Pointer[
             )
         )
 
-    fn unsafe_ptr[
-        O: MutableOrigin, //
-    ](self: Pointer[type, O, address_space]) -> UnsafePointer[
-        type, address_space, _default_alignment[type](), O
-    ] as output:
+    fn unsafe_ptr(self) -> UnsafePointer[type, address_space] as output:
         """Get a raw pointer to the underlying data.
-
-        Parameters:
-            O: The mutable origin.
 
         Returns:
             The raw pointer to the data.
