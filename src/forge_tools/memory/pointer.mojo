@@ -5,8 +5,8 @@ from memory import stack_allocation
 from os import abort
 
 
-trait SmartPointer:
-    """Trait for generic smart pointers."""
+trait SafePointer:
+    """Trait for generic safe pointers."""
 
     # TODO: this needs parametrized __getitem__, unsafe_ptr() etc.
 
@@ -35,7 +35,7 @@ struct Pointer[
     origin: Origin[is_mutable].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
-    """Defines a safe pointer.
+    """Defines a base pointer.
 
     Safety:
         This is not thread safe. This is not reference counted. When doing an
@@ -60,10 +60,10 @@ struct Pointer[
     
     #### Bits:
 
-    - 0: in_registers: Whether the pointer is allocated on registers.
+    - 0: in_registers: Whether the pointer is allocated in registers.
     - 1: is_allocated: Whether the pointer's memory is allocated.
     - 2: is_initialized: Whether the memory is initialized.
-    - 3: self_is_owner: Whether the pointer owns itself.
+    - 3: self_is_owner: Whether the pointer owns the memory.
     - 4: unset.
     - 5: unset.
     - 6: unset.
@@ -99,9 +99,9 @@ struct Pointer[
         Args:
             _mlir_value: The MLIR representation of the pointer.
             is_allocated: Whether the pointer's memory is allocated.
-            in_registers: Whether the pointer is allocated on registers.
+            in_registers: Whether the pointer is allocated in registers.
             is_initialized: Whether the memory is initialized.
-            self_is_owner: Whether the pointer owns itself.
+            self_is_owner: Whether the pointer owns the memory.
         """
         self._mlir_value = _mlir_value
         self._flags = (
@@ -157,7 +157,7 @@ struct Pointer[
             is_allocated: Whether the pointer's memory is allocated.
             in_registers: Whether the pointer is allocated in registers.
             is_initialized: Whether the memory is initialized.
-            self_is_owner: Whether the pointer owns itself.
+            self_is_owner: Whether the pointer owns the memory.
         """
         self = __type_of(self)(
             _mlir_value=__mlir_op.`lit.ref.from_pointer`[

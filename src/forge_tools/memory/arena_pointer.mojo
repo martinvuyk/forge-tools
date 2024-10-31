@@ -4,6 +4,7 @@ from memory import UnsafePointer, memset
 from collections import Optional
 from utils import Span
 from sys.info import bitwidthof, simdwidthof
+from sys.ffi import OpaquePointer
 from os import abort
 from .arc_pointer import ArcPointer
 
@@ -14,54 +15,37 @@ struct GladiatorPointer[
     origin: Origin[is_mutable].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
-    """Gladiator Pointer that resides in an Arena."""
+    """Gladiator Pointer (Weak Arena Pointer) that resides in an Arena."""
 
-    alias _P = UnsafePointer[type, address_space]
-    var _ptr: Self._P
-    """The Master data pointer."""
+    alias _U = UnsafePointer[type, address_space]
+    alias _C = ColosseumPointer[type, origin, address_space]
+    alias _A = ArcPointer[UnsafePointer[OpaquePointer], origin, address_space]
+    var _colosseum: Self._A
+    """A pointer to the collosseum."""
     var _start: Int
-    """The absolute starting offset from the master pointer."""
+    """The absolute starting offset from the colosseum pointer."""
     var _len: Int
     """The length of the pointer."""
-    var _master_is_alive: ArcPointer[UnsafePointer[Bool]]
-    """A pointer to determine whether the master is alive."""
-    var _free_slots: UnsafePointer[Byte]
-    """The pointer to the ArenaMasterPointer's free slots."""
-
-    # TODO: __getitem__ should check whether _master_is_alive etc.
 
     fn __init__(inout self):
-        self._free_slots = UnsafePointer[Byte]()
+        self._colosseum = Self._A(
+            UnsafePointer[Self._C].alloc(1).bitcast[OpaquePointer]()
+        )
         self._start = 0
         self._len = 0
-        self._ptr = Self._P()
-        self._master_is_alive = UnsafePointer[Bool].alloc(1)
-        self._master_is_alive[0] = False
 
-    fn __init__(
-        inout self,
-        *,
-        ptr: Self._P,
-        start: Int,
-        length: Int,
-        master_is_alive: ArcPointer[UnsafePointer[Bool]],
-        free_slots: UnsafePointer[Byte],
-    ):
+    fn __init__(inout self, *, colosseum: Self._A, start: Int, length: Int):
         """Constructs a GladiatorPointer from a Pointer.
 
         Args:
-            ptr: The Master data pointer.
-            start: The absolute starting offset from the master pointer.
+            colosseum: A pointer to the colosseum.
+            start: The absolute starting offset from the colosseum pointer.
             length: The length of the pointer.
-            master_is_alive: A pointer to determine whether the master is alive.
-            free_slots: The pointer to the ArenaMasterPointer's free slots.
         """
 
-        self._ptr = ptr
+        self._colosseum = colosseum
         self._start = start
         self._len = length
-        self._master_is_alive = master_is_alive
-        self._free_slots = free_slots
 
     @staticmethod
     @always_inline
@@ -74,22 +58,15 @@ struct GladiatorPointer[
         Returns:
             The pointer to the newly allocated buffer.
         """
-        return Self(ptr=Self._P.alloc(count), length=count)
+        if self._colosseum[]:
+            return self._colosseum[][].bitcast[Self._C]().alloc(count)
+        return Self()
 
     fn __del__(owned self):
         """Free the memory referenced by the pointer or ignore."""
-        if not self._master_is_alive:
+        if not self._colosseum[]:
             return
-        elif not self._master_is_alive[0]:
-            return
-        p0 = self._free_slots - self._start
-        full_byte_start = self._start // 8
-        full_byte_end = self._len // 8
-        memset(p0 + full_byte_start, 0xFF, full_byte_end)
-        mask = 0
-        for i in range(full_byte_end, full_byte_end + self._start % 8):
-            mask |= 1 << (bitwidthof[Int]() - i)
-        p0[full_byte_end] = p0[full_byte_end] | mask
+        self._colosseum[].bitcast[Self._C]()._free(self^)
 
     fn __int__(self) -> Int:
         return int(self._ptr)
@@ -99,13 +76,14 @@ struct GladiatorPointer[
 
 
 @value
-struct ArenaMasterPointer[
+struct ColosseumPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
-    """Arena Master Pointer that deallocates the arena when deleted."""
+    """Colosseum Pointer (Arena Owner Pointer) that deallocates the arena when
+    deleted."""
 
     var _free_slots: UnsafePointer[Byte]
     """Bits indicating whether the slot is free."""
@@ -114,16 +92,22 @@ struct ArenaMasterPointer[
     alias _P = UnsafePointer[type, address_space]
     var _ptr: Self._P
     """The data."""
-    var _master_is_alive: ArcPointer[UnsafePointer[Bool]]
-    """A pointer to determine whether the master is alive."""
+    alias _S = ArcPointer[UnsafePointer[OpaquePointer], origin, address_space]
+    var _self_ptr: Self._S
+    """A self pointer."""
     alias _G = GladiatorPointer[type, origin, address_space]
 
     fn __init__(inout self):
         self._free_slots = UnsafePointer[Byte]()
         self._len = 0
         self._ptr = Self._P()
-        self._master_is_alive = UnsafePointer[Bool].alloc(1)
-        self._master_is_alive[0] = True
+        self._self_ptr = Self._S.alloc(1)
+
+    fn __init__(inout self, *, owned other: Self):
+        self._free_slots = other._free_slots
+        self._len = other._len
+        self._ptr = other._ptr
+        self._self_ptr = other._self_ptr
 
     @doc_private
     @always_inline("nodebug")
@@ -134,14 +118,17 @@ struct ArenaMasterPointer[
             ptr: The UnsafePointer.
             length: The length of the pointer.
         """
-        self._ptr = ptr
+        s = Self()
+        s._ptr = ptr
         amnt = length // 8 + int(length < 8)
         p = UnsafePointer[Byte].alloc(amnt)
         memset(p, 0xFF, amnt)
-        self._free_slots = p
-        self._len = length // 8 + length % 8
-        self._master_is_alive = UnsafePointer[Bool].alloc(1)
-        self._master_is_alive[0] = True
+        s._free_slots = p
+        s._len = length // 8 + length % 8
+        s._self_ptr = Self._S(
+            UnsafePointer.address_of(s).bitcast[OpaquePointer]()
+        )
+        self = Self(other=s)
 
     @staticmethod
     @always_inline
@@ -227,9 +214,19 @@ struct ArenaMasterPointer[
             ptr=self._ptr,
             start=start,
             length=count,
-            master_is_alive=self._master_is_alive,
+            owner_is_alive=self._owner_is_alive,
             free_slots=self._free_slots,
         )
+
+    fn _free(inout self, owned gladiator: Self._G):
+        p0 = self._free_slots - gladiator._start
+        full_byte_start = gladiator._start // 8
+        full_byte_end = gladiator._len // 8
+        memset(p0 + full_byte_start, 0xFF, full_byte_end)
+        mask = 0
+        for i in range(full_byte_end, full_byte_end + gladiator._start % 8):
+            mask |= 1 << (bitwidthof[Int]() - i)
+        p0[full_byte_end] = p0[full_byte_end] | mask
 
     fn unsafe_ptr(self) -> UnsafePointer[type, address_space]:
         alias P = Pointer[type, MutableAnyOrigin, address_space]
@@ -244,36 +241,54 @@ struct ArenaMasterPointer[
     fn __del__(owned self):
         """Free the memory referenced by the pointer or ignore."""
         self._free_slots.free()
-        self._master_is_alive[0] = False  # mark as deleted first
+        self._owner_is_alive[0] = False  # mark as deleted first
         self._ptr.free()
 
 
 @value
-struct ArenaRcPointer[
+struct SpartacusPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
-    """Arena Reference Counted Pointer that deallocates the arena when it's the
+    """Reference Counted Arena Pointer that deallocates the arena when it's the
     last one.
 
     Safety:
         This is not thread safe.
+
+    Notes:
+        Spartacus is arguably the most famous Roman gladiator, a tough fighter
+        who led a massive slave rebellion. After being enslaved and put through
+        gladiator training school, an incredibly brutal place, he and 78 others
+        revolted against their master Batiatus using only kitchen knives.
+        [Source](
+        https://www.historyextra.com/period/roman/who-were-roman-gladiators-famous-spartacus-crixus/
+        ).
     """
 
     ...
 
 
 @value
-struct ArenaArcPointer[
+struct FlammaPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
-    """Arena Atomic Reference Counted Pointer that deallocates the arena when
+    """Atomic Reference Counted Arena Pointer that deallocates the arena when
     it's the last one.
+
+    Notes:
+        Gladiators were usually slaves, and Flamma came from the faraway
+        province of Syria. However, the fighting lifestyle seemed to suit him
+        well - he was offered his freedom four times, after winning 21 battles,
+        but refused it and continued to entertain the crowds of the Colosseum
+        until he died aged 30. His face was even used on coins. [Source](
+        https://www.historyextra.com/period/roman/who-were-roman-gladiators-famous-spartacus-crixus/
+        ).
     """
 
     ...
