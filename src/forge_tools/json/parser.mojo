@@ -6,6 +6,7 @@ from utils.string_slice import StringSlice, _StringSliceIter
 from utils.span import Span
 from sys.info import bitwidthof
 
+
 # TODO: UTF-16
 struct Parser[
     origin: Origin[False].type,
@@ -30,7 +31,8 @@ struct Parser[
         inout iterator: _StringSliceIter[origin],
     ) -> (Int8, UInt8, Int):
         constrained[
-            maximum_int_bitwidth < bitwidthof[Int](), "more than bitwidth[Int]() not supported"
+            maximum_int_bitwidth < bitwidthof[Int](),
+            "more than bitwidth[Int]() not supported",
         ]()
         alias `0` = Byte(ord("0"))
         alias `9` = Byte(ord("9"))
