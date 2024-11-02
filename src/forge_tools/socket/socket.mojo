@@ -70,6 +70,7 @@ from ._linux import _LinuxSocket
 from ._unix import _UnixSocket
 from ._windows import _WindowsSocket
 
+
 # TODO enum
 @register_passable("trivial")
 struct SockType:
