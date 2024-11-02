@@ -31,9 +31,13 @@ struct Parser[
         inout iterator: _StringSliceIter[origin],
     ) -> (Int8, UInt8, Int):
         constrained[
-            maximum_int_bitwidth < bitwidthof[Int](),
-            "more than bitwidth[Int]() not supported",
+            maximum_int_bitwidth <= bitwidthof[Int](),
+            "can't parse an Int bigger than bitwidth[Int]()",
         ]()
+        constrained[
+            bitwidthof[Int]() < 256,
+            "implementation expects bitwidthof[Int]() to be < 256",
+        ]
         alias `0` = Byte(ord("0"))
         alias `9` = Byte(ord("9"))
         alias `-` = Byte(ord("-"))
