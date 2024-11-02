@@ -4,14 +4,14 @@ from math import log
 from bit import bit_ceil
 from utils.string_slice import StringSlice, _StringSliceIter
 from utils.span import Span
-
+from sys.info import bitwidthof
 
 # TODO: UTF-16
 struct Parser[
     origin: Origin[False].type,
     allow_trailing_comma: Bool = True,
     allow_c_whitespace: Bool = True,
-    maximum_int_bitwidth: UInt = 64,
+    maximum_int_bitwidth: UInt = bitwidthof[Int](),
 ]:
     """A JSON Parser.
 
@@ -30,7 +30,7 @@ struct Parser[
         inout iterator: _StringSliceIter[origin],
     ) -> (Int8, UInt8, Int):
         constrained[
-            maximum_int_bitwidth < 256, "can't parse more than 255 bitwidth Int"
+            maximum_int_bitwidth < bitwidthof[Int](), "more than bitwidth[Int]() not supported"
         ]()
         alias `0` = Byte(ord("0"))
         alias `9` = Byte(ord("9"))
