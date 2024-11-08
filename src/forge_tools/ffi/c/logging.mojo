@@ -1,9 +1,26 @@
 """Libc POSIX logging syscalls."""
 
+from os import abort
 from sys.ffi import external_call
 from sys.info import os_is_windows
 from memory import UnsafePointer, stack_allocation
-from .types import *
+from .types import C
+
+
+@value
+struct TryLibc:
+    fn __enter__(self):
+        pass
+
+    fn __exit__(self):
+        pass
+
+    fn __exit__(self, error: Error) raises -> Bool:
+        raise Error(
+            str(error)
+            + "\nLibc Error: "
+            + char_ptr_to_string(strerror(get_errno()))
+        )
 
 
 fn get_errno() -> C.int:
@@ -61,7 +78,7 @@ fn perror(s: UnsafePointer[C.char]):
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/perror.3.html).
-        Fn signature: `char *perror(int errnum)`.
+        Fn signature: `void perror(const char *s)`.
     """
     _ = external_call["perror", C.void](s)
 
@@ -90,6 +107,7 @@ fn syslog[
     Args:
         priority: A File Descriptor to open the file with.
         message: An offset to seek to.
+        args: The extra arguments.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/closelog.3p.html).
@@ -98,7 +116,7 @@ fn syslog[
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
+    a = args.get_loaded_kgen_pack()
     _ = __mlir_op.`pop.external_call`[
         func = "syslog".value,
         variadicType = __mlir_attr[

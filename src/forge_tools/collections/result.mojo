@@ -228,7 +228,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self.err = err
 
     @always_inline
-    fn value(ref [_]self) -> ref [__lifetime_of(self._value)] T:
+    fn value(ref [_]self) -> ref [__origin_of(self._value)] T:
         """Retrieve a reference to the value of the `Result`.
 
         This check to see if the `Result` contains a value.
@@ -247,7 +247,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     @always_inline
     fn unsafe_value(
         ref [_]self,
-    ) -> ref [__lifetime_of(self._value)] T:
+    ) -> ref [__origin_of(self._value)] T:
         """Unsafely retrieve a reference to the value of the `Result`.
 
         This doesn't check to see if the `Result` contains a value.
@@ -472,7 +472,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self.err = err
 
     @always_inline
-    fn value(ref [_]self) -> ref [__lifetime_of(self._value)] T:
+    fn value(ref [_]self) -> ref [__origin_of(self._value)] T:
         """Retrieve a reference to the value of the `Result`.
 
         This check to see if the `Result` contains a value.
@@ -491,7 +491,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
     @always_inline
     fn unsafe_value(
         ref [_]self,
-    ) -> ref [__lifetime_of(self._value)] T:
+    ) -> ref [__origin_of(self._value)] T:
         """Unsafely retrieve a reference to the value of the `Result`.
 
         This doesn't check to see if the `Result` contains a value.

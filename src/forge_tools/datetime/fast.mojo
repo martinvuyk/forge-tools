@@ -39,7 +39,7 @@ alias _cal_h16 = CalendarHashes(CalendarHashes.UINT16)
 alias _cal_h8 = CalendarHashes(CalendarHashes.UINT8)
 
 
-trait _IntCollect(Intable, CollectionElement):
+trait _IntCollect(Intable):
     ...
 
 

@@ -47,7 +47,7 @@ alias _max_delta = (~UInt64(0) // (365 * 24 * 60 * 60 * 1_000_000_000)).cast[
 Gregorian calendar with year = 365 d * 24 h, 60 min, 60 s, 10^9 ns"""
 
 
-trait _IntCollect(Intable, CollectionElement):
+trait _IntCollect(Intable):
     ...
 
 

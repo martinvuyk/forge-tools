@@ -1,9 +1,10 @@
 """C POSIX types."""
 
 from sys.info import is_64bit, os_is_windows
+from sys.ffi import external_call
 from os import abort
 from utils import StaticTuple, StringSlice
-from memory import memcpy
+from memory import memcpy, UnsafePointer
 
 # ===----------------------------------------------------------------------=== #
 # Base Types

@@ -5,6 +5,8 @@
 # Error constants (errno.h)
 # ===----------------------------------------------------------------------=== #
 
+alias SUCCESS = 0
+"""Success."""
 alias EPERM = 1
 """Operation not permitted."""
 alias ENOENT = 2
@@ -925,7 +927,7 @@ alias IPV6_PMTUDISC_PROBE = 3
 """Ignore dst pmtu."""
 
 # ===----------------------------------------------------------------------=== #
-# File constants
+# File constants (stdio.h, fcntl.h, etc.)
 # ===----------------------------------------------------------------------=== #
 
 alias EOF = -1
@@ -938,17 +940,39 @@ alias STDOUT_FILENO = 1
 alias STDERR_FILENO = 2
 """Constant: STDERR_FILENO."""
 
-
 alias FM_READ = "r"
-"""Constant: FM_READ."""
+"""Open text file for reading. The stream is positioned at the beginning of the
+file."""
+alias FM_READ_WRITE = "r+"
+"""Open for reading and writing. The stream is positioned at the beginning of
+the file.
+"""
 alias FM_WRITE = "w"
-"""Constant: FM_WRITE."""
+"""Truncate file to zero length or create text file for writing. The stream is
+positioned at the beginning of the file.
+"""
+alias FM_WRITE_READ_CREATE = "w+"
+"""Open for reading and writing. The file is created if it does not exist,
+otherwise it is truncated. The stream is positioned at the beginning of the
+file.
+"""
 alias FM_APPEND = "a"
-"""Constant: FM_APPEND."""
-alias FM_BINARY = "b"
-"""Constant: FM_BINARY."""
-alias FM_PLUS = "+"
-"""Constant: FM_PLUS."""
+"""Open for appending (writing at end of file). The file is created if it does
+not exist. The stream is positioned at the end of the file.
+"""
+alias FM_APPEND_READ = "a+"
+"""Open for reading and appending (writing at end of file). The file is created
+if it does not exist. The initial file position for reading is at the beginning
+of the file, but output is always appended to the end of the file.
+"""
+# NOTE: The mode string can also include the letter 'b' either as a last
+# character or as a character between the characters in any of the two-character
+# strings described above. This is strictly for compatibility with C89 and has
+# no effect; the 'b' is ignored on all POSIX conforming systems, including
+# Linux. (Other systems may treat text files and binary files differently, and
+# adding the 'b' may be a good idea if you do I/O to a binary file and expect
+# that your program may be ported to non-UNIX environments).
+
 
 alias SEEK_SET = 0
 """Constant: SEEK_SET."""
@@ -958,46 +982,60 @@ alias SEEK_END = 2
 """Constant: SEEK_END."""
 
 alias O_RDONLY = 0
-"""Constant: O_RDONLY."""
+"""Open for reading only."""
 alias O_WRONLY = 1
-"""Constant: O_WRONLY."""
+"""Open for writing only."""
 alias O_RDWR = 2
-"""Constant: O_RDWR."""
-alias O_APPEND = 8
-"""Constant: O_APPEND."""
-alias O_CREAT = 512
-"""Constant: O_CREAT."""
-alias O_TRUNC = 1024
-"""Constant: O_TRUNC."""
-alias O_EXCL = 2048
-"""Constant: O_EXCL."""
-alias O_SYNC = 8192
-"""Constant: O_SYNC."""
-alias O_NONBLOCK = 16384
-"""Constant: O_NONBLOCK."""
+"""Open for reading and writing."""
 alias O_ACCMODE = 3
 """Constant: O_ACCMODE."""
-alias O_CLOEXEC = 524288
-"""Constant: O_CLOEXEC."""
+alias O_APPEND = 8
+"""Set append mode."""
+alias O_CREAT = 512
+"""Create file if it does not exist."""
+alias O_TRUNC = 1024
+"""If the file exists and is a regular file, and the file is successfully opened
+O_RDWR or O_WRONLY, its length shall be truncated to 0, and the mode and owner
+shall be unchanged. It shall have no effect on FIFO special files or terminal
+device files. Its effect on other file types is implementation-defined. The
+result of using O_TRUNC without either O_RDWR or O_WRONLY is undefined."""
+alias O_EXCL = 2048
+"""If O_CREAT and O_EXCL are set, open() shall fail if the file exists."""
+alias O_SYNC = 8192
+"""Write I/O operations on the file descriptor shall complete as defined by
+synchronized I/O file integrity completion."""
+alias O_NONBLOCK = 16384
+"""When opening a FIFO with O_RDONLY or O_WRONLY set:
 
-# from fcntl.h
-# TODO
-# alias O_EXEC = -1
-# """Constant: O_EXEC."""
-# alias O_SEARCH = -1
-# """Constant: O_SEARCH."""
-# alias O_DIRECTORY = -1
-# """Constant: O_DIRECTORY."""
-# alias O_DSYNC = -1
-# """Constant: O_DSYNC."""
-# alias O_NOCTTY = -1
-# """Constant: O_NOCTTY."""
-# alias O_NOFOLLOW = -1
-# """Constant: O_NOFOLLOW."""
-# alias O_RSYNC = -1
-# """Constant: O_RSYNC."""
-# alias O_TTY_INIT = -1
-# """Constant: O_TTY_INIT."""
+- If O_NONBLOCK is set, an open() for reading-only shall return without delay.
+    An open() for writing-only shall return an error if no process currently has
+    the file open for reading.
+- If O_NONBLOCK is clear, an open() for reading-only shall block the calling
+    thread until a thread opens the file for writing. An open() for writing-only
+    shall block the calling thread until a thread opens the file for reading.
+
+When opening a block special or character special file that supports
+non-blocking opens:
+
+- If O_NONBLOCK is set, the open() function shall return without blocking for
+    the device to be ready or available. Subsequent behavior of the device is
+    device-specific.
+- If O_NONBLOCK is clear, the open() function shall block the calling thread
+    until the device is ready or available before returning.
+
+Otherwise, the O_NONBLOCK flag shall not cause an error, but it is unspecified
+whether the file status flags will include the O_NONBLOCK flag.
+"""
+alias O_CLOEXEC = 524288
+"""Atomically set the FD_CLOEXEC flag on the new file descriptor."""
+alias O_DIRECTORY = 200000
+"""Constant: O_DIRECTORY."""
+alias O_DSYNC = 10000
+"""Constant: O_DSYNC."""
+alias O_NOCTTY = 400
+"""Do not assign controlling terminal."""
+alias O_NOFOLLOW = 400000
+"""Do not follow symbolic links."""
 
 alias F_DUPFD = 0
 """Constant: F_DUPFD."""
@@ -1030,16 +1068,6 @@ alias F_RSETLKW = 13
 alias F_DUPFD_CLOEXEC = 14
 """Constant: F_DUPFD_CLOEXEC."""
 
-# TODO
-# alias FD_CLOEXEC = -1
-# """Constant: FD_CLOEXEC."""
-# alias F_RDLCK = -1
-# """Constant: F_RDLCK."""
-# alias F_UNLCK = -1
-# """Constant: F_UNLCK."""
-# alias F_WRLCK = -1
-# """Constant: F_WRLCK."""
-
 alias AT_EACCESS = 512
 """Constant: AT_EACCESS."""
 alias AT_FDCWD = -100
@@ -1057,71 +1085,118 @@ alias AT_EMPTY_PATH = 4096
 alias AT_RECURSIVE = 32768
 """Constant: AT_RECURSIVE."""
 
+# ===----------------------------------------------------------------------=== #
+# File modes (sys/stat.h)
+# ===----------------------------------------------------------------------=== #
+
+alias S_IRWXU = 700
+"""Read, write, execute/search by owner."""
+alias S_IRUSR = 400
+"""Read permission, owner."""
+alias S_IWUSR = 200
+"""Write permission, owner."""
+alias S_IXUSR = 100
+"""Execute/search permission, owner."""
+alias S_IRWXG = 70
+"""Read, write, execute/search by group."""
+alias S_IRGRP = 40
+"""Read permission, group."""
+alias S_IWGRP = 20
+"""Write permission, group."""
+alias S_IXGRP = 10
+"""Execute/search permission, group."""
+alias S_IRWXO = 7
+"""Read, write, execute/search by others."""
+alias S_IROTH = 4
+"""Read permission, others."""
+alias S_IWOTH = 2
+"""Write permission, others."""
+alias S_IXOTH = 1
+"""Execute/search permission, others."""
+alias S_ISUID = 4000
+"""Set-user-ID on execution."""
+alias S_ISGID = 2000
+"""Set-group-ID on execution."""
+alias S_ISVTX = 1000
+"""On directories, restricted deletion flag."""
 
 # ===----------------------------------------------------------------------=== #
-# Logging constants
+# Logging constants (syslog.h)
 # ===----------------------------------------------------------------------=== #
 
-# TODO
-# alias LOG_PID = -1
-# """Constant: LOG_PID."""
-# alias LOG_CONS = -1
-# """Constant: LOG_CONS."""
-# alias LOG_NDELAY = -1
-# """Constant: LOG_NDELAY."""
-# alias LOG_ODELAY = -1
-# """Constant: LOG_ODELAY."""
-# alias LOG_NOWAIT = -1
-# """Constant: LOG_NOWAIT."""
-# alias LOG_KERN = -1
-# """Constant: LOG_KERN."""
-# alias LOG_USER = -1
-# """Constant: LOG_USER."""
-# alias LOG_MAIL = -1
-# """Constant: LOG_MAIL."""
-# alias LOG_NEWS = -1
-# """Constant: LOG_NEWS."""
-# alias LOG_UUCP = -1
-# """Constant: LOG_UUCP."""
-# alias LOG_DAEMON = -1
-# """Constant: LOG_DAEMON."""
-# alias LOG_AUTH = -1
-# """Constant: LOG_AUTH."""
-# alias LOG_CRON = -1
-# """Constant: LOG_CRON."""
-# alias LOG_LPR = -1
-# """Constant: LOG_LPR."""
-# alias LOG_LOCAL0 = -1
-# """Constant: LOG_LOCAL0."""
-# alias LOG_LOCAL1 = -1
-# """Constant: LOG_LOCAL1."""
-# alias LOG_LOCAL2 = -1
-# """Constant: LOG_LOCAL2."""
-# alias LOG_LOCAL3 = -1
-# """Constant: LOG_LOCAL3."""
-# alias LOG_LOCAL4 = -1
-# """Constant: LOG_LOCAL4."""
-# alias LOG_LOCAL5 = -1
-# """Constant: LOG_LOCAL5."""
-# alias LOG_LOCAL6 = -1
-# """Constant: LOG_LOCAL6."""
-# alias LOG_LOCAL7 = -1
-# """Constant: LOG_LOCAL7."""
-# alias LOG_MASK = -1  # (pri)
-# """Constant: LOG_MASK."""
-# alias LOG_EMERG = -1
-# """Constant: LOG_EMERG."""
-# alias LOG_ALERT = -1
-# """Constant: LOG_ALERT."""
-# alias LOG_CRIT = -1
-# """Constant: LOG_CRIT."""
-# alias LOG_ERR = -1
-# """Constant: LOG_ERR."""
-# alias LOG_WARNING = -1
-# """Constant: LOG_WARNING."""
-# alias LOG_NOTICE = -1
-# """Constant: LOG_NOTICE."""
-# alias LOG_INFO = -1
-# """Constant: LOG_INFO."""
-# alias LOG_DEBUG = -1
-# """Constant: LOG_DEBUG."""
+alias LOG_EMERG = 0
+"""A panic condition was reported to all processes."""
+alias LOG_ALERT = 1
+"""A condition that should be corrected immediately."""
+alias LOG_CRIT = 2
+"""A critical condition."""
+alias LOG_ERR = 3
+"""An error message."""
+alias LOG_WARNING = 4
+"""A warning message."""
+alias LOG_NOTICE = 5
+"""A condition requiring special handling."""
+alias LOG_INFO = 6
+"""A general information message."""
+alias LOG_DEBUG = 7
+"""A message useful for debugging programs."""
+
+alias LOG_PID = 1
+"""Log the process ID with each message."""
+alias LOG_CONS = 2
+"""Log to the system console on error."""
+alias LOG_ODELAY = 4
+"""Delay open until syslog() is called."""
+alias LOG_NDELAY = 8
+"""Connect to syslog daemon immediately."""
+alias LOG_NOWAIT = 0x10
+"""Do not wait for child processes."""
+alias LOG_PERROR = 0x20
+"""Log to stderr as well."""
+
+alias LOG_KERN = (0 << 3)
+"""Kernel messages."""
+alias LOG_USER = (1 << 3)
+"""Random user-level messages."""
+alias LOG_MAIL = (2 << 3)
+"""Mail system."""
+alias LOG_DAEMON = (3 << 3)
+"""System daemons."""
+alias LOG_AUTH = (4 << 3)
+"""Security/authorization messages."""
+alias LOG_SYSLOG = (5 << 3)
+"""Messages generated internally by syslogd."""
+alias LOG_LPR = (6 << 3)
+"""Line printer subsystem."""
+alias LOG_NEWS = (7 << 3)
+"""Network news subsystem."""
+alias LOG_UUCP = (8 << 3)
+"""UUCP subsystem."""
+alias LOG_CRON = (9 << 3)
+"""Clock daemon."""
+alias LOG_AUTHPRIV = (10 << 3)
+"""Security/authorization messages (private)."""
+alias LOG_FTP = (11 << 3)
+"""Ftp daemon."""
+
+alias LOG_LOCAL0 = (16 << 3)
+"""Reserved for local use."""
+alias LOG_LOCAL1 = (17 << 3)
+"""Reserved for local use."""
+alias LOG_LOCAL2 = (18 << 3)
+"""Reserved for local use."""
+alias LOG_LOCAL3 = (19 << 3)
+"""Reserved for local use."""
+alias LOG_LOCAL4 = (20 << 3)
+"""Reserved for local use."""
+alias LOG_LOCAL5 = (21 << 3)
+"""Reserved for local use."""
+alias LOG_LOCAL6 = (22 << 3)
+"""Reserved for local use."""
+alias LOG_LOCAL7 = (23 << 3)
+"""Reserved for local use."""
+
+alias LOG_NFACILITIES = 24
+"""Current number of facilities."""
+alias LOG_FACMASK = 0x03F8
+"""Mask to extract facility part."""

@@ -2,7 +2,7 @@
 
 from sys.ffi import external_call
 from memory import UnsafePointer
-from .types import *
+from .types import C
 
 
 fn htonl(hostlong: C.u_int) -> C.u_int:

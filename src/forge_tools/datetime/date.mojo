@@ -43,7 +43,7 @@ import .dt_str
 alias _cal_hash = CalendarHashes(32)
 
 
-trait _IntCollect(Intable, CollectionElement):
+trait _IntCollect(Intable):
     ...
 
 

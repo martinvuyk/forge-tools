@@ -1,16 +1,16 @@
 """Libc POSIX file syscalls."""
 
+from collections import Optional
+from memory import UnsafePointer
 from sys.ffi import external_call
 from sys.info import os_is_windows, triple_is_nvidia_cuda
-from memory import UnsafePointer
-from .types import *
 
-# FIXME: this shouldn't be needed
-from builtin.builtin_list import _LITRefPackHelper
+from .types import C
 
 
-fn close(fildes: C.int) -> C.int:
-    """Libc POSIX `close` function.
+fn libc_close(fildes: C.int) -> C.int:
+    """Libc POSIX `open` function. The argument flags must include one of the
+    following access modes: O_RDONLY, O_WRONLY, or O_RDWR.
 
     Args:
         fildes: A File Descriptor to close.
@@ -25,20 +25,19 @@ fn close(fildes: C.int) -> C.int:
     return external_call["close", C.int](fildes)
 
 
-fn open(
-    path: UnsafePointer[C.char],
-    oflag: C.int,
-    args: VariadicPack[element_trait=AnyType],
+fn libc_open(
+    path: UnsafePointer[C.char], oflag: C.int, mode: mode_t = 666
 ) -> C.int:
-    """Libc POSIX `open` function.
+    """Libc POSIX `open` function. The argument flags must include one of the
+    following access modes: O_RDONLY, O_WRONLY, or O_RDWR.
 
     Args:
         path: A path to a file.
         oflag: A flag to open the file with.
-        args: The extra arguments for the open function.
+        mode: The permission mode to open the file with.
 
     Returns:
-        A File Descriptor. Otherwise -1 and `errno` is set.
+        A File Descriptor. Otherwise `-1` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
@@ -46,41 +45,49 @@ fn open(
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     return __mlir_op.`pop.external_call`[
         func = "open".value,
         variadicType = __mlir_attr[
             `(`,
             `!kgen.pointer<scalar<si8>>,`,
-            `!pop.scalar<si32>`,
+            `!pop.scalar<ui32>`,
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](path, oflag, a)
+    ](path, oflag, mode)
 
 
-@always_inline
-fn open[
-    *T: AnyType
-](path: UnsafePointer[C.char], oflag: C.int, *args: *T) -> C.int:
+fn remove[*T: AnyType](pathname: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `open` function.
 
     Parameters:
         T: The type of the arguments.
 
     Args:
-        path: A path to a file.
-        oflag: A flag to open the file with.
-        args: The extra arguments for the open function.
+        pathname: A path to a file.
 
     Returns:
-        A File Descriptor. Otherwise -1 and `errno` is set.
+        Value `0` on success, otherwise `-1` and `errno` is set.
 
     Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
-        Fn signature: `int open(const char *path, int oflag, ...)`.
+        [Reference](https://man7.org/linux/man-pages/man3/remove.3.html).
+        Fn signature: `int remove(const char *pathname)`.
+
+        If the removed name was the last link to a file and no processes
+        have the file open, the file is deleted and the space it was
+        using is made available for reuse.
+
+        If the name was the last link to a file, but any processes still
+        have the file open, the file will remain in existence until the
+        last file descriptor referring to it is closed.
+
+        If the name referred to a symbolic link, the link is removed.
+
+        If the name referred to a socket, FIFO, or device, the name is
+        removed, but processes which have the object open may continue to
+        use it.
     """
-    return open(path, oflag, args)
+    return external_call["remove", C.int](pathname)
 
 
 fn openat(
@@ -98,7 +105,7 @@ fn openat(
         args: The extra arguments for the open function.
 
     Returns:
-        A File Descriptor. Otherwise -1 and `errno` is set.
+        A File Descriptor. Otherwise `-1` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
@@ -106,7 +113,6 @@ fn openat(
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     return __mlir_op.`pop.external_call`[
         func = "openat".value,
         variadicType = __mlir_attr[
@@ -117,7 +123,7 @@ fn openat(
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](fd, path, oflag, a)
+    ](fd, path, oflag, args.get_loaded_kgen_pack())
 
 
 @always_inline
@@ -136,7 +142,7 @@ fn openat[
         args: The extra arguments for the open function.
 
     Returns:
-        A File Descriptor. Otherwise -1 and `errno` is set.
+        A File Descriptor. Otherwise `-1` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
@@ -251,7 +257,7 @@ fn creat(path: UnsafePointer[C.char], mode: mode_t) -> C.int:
         mode: A mode to open the file with.
 
     Returns:
-        A File Descriptor. Otherwise -1 and `errno` is set.
+        A File Descriptor. Otherwise `-1` and `errno` is set.
 
     Notes:
         [Reference](https://man7.org/linux/man-pages/man3/creat.3p.html).
@@ -424,7 +430,6 @@ fn fprintf(
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     return __mlir_op.`pop.external_call`[
         func = "KGEN_CompilerRT_fprintf".value,
         variadicType = __mlir_attr[
@@ -434,7 +439,7 @@ fn fprintf(
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](stream, format, a)
+    ](stream, format, args.get_loaded_kgen_pack())
 
 
 @always_inline
@@ -543,8 +548,8 @@ fn printf(
     @parameter
     if triple_is_nvidia_cuda():
         # FIXME: externall_call should handle this
-        a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
-        _ = external_call["vprintf", Int32](format, Pointer.address_of(a))
+        a = args.get_loaded_kgen_pack()
+        return external_call["vprintf", C.int](format, Pointer.address_of(a))
     else:
         return dprintf(file, format, args)
 
@@ -629,7 +634,6 @@ fn snprintf[
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     num = __mlir_op.`pop.external_call`[
         func = "snprintf".value,
         variadicType = __mlir_attr[
@@ -640,7 +644,7 @@ fn snprintf[
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](s, n, format, a)
+    ](s, n, format, args.get_loaded_kgen_pack())
     return int(num)
 
 
@@ -667,7 +671,6 @@ fn sprintf[
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     num = __mlir_op.`pop.external_call`[
         func = "sprintf".value,
         variadicType = __mlir_attr[
@@ -677,7 +680,7 @@ fn sprintf[
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](s, format, a)
+    ](s, format, args.get_loaded_kgen_pack())
     return int(num)
 
 
@@ -714,7 +717,6 @@ fn fscanf[
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     return __mlir_op.`pop.external_call`[
         func = "fscanf".value,
         variadicType = __mlir_attr[
@@ -724,7 +726,7 @@ fn fscanf[
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](stream, format, a)
+    ](stream, format, args.get_loaded_kgen_pack())
 
 
 fn scanf[*T: AnyType](format: UnsafePointer[C.char], *args: *T) -> C.int:
@@ -754,7 +756,6 @@ fn scanf[*T: AnyType](format: UnsafePointer[C.char], *args: *T) -> C.int:
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     return __mlir_op.`pop.external_call`[
         func = "scanf".value,
         variadicType = __mlir_attr[
@@ -763,7 +764,7 @@ fn scanf[*T: AnyType](format: UnsafePointer[C.char], *args: *T) -> C.int:
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](format, a)
+    ](format, args.get_loaded_kgen_pack())
 
 
 fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
@@ -865,7 +866,7 @@ fn getline(
     return external_call["getline", C.u_int](lineptr, n, stream)
 
 
-# FIXME: lineptr should be UnsafePointer[addrinfo]
+# # FIXME: lineptr should be UnsafePointer[addrinfo]
 fn getdelim(
     lineptr: UnsafePointer[C.ptr_addr],
     n: UnsafePointer[C.u_int],
@@ -1013,7 +1014,7 @@ fn fflush(stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `fflush` function.
 
     Args:
-        stream
+        stream: The stream.
 
     Returns:
         Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
@@ -1026,7 +1027,7 @@ fn fflush(stream: UnsafePointer[FILE]) -> C.int:
 
 
 fn clearerr(stream: UnsafePointer[FILE]):
-    """Libc POSIX `feof` function.
+    """Libc POSIX `clearerr` function.
 
     Args:
         stream: A pointer to a stream.
@@ -1081,6 +1082,7 @@ fn fcntl[*T: AnyType](fildes: C.int, cmd: C.int, *args: *T) -> C.int:
     Args:
         fildes: A File Descriptor to close.
         cmd: A command to execute.
+        args: The extra args.
 
     Returns:
         Value 0 on success, -1 on error and `errno` is set.
@@ -1091,7 +1093,6 @@ fn fcntl[*T: AnyType](fildes: C.int, cmd: C.int, *args: *T) -> C.int:
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     return __mlir_op.`pop.external_call`[
         func = "fcntl".value,
         variadicType = __mlir_attr[
@@ -1101,7 +1102,7 @@ fn fcntl[*T: AnyType](fildes: C.int, cmd: C.int, *args: *T) -> C.int:
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](fildes, cmd, a)
+    ](fildes, cmd, args.get_loaded_kgen_pack())
 
 
 fn ioctl[*T: AnyType](fildes: C.int, request: C.int, *args: *T) -> C.int:
@@ -1113,6 +1114,7 @@ fn ioctl[*T: AnyType](fildes: C.int, request: C.int, *args: *T) -> C.int:
     Args:
         fildes: A File Descriptor to open the file with.
         request: An offset to seek to.
+        args: The extra args.
 
     Returns:
         Upon successful completion, `ioctl()` shall return a value other than
@@ -1125,7 +1127,6 @@ fn ioctl[*T: AnyType](fildes: C.int, request: C.int, *args: *T) -> C.int:
     """
 
     # FIXME: externall_call should handle this
-    a = _LITRefPackHelper(args._value).get_loaded_kgen_pack()
     return __mlir_op.`pop.external_call`[
         func = "ioctl".value,
         variadicType = __mlir_attr[
@@ -1135,4 +1136,4 @@ fn ioctl[*T: AnyType](fildes: C.int, request: C.int, *args: *T) -> C.int:
             `) -> !pop.scalar<si32>`,
         ],
         _type = C.int,
-    ](fildes, request, a)
+    ](fildes, request, args.get_loaded_kgen_pack())
