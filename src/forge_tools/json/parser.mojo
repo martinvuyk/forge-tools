@@ -1,6 +1,6 @@
 """JSON Parser module."""
 
-from math import log10
+from math import log10, nan
 from bit import bit_ceil
 from collections import Dict
 from utils import Span
@@ -21,7 +21,8 @@ struct Parser[
 
     Parameters:
         origin: The immutable origin of the data.
-        allow_trailing_comma: Whether to allow (ignore) trailing comma or fail.
+        allow_trailing_comma: Whether to allow (ignore) trailing comma or
+            set the instance type as empty (array/object).
         allow_c_whitespace: Whether to allow c whitespace, since it is faster.
         maximum_int_bitwidth: The maximum int bitwidth to consider for parsing.
     """
@@ -266,6 +267,131 @@ struct Parser[
         _ = iterator.__next__()  # e or E
         exponent = Self._parse_num(iterator)[2]
         return Float64(whole) * Float64(10) ** Float64(exponent)
+
+    fn loads(self) raises -> object:
+        """Parse Json from the start of the span. Evaluate arrays and objects
+        recursively until everything is parsed.
+
+        Returns:
+            The result.
+
+        Notes:
+            If allow_trailing_comma is False and any object or array contains
+            one, the item is set as empty.
+
+            - `JsonType.object` -> `Dict[String, object]`.
+            - `JsonType.array` -> `List[object]`.
+            - `JsonType.string` -> `StringSlice[origin]`.
+            - `JsonType.true`/`JsonType.false` -> `Bool`.
+            - `JsonType.null` -> `None`.
+            - `JsonType.invalid` -> `None`.
+            - `JsonType.float_exp`/`JsonType.float_dot` -> `Float64`.
+            - `JsonType.Inf` -> `Float64.MAX`/`Float64.MAX`.
+            - `JsonType.NaN` -> `nan[DType.float64]()`.
+            - `JsonType.int` -> `Int`.
+            - `JsonType.whitespace` -> `" "`.
+        """
+        return Self.parse_instance(Self._R.get_json_instance(self._buffer))
+
+    @staticmethod
+    fn parse_instance(instance: Self._J) -> object as output:
+        """Parse a JsonInstance from the start of the span **with no leading
+        whitespace and assuming the start and end were validated previously**.
+
+        Args:
+            instance: The JsonInstance.
+
+        Returns:
+            The result.
+
+        Notes:
+
+            - `JsonType.object` -> `Dict[String, Self._J]`.
+            - `JsonType.array` -> `List[Self._J]`.
+            - `JsonType.string` -> `StringSlice[origin]`.
+            - `JsonType.true`/`JsonType.false` -> `Bool`.
+            - `JsonType.null` -> `None`.
+            - `JsonType.invalid` -> `None`.
+            - `JsonType.float_exp`/`JsonType.float_dot` -> `Float64`.
+            - `JsonType.Inf` -> `Float64.MAX`/`Float64.MAX`.
+            - `JsonType.NaN` -> `nan[DType.float64]()`.
+            - `JsonType.int` -> `Int`.
+            - `JsonType.whitespace` -> `" "`.
+        """
+
+        if instance.type is JsonType.object:
+            obj = Dict[String, object]()
+            for item in Self.parse_object(instance).items():
+                obj[item[].key] = Self.parse_instance(item[].value)
+            output = obj
+            return
+        elif instance.type is JsonType.array:
+            arr = List[object]()
+            for item in Self.parse_array(instance):
+                arr.append(Self.parse_instance(item[]))
+            output = arr
+            return
+        elif instance.type is JsonType.int:
+            output = Self.parse_int(instance)
+            return
+        elif instance.type is JsonType.float_dot:
+            output = Self.parse_float_dot(instance)
+            return
+        elif instance.type is JsonType.float_exp:
+            output = Self.parse_float_exp(instance)
+            return
+        elif instance.type is JsonType.string:
+            output = StringSlice[origin](
+                ptr=instance.buffer.unsafe_ptr() + 1,
+                length=len(instance.buffer) - 1,
+            )
+            return
+        elif instance.type is JsonType.true:
+            output = True
+            return
+        elif instance.type is JsonType.false:
+            output = False
+            return
+        elif instance.type is JsonType.Inf:
+            output = Float64.MAX if len(instance.buffer) == 7 else Float64.MIN
+            return
+        elif instance.type is JsonType.NaN:
+            output = nan[DType.float64]()
+            return
+        elif instance.type is JsonType.whitespace:
+            output = " "
+            return
+
+        output = None
+
+    fn find(self, key: String) -> object:
+        """Find a json value by key.
+
+        Args:
+            key: The key.
+
+        Returns:
+            The JsonInstance on the right side of the key.
+
+        Notes:
+            This looks for the first occurrence of the key. Any invalid value is
+            set to None.
+
+            - `JsonType.object` -> `Dict[String, Self._J]`.
+            - `JsonType.array` -> `List[Self._J]`.
+            - `JsonType.string` -> `StringSlice[origin]`.
+            - `JsonType.true`/`JsonType.false` -> `Bool`.
+            - `JsonType.null` -> `None`.
+            - `JsonType.invalid` -> `None`.
+            - `JsonType.float_exp`/`JsonType.float_dot` -> `Float64`.
+            - `JsonType.Inf` -> `Float64.MAX`/`Float64.MAX`.
+            - `JsonType.NaN` -> `nan[DType.float64]()`.
+            - `JsonType.int` -> `Int`.
+            - `JsonType.whitespace` -> `" "`.
+        """
+        var full_key = '"' + key + '"'
+        instance = self._R.find(self._buffer, full_key)
+        return Self.parse_instance(instance)
 
 
 fn _get_base_10_multipliers[D: DType, width: Int]() -> SIMD[D, width]:
