@@ -8,6 +8,7 @@ from sys.info import os_is_windows, triple_is_nvidia_cuda
 from .types import C
 
 
+@always_inline
 fn libc_close(fildes: C.int) -> C.int:
     """Libc POSIX `open` function. The argument flags must include one of the
     following access modes: O_RDONLY, O_WRONLY, or O_RDWR.
@@ -25,11 +26,12 @@ fn libc_close(fildes: C.int) -> C.int:
     return external_call["close", C.int](fildes)
 
 
+@always_inline
 fn libc_open(
-    path: UnsafePointer[C.char], oflag: C.int, mode: mode_t = 666
+    path: UnsafePointer[C.char], oflag: C.int, mode: mode_t = 0o666
 ) -> C.int:
     """Libc POSIX `open` function. The argument flags must include one of the
-    following access modes: O_RDONLY, O_WRONLY, or O_RDWR.
+    following access modes: `O_RDONLY`, `O_WRONLY`, or `O_RDWR`.
 
     Args:
         path: A path to a file.
@@ -43,20 +45,10 @@ fn libc_open(
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
         Fn signature: `int open(const char *path, int oflag, ...)`.
     """
-
-    # FIXME: externall_call should handle this
-    return __mlir_op.`pop.external_call`[
-        func = "open".value,
-        variadicType = __mlir_attr[
-            `(`,
-            `!kgen.pointer<scalar<si8>>,`,
-            `!pop.scalar<ui32>`,
-            `) -> !pop.scalar<si32>`,
-        ],
-        _type = C.int,
-    ](path, oflag, mode)
+    return external_call["open", C.int](path, oflag, mode)
 
 
+@always_inline
 fn remove[*T: AnyType](pathname: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `open` function.
 
@@ -90,11 +82,9 @@ fn remove[*T: AnyType](pathname: UnsafePointer[C.char]) -> C.int:
     return external_call["remove", C.int](pathname)
 
 
+@always_inline
 fn openat(
-    fd: C.int,
-    path: UnsafePointer[C.char],
-    oflag: C.int,
-    args: VariadicPack[element_trait=AnyType],
+    fd: C.int, path: UnsafePointer[C.char], oflag: C.int, mode: mode_t = 0o666
 ) -> C.int:
     """Libc POSIX `openat` function.
 
@@ -102,7 +92,7 @@ fn openat(
         fd: A File Descriptor to open the file with.
         path: A path to a file.
         oflag: A flag to open the file with.
-        args: The extra arguments for the open function.
+        mode: The permission mode to open the file with.
 
     Returns:
         A File Descriptor. Otherwise `-1` and `errno` is set.
@@ -111,46 +101,10 @@ fn openat(
         [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
         Fn signature: `int openat(int fd, const char *path, int oflag, ...)`.
     """
-
-    # FIXME: externall_call should handle this
-    return __mlir_op.`pop.external_call`[
-        func = "openat".value,
-        variadicType = __mlir_attr[
-            `(`,
-            `!pop.scalar<si32>,`,
-            `!kgen.pointer<scalar<si8>>,`,
-            `!pop.scalar<si32>`,
-            `) -> !pop.scalar<si32>`,
-        ],
-        _type = C.int,
-    ](fd, path, oflag, args.get_loaded_kgen_pack())
+    return external_call["openat", C.int](fd, path, oflag, mode)
 
 
 @always_inline
-fn openat[
-    *T: AnyType
-](fd: C.int, path: UnsafePointer[C.char], oflag: C.int, *args: *T) -> C.int:
-    """Libc POSIX `openat` function.
-
-    Parameters:
-        T: The type of the arguments.
-
-    Args:
-        fd: A File Descriptor to open the file with.
-        path: A path to a file.
-        oflag: A flag to open the file with.
-        args: The extra arguments for the open function.
-
-    Returns:
-        A File Descriptor. Otherwise `-1` and `errno` is set.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
-        Fn signature: `int openat(int fd, const char *path, int oflag, ...)`.
-    """
-    return openat(fd, path, oflag, args)
-
-
 fn fopen(
     pathname: UnsafePointer[C.char], mode: UnsafePointer[C.char]
 ) -> UnsafePointer[FILE]:
@@ -171,6 +125,7 @@ fn fopen(
     return external_call["fopen", UnsafePointer[FILE]](pathname, mode)
 
 
+@always_inline
 fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
     """Libc POSIX `fdopen` function.
 
@@ -189,6 +144,7 @@ fn fdopen(fildes: C.int, mode: UnsafePointer[C.char]) -> UnsafePointer[FILE]:
     return external_call[name, UnsafePointer[FILE]](fildes, mode)
 
 
+@always_inline
 fn fclose(stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `fclose` function.
 
@@ -205,6 +161,7 @@ fn fclose(stream: UnsafePointer[FILE]) -> C.int:
     return external_call["fclose", C.int](stream)
 
 
+@always_inline
 fn freopen(
     pathname: UnsafePointer[C.char],
     mode: UnsafePointer[C.char],
@@ -228,6 +185,7 @@ fn freopen(
     return external_call["freopen", UnsafePointer[FILE]](pathname, mode, stream)
 
 
+@always_inline
 fn fmemopen(
     buf: UnsafePointer[C.void], size: C.u_int, mode: UnsafePointer[C.char]
 ) -> UnsafePointer[FILE]:
@@ -249,6 +207,7 @@ fn fmemopen(
     return external_call["fmemopen", UnsafePointer[FILE]](buf, size, mode)
 
 
+@always_inline
 fn creat(path: UnsafePointer[C.char], mode: mode_t) -> C.int:
     """Libc POSIX `creat` function.
 
@@ -266,6 +225,7 @@ fn creat(path: UnsafePointer[C.char], mode: mode_t) -> C.int:
     return external_call["creat", C.int](path, mode)
 
 
+@always_inline
 fn fseek(stream: UnsafePointer[FILE], offset: C.long, whence: C.int) -> C.int:
     """Libc POSIX `fseek` function.
 
@@ -285,6 +245,7 @@ fn fseek(stream: UnsafePointer[FILE], offset: C.long, whence: C.int) -> C.int:
     return external_call["fseek", C.int](stream, offset, whence)
 
 
+@always_inline
 fn fseeko(stream: UnsafePointer[FILE], offset: off_t, whence: C.int) -> C.int:
     """Libc POSIX `fseeko` function.
 
@@ -304,6 +265,7 @@ fn fseeko(stream: UnsafePointer[FILE], offset: off_t, whence: C.int) -> C.int:
     return external_call["fseeko", C.int](stream, offset, whence)
 
 
+@always_inline
 fn lseek(fildes: C.int, offset: off_t, whence: C.int) -> off_t:
     """Libc POSIX `lseek` function.
 
@@ -324,6 +286,7 @@ fn lseek(fildes: C.int, offset: off_t, whence: C.int) -> off_t:
     return external_call["lseek", off_t](fildes, offset, whence)
 
 
+@always_inline
 fn fputc(c: C.int, stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `fputc` function.
 
@@ -342,6 +305,7 @@ fn fputc(c: C.int, stream: UnsafePointer[FILE]) -> C.int:
     return external_call["fputc", C.int](c, stream)
 
 
+@always_inline
 fn fputs(s: UnsafePointer[C.char], stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `fputs` function.
 
@@ -361,6 +325,7 @@ fn fputs(s: UnsafePointer[C.char], stream: UnsafePointer[FILE]) -> C.int:
     return external_call["fputs", C.int](s, stream)
 
 
+@always_inline
 fn fgetc(stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `fgetc` function.
 
@@ -382,6 +347,7 @@ fn fgetc(stream: UnsafePointer[FILE]) -> C.int:
     return external_call["fgets", C.int](stream)
 
 
+@always_inline
 fn fgets(
     s: UnsafePointer[C.char], n: C.int, stream: UnsafePointer[FILE]
 ) -> UnsafePointer[C.char]:
@@ -407,6 +373,7 @@ fn fgets(
     return external_call["fgets", UnsafePointer[C.char]](s, n, stream)
 
 
+@always_inline
 fn fprintf(
     stream: UnsafePointer[FILE],
     format: UnsafePointer[C.char],
@@ -525,6 +492,7 @@ fn dprintf[
     return dprintf(fildes, format, args)
 
 
+@always_inline
 fn printf(
     format: UnsafePointer[C.char],
     args: VariadicPack[element_trait=AnyType],
@@ -604,6 +572,7 @@ fn printf[
     return printf(char_ptr(format), args, file=file)
 
 
+@always_inline
 fn snprintf[
     *T: AnyType
 ](
@@ -648,6 +617,7 @@ fn snprintf[
     return int(num)
 
 
+@always_inline
 fn sprintf[
     *T: AnyType
 ](s: UnsafePointer[C.char], format: UnsafePointer[C.char], *args: *T) -> C.int:
@@ -684,6 +654,7 @@ fn sprintf[
     return int(num)
 
 
+@always_inline
 fn fscanf[
     *T: AnyType
 ](
@@ -729,6 +700,7 @@ fn fscanf[
     ](stream, format, args.get_loaded_kgen_pack())
 
 
+@always_inline
 fn scanf[*T: AnyType](format: UnsafePointer[C.char], *args: *T) -> C.int:
     """Libc POSIX `scanf` function.
 
@@ -767,6 +739,7 @@ fn scanf[*T: AnyType](format: UnsafePointer[C.char], *args: *T) -> C.int:
     ](format, args.get_loaded_kgen_pack())
 
 
+@always_inline
 fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
     """Libc POSIX `sscanf` function.
 
@@ -792,6 +765,7 @@ fn sscanf(s: UnsafePointer[C.char], format: UnsafePointer[C.char]) -> C.int:
     return external_call["sscanf", C.int](s, format)
 
 
+@always_inline
 fn fread(
     ptr: UnsafePointer[C.void],
     size: C.u_int,
@@ -822,6 +796,7 @@ fn fread(
     return external_call["fread", C.u_int](ptr, size, nitems, stream)
 
 
+@always_inline
 fn rewind(stream: UnsafePointer[FILE]):
     """Libc POSIX `rewind` function.
 
@@ -897,6 +872,7 @@ fn getdelim(
     return external_call["getdelim", C.u_int](lineptr, n, stream)
 
 
+@always_inline
 fn pread(
     fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int, offset: off_t
 ) -> C.u_int:
@@ -919,6 +895,7 @@ fn pread(
     return external_call["pread", C.u_int](fildes, buf, nbyte, offset)
 
 
+@always_inline
 fn read(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
     """Libc POSIX `read` function.
 
@@ -937,6 +914,7 @@ fn read(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
     return external_call["read", C.u_int](fildes, buf, nbyte)
 
 
+@always_inline
 fn pwrite(
     fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int, offset: off_t
 ) -> C.u_int:
@@ -959,6 +937,7 @@ fn pwrite(
     return external_call["pwrite", C.u_int](fildes, buf, nbyte, offset)
 
 
+@always_inline
 fn write(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
     """Libc POSIX `write` function.
 
@@ -978,6 +957,7 @@ fn write(fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int) -> C.u_int:
     return external_call["write", C.u_int](fildes, buf, nbyte)
 
 
+@always_inline
 fn ftell(stream: UnsafePointer[FILE]) -> C.long:
     """Libc POSIX `ftell` function.
 
@@ -994,6 +974,7 @@ fn ftell(stream: UnsafePointer[FILE]) -> C.long:
     return external_call["ftell", C.long](stream)
 
 
+@always_inline
 fn ftello(stream: UnsafePointer[FILE]) -> off_t:
     """Libc POSIX `ftello` function.
 
@@ -1010,6 +991,7 @@ fn ftello(stream: UnsafePointer[FILE]) -> off_t:
     return external_call["ftello", off_t](stream)
 
 
+@always_inline
 fn fflush(stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `fflush` function.
 
@@ -1026,6 +1008,7 @@ fn fflush(stream: UnsafePointer[FILE]) -> C.int:
     return external_call["fflush", C.int](stream)
 
 
+@always_inline
 fn clearerr(stream: UnsafePointer[FILE]):
     """Libc POSIX `clearerr` function.
 
@@ -1039,6 +1022,7 @@ fn clearerr(stream: UnsafePointer[FILE]):
     _ = external_call["clearerr", C.void](stream)
 
 
+@always_inline
 fn feof(stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `feof` function.
 
@@ -1056,6 +1040,7 @@ fn feof(stream: UnsafePointer[FILE]) -> C.int:
     return external_call["feof", C.int](stream)
 
 
+@always_inline
 fn ferror(stream: UnsafePointer[FILE]) -> C.int:
     """Libc POSIX `ferror` function.
 
@@ -1073,6 +1058,7 @@ fn ferror(stream: UnsafePointer[FILE]) -> C.int:
     return external_call["ferror", C.int](stream)
 
 
+@always_inline
 fn fcntl[*T: AnyType](fildes: C.int, cmd: C.int, *args: *T) -> C.int:
     """Libc POSIX `fcntl` function.
 
@@ -1105,6 +1091,7 @@ fn fcntl[*T: AnyType](fildes: C.int, cmd: C.int, *args: *T) -> C.int:
     ](fildes, cmd, args.get_loaded_kgen_pack())
 
 
+@always_inline
 fn ioctl[*T: AnyType](fildes: C.int, request: C.int, *args: *T) -> C.int:
     """Libc POSIX `ioctl` function.
 

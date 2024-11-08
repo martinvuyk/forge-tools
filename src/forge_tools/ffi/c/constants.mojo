@@ -981,30 +981,30 @@ alias SEEK_CUR = 1
 alias SEEK_END = 2
 """Constant: SEEK_END."""
 
-alias O_RDONLY = 0
+alias O_RDONLY = 0o0
 """Open for reading only."""
-alias O_WRONLY = 1
+alias O_WRONLY = 0o1
 """Open for writing only."""
-alias O_RDWR = 2
+alias O_RDWR = 0o2
 """Open for reading and writing."""
-alias O_ACCMODE = 3
+alias O_ACCMODE = 0o3
 """Constant: O_ACCMODE."""
-alias O_APPEND = 8
+alias O_APPEND = 0o2000
 """Set append mode."""
-alias O_CREAT = 512
+alias O_CREAT = 0o100
 """Create file if it does not exist."""
-alias O_TRUNC = 1024
+alias O_TRUNC = 0o1000
 """If the file exists and is a regular file, and the file is successfully opened
 O_RDWR or O_WRONLY, its length shall be truncated to 0, and the mode and owner
 shall be unchanged. It shall have no effect on FIFO special files or terminal
 device files. Its effect on other file types is implementation-defined. The
 result of using O_TRUNC without either O_RDWR or O_WRONLY is undefined."""
-alias O_EXCL = 2048
+alias O_EXCL = 0o200
 """If O_CREAT and O_EXCL are set, open() shall fail if the file exists."""
-alias O_SYNC = 8192
+alias O_SYNC = 0o10000
 """Write I/O operations on the file descriptor shall complete as defined by
 synchronized I/O file integrity completion."""
-alias O_NONBLOCK = 16384
+alias O_NONBLOCK = 0o4000
 """When opening a FIFO with O_RDONLY or O_WRONLY set:
 
 - If O_NONBLOCK is set, an open() for reading-only shall return without delay.
@@ -1026,15 +1026,15 @@ non-blocking opens:
 Otherwise, the O_NONBLOCK flag shall not cause an error, but it is unspecified
 whether the file status flags will include the O_NONBLOCK flag.
 """
-alias O_CLOEXEC = 524288
+alias O_CLOEXEC = 0o2000000
 """Atomically set the FD_CLOEXEC flag on the new file descriptor."""
-alias O_DIRECTORY = 200000
+alias O_DIRECTORY = 0o200000
 """Constant: O_DIRECTORY."""
-alias O_DSYNC = 10000
+alias O_DSYNC = 0o10000
 """Constant: O_DSYNC."""
-alias O_NOCTTY = 400
+alias O_NOCTTY = 0o400
 """Do not assign controlling terminal."""
-alias O_NOFOLLOW = 400000
+alias O_NOFOLLOW = 0o400000
 """Do not follow symbolic links."""
 
 alias F_DUPFD = 0
@@ -1047,26 +1047,53 @@ alias F_GETFL = 3
 """Constant: F_GETFL."""
 alias F_SETFL = 4
 """Constant: F_SETFL."""
-alias F_GETOWN = 5
-"""Constant: F_GETOWN."""
-alias F_SETOWN = 6
-"""Constant: F_SETOWN."""
-alias F_GETLK = 7
+alias F_GETLK = 5
 """Constant: F_GETLK."""
-alias F_SETLK = 8
+alias F_SETLK = 6
 """Constant: F_SETLK."""
-alias F_SETLKW = 9
+alias F_SETLKW = 7
 """Constant: F_SETLKW."""
+alias F_SETOWN = 8
+"""Constant: F_SETOWN."""
+alias F_GETOWN = 9
+"""Constant: F_GETOWN."""
 alias F_RGETLK = 10
 """Constant: F_RGETLK."""
+alias F_SETSIG = 10
+"""Constant: F_SETSIG."""
 alias F_RSETLK = 11
 """Constant: F_RSETLK."""
+alias F_GETSIG = 11
+"""Constant: F_GETSIG."""
 alias F_CNVT = 12
 """Constant: F_CNVT."""
 alias F_RSETLKW = 13
 """Constant: F_RSETLKW."""
-alias F_DUPFD_CLOEXEC = 14
+alias F_INPROGRESS = 16
+"""Constant: F_INPROGRESS."""
+alias F_DUPFD_CLOEXEC = 1030
 """Constant: F_DUPFD_CLOEXEC."""
+alias F_LINUX_SPECIFIC_BASE = 1024
+"""Constant: F_LINUX_SPECIFIC_BASE."""
+
+
+alias LOCK_SH = 1
+"""Shared lock."""
+alias LOCK_EX = 2
+"""Exclusive lock."""
+alias LOCK_NB = 4
+"""Or'd with one of the above to prevent blocking."""
+alias LOCK_UN = 8
+"""Remove lock."""
+alias LOCK_MAND = 32
+"""This is a mandatory flock."""
+alias LOCK_READ = 64
+"""Which allows concurrent read operations."""
+alias LOCK_WRITE = 128
+"""Which allows concurrent write operations."""
+alias LOCK_RW = 192
+"""Which allows concurrent read & write ops."""
+
 
 alias AT_EACCESS = 512
 """Constant: AT_EACCESS."""
@@ -1089,35 +1116,35 @@ alias AT_RECURSIVE = 32768
 # File modes (sys/stat.h)
 # ===----------------------------------------------------------------------=== #
 
-alias S_IRWXU = 700
+alias S_IRWXU = 0o700
 """Read, write, execute/search by owner."""
-alias S_IRUSR = 400
+alias S_IRUSR = 0o400
 """Read permission, owner."""
-alias S_IWUSR = 200
+alias S_IWUSR = 0o200
 """Write permission, owner."""
-alias S_IXUSR = 100
+alias S_IXUSR = 0o100
 """Execute/search permission, owner."""
-alias S_IRWXG = 70
+alias S_IRWXG = 0o70
 """Read, write, execute/search by group."""
-alias S_IRGRP = 40
+alias S_IRGRP = 0o40
 """Read permission, group."""
-alias S_IWGRP = 20
+alias S_IWGRP = 0o20
 """Write permission, group."""
-alias S_IXGRP = 10
+alias S_IXGRP = 0o10
 """Execute/search permission, group."""
-alias S_IRWXO = 7
+alias S_IRWXO = 0o7
 """Read, write, execute/search by others."""
-alias S_IROTH = 4
+alias S_IROTH = 0o4
 """Read permission, others."""
-alias S_IWOTH = 2
+alias S_IWOTH = 0o2
 """Write permission, others."""
-alias S_IXOTH = 1
+alias S_IXOTH = 0o1
 """Execute/search permission, others."""
-alias S_ISUID = 4000
+alias S_ISUID = 0o4000
 """Set-user-ID on execution."""
-alias S_ISGID = 2000
+alias S_ISGID = 0o2000
 """Set-group-ID on execution."""
-alias S_ISVTX = 1000
+alias S_ISVTX = 0o1000
 """On directories, restricted deletion flag."""
 
 # ===----------------------------------------------------------------------=== #

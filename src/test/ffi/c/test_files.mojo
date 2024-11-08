@@ -16,40 +16,25 @@ def test_open_close():
     file = str(_dir_of_current_file() / "dummy_test_open_close")
     ptr = char_ptr(file)
     with TryLibc():
-        filedes = libc_open(ptr, O_WRONLY | O_CREAT | O_TRUNC, 744)
+        filedes = libc_open(ptr, O_WRONLY | O_CREAT | O_TRUNC, 0o666)
         assert_true(filedes != -1)
         sleep(0.05)
         assert_true(libc_close(filedes) != -1)
-        filedes = libc_open(ptr, O_RDONLY)
-        assert_true(filedes != -1)
-        sleep(0.05)
-        assert_true(libc_close(filedes) != -1)
-        filedes = libc_open(ptr, O_WRONLY)
-        assert_true(filedes != -1)
-        sleep(0.05)
-        assert_true(libc_close(filedes) != -1)
-        filedes = libc_open(ptr, O_RDWR)
-        assert_true(filedes != -1)
-        sleep(0.05)
-        assert_true(libc_close(filedes) != -1)
+        for s in List(O_RDONLY, O_WRONLY, O_RDWR):
+            filedes = libc_open(ptr, s[])
+            assert_true(filedes != -1)
+            sleep(0.05)
+            assert_true(libc_close(filedes) != -1)
 
         assert_true(remove(ptr) != -1)
     _ = file^
-
-
-def test_openat():
-    ...
-
-
-def test_fcntl():
-    ...
 
 
 def test_fopen_fclose():
     file = str(_dir_of_current_file() / "dummy_test_fopen_fclose")
     ptr = char_ptr(file)
     with TryLibc():
-        filedes = creat(ptr, 744)
+        filedes = creat(ptr, 0o666)
         assert_true(filedes != -1)
         for s in List(
             FM_WRITE,
@@ -63,8 +48,6 @@ def test_fopen_fclose():
             assert_true(stream != C.NULL.bitcast[FILE]())
             sleep(0.05)
             assert_true(fclose(stream) != EOF)
-            filedes = libc_open(ptr, O_RDONLY)
-            assert_true(filedes != -1)
 
         assert_true(remove(ptr) != -1)
     _ = file^
@@ -74,7 +57,7 @@ def test_fdopen_fclose():
     file = str(_dir_of_current_file() / "dummy_test_fdopen_fclose")
     ptr = char_ptr(file)
     with TryLibc():
-        filedes = creat(ptr, 744)
+        filedes = creat(ptr, 0o666)
         assert_true(filedes != -1)
         for s in List(
             FM_WRITE,
@@ -88,11 +71,28 @@ def test_fdopen_fclose():
             assert_true(stream != C.NULL.bitcast[FILE]())
             sleep(0.05)
             assert_true(fclose(stream) != EOF)
-            filedes = libc_open(ptr, O_RDONLY)
+            filedes = libc_open(ptr, O_RDWR)
             assert_true(filedes != -1)
 
         assert_true(remove(ptr) != -1)
     _ = file^
+
+
+def test_creat_openat():
+    file = str(_dir_of_current_file() / "dummy_test_creat_openat")
+    ptr = char_ptr(file)
+    with TryLibc():
+        filedes = creat(ptr, 0o666)
+        filedes = openat(filedes, ptr, O_WRONLY | O_CREAT | O_TRUNC, 0o666)
+        assert_true(filedes != -1)
+        sleep(0.05)
+        assert_true(libc_close(filedes) != -1)
+        assert_true(remove(ptr) != -1)
+    _ = file^
+
+
+def test_fcntl():
+    ...
 
 
 def test_freopen():
@@ -100,10 +100,6 @@ def test_freopen():
 
 
 def test_fmemopen():
-    ...
-
-
-def test_creat():
     ...
 
 
@@ -232,10 +228,9 @@ def main():
     test_fopen_fclose()
     test_fdopen_fclose()
     test_fcntl()
-    test_openat()
+    test_creat_openat()
     test_freopen()
     test_fmemopen()
-    test_creat()
     test_fseek()
     test_fseeko()
     test_lseek()
