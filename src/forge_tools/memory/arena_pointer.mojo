@@ -1,6 +1,6 @@
 """Arena Pointer module."""
 
-from memory import UnsafePointer, memset
+from memory import UnsafePointer, memset, stack_allocation
 from collections import Optional
 from utils import Span
 from sys.info import bitwidthof, simdwidthof
@@ -29,7 +29,10 @@ struct GladiatorPointer[
 
     fn __init__(inout self):
         self._colosseum = Self._A(
-            UnsafePointer[Self._C].alloc(1).bitcast[OpaquePointer]()
+            ptr=stack_allocation[1, Self._C]().bitcast[OpaquePointer](),
+            is_allocated=True,
+            in_registers=True,
+            is_initialized=True,
         )
         self._start = 0
         self._len = 0
@@ -58,21 +61,21 @@ struct GladiatorPointer[
         Returns:
             The pointer to the newly allocated buffer.
         """
-        if self._colosseum[]:
-            return self._colosseum[][].bitcast[Self._C]().alloc(count)
-        return Self()
+        return (
+            self._colosseum._ptr.unsafe_ptr()[][]
+            .bitcast[Self._C]()
+            .alloc(count)
+        )
 
     fn __del__(owned self):
         """Free the memory referenced by the pointer or ignore."""
-        if not self._colosseum[]:
-            return
-        self._colosseum[].bitcast[Self._C]()._free(self^)
+        self._colosseum._ptr.unsafe_ptr()[].bitcast[Self._C]()[]._free(self^)
 
     fn __int__(self) -> Int:
-        return int(self._ptr)
+        return int(self._colosseum._ptr.unsafe_ptr()[])
 
     fn __bool__(self) -> Bool:
-        return bool(self._ptr)
+        return bool(self._colosseum._ptr.unsafe_ptr()[])
 
 
 @value

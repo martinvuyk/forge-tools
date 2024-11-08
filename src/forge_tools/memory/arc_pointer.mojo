@@ -9,7 +9,7 @@ from .pointer import Pointer
 struct ArcPointer[
     is_mutable: Bool, //,
     type: AnyType,
-    origin: Origin[is_mutable.value].type,
+    origin: Origin[is_mutable].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
     """Atomic Reference Counted Pointer."""
@@ -77,8 +77,5 @@ struct ArcPointer[
 
         @parameter
         if address_space is AddressSpace.GENERIC and is_mutable:
-            alias P = Pointer[type, MutableAnyOrigin, AddressSpace.GENERIC]
             if self._ptr.count() == 1:
-                p = rebind[P](self._ptr)
-                p._flags = p._flags | 0b0101_0000
-                self._ptr = rebind[__type_of(self)._P](p)
+                self._ptr.unsafe_ptr()[]._flags |= 0b0101_0000
