@@ -49,8 +49,8 @@ struct Reader[
             character.
 
         Notes:
-            This only validates the content of the instance, not if it has a
-            trailing whitespace, comma, etc.
+            This only validates the start and end of the instance, not if it has
+            a trailing whitespace, comma, contents, etc.
         """
 
         # object
@@ -198,12 +198,26 @@ struct Reader[
         inout b0_char: Byte,
         inout length: UInt,
     ) -> Bool:
-        while b0_char != closing_byte:
-            if not iterator.__has_next__():
-                return False
-            char = rebind[StringSlice[origin]](iterator.__next__())
-            b0_char = char.unsafe_ptr()[0]
-            length += char.byte_length()
+        alias `"` = Byte(ord('"'))
+        alias `\\` = Byte(ord("\\"))
+
+        @parameter
+        if closing_byte != `"`:
+            while b0_char != closing_byte:
+                if not iterator.__has_next__():
+                    return False
+                char = rebind[StringSlice[origin]](iterator.__next__())
+                b0_char = char.unsafe_ptr()[0]
+                length += char.byte_length()
+        else:
+            is_escaped = False
+            while not (b0_char == `"` and not is_escaped):
+                if not iterator.__has_next__():
+                    return False
+                char = rebind[StringSlice[origin]](iterator.__next__())
+                b0_char = char.unsafe_ptr()[0]
+                is_escaped = not is_escaped and b0_char == `\\`
+                length += char.byte_length()
         return True
 
     @always_inline
