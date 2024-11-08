@@ -1,5 +1,7 @@
 """Json module."""
 
+from utils import Span
+
 # TODO: write tests with https://github.com/miloyip/nativejson-benchmark/tree/master/data/jsonchecker
 # TODO: read python impl https://github.com/python/cpython/blob/main/Lib/json/scanner.py
 

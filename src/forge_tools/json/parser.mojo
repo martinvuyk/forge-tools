@@ -1,6 +1,6 @@
 """JSON Parser module."""
 
-from math import log
+from math import log10
 from bit import bit_ceil
 from utils.string_slice import StringSlice, _StringSliceIter
 from utils.span import Span
@@ -27,33 +27,28 @@ struct Parser[
     var _buffer: Self._Sp
 
     @staticmethod
-    fn _parse_num(
-        inout iterator: _StringSliceIter[origin],
-    ) -> (Int8, UInt8, Int):
+    fn _parse_num(inout iterator: _StringSliceIter[origin]) -> (Int8, Int, Int):
         constrained[
             maximum_int_bitwidth <= bitwidthof[Int](),
             "can't parse an Int bigger than bitwidth[Int]()",
         ]()
-        constrained[
-            bitwidthof[Int]() < 256,
-            "implementation expects bitwidthof[Int]() to be < 256",
-        ]
         alias `0` = Byte(ord("0"))
         alias `9` = Byte(ord("9"))
         alias `-` = Byte(ord("-"))
-        debug_assert(iterator.__hasmore__(), "iterator has no more values")
+        debug_assert(iterator.__has_next__(), "iterator has no more values")
         b0_char = iterator.__next__().unsafe_ptr()[0]
         sign = Int8(1)
         if b0_char == `-`:
             sign = -1
-            debug_assert(iterator.__hasmore__(), "iterator has no more values")
+            debug_assert(iterator.__has_next__(), "iterator has no more values")
             b0_char = iterator.__next__().unsafe_ptr()[0]
 
-        alias w = bit_ceil(log(2**maximum_int_bitwidth))
+        alias Si = Scalar[DType.index]
+        alias w = int(bit_ceil(log10(Si(2**maximum_int_bitwidth))))
         alias base_10_multipliers = _get_base_10_multipliers[DType.uint8, w]()
         values = SIMD[DType.uint8, w](0x30)
-        idx = UInt8(0)
-        while iterator.__hasmore__():
+        idx = 0
+        while iterator.__has_next__():
             debug_assert(`0` <= b0_char <= `9`, "value is not a  digit")
             values[idx] = b0_char
             idx += 1
@@ -91,10 +86,12 @@ struct Parser[
 
         iterator = StringSlice(unsafe_from_utf8=span).__iter__()
         sign, _, whole = Self._parse_num(iterator)
-        debug_assert(iterator.__hasmore__(), "iterator has no more values")
+        debug_assert(iterator.__has_next__(), "iterator has no more values")
         _ = iterator.__next__()  # dot
         _, idx, decimal = Self._parse_num(iterator)
-        return Float64(whole) + Float64(sign) * Float64(decimal) / 10**idx
+        return (
+            Float64(whole) + Float64(int(sign)) * Float64(decimal) / 10**idx
+        )
 
     @staticmethod
     fn parse_float_exp(span: Self._Sp) -> Float64:
@@ -112,7 +109,7 @@ struct Parser[
         alias `9` = Byte(ord("9"))
         iterator = StringSlice(unsafe_from_utf8=span).__iter__()
         whole = Self._parse_num(iterator)[2]
-        debug_assert(iterator.__hasmore__(), "iterator has no more values")
+        debug_assert(iterator.__has_next__(), "iterator has no more values")
         _ = iterator.__next__()  # e or E
         exponent = Self._parse_num(iterator)[2]
         return Float64(whole) * Float64(10) ** Float64(exponent)
@@ -124,6 +121,7 @@ fn _get_base_10_multipliers[D: DType, width: Int]() -> SIMD[D, width]:
     @parameter
     for i in reversed(range(width)):
         values[i] = 10**i
+    return values
 
 
 fn _align_base_10[
@@ -133,3 +131,4 @@ fn _align_base_10[
     for i in range(w):
         if idx == i:
             return v.rotate_left[i]()
+    return SIMD[DType.uint8, w](0)

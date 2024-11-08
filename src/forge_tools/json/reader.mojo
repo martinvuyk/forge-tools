@@ -1,9 +1,10 @@
 """JSON Reader module."""
 
-from utils.span import Span
-from utils.string_slice import StringSlice, _StringSliceIter
 from memory import UnsafePointer
 from sys.intrinsics import unlikely
+from utils.string_slice import StringSlice, _StringSliceIter
+from utils.span import Span
+from .json import JsonInstance, JsonType
 
 
 # TODO: UTF-16. _StringSliceIter should actually support it, then this code stays unchanged
@@ -39,6 +40,7 @@ struct Reader[
         whitespace**.
 
         Args:
+            span: The span to look into.
             start: The absolute offset in bytes to start reading a valid
                 `JsonType`.
 
@@ -73,13 +75,13 @@ struct Reader[
 
         ptr = span.unsafe_ptr()
         alias J = JsonInstance
-        invalid = J(JsonType.invalid, Self._sp(p + start, 0))
+        var invalid = J(JsonType.invalid, Self._sp(ptr + start, 0))
 
         debug_assert(start < len(span), "start is `>=` buffer length")
         iterator = StringSlice[origin](
-            unsafe_from_utf8_ptr=ptr + start, len=len(span) - start
+            ptr=ptr + start, length=len(span) - start
         ).__iter__()
-        if not iterator.__hasmore__():
+        if not iterator.__has_next__():
             output = invalid
             return
         char = iterator.__next__()
@@ -87,7 +89,7 @@ struct Reader[
         while (
             char.byte_length() == 1
             and Self.isspace(char.unsafe_ptr()[0])
-            and iterator.__hasmore__()
+            and iterator.__has_next__()
         ):
             char = iterator.__next__()
             length += 1
@@ -97,16 +99,16 @@ struct Reader[
         start_ptr = char.unsafe_ptr()
         b0_char = start_ptr[0]
         if b0_char == `{`:
-            if Self._is_closed[`}`](iterator, char, char_p, b0_char, length):
+            if Self._is_closed[`}`](iterator, b0_char, length):
                 output = J(JsonType.object, Self._sp(start_ptr, length))
                 return
         elif b0_char == `[`:
-            if Self._is_closed[`]`](iterator, char, char_p, b0_char, length):
+            if Self._is_closed[`]`](iterator, b0_char, length):
                 output = J(JsonType.array, Self._sp(start_ptr, length))
                 return
         elif b0_char == `"`:
             b0_char = 0
-            if Self._is_closed[`"`](iterator, char, char_p, b0_char, length):
+            if Self._is_closed[`"`](iterator, b0_char, length):
                 output = J(JsonType.string, Self._sp(start_ptr, length))
                 return
         elif b0_char == `t`:
@@ -125,7 +127,9 @@ struct Reader[
                 output = J(JsonType.false, Self._sp(start_ptr, 4))
                 return
         elif `0` <= b0_char <= `9`:
-            return Self._validate_int_float(start_ptr, b0_char, length)
+            return Self._validate_int_float(
+                iterator, start_ptr, b0_char, length
+            )
         elif b0_char == `n`:
             alias `u` = Byte(ord("u"))
             alias `l` = Byte(ord("l"))
@@ -138,13 +142,15 @@ struct Reader[
                 output = J(JsonType.NaN, Self._sp(start_ptr, 3))
                 return
         elif b0_char == `-`:
-            if not iterator.__hasmore__():
+            if not iterator.__has_next__():
                 output = invalid
                 return
             b0_char = iterator.__next__().unsafe_ptr()[0]
 
             if `0` <= b0_char <= `9`:
-                return Self._validate_int_float(start_ptr, b0_char, length)
+                return Self._validate_int_float(
+                    iterator, start_ptr, b0_char, length
+                )
             start_ptr -= 1
             length += 1
 
@@ -171,7 +177,7 @@ struct Reader[
         b6: Byte = 0,
         b7: Byte = 0,
     ](inout iterator: _StringSliceIter) -> Bool:
-        if not iterator.__hasmore__():
+        if not iterator.__has_next__():
             return False
 
         alias items = (b0, b1, b2, b3, b4, b5, b6, b7)
@@ -179,7 +185,7 @@ struct Reader[
         @parameter
         for i in range(amount):
             b0_char = iterator.__next__().unsafe_ptr()[0]
-            if not iterator.__hasmore__() or b0_char != items.get[i, Byte]():
+            if not iterator.__has_next__() or b0_char != items.get[i, Byte]():
                 return False
         return True
 
@@ -189,13 +195,11 @@ struct Reader[
         closing_byte: Byte
     ](
         inout iterator: _StringSliceIter,
-        inout char: StringSlice[origin],
-        inout char_p: UnsafePointer[Byte],
         inout b0_char: Byte,
         inout length: UInt,
     ) -> Bool:
         while b0_char != closing_byte:
-            if not iterator.__hasmore__():
+            if not iterator.__has_next__():
                 return False
             char = rebind[StringSlice[origin]](iterator.__next__())
             b0_char = char.unsafe_ptr()[0]
@@ -205,7 +209,10 @@ struct Reader[
     @always_inline
     @staticmethod
     fn _validate_int_float(
-        start_ptr: UnsafePointer[Byte], owned b0_char: Byte, owned length: UInt
+        inout iterator: _StringSliceIter[origin],
+        start_ptr: UnsafePointer[Byte],
+        owned b0_char: Byte,
+        owned length: UInt,
     ) -> JsonInstance[origin] as output:
         # digit
         alias `0` = Byte(ord("0"))
@@ -217,10 +224,10 @@ struct Reader[
         alias `E` = Byte(ord("E"))
         alias `+` = Byte(ord("+"))
         alias exponents = SIMD[DType.uint8, 2](`e`, `E`)
-
         invalid = JsonInstance(JsonType.invalid, Self._sp(start_ptr, 0))
+
         while `0` <= b0_char <= `9`:
-            if not iterator.__hasmore__():
+            if not iterator.__has_next__():
                 break
             b0_char = iterator.__next__().unsafe_ptr()[0]
             length += 1
@@ -228,7 +235,7 @@ struct Reader[
         if b0_char == `.`:
             b0_char = `0`
             while `0` <= b0_char <= `9`:
-                if not iterator.__hasmore__():
+                if not iterator.__has_next__():
                     break
                 b0_char = iterator.__next__().unsafe_ptr()[0]
                 length += 1
@@ -237,7 +244,7 @@ struct Reader[
             )
             return
         elif b0_char in exponents:
-            if not iterator.__hasmore__():
+            if not iterator.__has_next__():
                 output = invalid
                 return
             b0_char = iterator.__next__().unsafe_ptr()[0]
@@ -245,14 +252,14 @@ struct Reader[
             alias str_signs = SIMD[DType.uint8, 2](`+`, `-`)
             comparison = (str_signs == b0_char).cast[DType.int8]()
             sign = (comparison * num_signs).reduce_or()
-            if sign * int(iterator.__hasmore__()) == 0:
+            if sign * int(iterator.__has_next__()) == 0:
                 output = invalid
                 return
             length += 1
             b0_char = iterator.__next__().unsafe_ptr()[0]
 
             while `0` <= b0_char <= `9`:
-                if not iterator.__hasmore__():
+                if not iterator.__has_next__():
                     break
                 b0_char = iterator.__next__().unsafe_ptr()[0]
                 length += 1
@@ -315,15 +322,15 @@ struct Reader[
             return
         colon_idx = key_idx + key.byte_length()
         iterator = StringSlice[origin](
-            unsafe_from_utf8_ptr=p, len=len(span) - key_idx
+            ptr=p, length=len(span) - key_idx
         ).__iter__()
-        if not iterator.__hasmore__():
+        if not iterator.__has_next__():
             output = invalid
             return
         colon_idx += 1
         char = iterator.__next__()
         if unlikely(Self.isspace(char.unsafe_ptr()[0])):
-            if not iterator.__hasmore__():
+            if not iterator.__has_next__():
                 output = invalid
                 return
             char = iterator.__next__()
