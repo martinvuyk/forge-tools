@@ -159,7 +159,7 @@ struct Libc[static: Bool]:
             facility: Arguments for the format string.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/closelog.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/openlog.3.html).
             Fn signature: `void openlog(const char *ident, int logopt,
                 int facility)`.
         """
@@ -183,7 +183,7 @@ struct Libc[static: Bool]:
             args: The extra arguments.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/closelog.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/syslog.3.html).
             Fn signature: `void syslog(int priority, const char *message,
                 ... /* arguments */)`.
         """
@@ -216,7 +216,7 @@ struct Libc[static: Bool]:
             The previous log priority mask.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/closelog.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/setlogmask.3.html).
             Fn signature: ` int setlogmask(int maskpri)`.
         """
 
@@ -256,7 +256,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/close.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/close.3p.html).
             Fn signature: `int close(int fildes)`.
         """
 
@@ -282,7 +282,7 @@ struct Libc[static: Bool]:
             A File Descriptor. Otherwise `-1` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/open.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/open.3p.html).
             Fn signature: `int open(const char *path, int oflag, ...)`.
         """
 
@@ -350,7 +350,7 @@ struct Libc[static: Bool]:
             A File Descriptor. Otherwise `-1` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/open.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/openat.3p.html).
             Fn signature: `int openat(int fd, const char *path, int oflag, ...
             )`.
         """
@@ -516,7 +516,7 @@ struct Libc[static: Bool]:
             A File Descriptor. Otherwise `-1` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/creat.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/creat.3p.html).
             Fn signature: `int creat(const char *path, mode_t mode)`.
         """
 
@@ -597,7 +597,7 @@ struct Libc[static: Bool]:
             file on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/lseek.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/lseek.3p.html).
             Fn signature: `off_t lseek(int fildes, off_t offset, int whence)`.
         """
 
@@ -1187,7 +1187,7 @@ struct Libc[static: Bool]:
             byte.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/vsprintf.3.html).
             Fn signature: `int vsprintf(char *restrict str,
                 const char *restrict format, va_list ap)`.
         """
@@ -1532,7 +1532,7 @@ struct Libc[static: Bool]:
             The number of bytes read. Otherwise -1 and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/read.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/read.3p.html).
             Fn signature: `ssize_t pread(int fildes, void *buf, size_t nbyte,
                 off_t offset)`.
         """
@@ -1560,7 +1560,7 @@ struct Libc[static: Bool]:
             The number of bytes read. Otherwise -1 and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/read.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/read.3p.html).
             Fn signature: `sssize_t read(int fildes, void *buf, size_t nbyte)`.
         """
 
@@ -1590,7 +1590,7 @@ struct Libc[static: Bool]:
             The number of bytes written. Otherwise -1 and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/write.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/pwrite.3p.html).
             Fn signature: `ssize_t pwrite(int fildes, const void *buf,
                 size_t nbyte, off_t offset)`.
         """
@@ -1618,7 +1618,7 @@ struct Libc[static: Bool]:
             The number of bytes written. Otherwise -1 and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/write.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/write.3p.html).
             Fn signature: `ssize_t write(int fildes, const void *buf,
                 size_t nbyte)`.
         """
@@ -1770,7 +1770,7 @@ struct Libc[static: Bool]:
             Value depending on cmd on success, `-1` on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fcntl.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fcntl.3p.html).
             Fn signature: `int fcntl(int fildes, int cmd, ...)`.
         """
 
@@ -1810,7 +1810,7 @@ struct Libc[static: Bool]:
             Otherwise, it shall return -1 and set `errno` to indicate the error.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/ioctl.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/ioctl.3p.html).
             Fn signature: `int ioctl(int fildes, int request, ...)`.
         """
 
@@ -2062,7 +2062,7 @@ struct Libc[static: Bool]:
             A file descriptor for the socket.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/socket.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/socket.3p.html).
             Fn signature: `int socket(int domain, int type, int protocol)`.
         """
 
@@ -2094,7 +2094,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/socketpair.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/socketpair.3p.html).
             Fn signature: `int socketpair(int domain, int type, int protocol,
             int socket_vector[2])`.
         """
@@ -2130,7 +2130,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/setsockopt.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/setsockopt.3p.html).
             Fn signature: `int setsockopt(int socket, int level,
                 int option_name, const void *option_value, socklen_t option_len
                 )`.
@@ -2163,7 +2163,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/bind.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/bind.3p.html).
             Fn signature: `int bind(int socket, const struct sockaddr *address,
                 socklen_t address_len)`.
         """
@@ -2188,7 +2188,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/listen.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/listen.3p.html).
             Fn signature: `int listen(int socket, int backlog)`.
         """
 
@@ -2219,7 +2219,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/accept.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/accept.3p.html).
             Fn signature: `int accept(int socket,
                 struct sockaddr *restrict address,
                 socklen_t *restrict address_len);`.
@@ -2250,7 +2250,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/connect.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/connect.3p.html).
             Fn signature: `int connect(int socket,
                 const struct sockaddr *address,
                 socklen_t address_len)`.
@@ -2283,7 +2283,7 @@ struct Libc[static: Bool]:
             The amount of bytes recieved. Value -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/recv.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/recv.3p.html).
             Fn signature: `ssize_t recv(int socket, void *buffer, size_t length,
                 int flags)`.
         """
@@ -2321,7 +2321,7 @@ struct Libc[static: Bool]:
             The amount of bytes recieved. Value -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/recvfrom.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/recvfrom.3p.html).
             Fn signature: `ssize_t recvfrom(int socket, void *restrict buffer,
                 size_t length, int flags, struct sockaddr *restrict address,
                 socklen_t *restrict address_len)`.
@@ -2356,7 +2356,7 @@ struct Libc[static: Bool]:
             The number of bytes sent. Value -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/send.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/send.3p.html).
             Fn signature: `ssize_t send(int socket, const void *buffer,
                 size_t length, int flags)`.
         """
@@ -2397,7 +2397,7 @@ struct Libc[static: Bool]:
             The number of bytes sent. Value -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/sendto.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/sendto.3p.html).
             Fn signature: `ssize_t sendto(int socket, const void *message,
                 size_t length, int flags, const struct sockaddr *dest_addr,
                 socklen_t dest_len)`.
@@ -2425,7 +2425,7 @@ struct Libc[static: Bool]:
             Value 0 on success, -1 on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/shutdown.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/shutdown.3p.html).
             Fn signature: `int shutdown(int socket, int how)`.
         """
 
