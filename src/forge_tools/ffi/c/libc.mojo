@@ -10,15 +10,28 @@ from .types import C
 
 @value
 struct TryLibc[static: Bool]:
+    """Try to execute Libc code, add the Libc Error, and retrow.
+
+    Parameters:
+        static: Whether the library is statically linked.
+    """
+
     var _lib: Libc[static]
 
     fn __enter__(self):
+        """Enter a context."""
         pass
 
     fn __exit__(self):
+        """Exit a context with no error."""
         pass
 
     fn __exit__(self, error: Error) raises -> Bool:
+        """Exit a context with an error.
+
+        Arguments:
+            error: The error.
+        """
         raise Error(
             str(error)
             + "\nLibc Error: "
@@ -253,7 +266,7 @@ struct Libc[static: Bool]:
             fildes: A File Descriptor to close.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/close.3p.html).
@@ -539,7 +552,7 @@ struct Libc[static: Bool]:
                 `SEEK_END`).
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/fseek.3.html).
@@ -567,7 +580,7 @@ struct Libc[static: Bool]:
                 `SEEK_END`).
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/fseek.3.html).
@@ -2091,7 +2104,7 @@ struct Libc[static: Bool]:
                 descriptors.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/socketpair.3p.html).
@@ -2127,7 +2140,7 @@ struct Libc[static: Bool]:
             option_len: The size of the buffer pointed by option_value.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/setsockopt.3p.html).
@@ -2160,7 +2173,7 @@ struct Libc[static: Bool]:
             address_len: The length of the pointer.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/bind.3p.html).
@@ -2185,7 +2198,7 @@ struct Libc[static: Bool]:
                 connections for socket may grow.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/listen.3p.html).
@@ -2216,7 +2229,7 @@ struct Libc[static: Bool]:
                 address of the accepted socket.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/accept.3p.html).
@@ -2247,7 +2260,7 @@ struct Libc[static: Bool]:
             address_len: The length of the address.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/connect.3p.html).
@@ -2422,7 +2435,7 @@ struct Libc[static: Bool]:
                 accepted socket.
 
         Returns:
-            Value 0 on success, -1 on error and `errno` is set.
+            Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/shutdown.3p.html).
