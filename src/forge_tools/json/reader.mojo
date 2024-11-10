@@ -310,7 +310,7 @@ struct Reader[
     @always_inline
     @staticmethod
     fn _sp(ptr: UnsafePointer[Byte], length: Int) -> Span[Byte, origin]:
-        return Span[Byte, origin](unsafe_ptr=ptr, len=length)
+        return Span[Byte, origin](ptr=ptr, length=length)
 
     @staticmethod
     fn find(span: Self._Sp, key: StringSlice) -> JsonInstance[origin] as output:

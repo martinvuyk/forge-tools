@@ -125,7 +125,7 @@ fn char_ptr[T: AnyType](ptr: UnsafePointer[T]) -> UnsafePointer[C.char]:
 
 
 fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
-    """Create a String **copying** a char pointer.
+    """Create a String **copying** a **null terminated** char pointer.
 
     Args:
         s: A pointer to a C string.
@@ -133,26 +133,13 @@ fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     Returns:
         The String.
     """
-    l = int(strlen(s)) + 1
-    buf = UnsafePointer[UInt8].alloc(l)
-    memcpy(buf.bitcast[C.char](), s, l)
-    return String(ptr=buf, len=l)
-
-
-fn strlen(s: UnsafePointer[C.char]) -> size_t:
-    """Libc POSIX `strlen` function.
-
-    Args:
-        s: A pointer to a C string.
-
-    Returns:
-        The length of the string.
-
-    Notes:
-        [Reference](https://man7.org/linux/man-pages/man3/strlen.3p.html).
-        Fn signature: `size_t strlen(const char *s)`.
-    """
-    return external_call["strlen", size_t](s)
+    idx = 0
+    while s[idx] != 0:
+        idx += 1
+    idx += 1
+    buf = UnsafePointer[UInt8].alloc(idx)
+    memcpy(buf.bitcast[C.char](), s, idx)
+    return String(ptr=buf, length=idx)
 
 
 # ===----------------------------------------------------------------------=== #

@@ -3,7 +3,7 @@
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
 from memory import UnsafePointer, stack_allocation
-from forge_tools.ffi.c.logging import *
+from forge_tools.ffi.c.libc import Libc
 from forge_tools.ffi.c.types import *
 from forge_tools.ffi.c.constants import *
 
@@ -145,53 +145,111 @@ alias error_message = (
 )
 
 
-def test_errno():
-    assert_equal(get_errno(), 0)
-    set_errno(1)
-    assert_equal(get_errno(), 1)
-    set_errno(0)  # just in case since it's a global var
+def _test_errno(libc: Libc):
+    assert_equal(libc.get_errno(), 0)
+    libc.set_errno(1)
+    assert_equal(libc.get_errno(), 1)
+    libc.set_errno(0)  # just in case since it's a global var
 
 
-def test_strerror():
+def test_dynamic_errno():
+    _test_errno(Libc[static=False]("libc.so.6"))
+
+
+def test_static_errno():
+    _test_errno(Libc[static=True]())
+
+
+def _test_strerror(libc: Libc):
     @parameter
     for i in range(len(error_message)):
         errno_msg = error_message.get[i, Tuple[Int, StringLiteral]]()
         errno = errno_msg.get[0, Int]()
         msg = errno_msg.get[1, StringLiteral]()
-        res = char_ptr_to_string(strerror(errno))
+        res = char_ptr_to_string(libc.strerror(errno))
         assert_equal(res, msg)
 
 
-# TODO: prints to stderr
-def test_perror():
+def test_dynamic_strerror():
+    _test_strerror(Libc[static=False]("libc.so.6"))
+
+
+def test_static_strerror():
+    _test_strerror(Libc[static=True]())
+
+
+def _test_perror(libc: Libc):
     ...
 
 
-# TODO
-def test_openlog():
+def test_dynamic_perror():
     ...
 
 
-# TODO
-def test_syslog():
+def test_static_perror():
     ...
 
 
-# TODO
-def test_setlogmask():
+def _test_openlog(libc: Libc):
     ...
 
 
-# TODO
-def test_closelog():
+def test_dynamic_openlog():
+    ...
+
+
+def test_static_openlog():
+    ...
+
+
+def _test_syslog(libc: Libc):
+    ...
+
+
+def test_dynamic_syslog():
+    ...
+
+
+def test_static_syslog():
+    ...
+
+
+def _test_setlogmask(libc: Libc):
+    ...
+
+
+def test_dynamic_setlogmask():
+    ...
+
+
+def test_static_setlogmask():
+    ...
+
+
+def _test_closelog(libc: Libc):
+    ...
+
+
+def test_dynamic_closelog():
+    ...
+
+
+def test_static_closelog():
     ...
 
 
 def main():
-    test_errno()
-    test_strerror()
-    test_perror()
-    test_openlog()
-    test_syslog()
-    test_setlogmask()
-    test_closelog()
+    test_dynamic_errno()
+    test_static_errno()
+    test_dynamic_strerror()
+    test_static_strerror()
+    test_dynamic_perror()
+    test_static_perror()
+    test_dynamic_openlog()
+    test_static_openlog()
+    test_dynamic_syslog()
+    test_static_syslog()
+    test_dynamic_setlogmask()
+    test_static_setlogmask()
+    test_dynamic_closelog()
+    test_static_closelog()
