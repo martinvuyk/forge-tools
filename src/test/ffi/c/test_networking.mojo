@@ -2,7 +2,7 @@
 
 from testing import assert_equal, assert_false, assert_raises, assert_true
 from forge_tools.ffi.c.libc import Libc, TryLibc
-from forge_tools.ffi.c.types import *
+from forge_tools.ffi.c.types import C, char_ptr
 from forge_tools.ffi.c.constants import *
 
 

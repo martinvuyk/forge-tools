@@ -53,17 +53,7 @@ from collections import Optional
 from memory import UnsafePointer, stack_allocation, Arc
 from utils import Variant, Span, StringSlice
 
-from forge_tools.ffi.c import (
-    C,
-    ntohs,
-    ntohl,
-    htons,
-    htonl,
-    inet_aton,
-    inet_ntoa,
-    in_addr,
-    in_addr_t,
-)
+from forge_tools.ffi.c.types import C, in_addr
 
 from .address import SockFamily, SockAddr, IPv4Addr, IPv6Addr
 from ._linux import _LinuxSocket
@@ -621,11 +611,11 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            s0, s1 = Self._linux_s.socketpair()
-            return Self(s0), Self(s1)
+            var s = Self._linux_s.socketpair()
+            return Self(s[0]), Self(s[1])
         elif sock_platform is SockPlatform.UNIX:
-            s0, s1 = Self._unix_s.socketpair()
-            return Self(s0), Self(s1)
+            var s = Self._unix_s.socketpair()
+            return Self(s[0]), Self(s[1])
         else:
             constrained[False, "Platform not supported yet."]()
             return Self(), Self()
@@ -740,7 +730,7 @@ recv.2.en.html#The_flags_argument).
             return self._impl[Self._unix_s].gethostname()
         else:
             constrained[False, "Platform not supported yet."]()
-            return ""
+            return None
 
     @staticmethod
     fn gethostbyname(name: String) -> Optional[sock_address]:
@@ -803,7 +793,7 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
-        return ntohs(value)
+        return Self._unix_s.lib.ntohs(value)
 
     @staticmethod
     fn ntohl(value: UInt32) -> UInt32:
@@ -815,7 +805,7 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
-        return ntohl(value)
+        return Self._unix_s.lib.ntohl(value)
 
     @staticmethod
     fn htons(value: UInt16) -> UInt16:
@@ -827,7 +817,7 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
-        return htons(value)
+        return Self._unix_s.lib.htons(value)
 
     @staticmethod
     fn htonl(value: UInt32) -> UInt32:
@@ -839,7 +829,7 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
-        return htonl(value)
+        return Self._unix_s.lib.htonl(value)
 
     @staticmethod
     fn inet_aton(value: String) -> Optional[UInt32]:
@@ -851,8 +841,11 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
+
         ptr = stack_allocation[1, in_addr]()
-        err = inet_aton(value.unsafe_ptr().bitcast[C.char](), ptr)
+        err = Self._unix_s.lib.inet_aton(
+            value.unsafe_ptr().bitcast[C.char](), ptr
+        )
         if err == 0:
             return None
         return ptr[0].s_addr
@@ -867,14 +860,15 @@ recv.2.en.html#The_flags_argument).
         Returns:
             The result.
         """
+
         length = 0
-        ptr = inet_ntoa(value).bitcast[UInt8]()
+        ptr = Self._unix_s.lib.inet_ntoa(value).bitcast[UInt8]()
         for i in range(7, 16):
             if ptr[i] == 0:
                 length = i
                 break
-        alias S = StringSlice[ImmutableAnyLifetime]
-        return String(S(unsafe_from_utf8_ptr=ptr, len=length))
+        alias S = StringSlice[ImmutableAnyOrigin]
+        return String(S(ptr=ptr, length=length))
 
     @staticmethod
     fn getdefaulttimeout() -> Optional[Float64]:
@@ -1224,7 +1218,7 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            res = Self._linux_s.create_server(
+            var res = Self._linux_s.create_server(
                 address,
                 backlog=backlog,
                 reuse_port=reuse_port,
@@ -1232,7 +1226,7 @@ nf-ws2tcpip-getaddrinfo).
             )
             return Self(res[0]), S(res[1])
         elif sock_platform is SockPlatform.UNIX:
-            res = Self._unix_s.create_server(
+            var res = Self._unix_s.create_server(
                 address,
                 backlog=backlog,
                 reuse_port=reuse_port,

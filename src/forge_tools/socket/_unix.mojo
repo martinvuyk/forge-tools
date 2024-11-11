@@ -9,7 +9,18 @@ from .socket import (
     SockProtocol,
 )
 from .address import SockFamily, SockAddr, IPv4Addr, IPv6Addr
-from forge_tools.ffi.c import (
+from forge_tools.ffi.c.libc import Libc
+from forge_tools.ffi.c.types import (
+    C,
+    in_addr,
+    sockaddr,
+    sockaddr_in,
+    socklen_t,
+    addrinfo,
+    char_ptr_to_string,
+    sa_family_t,
+)
+from forge_tools.ffi.c.constants import (
     AF_INET,
     AF_INET6,
     AF_UNIX,
@@ -30,35 +41,12 @@ from forge_tools.ffi.c import (
     IPPROTO_UDP,
     IPPROTO_SCTP,
     IPPROTO_UDPLITE,
-    C,
-    socket,
-    htons,
-    in_addr,
-    sockaddr,
-    sockaddr_in,
-    socklen_t,
-    shutdown,
     SHUT_RDWR,
-    bind,
-    listen,
-    connect,
-    accept,
-    send,
-    recv,
-    char_ptr_to_string,
-    inet_pton,
-    sa_family_t,
     IPPROTO_IPV6,
     IPV6_V6ONLY,
-    setsockopt,
-    addrinfo,
-    getaddrinfo,
-    strlen,
     SOL_SOCKET,
     SO_REUSEADDR,
     SO_REUSEPORT,
-    get_errno,
-    strerror,
     STDERR_FILENO,
 )
 
@@ -74,6 +62,8 @@ struct _UnixSocket[
 
     var fd: Arc[FileDescriptor]
     """The Socket's `Arc[FileDescriptor]`."""
+    alias lib = Libc[static=False]("libc.so.6")
+    """The dynamically linked Libc."""
     alias _sock_family = _get_unix_sock_family_constant(sock_family)
     alias _sock_type = _get_unix_sock_type_constant(sock_type)
     alias _sock_protocol = _get_unix_sock_protocol_constant(sock_protocol)
@@ -84,9 +74,13 @@ struct _UnixSocket[
 
     fn __init__(inout self) raises:
         """Create a new socket object."""
-        fd = socket(Self._sock_family, Self._sock_type, Self._sock_protocol)
+        fd = self.lib.socket(
+            Self._sock_family, Self._sock_type, Self._sock_protocol
+        )
         if fd == -1:
-            message = char_ptr_to_string(strerror(get_errno()))
+            message = char_ptr_to_string(
+                self.lib.strerror(self.lib.get_errno())
+            )
             raise Error("Failed to create socket: " + message)
         self.fd = FileDescriptor(int(fd))
 
@@ -99,9 +93,11 @@ struct _UnixSocket[
         `Arc[FileDescriptor]`.
         """
         if self.fd.count() == 1:
-            err = shutdown(self.fd.value, SHUT_RDWR)
+            err = self.lib.shutdown(self.fd[].value, SHUT_RDWR)
             if err == -1:
-                message = char_ptr_to_string(strerror(get_errno()))
+                message = char_ptr_to_string(
+                    self.lib.strerror(self.lib.get_errno())
+                )
                 raise Error("Failed trying to close the socket: " + message)
 
     fn __del__(owned self):
@@ -119,8 +115,13 @@ struct _UnixSocket[
         ptr[0] = option_value
         cvoid = ptr.bitcast[C.void]()
         s = sizeof[Int]()
-        if setsockopt(self.fd.value, level, option_name, cvoid, s) == -1:
-            message = char_ptr_to_string(strerror(get_errno()))
+        if (
+            self.lib.setsockopt(self.fd[].value, level, option_name, cvoid, s)
+            == -1
+        ):
+            message = char_ptr_to_string(
+                self.lib.strerror(self.lib.get_errno())
+            )
             raise Error("Failed to set socket options: " + message)
 
     fn bind(self, address: sock_address) raises:
@@ -129,19 +130,24 @@ struct _UnixSocket[
         @parameter
         if _type_is_eq[sock_address, IPv4Addr]():
             addr = rebind[IPv4Addr](address)
-            port = htons(addr.port)
+            port = self.lib.htons(addr.port)
             ip_buf = stack_allocation[4, C.void]()
             ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
-            err = inet_pton(Self._sock_family, ip_ptr, ip_buf)
+            err = self.lib.inet_pton(Self._sock_family, ip_ptr, ip_buf)
             if err == 0:
                 raise Error("Invalid Address.")
             ip = ip_buf.bitcast[C.u_int]().load()
             zero = StaticTuple[C.char, 8]()
             ai = sockaddr_in(Self._sock_family, port, ip, zero)
             ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
-            if bind(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
+            if (
+                self.lib.bind(self.fd[].value, ai_ptr, sizeof[sockaddr_in]())
+                == -1
+            ):
                 _ = ai
-                message = char_ptr_to_string(strerror(get_errno()))
+                message = char_ptr_to_string(
+                    self.lib.strerror(self.lib.get_errno())
+                )
                 raise Error("Failed to bind the socket: " + message)
             _ = ai
         else:
@@ -153,8 +159,10 @@ struct _UnixSocket[
         of unaccepted connections that the system will allow before refusing
         new connections. If `backlog == 0`, a default value is chosen.
         """
-        if listen(self.fd.value, C.int(backlog)) == -1:
-            message = char_ptr_to_string(strerror(get_errno()))
+        if self.lib.listen(self.fd[].value, C.int(backlog)) == -1:
+            message = char_ptr_to_string(
+                self.lib.strerror(self.lib.get_errno())
+            )
             raise Error("Failed to listen on socket: " + message)
 
     async fn connect(self, address: sock_address) raises:
@@ -163,19 +171,24 @@ struct _UnixSocket[
         @parameter
         if _type_is_eq[sock_address, IPv4Addr]():
             addr = rebind[IPv4Addr](address)
-            port = htons(addr.port)
+            port = self.lib.htons(addr.port)
             ip_buf = stack_allocation[4, C.void]()
             ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
-            err = inet_pton(Self._sock_family, ip_ptr, ip_buf)
+            err = self.lib.inet_pton(Self._sock_family, ip_ptr, ip_buf)
             if err == 0:
                 raise Error("Invalid Address.")
             ip = ip_buf.bitcast[C.u_int]().load()
             zero = StaticTuple[C.char, 8]()
             ai = sockaddr_in(Self._sock_family, port, ip, zero)
             ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
-            if connect(self.fd.value, ai_ptr, sizeof[sockaddr_in]()) == -1:
+            if (
+                self.lib.connect(self.fd[].value, ai_ptr, sizeof[sockaddr_in]())
+                == -1
+            ):
                 _ = ai
-                message = char_ptr_to_string(strerror(get_errno()))
+                message = char_ptr_to_string(
+                    self.lib.strerror(self.lib.get_errno())
+                )
                 raise Error("Failed to create socket: " + message)
             _ = ai
         else:
@@ -193,16 +206,18 @@ struct _UnixSocket[
                 addr_ptr = stack_allocation[1, sockaddr]()
                 sin_size = socklen_t(sizeof[socklen_t]())
                 size_ptr = UnsafePointer[socklen_t].address_of(sin_size)
-                fd = int(accept(self.fd.value, addr_ptr, size_ptr))
+                fd = int(self.lib.accept(self.fd[].value, addr_ptr, size_ptr))
                 if fd == -1:
-                    message = char_ptr_to_string(strerror(get_errno()))
+                    message = char_ptr_to_string(
+                        self.lib.strerror(self.lib.get_errno())
+                    )
                     raise Error("Failed to create socket: " + message)
                 sa_family = addr_ptr.bitcast[sa_family_t]()[0]
                 if sa_family != Self._sock_family:
                     raise Error("Wrong Address Family for this socket.")
                 p = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
-                addr_str = String(ptr=p.bitcast[UInt8](), len=int(sin_size))
-                return Self(fd=fd), sock_address(addr_str^)
+                addr_str = String(ptr=p.bitcast[UInt8](), length=int(sin_size))
+                return Self(fd=FileDescriptor(fd)), sock_address(addr_str^)
             except e:
                 print(str(e), file=STDERR_FILENO)
                 return None
@@ -215,16 +230,20 @@ struct _UnixSocket[
         """Create a pair of socket objects from the sockets returned by the
         platform `socketpair()` function."""
         socket_vector = stack_allocation[2, C.int]()
-        err = socket(
+        err = Self.lib.socketpair(
             Self._sock_family,
             Self._sock_type,
             Self._sock_protocol,
             socket_vector,
         )
         if err == -1:
-            message = char_ptr_to_string(strerror(get_errno()))
+            message = char_ptr_to_string(
+                Self.lib.strerror(Self.lib.get_errno())
+            )
             raise Error("Failed to create socket: " + message)
-        return Self(fd=int(socket_vector[0])), Self(fd=int(socket_vector[1]))
+        return Self(fd=FileDescriptor(int(socket_vector[0]))), Self(
+            fd=FileDescriptor(int(socket_vector[1]))
+        )
 
     fn get_fd(self) -> Arc[FileDescriptor]:
         """Get an ARC reference to the Socket's FileDescriptor.
@@ -245,17 +264,23 @@ struct _UnixSocket[
     async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
         ptr = buf.unsafe_ptr().bitcast[C.void]()
-        sent = int(send(self.fd.value, ptr, len(buf), flags))
+        sent = int(self.lib.send(self.fd[].value, ptr, len(buf), flags))
         if sent == -1:
-            print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
+            print(
+                char_ptr_to_string(self.lib.strerror(self.lib.get_errno())),
+                file=STDERR_FILENO,
+            )
         return sent
 
     async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Receive up to `len(buf)` bytes into the buffer."""
         ptr = buf.unsafe_ptr().bitcast[C.void]()
-        recvd = int(recv(self.fd.value, ptr, len(buf), flags))
+        recvd = int(self.lib.recv(self.fd[].value, ptr, len(buf), flags))
         if recvd == -1:
-            print(char_ptr_to_string(strerror(get_errno())), file=STDERR_FILENO)
+            print(
+                char_ptr_to_string(self.lib.strerror(self.lib.get_errno())),
+                file=STDERR_FILENO,
+            )
         return recvd
 
     @staticmethod
@@ -321,9 +346,9 @@ struct _UnixSocket[
         alias UP = UnsafePointer
         res_p = C.ptr_addr(int(UP[addrinfo].address_of(result)))
         res_p_p = UP[C.ptr_addr].address_of(res_p)
-        err = getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
+        err = Self.lib.getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
         if err != 0:
-            msg = char_ptr_to_string(strerror(err))
+            msg = char_ptr_to_string(Self.lib.strerror(err))
             raise Error("Error in getaddrinfo(). Code: " + msg)
         next_addr = C.NULL
         first = True
@@ -334,13 +359,13 @@ struct _UnixSocket[
             pt = _parse_unix_sock_protocol_constant(int(result.ai_protocol))
             addrlen = int(result.ai_addrlen)
             addr_ptr = result.ai_addr.bitcast[UInt8]()
-            alias S = StringSlice[ImmutableAnyLifetime]
-            addr = String(S(unsafe_from_utf8_ptr=addr_ptr, len=addrlen))
+            alias S = StringSlice[ImmutableAnyOrigin]
+            addr = String(S(ptr=addr_ptr, length=addrlen))
             can = String()
             if flags != 0:
                 p = result.ai_canonname
-                l = int(strlen(p))
-                can = String(S(unsafe_from_utf8_ptr=p.bitcast[UInt8](), len=l))
+                l = int(Self.lib.strlen(p))
+                can = String(S(ptr=p.bitcast[UInt8](), length=l))
             info.append((af, st, pt, can^, sock_address(addr^)))
             result = next_addr.bitcast[addrinfo]()[0]
             next_addr = result.ai_next

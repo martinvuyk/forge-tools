@@ -4,7 +4,7 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 
 from memory import UnsafePointer, stack_allocation, memcmp
 from forge_tools.ffi.c.libc import Libc, TryLibc
-from forge_tools.ffi.c.types import *
+from forge_tools.ffi.c.types import C, char_ptr, char_ptr_to_string
 from forge_tools.ffi.c.constants import *
 
 
