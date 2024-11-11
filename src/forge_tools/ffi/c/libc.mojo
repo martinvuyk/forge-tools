@@ -10,13 +10,13 @@ from .types import C
 
 @value
 struct TryLibc[static: Bool]:
-    """Try to execute Libc code, add the Libc Error, and retrow.
+    """Try to execute Libc code, append the Libc Error, and rethrow.
 
     Parameters:
         static: Whether the library is statically linked.
     """
 
-    var _lib: Libc[static]
+    var _lib: Libc[static=static]
 
     fn __enter__(self):
         """Enter a context."""
@@ -40,15 +40,21 @@ struct TryLibc[static: Bool]:
 
 
 @value
-struct Libc[static: Bool]:
+struct Libc[*, static: Bool]:
     """An implementation of Libc. Can be dynamically or statically linked.
 
     Parameters:
         static: Whether the library is statically linked.
 
     Notes:
-        Some exceptions are made for Microsoft Windows. Pull requests to extend
-        support are welcome.
+
+        - Some exceptions are made for Microsoft Windows. Pull requests to extend
+            support are welcome.
+        - All reference links point to the POSIX section of the linux manpages,
+            to read the linux documentation which is often more thorough in
+            explaining caveats (applicable to Linux, but similar in other
+            implementations), replace the end of the link `3p.html` with
+            `3.html`.
     """
 
     var _lib: Optional[DLHandle]
@@ -95,11 +101,11 @@ struct Libc[static: Bool]:
                     "__errno_location", UnsafePointer[C.int]
                 ]()[]
 
-    fn set_errno(self, errnum: C.int):
+    fn set_errno(self, errno: C.int):
         """Set the `errno` global variable for the current thread.
 
         Args:
-            errnum: The value to set `errno` to.
+            errno: The value to set `errno` to.
         """
 
         @parameter
@@ -107,20 +113,20 @@ struct Libc[static: Bool]:
 
             @parameter
             if static:
-                _ = external_call["_set_errno", C.int](errnum)
+                _ = external_call["_set_errno", C.int](errno)
             else:
-                _ = self._lib.value().call["_set_errno", C.int](errnum)
+                _ = self._lib.value().call["_set_errno", C.int](errno)
         else:
 
             @parameter
             if static:
                 _ = external_call["__errno_location", UnsafePointer[C.int]]()[
                     0
-                ] = errnum
+                ] = errno
             else:
                 _ = self._lib.value().call[
                     "__errno_location", UnsafePointer[C.int]
-                ]()[0] = errnum
+                ]()[0] = errno
 
     fn strerror(self, errnum: C.int) -> UnsafePointer[C.char]:
         """Libc POSIX `strerror` function.
@@ -132,7 +138,7 @@ struct Libc[static: Bool]:
             A Pointer to the error message.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/strerror.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/strerror.3p.html).
             Fn signature: `char *strerror(int errnum)`.
         """
 
@@ -144,14 +150,14 @@ struct Libc[static: Bool]:
                 errnum
             )
 
-    fn perror(self, s: UnsafePointer[C.char]):
+    fn perror(self, s: UnsafePointer[C.char] = UnsafePointer[C.char]()):
         """Libc POSIX `perror` function.
 
         Args:
             s: The string to print in front of the error message.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/perror.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/perror.3p.html).
             Fn signature: `void perror(const char *s)`.
         """
 
@@ -168,11 +174,12 @@ struct Libc[static: Bool]:
 
         Args:
             ident: A File Descriptor to open the file with.
-            logopt: An offset to seek to.
-            facility: Arguments for the format string.
+            logopt: Flags which control the operation of openlog.
+            facility: Establishes a default to be used if none is specified in
+                subsequent calls to syslog.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/openlog.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/openlog.3p.html).
             Fn signature: `void openlog(const char *ident, int logopt,
                 int facility)`.
         """
@@ -187,18 +194,17 @@ struct Libc[static: Bool]:
 
     fn syslog[
         *T: AnyType
-    ](self, priority: C.int, message: UnsafePointer[C.char], *args: *T):
+    ](self, priority: C.int, format: UnsafePointer[C.char], *args: *T):
         """Libc POSIX `syslog` function.
 
         Args:
             priority: A File Descriptor to open the file with.
-            message: An offset to seek to.
+            format: A format string to print.
             args: The extra arguments.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/syslog.3.html).
-            Fn signature: `void syslog(int priority, const char *message,
-                ... /* arguments */)`.
+            [Reference](https://man7.org/linux/man-pages/man3/syslog.3p.html).
+            Fn signature: `void syslog(int priority, const char *format, ...)`.
         """
 
         @parameter
@@ -213,24 +219,29 @@ struct Libc[static: Bool]:
                     `) -> !pop.scalar<si8>`,
                 ],
                 _type = C.void,
-            ](priority, message, args.get_loaded_kgen_pack())
+            ](priority, format, args.get_loaded_kgen_pack())
         else:
             _ = self._lib.value().call["syslog", C.void](
-                priority, message, args.get_loaded_kgen_pack()
+                priority, format, args.get_loaded_kgen_pack()
             )
 
     fn setlogmask(self, maskpri: C.int) -> C.int:
         """Libc POSIX `setlogmask` function.
 
         Args:
-            maskpri: A File Descriptor to open the file with.
+            maskpri: A new priority mask.
 
         Returns:
             The previous log priority mask.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/setlogmask.3.html).
-            Fn signature: ` int setlogmask(int maskpri)`.
+            [Reference](https://man7.org/linux/man-pages/man3/setlogmask.3p.html).
+            Fn signature: `int setlogmask(int maskpri)`.
+            A process has a log priority mask that determines which calls to
+            `syslog(3)` may be logged.  All other calls will be ignored.
+            Logging is enabled for the priorities that have the corresponding
+            bit set in mask.  The initial mask is such that logging is
+            enabled for all priorities.
         """
 
         @parameter
@@ -243,7 +254,7 @@ struct Libc[static: Bool]:
         """Libc POSIX `closelog` function.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/closelog.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/closelog.3p.html).
             Fn signature: `void closelog(void)`.
         """
 
@@ -319,7 +330,7 @@ struct Libc[static: Bool]:
             Value `0` on success, otherwise `-1` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/remove.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/remove.3p.html).
             Fn signature: `int remove(const char *pathname)`.
 
             If the removed name was the last link to a file and no processes
@@ -390,7 +401,7 @@ struct Libc[static: Bool]:
             A pointer to a File. Otherwise `NULL` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fopen.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fopen.3p.html).
             Fn signature: `FILE *fopen(const char *restrict pathname,
                 const char *restrict mode)`.
         """
@@ -417,7 +428,7 @@ struct Libc[static: Bool]:
             A pointer to a File. Otherwise `NULL` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fdopen.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fdopen.3p.html).
             Fn signature: `FILE *fdopen(int fildes, const char *mode)`.
         """
         alias name = "_fdopen" if os_is_windows() else "fdopen"
@@ -441,7 +452,7 @@ struct Libc[static: Bool]:
             Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fclose.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fclose.3p.html).
             Fn signature: `int fclose(FILE *stream)`.
         """
 
@@ -469,7 +480,7 @@ struct Libc[static: Bool]:
             A pointer to a File. Otherwise `NULL` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/freopen.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/freopen.3p.html).
             Fn signature: `FILE *freopen(const char *restrict pathname,
                 const char *restrict mode, FILE *restrict stream)`.
         """
@@ -502,7 +513,7 @@ struct Libc[static: Bool]:
             A pointer to a File. Otherwise `NULL` and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fmemopen.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fmemopen.3p.html).
             Fn signature: `FILE *fmemopen(void *restrict buf, size_t size,
                 const char *restrict mode)`.
         """
@@ -541,7 +552,10 @@ struct Libc[static: Bool]:
 
     @always_inline
     fn fseek(
-        self, stream: UnsafePointer[FILE], offset: C.long, whence: C.int
+        self,
+        stream: UnsafePointer[FILE],
+        offset: C.long,
+        whence: C.int = SEEK_SET,
     ) -> C.int:
         """Libc POSIX `fseek` function.
 
@@ -555,7 +569,7 @@ struct Libc[static: Bool]:
             Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fseek.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fseek.3p.html).
             Fn signature: `int fseek(FILE *stream, long offset, int whence)`.
         """
 
@@ -583,7 +597,7 @@ struct Libc[static: Bool]:
             Value `0` on success, `-1` on error and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fseek.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fseek.3p.html).
             Fn signature: `int fseeko(FILE *stream, off_t offset, int whence)`.
         """
 
@@ -635,7 +649,7 @@ struct Libc[static: Bool]:
             is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fputc.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fputc.3p.html).
             Fn signature: `int fputc(int c, FILE *stream)`.
         """
 
@@ -659,7 +673,7 @@ struct Libc[static: Bool]:
             Positive number. Otherwise `EOF` (usually -1) and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fputs.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fputs.3p.html).
             Fn signature: `int fputs(const char *restrict s, FILE *restrict
             stream)`.
         """
@@ -686,7 +700,7 @@ struct Libc[static: Bool]:
             and shall set `errno` to indicate the error.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fgetc.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fgetc.3p.html).
             Fn signature: `int fgetc(FILE *stream)`.
         """
 
@@ -716,7 +730,7 @@ struct Libc[static: Bool]:
             error.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fgets.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fgets.3p.html).
             Fn signature: `char *fgets(char *restrict s, int n,
                 FILE *restrict stream)`.
         """
@@ -742,11 +756,11 @@ struct Libc[static: Bool]:
             args: The arguments to be added into the format string.
 
         Returns:
-            The number of bytes transmitted. Otherwise a negative value and
-            `errno` is set.
+            The number of bytes transmitted excluding the terminating null byte.
+            Otherwise a negative value and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/printf.3p.html).
         """
 
         @parameter
@@ -782,33 +796,13 @@ struct Libc[static: Bool]:
             args: The arguments to be added into the format string.
 
         Returns:
-            The number of bytes transmitted. Otherwise a negative value and
-            `errno` is set.
+            The number of bytes transmitted excluding the terminating null byte.
+            Otherwise a negative value and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/printf.3p.html).
         """
         return self.printf(format, args)
-
-    @always_inline
-    fn printf[*T: AnyType](self, format: String, *args: *T) -> C.int:
-        """Libc POSIX `printf` function.
-
-        Parameters:
-            T: The type of the arguments.
-
-        Args:
-            format: The format string.
-            args: The args to send to the `printf` function.
-
-        Returns:
-            The number of bytes transmitted. Otherwise a negative value and
-            `errno` is set.
-
-        Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/printf.3.html).
-        """
-        return self.printf(char_ptr(format), args)
 
     @always_inline
     fn fprintf(
@@ -825,11 +819,11 @@ struct Libc[static: Bool]:
             args: The arguments to be added into the format string.
 
         Returns:
-            The number of bytes transmitted. Otherwise a negative value and
-            `errno` is set.
+            The number of bytes transmitted excluding the terminating null byte.
+            Otherwise a negative value and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fprintf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
             Fn signature: `int fprintf(FILE *restrict stream,
                 const char *restrict format, ...)`.
         """
@@ -872,11 +866,11 @@ struct Libc[static: Bool]:
             args: The arguments to be added into the format string.
 
         Returns:
-            The number of bytes transmitted. Otherwise a negative value and
-            `errno` is set.
+            The number of bytes transmitted excluding the terminating null byte.
+            Otherwise a negative value and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fprintf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
             Fn signature: `int fprintf(FILE *restrict stream,
                 const char *restrict format, ...)`.
         """
@@ -893,11 +887,11 @@ struct Libc[static: Bool]:
             format: A format string.
 
         Returns:
-            The number of bytes transmitted. Otherwise a negative value and
-            `errno` is set.
+            The number of bytes transmitted excluding the terminating null byte.
+            Otherwise a negative value and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fprintf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fprintf.3p.html).
             Fn signature: `int fprintf(FILE *restrict stream,
                 const char *restrict format, ...)`.
         """
@@ -918,11 +912,11 @@ struct Libc[static: Bool]:
             args: The arguments to be added into the format string.
 
         Returns:
-            The number of bytes transmitted. Otherwise a negative value and
-            `errno` is set.
+            The number of bytes transmitted excluding the terminating null byte.
+            Otherwise a negative value and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/dprintf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/dprintf.3p.html).
             Fn signature: `int dprintf(int fd, const char *restrict format,
                 ...)`.
         """
@@ -934,7 +928,7 @@ struct Libc[static: Bool]:
                 func = "dprintf".value,
                 variadicType = __mlir_attr[
                     `(`,
-                    `!pop.scalar<si8>,`,
+                    `!pop.scalar<si32>,`,
                     `!kgen.pointer<scalar<si8>>`,
                     `) -> !pop.scalar<si32>`,
                 ],
@@ -964,7 +958,7 @@ struct Libc[static: Bool]:
             `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/dprintf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/dprintf.3p.html).
             Fn signature: `int dprintf(int fd, const char *restrict format,
                 ...)`.
         """
@@ -990,11 +984,10 @@ struct Libc[static: Bool]:
             args: The arguments to be added into the format string.
 
         Returns:
-            The number of bytes written to s, excluding the terminating null
-            byte.
+            The number of bytes written, excluding the terminating null byte.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/sprintf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/sprintf.3p.html).
             Fn signature: `int sprintf(char *restrict str,
                 const char *restrict format, ...)`.
         """
@@ -1025,7 +1018,7 @@ struct Libc[static: Bool]:
     ](
         self,
         s: UnsafePointer[C.char],
-        n: C.u_int,
+        n: size_t,
         format: UnsafePointer[C.char],
         *args: *T,
     ) -> C.int:
@@ -1045,7 +1038,7 @@ struct Libc[static: Bool]:
             sufficiently large excluding the terminating null byte.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/snprintf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/snprintf.3p.html).
             Fn signature: `int snprintf(char *restrict s, size_t n,
                 const char *restrict format, ...)`.
         """
@@ -1071,192 +1064,181 @@ struct Libc[static: Bool]:
             )
             return int(num)
 
-    @always_inline
-    fn vprintf[
-        *T: AnyType
-    ](self, format: UnsafePointer[C.char], *args: *T) -> C.int:
-        """Libc POSIX `vprintf` function.
+    # TODO: add va_list builder and test
+    # @always_inline
+    # fn vprintf(
+    #     self,
+    #     format: UnsafePointer[C.char],
+    #     ap: VariadicPack[element_trait=AnyType],
+    # ) -> C.int:
+    #     """Libc POSIX `vprintf` function.
 
-        Parameters:
-            T: The type of the arguments.
+    #     Args:
+    #         format: A format string.
+    #         ap: The arguments to be added into the format string.
 
-        Args:
-            format: A format string.
-            args: The arguments to be added into the format string.
+    #     Returns:
+    #         The number of bytes transmitted excluding the terminating null byte.
+    #         Otherwise a negative value and `errno` is set.
 
-        Returns:
-            The number of bytes written to s, excluding the terminating null
-            byte.
+    #     Notes:
+    #         [Reference](https://man7.org/linux/man-pages/man3/vprintf.3p.html).
+    #         Fn signature: `int vprintf(const char *restrict format,
+    #             va_list ap)`.
+    #     """
 
-        Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/vprintf.3.html).
-            Fn signature: `int vprintf(const char *restrict format,
-                va_list ap)`.
-        """
+    #     a = ap.get_loaded_kgen_pack()
+    #     p = UnsafePointer.address_of(a)
 
-        a = args.get_loaded_kgen_pack()
-        p = UnsafePointer.address_of(a)
+    #     @parameter
+    #     if static:
+    #         return int(external_call["vprintf", C.int](format, p))
+    #     else:
+    #         return int(self._lib.value().call["vprintf", C.int](format, p))
 
-        @parameter
-        if static:
-            return int(external_call["vprintf", C.int](format, p))
-        else:
-            return int(self._lib.value().call["vprintf", C.int](format, p))
+    # TODO: add va_list builder and test
+    # @always_inline
+    # fn vfprintf(
+    #     self,
+    #     stream: UnsafePointer[FILE],
+    #     format: UnsafePointer[C.char],
+    #     ap: VariadicPack[element_trait=AnyType],
+    # ) -> C.int:
+    #     """Libc POSIX `vfprintf` function.
 
-    @always_inline
-    fn vfprintf[
-        *T: AnyType
-    ](
-        self,
-        stream: UnsafePointer[FILE],
-        format: UnsafePointer[C.char],
-        *args: *T,
-    ) -> C.int:
-        """Libc POSIX `vfprintf` function.
+    #     Args:
+    #         stream: A pointer to a stream.
+    #         format: A format string.
+    #         ap: The arguments to be added into the format string.
 
-        Parameters:
-            T: The type of the arguments.
+    #     Returns:
+    #         The number of bytes transmitted excluding the terminating null byte.
+    #         Otherwise a negative value and `errno` is set.
 
-        Args:
-            stream: A pointer to a stream.
-            format: A format string.
-            args: The arguments to be added into the format string.
+    #     Notes:
+    #         [Reference](https://man7.org/linux/man-pages/man3/vfprintf.3p.html).
+    #         Fn signature: `int vfprintf(FILE *restrict stream,
+    #             const char *restrict format, va_list ap)`.
+    #     """
 
-        Returns:
-            The number of bytes written to s, excluding the terminating null
-            byte.
+    #     a = ap.get_loaded_kgen_pack()
+    #     p = UnsafePointer.address_of(a)
 
-        Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/vfprintf.3.html).
-            Fn signature: `int vfprintf(FILE *restrict stream,
-                const char *restrict format, va_list ap)`.
-        """
+    #     @parameter
+    #     if static:
+    #         return int(external_call["vfprintf", C.int](stream, format, p))
+    #     else:
+    #         return int(
+    #             self._lib.value().call["vfprintf", C.int](stream, format, p)
+    #         )
 
-        a = args.get_loaded_kgen_pack()
-        p = UnsafePointer.address_of(a)
+    # TODO: add va_list builder and test
+    # @always_inline
+    # fn vdprintf(
+    #     self,
+    #     fd: C.int,
+    #     format: UnsafePointer[C.char],
+    #     ap: VariadicPack[element_trait=AnyType],
+    # ) -> C.int:
+    #     """Libc POSIX `vdprintf` function.
 
-        @parameter
-        if static:
-            return int(external_call["vfprintf", C.int](stream, format, p))
-        else:
-            return int(
-                self._lib.value().call["vfprintf", C.int](stream, format, p)
-            )
+    #     Args:
+    #         fd: A file descriptor.
+    #         format: A format string.
+    #         ap: The arguments to be added into the format string.
 
-    @always_inline
-    fn vdprintf[
-        *T: AnyType
-    ](self, fd: C.int, format: UnsafePointer[C.char], *args: *T) -> C.int:
-        """Libc POSIX `vdprintf` function.
+    #     Returns:
+    #         The number of bytes transmitted excluding the terminating null byte.
+    #         Otherwise a negative value and `errno` is set.
 
-        Parameters:
-            T: The type of the arguments.
+    #     Notes:
+    #         [Reference](https://man7.org/linux/man-pages/man3/vdprintf.3p.html).
+    #         Fn signature: `int vdprintf(int fd, const char *restrict format,
+    #             va_list ap)`.
+    #     """
 
-        Args:
-            fd: A file descriptor.
-            format: A format string.
-            args: The arguments to be added into the format string.
+    #     a = ap.get_loaded_kgen_pack()
+    #     p = UnsafePointer.address_of(a)
 
-        Returns:
-            The number of bytes written to s, excluding the terminating null
-            byte.
+    #     @parameter
+    #     if static:
+    #         return int(external_call["vdprintf", C.int](fd, format, p))
+    #     else:
+    #         return int(self._lib.value().call["vdprintf", C.int](fd, format, p))
 
-        Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/vdprintf.3.html).
-            Fn signature: `int vdprintf(int fd, const char *restrict format,
-                va_list ap)`.
-        """
+    # TODO: add va_list builder and test
+    # @always_inline
+    # fn vsprintf(
+    #     self,
+    #     str: UnsafePointer[C.char],
+    #     format: UnsafePointer[C.char],
+    #     ap: VariadicPack[element_trait=AnyType],
+    # ) -> C.int:
+    #     """Libc POSIX `vsprintf` function.
 
-        a = args.get_loaded_kgen_pack()
-        p = UnsafePointer.address_of(a)
+    #     Args:
+    #         str: A pointer to a buffer to store the read string.
+    #         format: A format string.
+    #         ap: The arguments to be added into the format string.
 
-        @parameter
-        if static:
-            return int(external_call["vdprintf", C.int](fd, format, p))
-        else:
-            return int(self._lib.value().call["vdprintf", C.int](fd, format, p))
+    #     Returns:
+    #         The number of bytes transmitted excluding the terminating null byte.
+    #         Otherwise a negative value and `errno` is set.
 
-    @always_inline
-    fn vsprintf[
-        *T: AnyType
-    ](
-        self,
-        str: UnsafePointer[C.char],
-        format: UnsafePointer[C.char],
-        *args: *T,
-    ) -> C.int:
-        """Libc POSIX `vsprintf` function.
+    #     Notes:
+    #         [Reference](https://man7.org/linux/man-pages/man3/vsprintf.3p.html).
+    #         Fn signature: `int vsprintf(char *restrict str,
+    #             const char *restrict format, va_list ap)`.
+    #     """
 
-        Parameters:
-            T: The type of the arguments.
+    #     a = ap.get_loaded_kgen_pack()
+    #     p = UnsafePointer.address_of(a)
 
-        Args:
-            str: A pointer to a buffer to store the read string.
-            format: A format string.
-            args: The arguments to be added into the format string.
+    #     @parameter
+    #     if static:
+    #         return int(external_call["vsprintf", C.int](str, format, p))
+    #     else:
+    #         return int(
+    #             self._lib.value().call["vsprintf", C.int](str, format, p)
+    #         )
 
-        Returns:
-            The number of bytes written to s, excluding the terminating null
-            byte.
+    # TODO: add va_list builder and test
+    # @always_inline
+    # fn vsnprintf(
+    #     self,
+    #     s: UnsafePointer[C.char],
+    #     n: size_t,
+    #     format: UnsafePointer[C.char],
+    #     ap: VariadicPack[element_trait=AnyType],
+    # ) -> C.int:
+    #     """Libc POSIX `vsnprintf` function.
 
-        Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/vsprintf.3.html).
-            Fn signature: `int vsprintf(char *restrict str,
-                const char *restrict format, va_list ap)`.
-        """
+    #     Args:
+    #         s: A pointer to a buffer to store the read string.
+    #         n: The maximum number of characters to read.
+    #         format: A format string.
+    #         ap: The arguments to be added into the format string.
 
-        a = args.get_loaded_kgen_pack()
-        p = UnsafePointer.address_of(a)
+    #     Returns:
+    #         The number of bytes that would be written to s had n been
+    #         sufficiently large excluding the terminating null byte.
 
-        @parameter
-        if static:
-            return int(external_call["vsprintf", C.int](str, format, p))
-        else:
-            return int(
-                self._lib.value().call["vsprintf", C.int](str, format, p)
-            )
+    #     Notes:
+    #         [Reference](https://man7.org/linux/man-pages/man3/vsnprintf.3p.html).
+    #         Fn signature: `int vsnprintf(char *restrict s, size_t n,
+    #             const char *restrict format, va_list ap)`.
+    #     """
 
-    @always_inline
-    fn vsnprintf[
-        *T: AnyType
-    ](
-        self,
-        s: UnsafePointer[C.char],
-        n: size_t,
-        format: UnsafePointer[C.char],
-        *args: *T,
-    ) -> C.int:
-        """Libc POSIX `vsnprintf` function.
+    #     a = ap.get_loaded_kgen_pack()
+    #     p = UnsafePointer.address_of(a)
 
-        Parameters:
-            T: The type of the arguments.
-
-        Args:
-            s: A pointer to a buffer to store the read string.
-            n: The maximum number of characters to read.
-            format: A format string.
-            args: The arguments to be added into the format string.
-
-        Returns:
-            The number of bytes written to s, excluding the terminating null
-            byte.
-
-        Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/vsnprintf.3.html).
-            Fn signature: `int vsnprintf(char *restrict s, size_t n,
-                const char *restrict format, va_list ap)`.
-        """
-
-        a = args.get_loaded_kgen_pack()
-        p = UnsafePointer.address_of(a)
-
-        @parameter
-        if static:
-            return int(external_call["vsnprintf", C.int](s, n, format, p))
-        else:
-            return int(
-                self._lib.value().call["vsnprintf", C.int](s, n, format, p)
-            )
+    #     @parameter
+    #     if static:
+    #         return int(external_call["vsnprintf", C.int](s, n, format, p))
+    #     else:
+    #         return int(
+    #             self._lib.value().call["vsnprintf", C.int](s, n, format, p)
+    #         )
 
     @always_inline
     fn fscanf[
@@ -1290,8 +1272,8 @@ struct Libc[static: Bool]:
             set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fscanf.3.html).
-            Fn signature: `int fscanf(FILE *restrict stream,`.
+            [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
+            Fn signature: `int fscanf(FILE *restrict stream,
                 const char *restrict format, ...)`.
         """
 
@@ -1339,7 +1321,7 @@ struct Libc[static: Bool]:
             set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fscanf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fscanf.3p.html).
             Fn signature: `int scanf(const char *restrict format, ...)`.`.
         """
 
@@ -1382,7 +1364,7 @@ struct Libc[static: Bool]:
             set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/sscanf.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/sscanf.3p.html).
             Fn signature: `int sscanf(const char *restrict s,
                 const char *restrict format, ...)`.
         """
@@ -1397,10 +1379,10 @@ struct Libc[static: Bool]:
     fn fread(
         self,
         ptr: UnsafePointer[C.void],
-        size: C.u_int,
-        nitems: C.u_int,
+        size: size_t,
+        nitems: size_t,
         stream: UnsafePointer[FILE],
-    ) -> C.u_int:
+    ) -> size_t:
         """Libc POSIX `fread` function.
 
         Args:
@@ -1418,16 +1400,16 @@ struct Libc[static: Bool]:
             `errno` shall be set to indicate the error.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fread.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fread.3p.html).
             Fn signature: `size_t fread(void *restrict ptr, size_t size,
                 size_t nitems, FILE *restrict stream)`.
         """
 
         @parameter
         if static:
-            return external_call["fread", C.u_int](ptr, size, nitems, stream)
+            return external_call["fread", size_t](ptr, size, nitems, stream)
         else:
-            return self._lib.value().call["fread", C.u_int](
+            return self._lib.value().call["fread", size_t](
                 ptr, size, nitems, stream
             )
 
@@ -1439,7 +1421,7 @@ struct Libc[static: Bool]:
             stream: A pointer to a stream.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/rewind.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/rewind.3p.html).
             Fn signature: `void rewind(FILE *stream)`.
         """
 
@@ -1474,7 +1456,7 @@ struct Libc[static: Bool]:
             -1 and set `errno` to indicate the error.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/getline.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/getline.3p.html).
             Fn signature: `ssize_t getline(char **restrict lineptr,
                 size_t *restrict n, FILE *restrict stream);`.
         """
@@ -1487,7 +1469,7 @@ struct Libc[static: Bool]:
                 lineptr, n, stream
             )
 
-    # # FIXME: lineptr should be UnsafePointer[addrinfo]
+    # FIXME: lineptr should be UnsafePointer[addrinfo]
     fn getdelim(
         self,
         lineptr: UnsafePointer[C.ptr_addr],
@@ -1512,7 +1494,7 @@ struct Libc[static: Bool]:
             -1 and set `errno` to indicate the error.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/getdelim.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/getdelim.3p.html).
             Fn signature: `ssize_t getdelim(char **restrict lineptr,
                 size_t *restrict n, FILE *restrict stream);`.
         """
@@ -1560,8 +1542,8 @@ struct Libc[static: Bool]:
 
     @always_inline
     fn read(
-        self, fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int
-    ) -> C.u_int:
+        self, fildes: C.int, buf: UnsafePointer[C.void], nbyte: size_t
+    ) -> ssize_t:
         """Libc POSIX `read` function.
 
         Args:
@@ -1574,29 +1556,29 @@ struct Libc[static: Bool]:
 
         Notes:
             [Reference](https://man7.org/linux/man-pages/man3/read.3p.html).
-            Fn signature: `sssize_t read(int fildes, void *buf, size_t nbyte)`.
+            Fn signature: `size_t read(int fildes, void *buf, size_t nbyte)`.
         """
 
         @parameter
         if static:
-            return external_call["read", C.u_int](fildes, buf, nbyte)
+            return external_call["read", ssize_t](fildes, buf, nbyte)
         else:
-            return self._lib.value().call["read", C.u_int](fildes, buf, nbyte)
+            return self._lib.value().call["read", ssize_t](fildes, buf, nbyte)
 
     @always_inline
     fn pwrite(
         self,
         fildes: C.int,
         buf: UnsafePointer[C.void],
-        nbyte: C.u_int,
+        nbyte: size_t,
         offset: off_t,
-    ) -> C.u_int:
+    ) -> ssize_t:
         """Libc POSIX `pwrite` function.
 
         Args:
             fildes: A File Descriptor to open the file with.
-            buf: A pointer to a buffer to store the read string.
-            nbyte: The maximum number of characters to read.
+            buf: A pointer to a buffer to store.
+            nbyte: The maximum number of characters to write.
             offset: An offset to seek to.
 
         Returns:
@@ -1610,22 +1592,22 @@ struct Libc[static: Bool]:
 
         @parameter
         if static:
-            return external_call["pwrite", C.u_int](fildes, buf, nbyte, offset)
+            return external_call["pwrite", ssize_t](fildes, buf, nbyte, offset)
         else:
-            return self._lib.value().call["pwrite", C.u_int](
+            return self._lib.value().call["pwrite", ssize_t](
                 fildes, buf, nbyte, offset
             )
 
     @always_inline
     fn write(
-        self, fildes: C.int, buf: UnsafePointer[C.void], nbyte: C.u_int
-    ) -> C.u_int:
+        self, fildes: C.int, buf: UnsafePointer[C.void], nbyte: size_t
+    ) -> ssize_t:
         """Libc POSIX `write` function.
 
         Args:
             fildes: A File Descriptor to open the file with.
-            buf: A pointer to a buffer to store the read string.
-            nbyte: The maximum number of characters to read.
+            buf: A pointer to a buffer to store.
+            nbyte: The maximum number of characters to write.
 
         Returns:
             The number of bytes written. Otherwise -1 and `errno` is set.
@@ -1638,9 +1620,9 @@ struct Libc[static: Bool]:
 
         @parameter
         if static:
-            return external_call["write", C.u_int](fildes, buf, nbyte)
+            return external_call["write", ssize_t](fildes, buf, nbyte)
         else:
-            return self._lib.value().call["write", C.u_int](fildes, buf, nbyte)
+            return self._lib.value().call["write", ssize_t](fildes, buf, nbyte)
 
     @always_inline
     fn ftell(self, stream: UnsafePointer[FILE]) -> C.long:
@@ -1653,7 +1635,7 @@ struct Libc[static: Bool]:
             The byte offset form the start. Otherwise -1 and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/ftell.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/ftell.3p.html).
             Fn signature: `long ftell(FILE *stream)`.
         """
 
@@ -1674,7 +1656,7 @@ struct Libc[static: Bool]:
             The byte offset form the start. Otherwise -1 and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/ftell.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/ftell.3p.html).
             Fn signature: `off_t ftello(FILE *stream)`.
         """
 
@@ -1695,7 +1677,7 @@ struct Libc[static: Bool]:
             Value 0 on success, otherwise `EOF` (usually -1) and `errno` is set.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/fflush.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/fflush.3p.html).
             Fn signature: `int fflush(FILE *stream)`.
         """
 
@@ -1713,7 +1695,7 @@ struct Libc[static: Bool]:
             stream: A pointer to a stream.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/clearerr.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/clearerr.3p.html).
             Fn signature: `void clearerr(FILE *stream)`.
         """
 
@@ -1735,7 +1717,7 @@ struct Libc[static: Bool]:
             stream is set, else 0.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/feof.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/feof.3p.html).
             Fn signature: `int feof(FILE *stream)`.
         """
 
@@ -1757,7 +1739,7 @@ struct Libc[static: Bool]:
             is set, else 0.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/ferror.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/ferror.3p.html).
             Fn signature: `int ferror(FILE *stream)`.
         """
 
@@ -1859,7 +1841,7 @@ struct Libc[static: Bool]:
             A 32-bit unsigned integer in network byte order.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/htonl.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
             Fn signature: `uint32_t htonl(uint32_t hostlong)`.
         """
 
@@ -1879,7 +1861,7 @@ struct Libc[static: Bool]:
             A 16-bit unsigned integer in network byte order.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/htonl.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
             Fn signature: `uint16_t htons(uint16_t hostshort)`.
         """
 
@@ -1899,7 +1881,7 @@ struct Libc[static: Bool]:
             A 32-bit unsigned integer in host byte order.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/htonl.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
             Fn signature: `uint32_t ntohl(uint32_t netlong)`.
         """
 
@@ -1919,7 +1901,7 @@ struct Libc[static: Bool]:
             A 16-bit unsigned integer in host byte order.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/htonl.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/htonl.3p.html).
             Fn signature: `uint16_t ntohs(uint16_t netshort)`.
         """
 
@@ -1951,7 +1933,7 @@ struct Libc[static: Bool]:
             error.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3p.html).
             Fn signature: `const char *inet_ntop(int af,
                 const void *restrict src, char *restrict dst, socklen_t size)`.
         """
@@ -1982,7 +1964,7 @@ struct Libc[static: Bool]:
             a valid network address in the specified address family.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/inet_ntop.3p.html).
             Fn signature: `int inet_pton(int af, const char *restrict src,
                 void *restrict dst)`.
         """
@@ -2007,7 +1989,7 @@ struct Libc[static: Bool]:
             indicate error return.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
             Fn signature: `in_addr_t inet_addr(const char *cp)`.
         """
 
@@ -2030,7 +2012,7 @@ struct Libc[static: Bool]:
             Value 1 if successful, 0 if the string is invalid.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/inet_aton.3p.html).
             Fn signature: `int inet_aton(const char *cp, struct in_addr *inp)`.
         """
 
@@ -2050,7 +2032,7 @@ struct Libc[static: Bool]:
             A pointer to the string in IPv4 dotted-decimal notation.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/inet_addr.3p.html).
             Fn signature: `char *inet_ntoa(struct in_addr in)`.
             Allocated buffer is 16-18 bytes depending on implementation.
         """
@@ -2468,7 +2450,7 @@ struct Libc[static: Bool]:
             Value 0 on success, one of several errors otherwise.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/freeaddrinfo.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
             Fn signature: `int getaddrinfo(const char *restrict nodename,
                 const char *restrict servname,
                 const struct addrinfo *restrict hints,
@@ -2496,7 +2478,7 @@ struct Libc[static: Bool]:
             `getaddrinfo()` and `getnameinfo()` functions.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/gai_strerror.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/gai_strerror.3p.html).
             Fn signature: `const char *gai_strerror(int ecode)`.
         """
 
@@ -2522,7 +2504,7 @@ struct Libc[static: Bool]:
             The length of the string.
 
         Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/strlen.3.html).
+            [Reference](https://man7.org/linux/man-pages/man3/strlen.3p.html).
             Fn signature: `size_t strlen(const char *s)`.
         """
 

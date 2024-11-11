@@ -1151,6 +1151,7 @@ alias S_ISVTX = 0o1000
 # Logging constants (syslog.h)
 # ===----------------------------------------------------------------------=== #
 
+# levels
 alias LOG_EMERG = 0
 """A panic condition was reported to all processes."""
 alias LOG_ALERT = 1
@@ -1168,6 +1169,7 @@ alias LOG_INFO = 6
 alias LOG_DEBUG = 7
 """A message useful for debugging programs."""
 
+# options
 alias LOG_PID = 1
 """Log the process ID with each message."""
 alias LOG_CONS = 2
@@ -1181,6 +1183,7 @@ alias LOG_NOWAIT = 0x10
 alias LOG_PERROR = 0x20
 """Log to stderr as well."""
 
+# facilities
 alias LOG_KERN = (0 << 3)
 """Kernel messages."""
 alias LOG_USER = (1 << 3)

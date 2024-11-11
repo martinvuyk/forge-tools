@@ -2,8 +2,8 @@
 
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
-from memory import UnsafePointer, stack_allocation
-from forge_tools.ffi.c.libc import Libc
+from memory import UnsafePointer, stack_allocation, memcmp
+from forge_tools.ffi.c.libc import Libc, TryLibc
 from forge_tools.ffi.c.types import *
 from forge_tools.ffi.c.constants import *
 
@@ -146,10 +146,13 @@ alias error_message = (
 
 
 def _test_errno(libc: Libc):
-    assert_equal(libc.get_errno(), 0)
-    libc.set_errno(1)
-    assert_equal(libc.get_errno(), 1)
-    libc.set_errno(0)  # just in case since it's a global var
+    @parameter
+    for i in range(len(error_message)):
+        errno_msg = error_message.get[i, Tuple[Int, StringLiteral]]()
+        errno = errno_msg.get[0, Int]()
+        libc.set_errno(i)
+        assert_equal(libc.get_errno(), i)
+    libc.set_errno(0)
 
 
 def test_dynamic_errno():
@@ -179,63 +182,88 @@ def test_static_strerror():
 
 
 def _test_perror(libc: Libc):
-    ...
+    @parameter
+    for i in range(len(error_message)):
+        errno_msg = error_message.get[i, Tuple[Int, StringLiteral]]()
+        errno = errno_msg.get[0, Int]()
+        libc.set_errno(errno)
+        libc.perror()
+    libc.set_errno(0)
 
 
 def test_dynamic_perror():
-    ...
+    _test_perror(Libc[static=False]("libc.so.6"))
 
 
 def test_static_perror():
-    ...
+    _test_perror(Libc[static=True]())
 
 
-def _test_openlog(libc: Libc):
-    ...
+alias log_levels = (
+    LOG_EMERG,
+    LOG_ALERT,
+    LOG_CRIT,
+    LOG_ERR,
+    LOG_WARNING,
+    LOG_NOTICE,
+    LOG_INFO,
+    LOG_DEBUG,
+)
+alias log_options = (
+    LOG_PID,
+    LOG_CONS,
+    LOG_ODELAY,
+    LOG_NDELAY,
+    LOG_NOWAIT,
+    LOG_PERROR,
+)
+alias log_facilities = (
+    LOG_KERN,
+    LOG_USER,
+    LOG_MAIL,
+    LOG_DAEMON,
+    LOG_AUTH,
+    LOG_SYSLOG,
+    LOG_LPR,
+    LOG_NEWS,
+    LOG_UUCP,
+    LOG_CRON,
+    LOG_AUTHPRIV,
+    LOG_FTP,
+)
 
 
-def test_dynamic_openlog():
-    ...
+def _test_log(libc: Libc):
+    with TryLibc(libc):
+        name = "log_tester"
+        identity = char_ptr(name)
+
+        @parameter
+        for i in range(len(log_levels)):
+            alias level = log_levels.get[i, Int]()
+
+            @parameter
+            for j in range(len(log_options)):
+                alias option = log_options.get[j, Int]()
+
+                @parameter
+                for k in range(len(log_facilities)):
+                    alias facility = log_facilities.get[k, Int]()
+                    libc.openlog(identity, option, facility)
+                    _ = libc.setlogmask(level)
+                    libc.syslog(
+                        level, char_ptr("test i:%d, j:%d, k:%d"), i, j, k
+                    )
+                    libc.closelog()
+        _ = name
 
 
-def test_static_openlog():
-    ...
+def test_dynamic_log():
+    _test_log(Libc[static=False]("libc.so.6"))
 
 
-def _test_syslog(libc: Libc):
-    ...
-
-
-def test_dynamic_syslog():
-    ...
-
-
-def test_static_syslog():
-    ...
-
-
-def _test_setlogmask(libc: Libc):
-    ...
-
-
-def test_dynamic_setlogmask():
-    ...
-
-
-def test_static_setlogmask():
-    ...
-
-
-def _test_closelog(libc: Libc):
-    ...
-
-
-def test_dynamic_closelog():
-    ...
-
-
-def test_static_closelog():
-    ...
+def test_static_log():
+    _test_log(Libc[static=True]())
 
 
 def main():
@@ -245,11 +273,5 @@ def main():
     test_static_strerror()
     test_dynamic_perror()
     test_static_perror()
-    test_dynamic_openlog()
-    test_static_openlog()
-    test_dynamic_syslog()
-    test_static_syslog()
-    test_dynamic_setlogmask()
-    test_static_setlogmask()
-    test_dynamic_closelog()
-    test_static_closelog()
+    test_dynamic_log()
+    test_static_log()

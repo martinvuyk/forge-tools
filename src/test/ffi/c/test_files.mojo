@@ -5,7 +5,7 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 
 from pathlib import _dir_of_current_file
 from time import sleep
-from memory import UnsafePointer, memset, memcpy, memcmp
+from memory import UnsafePointer, memset, memcpy, memcmp, stack_allocation
 from random import random_ui64
 
 from forge_tools.ffi.c.types import C, char_ptr, FILE
@@ -245,7 +245,7 @@ def _test_fput_fget(libc: Libc, suffix: String):
         filedes = libc.creat(ptr, 0o666)
         assert_true(filedes != -1)
 
-        # print to file
+        # write
         filedes = libc.open(ptr, O_RDWR)
         assert_true(filedes != -1)
         stream = libc.fdopen(filedes, char_ptr(FM_READ_WRITE))
@@ -257,6 +257,7 @@ def _test_fput_fget(libc: Libc, suffix: String):
         assert_true(libc.fflush(stream) != EOF)  # flush stream
         stream = libc.fopen(ptr, char_ptr(FM_READ_WRITE))
 
+        # read and compare
         for i in range(size - 1):
             assert_equal(libc.fgetc(stream), i + 1)
 
@@ -264,10 +265,12 @@ def _test_fput_fget(libc: Libc, suffix: String):
         memset(a, ord("a"), size - 1)
         a[size - 1] = 0
 
+        # write
         stream = libc.fopen(ptr, char_ptr(FM_READ_WRITE))
         assert_true(libc.fputs(a, stream) != EOF)
         assert_true(libc.fclose(stream) != EOF)
 
+        # read and compare
         stream = libc.fopen(ptr, char_ptr(FM_READ_WRITE))
         b = UnsafePointer[C.char].alloc(size)
         p = libc.fgets(b, size, stream)
@@ -275,6 +278,7 @@ def _test_fput_fget(libc: Libc, suffix: String):
         assert_true(libc.fflush(stream) != EOF)  # flush stream
         assert_equal(0, memcmp(p, a, size))
 
+        # cleanup
         assert_true(libc.fclose(stream) != EOF)
         assert_true(libc.remove(ptr) != -1)
         a.free()
@@ -292,6 +296,60 @@ def test_static_fput_fget():
 
 def _test_dprintf(libc: Libc, suffix: String):
     file = str(_dir_of_current_file() / ("dummy_test_dprintf" + suffix))
+    ptr = char_ptr(file)
+    with TryLibc(libc):
+        filedes = libc.creat(ptr, 0o666)
+        assert_true(filedes != -1)
+
+        # setup
+        alias `%` = C.char(ord("%"))
+        alias `d` = C.char(ord("d"))
+        alias `1` = C.char(ord("1"))
+        a = UnsafePointer[C.char].alloc(9)
+        b = UnsafePointer[C.char].alloc(5)
+        c = UnsafePointer[C.char].alloc(5)
+
+        # print
+        filedes = libc.open(ptr, O_RDWR)
+        assert_true(filedes != -1)
+        a[0], a[1], a[2], a[3], a[4] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.dprintf(filedes, a, C.int(1), C.int(1))
+        assert_equal(num_bytes, 2)
+        assert_true(libc.close(filedes) != -1)
+
+        # read and compare
+        stream = libc.fopen(ptr, char_ptr(FM_READ_WRITE))
+        p = libc.fgets(b, 3, stream)
+        assert_equal(b, p)
+        assert_true(libc.fflush(stream) != EOF)  # flush stream
+        c[0], c[1], c[2] = `1`, `1`, C.char(0)
+        assert_equal(0, memcmp(p, c, 3))
+
+        # print
+        filedes = libc.open(ptr, O_RDWR)
+        assert_true(filedes != -1)
+        a[4], a[5], a[6], a[7], a[8] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.dprintf(
+            filedes, a, C.int(1), C.int(1), C.int(1), C.int(1)
+        )
+        assert_equal(num_bytes, 4)
+        assert_true(libc.close(filedes) != -1)
+
+        # read and compare
+        stream = libc.fopen(ptr, char_ptr(FM_READ_WRITE))
+        p = libc.fgets(b, 5, stream)
+        assert_equal(b, p)
+        assert_true(libc.fflush(stream) != EOF)  # flush stream
+        c[0], c[1], c[2], c[3], c[4] = `1`, `1`, `1`, `1`, C.char(0)
+        assert_equal(0, memcmp(p, c, 5))
+
+        # cleanup
+        assert_true(libc.fclose(stream) != EOF)
+        assert_true(libc.remove(ptr) != -1)
+        a.free()
+        b.free()
+        c.free()
+    _ = file^
 
 
 def test_dynamic_dprintf():
@@ -303,7 +361,29 @@ def test_static_dprintf():
 
 
 def _test_printf(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_printf" + suffix))
+    with TryLibc(libc):
+        # setup
+        alias `%` = C.char(ord("%"))
+        alias `d` = C.char(ord("d"))
+        alias `1` = C.char(ord("1"))
+        a = UnsafePointer[C.char].alloc(9)
+        b = UnsafePointer[C.char].alloc(5)
+        c = UnsafePointer[C.char].alloc(5)
+
+        # print
+        a[0], a[1], a[2], a[3], a[4] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.printf(a, C.int(1), C.int(1))
+        assert_equal(num_bytes, 2)
+
+        # print
+        a[4], a[5], a[6], a[7], a[8] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.printf(a, C.int(1), C.int(1), C.int(1), C.int(1))
+        assert_equal(num_bytes, 4)
+
+        # cleanup
+        a.free()
+        b.free()
+        c.free()
 
 
 def test_dynamic_printf():
@@ -314,20 +394,38 @@ def test_static_printf():
     _test_printf(Libc[static=True](), "_static")
 
 
-def _test_snprintf(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_snprintf" + suffix))
-
-
-def test_dynamic_snprintf():
-    _test_snprintf(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_snprintf():
-    _test_snprintf(Libc[static=True](), "_static")
-
-
 def _test_sprintf(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_sprintf" + suffix))
+    with TryLibc(libc):
+        # setup
+        alias `%` = C.char(ord("%"))
+        alias `d` = C.char(ord("d"))
+        alias `1` = C.char(ord("1"))
+        a = UnsafePointer[C.char].alloc(9)
+        b = UnsafePointer[C.char].alloc(5)
+        c = UnsafePointer[C.char].alloc(5)
+
+        # print
+        a[0], a[1], a[2], a[3], a[4] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.sprintf(b, a, C.int(1), C.int(1))
+        assert_equal(num_bytes, 2)
+
+        # read and compare
+        c[0], c[1], c[2] = `1`, `1`, C.char(0)
+        assert_equal(0, memcmp(b, c, 3))
+
+        # print
+        a[4], a[5], a[6], a[7], a[8] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.sprintf(b, a, C.int(1), C.int(1), C.int(1), C.int(1))
+        assert_equal(num_bytes, 4)
+
+        # read and compare
+        c[2], c[3], c[4] = `1`, `1`, C.char(0)
+        assert_equal(0, memcmp(b, c, 5))
+
+        # cleanup
+        a.free()
+        b.free()
+        c.free()
 
 
 def test_dynamic_sprintf():
@@ -338,8 +436,85 @@ def test_static_sprintf():
     _test_sprintf(Libc[static=True](), "_static")
 
 
+def _test_snprintf(libc: Libc, suffix: String):
+    with TryLibc(libc):
+        # setup
+        alias `%` = C.char(ord("%"))
+        alias `d` = C.char(ord("d"))
+        alias `1` = C.char(ord("1"))
+        a = UnsafePointer[C.char].alloc(9)
+        b = UnsafePointer[C.char].alloc(5)
+        c = UnsafePointer[C.char].alloc(5)
+
+        # print
+        a[0], a[1], a[2], a[3], a[4] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.snprintf(b, 3, a, C.int(1), C.int(1))
+        assert_equal(num_bytes, 2)
+
+        # read and compare
+        c[0], c[1], c[2] = `1`, `1`, C.char(0)
+        assert_equal(0, memcmp(b, c, 3))
+
+        # print
+        a[4], a[5], a[6], a[7], a[8] = `%`, `d`, `%`, `d`, C.char(0)
+        num_bytes = libc.snprintf(
+            b, 5, a, C.int(1), C.int(1), C.int(1), C.int(1)
+        )
+        assert_equal(num_bytes, 4)
+
+        # read and compare
+        c[2], c[3], c[4] = `1`, `1`, C.char(0)
+        assert_equal(0, memcmp(b, c, 5))
+
+        # cleanup
+        a.free()
+        b.free()
+        c.free()
+
+
+def test_dynamic_snprintf():
+    _test_snprintf(Libc[static=False]("libc.so.6"), "_dynamic")
+
+
+def test_static_snprintf():
+    _test_snprintf(Libc[static=True](), "_static")
+
+
 def _test_fscanf(libc: Libc, suffix: String):
     file = str(_dir_of_current_file() / ("dummy_test_fscanf" + suffix))
+    ptr = char_ptr(file)
+    with TryLibc(libc):
+        filedes = libc.creat(ptr, 0o666)
+        assert_true(filedes != -1)
+
+        # setup
+        alias `1` = C.char(ord("1"))
+        a = UnsafePointer[C.char].alloc(2)
+
+        filedes = libc.open(ptr, O_RDWR)
+        assert_true(filedes != -1)
+        a[0], a[1] = `1`, C.char(0)
+
+        stream = libc.fdopen(filedes, char_ptr(FM_READ_WRITE))
+
+        # print
+        num_bytes = libc.fputs(a, stream)
+
+        # read and compare
+        value = stack_allocation[1, C.int]()
+        value[0] = 0
+        assert_true(libc.fseek(stream, 0) != -1)
+        scanned = libc.fscanf(stream, char_ptr("%d"), value)
+        assert_true(libc.fflush(stream) != EOF)
+        assert_equal(num_bytes, 1)
+        assert_equal(scanned, 1)
+        assert_equal(value[0], 1)
+
+        # cleanup
+        assert_true(libc.close(filedes) != -1)
+        assert_true(libc.remove(ptr) != -1)
+        a.free()
+    _ = file^
 
 
 def test_dynamic_fscanf():
@@ -348,150 +523,6 @@ def test_dynamic_fscanf():
 
 def test_static_fscanf():
     _test_fscanf(Libc[static=True](), "_static")
-
-
-def _test_scanf(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_scanf" + suffix))
-
-
-def test_dynamic_scanf():
-    _test_scanf(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_scanf():
-    _test_scanf(Libc[static=True](), "_static")
-
-
-def _test_sscanf(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_sscanf" + suffix))
-
-
-def test_dynamic_sscanf():
-    _test_sscanf(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_sscanf():
-    _test_sscanf(Libc[static=True](), "_static")
-
-
-def _test_fread(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_fread" + suffix))
-
-
-def test_dynamic_fread():
-    _test_fread(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_fread():
-    _test_fread(Libc[static=True](), "_static")
-
-
-def _test_rewind(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_rewind" + suffix))
-
-
-def test_dynamic_rewind():
-    _test_rewind(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_rewind():
-    _test_rewind(Libc[static=True](), "_static")
-
-
-def _test_getline(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_getline" + suffix))
-
-
-def test_dynamic_getline():
-    _test_getline(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_getline():
-    _test_getline(Libc[static=True](), "_static")
-
-
-def _test_getdelim(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_getdelim" + suffix))
-
-
-def test_dynamic_getdelim():
-    _test_getdelim(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_getdelim():
-    _test_getdelim(Libc[static=True](), "_static")
-
-
-def _test_pread(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_pread" + suffix))
-
-
-def test_dynamic_pread():
-    _test_pread(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_pread():
-    _test_pread(Libc[static=True](), "_static")
-
-
-def _test_read(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_read" + suffix))
-
-
-def test_dynamic_read():
-    _test_read(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_read():
-    _test_read(Libc[static=True](), "_static")
-
-
-def _test_pwrite(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_pwrite" + suffix))
-
-
-def test_dynamic_pwrite():
-    _test_pwrite(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_pwrite():
-    _test_pwrite(Libc[static=True](), "_static")
-
-
-def _test_write(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_write" + suffix))
-
-
-def test_dynamic_write():
-    _test_write(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_write():
-    _test_write(Libc[static=True](), "_static")
-
-
-def _test_clearerr(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_clearerr" + suffix))
-
-
-def test_dynamic_clearerr():
-    _test_clearerr(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_clearerr():
-    _test_clearerr(Libc[static=True](), "_static")
-
-
-def _test_ferror(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_ferror" + suffix))
-
-
-def test_dynamic_ferror():
-    _test_ferror(Libc[static=False]("libc.so.6"), "_dynamic")
-
-
-def test_static_ferror():
-    _test_ferror(Libc[static=True](), "_static")
 
 
 def _test_fcntl(libc: Libc, suffix: String):
@@ -520,6 +551,12 @@ def test_static_fcntl():
 
 def _test_ioctl(libc: Libc, suffix: String):
     file = str(_dir_of_current_file() / ("dummy_test_ioctl" + suffix))
+    ptr = char_ptr(file)
+    with TryLibc(libc):
+        # TODO: a thorough test using the most often used functionality
+        # see https://man7.org/linux/man-pages/man3/ioctl.3p.html
+        ...
+    _ = file^
 
 
 def test_dynamic_ioctl():
@@ -559,30 +596,6 @@ def main():
     test_dynamic_sprintf()
     test_static_fscanf()
     test_dynamic_fscanf()
-    test_static_scanf()
-    test_dynamic_scanf()
-    test_static_sscanf()
-    test_dynamic_sscanf()
-    test_static_fread()
-    test_dynamic_fread()
-    test_static_rewind()
-    test_dynamic_rewind()
-    test_static_getline()
-    test_dynamic_getline()
-    test_static_getdelim()
-    test_dynamic_getdelim()
-    test_static_pread()
-    test_dynamic_pread()
-    test_static_read()
-    test_dynamic_read()
-    test_static_pwrite()
-    test_dynamic_pwrite()
-    test_static_write()
-    test_dynamic_write()
-    test_static_clearerr()
-    test_dynamic_clearerr()
-    test_static_ferror()
-    test_dynamic_ferror()
     test_static_fcntl()
     test_dynamic_fcntl()
     test_static_ioctl()
