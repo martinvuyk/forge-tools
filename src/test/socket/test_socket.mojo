@@ -54,7 +54,7 @@ def test_htonl():
 def test_inet_aton():
     res = Socket.inet_aton(String("123.45.67.89"))
     assert_true(res)
-    value: UInt32 = 0b01111011001011010100001101011001
+    value = UInt32(0b01111011001011010100001101011001)
 
     @parameter
     if not is_big_endian():
@@ -67,7 +67,7 @@ def test_inet_aton():
 
 
 def test_inet_ntoa():
-    value: UInt32 = 0b01111011001011010100001101011001
+    value = UInt32(0b01111011001011010100001101011001)
 
     @parameter
     if not is_big_endian():
@@ -96,7 +96,7 @@ def test_server_sync_ipv4():
 
 def test_create_server_sync_ipv4():
     server = Socket.create_server(("0.0.0.0", 8002))
-    _ = server
+    _ = server^
 
 
 # def test_create_connection_sync_ipv4():

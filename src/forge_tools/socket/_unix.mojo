@@ -18,6 +18,7 @@ from forge_tools.ffi.c.types import (
     socklen_t,
     addrinfo,
     char_ptr_to_string,
+    char_ptr,
     sa_family_t,
 )
 from forge_tools.ffi.c.constants import (
@@ -92,12 +93,11 @@ struct _UnixSocket[
         """Closes the Socket if it's the last reference to its
         `Arc[FileDescriptor]`.
         """
+        alias lib = Self.lib
         if self.fd.count() == 1:
-            err = self.lib.shutdown(self.fd[].value, SHUT_RDWR)
+            err = lib.shutdown(self.fd[].value, SHUT_RDWR)
             if err == -1:
-                message = char_ptr_to_string(
-                    self.lib.strerror(self.lib.get_errno())
-                )
+                message = char_ptr_to_string(lib.strerror(lib.get_errno()))
                 raise Error("Failed trying to close the socket: " + message)
 
     fn __del__(owned self):
@@ -132,7 +132,7 @@ struct _UnixSocket[
             addr = rebind[IPv4Addr](address)
             port = self.lib.htons(addr.port)
             ip_buf = stack_allocation[4, C.void]()
-            ip_ptr = addr.host.unsafe_ptr().bitcast[C.char]()
+            ip_ptr = char_ptr(addr.host)
             err = self.lib.inet_pton(Self._sock_family, ip_ptr, ip_buf)
             if err == 0:
                 raise Error("Invalid Address.")
@@ -340,13 +340,13 @@ struct _UnixSocket[
         hints.ai_protocol = Self._sock_protocol
         hints_p = UnsafePointer[addrinfo].address_of(hints)
         nodename = str(address)
-        nodename_p = nodename.unsafe_ptr().bitcast[C.char]()
-        servname_p = C.NULL.bitcast[C.char]()
         result = addrinfo()
         alias UP = UnsafePointer
         res_p = C.ptr_addr(int(UP[addrinfo].address_of(result)))
         res_p_p = UP[C.ptr_addr].address_of(res_p)
-        err = Self.lib.getaddrinfo(nodename_p, servname_p, hints_p, res_p_p)
+        err = Self.lib.getaddrinfo(
+            char_ptr(nodename), char_ptr(C.NULL), hints_p, res_p_p
+        )
         if err != 0:
             msg = char_ptr_to_string(Self.lib.strerror(err))
             raise Error("Error in getaddrinfo(). Code: " + msg)

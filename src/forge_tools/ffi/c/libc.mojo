@@ -50,9 +50,9 @@ struct Libc[*, static: Bool]:
 
         - Some exceptions are made for Microsoft Windows. Pull requests to extend
             support are welcome.
-        - All reference links point to the POSIX section of the linux manpages,
-            to read the linux documentation which is often more thorough in
-            explaining caveats (applicable to Linux, but similar in other
+        - All reference links point to the POSIX section of the linux manual
+            pages, to read the linux documentation which is often more thorough
+            in explaining caveats (applicable to Linux, but similar in other
             implementations), replace the end of the link `3p.html` with
             `3.html`.
     """
@@ -1785,47 +1785,48 @@ struct Libc[*, static: Bool]:
         else:
             return self._lib.value().call["fcntl", C.int](fildes, cmd, args)
 
-    @always_inline
-    fn ioctl[
-        *T: AnyType
-    ](self, fildes: C.int, request: C.int, *args: *T) -> C.int:
-        """Libc POSIX `ioctl` function.
+    # TODO: this needs to be tested thoroughly
+    # @always_inline
+    # fn ioctl[
+    #     *T: AnyType
+    # ](self, fildes: C.int, request: C.int, *args: *T) -> C.int:
+    #     """Libc POSIX `ioctl` function.
 
-        Parameters:
-            T: The types of the arguments.
+    #     Parameters:
+    #         T: The types of the arguments.
 
-        Args:
-            fildes: A File Descriptor to open the file with.
-            request: An offset to seek to.
-            args: The extra args.
+    #     Args:
+    #         fildes: A File Descriptor to open the file with.
+    #         request: An offset to seek to.
+    #         args: The extra args.
 
-        Returns:
-            Upon successful completion, `ioctl()` shall return a value other
-            than -1 that depends upon the STREAMS device control function.
-            Otherwise, it shall return -1 and set `errno` to indicate the error.
+    #     Returns:
+    #         Upon successful completion, `ioctl()` shall return a value other
+    #         than -1 that depends upon the STREAMS device control function.
+    #         Otherwise, it shall return -1 and set `errno` to indicate the error.
 
-        Notes:
-            [Reference](https://man7.org/linux/man-pages/man3/ioctl.3p.html).
-            Fn signature: `int ioctl(int fildes, int request, ...)`.
-        """
+    #     Notes:
+    #         [Reference](https://man7.org/linux/man-pages/man3/ioctl.3p.html).
+    #         Fn signature: `int ioctl(int fildes, int request, ...)`.
+    #     """
 
-        @parameter
-        if static:
-            # FIXME: externall_call should handle this
-            return __mlir_op.`pop.external_call`[
-                func = "ioctl".value,
-                variadicType = __mlir_attr[
-                    `(`,
-                    `!pop.scalar<si32>,`,
-                    `!pop.scalar<si32>`,
-                    `) -> !pop.scalar<si32>`,
-                ],
-                _type = C.int,
-            ](fildes, request, args.get_loaded_kgen_pack())
-        else:
-            return self._lib.value().call["ioctl", C.int](
-                fildes, request, args.get_loaded_kgen_pack()
-            )
+    #     @parameter
+    #     if static:
+    #         # FIXME: externall_call should handle this
+    #         return __mlir_op.`pop.external_call`[
+    #             func = "ioctl".value,
+    #             variadicType = __mlir_attr[
+    #                 `(`,
+    #                 `!pop.scalar<si32>,`,
+    #                 `!pop.scalar<si32>`,
+    #                 `) -> !pop.scalar<si32>`,
+    #             ],
+    #             _type = C.int,
+    #         ](fildes, request, args.get_loaded_kgen_pack())
+    #     else:
+    #         return self._lib.value().call["ioctl", C.int](
+    #             fildes, request, args.get_loaded_kgen_pack()
+    #         )
 
     # ===------------------------------------------------------------------=== #
     # Networking
@@ -2096,11 +2097,11 @@ struct Libc[*, static: Bool]:
 
         @parameter
         if static:
-            return external_call["socket", C.int](
+            return external_call["socketpair", C.int](
                 domain, type, protocol, socket_vector
             )
         else:
-            return self._lib.value().call["socket", C.int](
+            return self._lib.value().call["socketpair", C.int](
                 domain, type, protocol, socket_vector
             )
 
@@ -2119,7 +2120,7 @@ struct Libc[*, static: Bool]:
             level: Protocol Level see SOL_ alises.
             option_name: Option name see SO_ alises.
             option_value: A pointer to a buffer containing the option value.
-            option_len: The size of the buffer pointed by option_value.
+            option_len: The **byte size** of the buffer pointed by option_value.
 
         Returns:
             Value `0` on success, `-1` on error and `errno` is set.
@@ -2408,13 +2409,13 @@ struct Libc[*, static: Bool]:
                 socket, message, length, flags, dest_addr, dest_len
             )
 
-    fn shutdown(self, socket: C.int, how: C.int) -> C.int:
+    fn shutdown(self, socket: C.int, how: C.int = SHUT_RDWR) -> C.int:
         """Libc POSIX `shutdown` function.
 
         Args:
             socket: The socket's file descriptor.
-            how: A pointer to a buffer to store the length of the address of the
-                accepted socket.
+            how: Specifies the type of shutdown: {`SHUT_RD`, `SHUT_WR`,
+                `SHUT_RDWR`}.
 
         Returns:
             Value `0` on success, `-1` on error and `errno` is set.

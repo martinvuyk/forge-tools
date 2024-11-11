@@ -926,6 +926,36 @@ alias IPV6_PMTUDISC_DO = 2
 alias IPV6_PMTUDISC_PROBE = 3
 """Ignore dst pmtu."""
 
+# netdb.h
+alias EAI_BADFLAGS = -1
+"""Bad value for ai_flags."""
+alias EAI_NONAME = -2
+"""Name or service not known."""
+alias EAI_AGAIN = -3
+"""Temporary failure in name resolution."""
+alias EAI_FAIL = -4
+"""Non-recoverable failure in name resolution."""
+alias EAI_NODATA = -5
+"""No address associated with hostname."""
+alias EAI_FAMILY = -6
+"""Error: ai_family not supported."""
+alias EAI_SOCKTYPE = -7
+"""Error: ai_socktype not supported."""
+alias EAI_SERVICE = -8
+"""Servname not supported for ai_socktype."""
+alias EAI_ADDRFAMILY = -9
+"""Address family for hostname not supported."""
+alias EAI_MEMORY = -10
+"""Memory allocation failure."""
+alias EAI_SYSTEM = -11
+"""System error."""
+alias EAI_BADHINTS = -12
+"""Bad value for hints."""
+alias EAI_PROTOCOL = -13
+"""Resolved protocol is unknown."""
+alias EAI_OVERFLOW = -14
+"""Argument buffer overflow."""
+
 # ===----------------------------------------------------------------------=== #
 # File constants (stdio.h, fcntl.h, etc.)
 # ===----------------------------------------------------------------------=== #
