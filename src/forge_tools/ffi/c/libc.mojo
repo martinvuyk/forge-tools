@@ -3,7 +3,7 @@
 from collections import Optional
 from memory import UnsafePointer, stack_allocation
 from sys.ffi import external_call, DLHandle
-from sys.info import os_is_windows, triple_is_nvidia_cuda
+from sys.info import os_is_windows, triple_is_nvidia_cuda, os_is_macos
 
 from .types import C
 
@@ -99,16 +99,13 @@ struct Libc[*, static: Bool]:
                 _ = self._lib.value().call["_get_errno", C.void](errno)
             return errno[]
         else:
+            alias loc = "___error" if os_is_macos() else "__errno_location"
 
             @parameter
             if static:
-                return external_call[
-                    "__errno_location", UnsafePointer[C.int]
-                ]()[]
+                return external_call[loc, UnsafePointer[C.int]]()[]
             else:
-                return self._lib.value().call[
-                    "__errno_location", UnsafePointer[C.int]
-                ]()[]
+                return self._lib.value().call[loc, UnsafePointer[C.int]]()[]
 
     fn set_errno(self, errno: C.int):
         """Set the `errno` global variable for the current thread.
@@ -126,16 +123,15 @@ struct Libc[*, static: Bool]:
             else:
                 _ = self._lib.value().call["_set_errno", C.int](errno)
         else:
+            alias loc = "___error" if os_is_macos() else "__errno_location"
 
             @parameter
             if static:
-                _ = external_call["__errno_location", UnsafePointer[C.int]]()[
+                _ = external_call[loc, UnsafePointer[C.int]]()[0] = errno
+            else:
+                _ = self._lib.value().call[loc, UnsafePointer[C.int]]()[
                     0
                 ] = errno
-            else:
-                _ = self._lib.value().call[
-                    "__errno_location", UnsafePointer[C.int]
-                ]()[0] = errno
 
     fn strerror(self, errnum: C.int) -> UnsafePointer[C.char]:
         """Libc POSIX `strerror` function.
