@@ -17,7 +17,7 @@ def _test_open_close(libc: Libc, suffix: String):
     file = str(_dir_of_current_file() / ("dummy_test_open_close" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
-        filedes = libc.open(ptr, O_WRONLY | O_RDONLY | O_CREAT | O_TRUNC, 0o666)
+        filedes = libc.open(ptr, O_RDWR | O_CREAT | O_TRUNC, 0o666)
         assert_true(filedes != -1)
         sleep(0.05)
         assert_true(libc.close(filedes) != -1)
@@ -202,9 +202,7 @@ def _test_fseek_ftell(libc: Libc, suffix: String):
         assert_true(filedes != -1)
 
         # print to file
-        filedes = libc.open(ptr, O_RDWR)
-        assert_true(filedes != -1)
-        stream = libc.fdopen(filedes, char_ptr(FM_WRITE))
+        stream = libc.fopen(ptr, char_ptr(FM_WRITE))
         assert_true(stream != C.NULL.bitcast[FILE]())
         size = 100
         a = UnsafePointer[Byte].alloc(size)

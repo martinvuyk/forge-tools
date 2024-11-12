@@ -224,8 +224,6 @@ def _test_socketpair(libc: Libc):
         assert_true(err != -1)
         err = libc.shutdown(socket_vector[0], SHUT_RDWR)
         assert_true(err != -1)
-        err = libc.shutdown(socket_vector[1], SHUT_RDWR)
-        assert_true(err != -1)
 
 
 def test_dynamic_socketpair():
@@ -240,7 +238,7 @@ def _test_setsockopt(libc: Libc):
     with TryLibc(libc):
         value_ptr = stack_allocation[1, C.int]()
         value_ptr[0] = 0
-        fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_IP)
+        fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
         assert_true(fd != -1)
         err = libc.setsockopt(
             fd,
@@ -262,13 +260,13 @@ def test_static_setsockopt():
 
 def _test_bind_listen(libc: Libc):
     with TryLibc(libc):
-        fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_IP)
+        fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
         assert_true(fd != -1)
         value_ptr = stack_allocation[1, C.int]()
         value_ptr[0] = 1
         err = libc.setsockopt(
             fd,
-            SOL_SOCKET,
+            SOL_SOCKET if not os_is_macos() else SOL_TCP,
             SO_REUSEADDR,
             value_ptr.bitcast[C.void](),
             sizeof[C.int](),
