@@ -4,6 +4,7 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 from sys.info import is_big_endian, sizeof
 from memory import stack_allocation, UnsafePointer
 from utils import StaticTuple
+from sys.info import os_is_macos
 
 from forge_tools.ffi.c.libc import Libc, TryLibc
 from forge_tools.ffi.c.types import (
@@ -178,12 +179,12 @@ def test_static_inet_ntoa():
 
 
 alias socket_combinations = (
-    (AF_INET, SOCK_STREAM, IPPROTO_IP),
-    (AF_INET, SOCK_DGRAM, IPPROTO_IP),
-    # (AF_INET, SOCK_SEQPACKET, IPPROTO_SCTP), # unsupported MacOS 14
-    (AF_INET6, SOCK_STREAM, IPPROTO_IP),
-    (AF_INET6, SOCK_DGRAM, IPPROTO_IP),
-    # (AF_INET6, SOCK_SEQPACKET, IPPROTO_SCTP), # unsupported MacOS 14
+    (AF_INET, SOCK_STREAM, IPPROTO_TCP),
+    (AF_INET, SOCK_DGRAM, IPPROTO_UDP),
+    (AF_INET, SOCK_SEQPACKET, IPPROTO_SCTP),
+    (AF_INET6, SOCK_STREAM, IPPROTO_TCP),
+    (AF_INET6, SOCK_DGRAM, IPPROTO_UDP),
+    (AF_INET6, SOCK_SEQPACKET, IPPROTO_SCTP),
 )
 
 
@@ -196,6 +197,8 @@ def _test_socket_create(libc: Libc):
             alias address_family = combo.get[0, Int]()
             alias socket_type = combo.get[1, Int]()
             alias socket_protocol = combo.get[2, Int]()
+            if socket_protocol == IPPROTO_SCTP and os_is_macos():
+                continue
             fd = libc.socket(address_family, socket_type, socket_protocol)
             assert_true(fd != -1)
 
