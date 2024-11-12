@@ -6,7 +6,7 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 from pathlib import _dir_of_current_file
 from time import sleep
 from memory import UnsafePointer, memset, memcpy, memcmp, stack_allocation
-from random import random_ui64
+from sys.info import os_is_macos
 
 from forge_tools.ffi.c.types import C, char_ptr, FILE
 from forge_tools.ffi.c.libc import TryLibc, Libc
@@ -17,12 +17,14 @@ def _test_open_close(libc: Libc, suffix: String):
     file = str(_dir_of_current_file() / ("dummy_test_open_close" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
-        filedes = libc.open(ptr, O_RDWR | O_CREAT | O_TRUNC, 0o666)
+        filedes = libc.open(ptr, O_RDWR | O_CREAT | O_TRUNC | O_NONBLOCK, 0o666)
         assert_true(filedes != -1)
         sleep(0.05)
         assert_true(libc.close(filedes) != -1)
         for s in List(O_RDONLY, O_WRONLY, O_RDWR):
-            filedes = libc.open(ptr, s[])
+            if os_is_macos() and s[] != O_RDONLY:  # Permission denied
+                continue
+            filedes = libc.open(ptr, s[] | O_NONBLOCK)
             assert_true(filedes != -1)
             sleep(0.05)
             assert_true(libc.close(filedes) != -1)
@@ -204,12 +206,28 @@ def _test_fseek_ftell(libc: Libc, suffix: String):
         # print to file
         stream = libc.fopen(ptr, char_ptr(FM_WRITE))
         assert_true(stream != C.NULL.bitcast[FILE]())
-        size = 100
-        a = UnsafePointer[Byte].alloc(size)
-        for i in range(size - 1):
-            a[i] = i + 1
+        # MacOS seems to execute backspace instead of printing it, so lets just
+        # test textual characters
+        size = ord("~") - ord(" ")
+        a = UnsafePointer[C.char].alloc(size)
+        idx = 0
+        for i in range(ord(" "), ord("~")):
+            if i == ord("\\"):  # otherwise escapes
+                a[idx] = i + 1
+            elif i == ord("%"):
+
+                @parameter
+                if os_is_macos():
+                    # MacOS is not compliant with ASCII
+                    # triggers format specifier if it's not '%%'
+                    a[idx] = i + 1
+                else:
+                    a[idx] = i
+            else:
+                a[idx] = i
+            idx += 1
         a[size - 1] = 0
-        num_bytes = libc.fprintf(stream, char_ptr(a))
+        num_bytes = libc.fprintf(stream, a)
         assert_equal(num_bytes, size - 1)
 
         assert_true(libc.fflush(stream) != EOF)  # flush stream

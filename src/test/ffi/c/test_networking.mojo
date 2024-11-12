@@ -4,7 +4,7 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 from sys.info import is_big_endian, sizeof
 from memory import stack_allocation, UnsafePointer
 from utils import StaticTuple
-from sys.info import os_is_macos
+from sys.info import os_is_macos, os_is_linux, os_is_windows
 
 from forge_tools.ffi.c.libc import Libc, TryLibc
 from forge_tools.ffi.c.types import (
@@ -15,6 +15,7 @@ from forge_tools.ffi.c.types import (
     sockaddr_in,
     sockaddr,
     addrinfo,
+    socklen_t,
 )
 from forge_tools.ffi.c.constants import *
 
@@ -207,6 +208,9 @@ def _test_socket_create(libc: Libc):
                     continue
             fd = libc.socket(address_family, socket_type, socket_protocol)
             assert_true(fd != -1)
+            if socket_protocol == SOCK_STREAM:
+                err = libc.shutdown(fd, SHUT_RDWR)
+                assert_true(err != -1)
 
 
 def test_dynamic_socket_create():
@@ -237,17 +241,48 @@ def test_static_socketpair():
 def _test_setsockopt(libc: Libc):
     with TryLibc(libc):
         value_ptr = stack_allocation[1, C.int]()
-        value_ptr[0] = 0
-        fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
-        assert_true(fd != -1)
-        err = libc.setsockopt(
-            fd,
-            SOL_SOCKET,
-            SO_REUSEADDR,
-            value_ptr.bitcast[C.void](),
-            sizeof[C.int](),
-        )
-        assert_true(err != -1)
+        value_ptr[0] = C.int(1)
+        null_ptr = value_ptr.bitcast[C.void]()
+        size = socklen_t(sizeof[C.int]())
+
+        @parameter
+        if os_is_linux():
+            fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
+            assert_true(fd != -1)
+            err = libc.setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, null_ptr, size)
+            assert_true(err != -1)
+            err = libc.setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, null_ptr, size)
+            assert_true(err != -1)
+            value_ptr[0] = C.int(20)
+            err = libc.setsockopt(fd, SOL_TCP, TCP_KEEPIDLE, null_ptr, size)
+            assert_true(err != -1)
+            err = libc.setsockopt(fd, SOL_TCP, TCP_KEEPINTVL, null_ptr, size)
+            assert_true(err != -1)
+            err = libc.setsockopt(fd, SOL_TCP, TCP_KEEPCNT, null_ptr, size)
+            assert_true(err != -1)
+        elif os_is_windows():
+            # TODO
+            # tcp_keepalive keepaliveParams;
+            # DWORD ret = 0;
+            # keepaliveParams.onoff = 1;
+            # keepaliveParams.keepaliveinterval = keepaliveParams.keepalivetime = keepaliveIntervalSec * 1000;
+            # WSAIoctl(sockfd, SIO_KEEPALIVE_VALS, &keepaliveParams, sizeof(keepaliveParams), NULL, 0, &ret, NULL, NULL);
+            constrained[False, "Unsupported test"]()
+        elif os_is_macos():
+            value_ptr = stack_allocation[1, C.int]()
+            value_ptr[0] = C.int(1)
+            fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
+            assert_true(fd != -1)
+            err = libc.setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, null_ptr, size)
+            assert_true(err != -1)
+            err = libc.setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, null_ptr, size)
+            assert_true(err != -1)
+            err = libc.setsockopt(
+                fd, IPPROTO_TCP, TCP_KEEPALIVE, null_ptr, size
+            )
+            assert_true(err != -1)
+        else:
+            constrained[False, "Unsupported test"]()
 
 
 def test_dynamic_setsockopt():

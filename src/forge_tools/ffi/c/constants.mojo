@@ -478,35 +478,35 @@ alias SOCK_PACKET = 10
 # Updated from http://www.iana.org/assignments/protocol-numbers and other
 # sources.
 alias IPPROTO_IP = 0
-"""internet protocol, pseudo protocol number."""
+"""Internet protocol, pseudo protocol number."""
 alias IPPROTO_HOPOPT = 0
 """IPv6 Hop-by-Hop Option [RFC1883]."""
 alias IPPROTO_ICMP = 1
-"""internet control message protocol."""
+"""Internet control message protocol."""
 alias IPPROTO_IGMP = 2
 """Internet Group Management."""
 alias IPPROTO_GGP = 3
-"""gateway-gateway protocol."""
+"""Gateway-gateway protocol."""
 alias IPPROTO_IP_ENCAP = 4
 """IP encapsulated in IP (officially ``IP'')."""
 alias IPPROTO_ST = 5
 """ST datagram mode."""
 alias IPPROTO_TCP = 6
-"""transmission control protocol."""
+"""Transmission control protocol."""
 alias IPPROTO_EGP = 8
-"""exterior gateway protocol."""
+"""Exterior gateway protocol."""
 alias IPPROTO_IGP = 9
-"""any private interior gateway (Cisco)."""
+"""Any private interior gateway (Cisco)."""
 alias IPPROTO_PUP = 12
 """PARC universal packet protocol."""
 alias IPPROTO_UDP = 17
-"""user datagram protocol."""
+"""User datagram protocol."""
 alias IPPROTO_HMP = 20
-"""host monitoring protocol."""
+"""Host monitoring protocol."""
 alias IPPROTO_XNS_IDP = 22
 """Xerox NS IDP."""
 alias IPPROTO_RDP = 27
-""""reliable datagram" protocol."""
+""""Reliable datagram" protocol."""
 alias IPPROTO_ISO_TP4 = 29
 """ISO Transport Protocol class 4 [RFC905]."""
 alias IPPROTO_DCCP = 33
@@ -619,6 +619,21 @@ alias SHUT_RDWR = 2
 # Socket level options (SOL_SOCKET)
 alias SOL_SOCKET = 1
 """Constant: SOL_SOCKET."""
+alias SOL_IP = 0
+"""Constant: `SOL_IP`."""
+alias SOL_IPX = 256
+"""Constant: `SOL_IPX`."""
+alias SOL_AX25 = 257
+"""Constant: `SOL_AX25`."""
+alias SOL_ATALK = 258
+"""Constant: `SOL_ATALK`."""
+alias SOL_NETROM = 259
+"""Constant: `SOL_NETROM`."""
+alias SOL_TCP = 6
+"""Constant: `SOL_TCP`."""
+alias SOL_UDP = 17
+"""Constant: `SOL_UDP`."""
+
 
 alias SO_DEBUG = 1
 """Constant: SO_DEBUG."""
@@ -767,13 +782,36 @@ alias SO_DETACH_REUSEPORT_BPF = 68
 
 # TCP level options (IPPROTO_TCP)
 alias TCP_NODELAY = 1
-"""Constant: TCP_NODELAY."""
-alias TCP_KEEPIDLE = 2
-"""Constant: TCP_KEEPIDLE."""
-alias TCP_KEEPINTVL = 3
-"""Constant: TCP_KEEPINTVL."""
-alias TCP_KEEPCNT = 4
-"""Constant: TCP_KEEPCNT."""
+"""Don't delay send to coalesce packets."""
+alias TCP_MAXSEG = 2
+"""Set maximum segment size."""
+alias TCP_CORK = 3
+"""Control sending of partial frames."""
+alias TCP_KEEPIDLE = 4
+"""Start keeplives after this period."""
+alias TCP_KEEPINTVL = 5
+"""Interval between keepalives."""
+alias TCP_KEEPCNT = 6
+"""Number of keepalives before death."""
+alias TCP_SYNCNT = 7
+"""Number of SYN retransmits."""
+alias TCP_LINGER2 = 8
+"""Life time of orphaned FIN-WAIT-2 state."""
+alias TCP_DEFER_ACCEPT = 9
+"""Wake up listener only when data arrive."""
+alias TCP_WINDOW_CLAMP = 10
+"""Bound advertised window."""
+alias TCP_INFO = 11
+"""Information about this connection.."""
+alias TCP_QUICKACK = 12
+"""Bock/reenable quick ACKs."""
+alias TCP_CONGESTION = 13
+"""Congestion control algorithm."""
+alias TCP_MD5SIG = 14
+"""TCP MD5 Signature (RFC2385)."""
+alias TCP_KEEPALIVE = 0x10
+"""Idle time used when SO_KEEPALIVE is enabled."""
+
 
 # IPv4 level options (IPPROTO_IP)
 alias IP_TOS = 1
