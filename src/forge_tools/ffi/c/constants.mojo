@@ -1,5 +1,17 @@
-"""Libc POSIX constants."""
+"""Libc POSIX constants.
 
+Notes:
+    If you find any errors in the constants given for a specific platform, pull
+    requests to extend support are welcome.
+"""
+
+from sys.info import os_is_linux, os_is_macos, os_is_windows
+
+alias _mac_or_windows = os_is_macos() or os_is_windows()
+alias _mac_or_linux = os_is_macos() or os_is_linux()
+alias _windows = os_is_windows()
+alias _mac = os_is_macos()
+alias _linux = os_is_linux()
 
 # ===----------------------------------------------------------------------=== #
 # Error constants (errno.h)
@@ -300,7 +312,7 @@ alias AF_ATMPVC = 8
 """Constant: AF_ATMPVC."""
 alias AF_X25 = 9
 """Constant: AF_X25."""
-alias AF_INET6 = 10
+alias AF_INET6 = 10 if not _windows else 23
 """Constant: AF_INET6."""
 alias AF_ROSE = 11
 """Constant: AF_ROSE."""
@@ -328,7 +340,7 @@ alias AF_RDS = 21
 """Constant: AF_RDS."""
 alias AF_SNA = 22
 """Constant: AF_SNA."""
-alias AF_IRDA = 23
+alias AF_IRDA = 23 if not _windows else 26
 """Constant: AF_IRDA."""
 alias AF_PPPOX = 24
 """Constant: AF_PPPOX."""
@@ -340,7 +352,7 @@ alias AF_CAN = 29
 """Constant: AF_CAN."""
 alias AF_TIPC = 30
 """Constant: AF_TIPC."""
-alias AF_BLUETOOTH = 31
+alias AF_BLUETOOTH = 31 if not _windows else 32
 """Constant: AF_BLUETOOTH."""
 alias AF_IUCV = 32
 """Constant: AF_IUCV."""
@@ -595,14 +607,26 @@ alias AI_CANONNAME = 2
 """Constant: AI_CANONNAME."""
 alias AI_NUMERICHOST = 4
 """Constant: AI_NUMERICHOST."""
-alias AI_V4MAPPED = 8
+alias AI_V4MAPPED = 8 if not _mac_or_windows else 0x800
 """Constant: AI_V4MAPPED."""
-alias AI_ALL = 16
+alias AI_ALL = 16 if not _mac_or_windows else 0x100
 """Constant: AI_ALL."""
-alias AI_ADDRCONFIG = 32
+alias AI_ADDRCONFIG = 32 if not _mac_or_windows else 0x400
 """Constant: AI_ADDRCONFIG."""
 alias AI_IDN = 64
 """Constant: AI_IDN."""
+
+alias NI_NUMERICHOST = 1 if not _mac else 2
+"""Return the host address, not the name."""
+alias NI_NUMERICSERV = 2 if not _mac else 8
+"""Return the service address, not the name."""
+alias NI_NOFQDN = 4 if not _mac else 1
+"""Return a short name if in the local domain."""
+alias NI_NAMEREQD = 8 if not _mac else 4
+"""Fail if either host or service name is unknown."""
+alias NI_DGRAM = 16
+"""Look up datagram service instead of stream."""
+
 
 alias INET_ADDRSTRLEN = 16
 """Constant: INET_ADDRSTRLEN."""
@@ -616,8 +640,15 @@ alias SHUT_WR = 1
 alias SHUT_RDWR = 2
 """Constant: SHUT_RDWR."""
 
-# Socket level options (SOL_SOCKET)
-alias SOL_SOCKET = 1
+# Apple
+# https://gist.github.com/cyberroadie/3490843
+# https://newosxbook.com/src.jl?tree=xnu-4903.221.2&file=/bsd/sys/socket.h
+# https://newosxbook.com/src.jl?tree=xnu&file=bsd/netinet/in.h
+# https://github.com/apple/darwin-xnu/blob/main/bsd/netinet/tcp.h
+# https://github.com/lunarmodules/luasocket/issues/242
+
+# Socket level options
+alias SOL_SOCKET = 1 if not _mac else 0xFFFF
 """Constant: SOL_SOCKET."""
 alias SOL_IP = 0
 """Constant: `SOL_IP`."""
@@ -637,45 +668,45 @@ alias SOL_UDP = 17
 
 alias SO_DEBUG = 1
 """Constant: SO_DEBUG."""
-alias SO_REUSEADDR = 2
+alias SO_REUSEADDR = 2 if not _mac else 0x0004
 """Constant: SO_REUSEADDR."""
-alias SO_TYPE = 3
+alias SO_TYPE = 3 if not _mac else 0x1008
 """Constant: SO_TYPE."""
-alias SO_ERROR = 4
+alias SO_ERROR = 4 if not _mac else 0x1007
 """Constant: SO_ERROR."""
-alias SO_DONTROUTE = 5
+alias SO_DONTROUTE = 5 if not _mac else 0x0010
 """Constant: SO_DONTROUTE."""
-alias SO_BROADCAST = 6
+alias SO_BROADCAST = 6 if not _mac else 0x0020
 """Constant: SO_BROADCAST."""
-alias SO_SNDBUF = 7
+alias SO_SNDBUF = 7 if not _mac else 0x1001
 """Constant: SO_SNDBUF."""
-alias SO_RCVBUF = 8
+alias SO_RCVBUF = 8 if not _mac else 0x1002
 """Constant: SO_RCVBUF."""
-alias SO_KEEPALIVE = 9
+alias SO_KEEPALIVE = 9 if not _mac else 0x0008
 """Constant: SO_KEEPALIVE."""
-alias SO_OOBINLINE = 10
+alias SO_OOBINLINE = 10 if not _mac else 0x0100
 """Constant: SO_OOBINLINE."""
 alias SO_NO_CHECK = 11
 """Constant: SO_NO_CHECK."""
 alias SO_PRIORITY = 12
 """Constant: SO_PRIORITY."""
-alias SO_LINGER = 13
+alias SO_LINGER = 13 if not _mac else 0x1080
 """Constant: SO_LINGER."""
 alias SO_BSDCOMPAT = 14
 """Constant: SO_BSDCOMPAT."""
-alias SO_REUSEPORT = 15
+alias SO_REUSEPORT = 15 if not _mac else 0x0200
 """Constant: SO_REUSEPORT."""
 alias SO_PASSCRED = 16
 """Constant: SO_PASSCRED."""
 alias SO_PEERCRED = 17
 """Constant: SO_PEERCRED."""
-alias SO_RCVLOWAT = 18
+alias SO_RCVLOWAT = 18 if not _mac else 0x1004
 """Constant: SO_RCVLOWAT."""
-alias SO_SNDLOWAT = 19
+alias SO_SNDLOWAT = 19 if not _mac else 0x1003
 """Constant: SO_SNDLOWAT."""
-alias SO_RCVTIMEO = 20
+alias SO_RCVTIMEO = 20 if not _mac else 0x1006
 """Constant: SO_RCVTIMEO."""
-alias SO_SNDTIMEO = 21
+alias SO_SNDTIMEO = 21 if not _mac else 0x1005
 """Constant: SO_SNDTIMEO."""
 alias SO_SECURITY_AUTHENTICATION = 22
 """Constant: SO_SECURITY_AUTHENTICATION."""
@@ -693,9 +724,9 @@ alias SO_GET_FILTER = SO_ATTACH_FILTER
 """Constant: SO_GET_FILTER."""
 alias SO_PEERNAME = 28
 """Constant: SO_PEERNAME."""
-alias SO_TIMESTAMP = 29
+alias SO_TIMESTAMP = 29 if not _mac else 0x0400
 """Constant: SO_TIMESTAMP."""
-alias SO_ACCEPTCONN = 30
+alias SO_ACCEPTCONN = 30 if not _mac else 0x0002
 """Constant: SO_ACCEPTCONN."""
 alias SO_PEERSEC = 31
 """Constant: SO_PEERSEC."""
@@ -780,6 +811,57 @@ alias SO_SNDTIMEO_NEW = 67
 alias SO_DETACH_REUSEPORT_BPF = 68
 """Constant: SO_DETACH_REUSEPORT_BPF."""
 
+
+# Apple
+alias SO_TIMESTAMP_MONOTONIC = 0x0800
+"""Monotonically increasing timestamp on rcvd dgram."""
+alias SO_ACCEPTFILTER = 0x1000
+"""There is an accept filter."""
+alias SO_DONTTRUNC = 0x2000
+"""APPLE: Retain unread data."""
+alias SO_WANTMORE = 0x4000
+"""APPLE: Give hint when more data ready."""
+alias SO_WANTOOBFLAG = 0x8000
+"""APPLE: Want OOB in MSG_FLAG on receive."""
+
+
+alias SO_LABEL = 0x1010
+"""Socket's MAC label."""
+alias SO_PEERLABEL = 0x1011
+"""Socket's peer MAC label."""
+alias SO_NREAD = 0x1020
+"""APPLE: get 1st-packet byte count."""
+alias SO_NKE = 0x1021
+"""APPLE: Install socket-level NKE."""
+alias SO_NOSIGPIPE = 0x1022
+"""APPLE: No SIGPIPE on EPIPE."""
+alias SO_NOADDRERR = 0x1023
+"""APPLE: Returns EADDRNOTAVAIL when src is not available anymore."""
+alias SO_NWRITE = 0x1024
+"""APPLE: Get number of bytes currently in send socket buffer."""
+alias SO_REUSESHAREUID = 0x1025
+"""APPLE: Allow reuse of port/socket by different userids."""
+alias SO_NOTIFYCONFLICT = 0x1026
+"""APPLE: send notification if there is a bind on a port which is already in
+use."""
+alias SO_UPCALLCLOSEWAIT = 0x1027
+"""APPLE: block on close until an upcall returns."""
+alias SO_LINGER_SEC = 0x1080
+"""Linger on close if data present (in seconds)."""
+alias SO_RESTRICTIONS = 0x1081
+"""APPLE: deny inbound/outbound/both/flag set."""
+alias SO_RESTRICT_DENYIN = 0x00000001
+"""Flag for SO_RESTRICTIONS - deny inbound."""
+alias SO_RESTRICT_DENYOUT = 0x00000002
+"""Flag for SO_RESTRICTIONS - deny outbound."""
+alias SO_RESTRICT_DENYSET = 0x80000000
+"""Flag for SO_RESTRICTIONS - deny has been set."""
+alias SO_RANDOMPORT = 0x1082
+"""APPLE: request local port randomization."""
+alias SO_NP_EXTENSIONS = 0x1083
+"""To turn off some POSIX behavior."""
+
+
 # TCP level options (IPPROTO_TCP)
 alias TCP_NODELAY = 1
 """Don't delay send to coalesce packets."""
@@ -789,9 +871,9 @@ alias TCP_CORK = 3
 """Control sending of partial frames."""
 alias TCP_KEEPIDLE = 4
 """Start keeplives after this period."""
-alias TCP_KEEPINTVL = 5
+alias TCP_KEEPINTVL = 5 if not _mac else 0x101
 """Interval between keepalives."""
-alias TCP_KEEPCNT = 6
+alias TCP_KEEPCNT = 6 if not _mac else 0x102
 """Number of keepalives before death."""
 alias TCP_SYNCNT = 7
 """Number of SYN retransmits."""
@@ -965,34 +1047,43 @@ alias IPV6_PMTUDISC_PROBE = 3
 """Ignore dst pmtu."""
 
 # netdb.h
-alias EAI_BADFLAGS = -1
+alias EAI_BADFLAGS = -1 if not _mac_or_windows else (
+    3 if not _windows else 10022
+)
 """Bad value for ai_flags."""
-alias EAI_NONAME = -2
+alias EAI_NONAME = -2 if not _mac_or_windows else (8 if not _windows else 11001)
 """Name or service not known."""
-alias EAI_AGAIN = -3
+alias EAI_AGAIN = -3 if not _mac_or_windows else (2 if not _windows else 11002)
 """Temporary failure in name resolution."""
-alias EAI_FAIL = -4
+alias EAI_FAIL = -4 if not _mac_or_windows else (4 if not _windows else 11003)
 """Non-recoverable failure in name resolution."""
-alias EAI_NODATA = -5
+alias EAI_NODATA = -5 if not _mac else 7
 """No address associated with hostname."""
-alias EAI_FAMILY = -6
+alias EAI_FAMILY = -6 if not _mac_or_windows else (5 if not _windows else 10047)
 """Error: ai_family not supported."""
-alias EAI_SOCKTYPE = -7
+alias EAI_SOCKTYPE = -7 if not _mac_or_windows else (
+    10 if not _windows else 10044
+)
 """Error: ai_socktype not supported."""
-alias EAI_SERVICE = -8
+alias EAI_SERVICE = -8 if not _mac_or_windows else (
+    9 if not _windows else 10109
+)
 """Servname not supported for ai_socktype."""
-alias EAI_ADDRFAMILY = -9
+alias EAI_ADDRFAMILY = -9 if not _mac else 1
 """Address family for hostname not supported."""
-alias EAI_MEMORY = -10
+alias EAI_MEMORY = -10 if not _mac_or_windows else (6 if not _windows else 8)
 """Memory allocation failure."""
-alias EAI_SYSTEM = -11
+alias EAI_SYSTEM = -11 if not _mac else 11
 """System error."""
-alias EAI_BADHINTS = -12
-"""Bad value for hints."""
-alias EAI_PROTOCOL = -13
+alias EAI_BADHINTS = -12 if not _mac else 12
+"""Invalid value for hints."""
+alias EAI_PROTOCOL = -13 if not _mac else 13
 """Resolved protocol is unknown."""
-alias EAI_OVERFLOW = -14
+alias EAI_OVERFLOW = -14 if not _mac else 14
 """Argument buffer overflow."""
+alias EAI_IDN_ENCODE = 15
+"""Parameter string not correctly encoded."""
+
 
 # ===----------------------------------------------------------------------=== #
 # File constants (stdio.h, fcntl.h, etc.)

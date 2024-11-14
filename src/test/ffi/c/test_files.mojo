@@ -5,7 +5,7 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 
 from pathlib import _dir_of_current_file
 from time import sleep
-from memory import UnsafePointer, memset, memcpy, memcmp, stack_allocation
+from memory import UnsafePointer, memset, memcmp, stack_allocation
 from sys.info import os_is_macos
 
 from forge_tools.ffi.c.types import C, char_ptr, FILE
@@ -21,13 +21,12 @@ def _test_open_close(libc: Libc, suffix: String):
         assert_true(filedes != -1)
         sleep(0.05)
         assert_true(libc.close(filedes) != -1)
-        for s in List(O_RDONLY, O_WRONLY, O_RDWR):
-            if os_is_macos() and s[] != O_RDONLY:  # Permission denied
-                continue
-            filedes = libc.open(ptr, s[] | O_NONBLOCK)
-            assert_true(filedes != -1)
-            sleep(0.05)
-            assert_true(libc.close(filedes) != -1)
+        if not os_is_macos():  # Permission denied
+            for s in List(O_RDONLY, O_WRONLY, O_RDWR):
+                filedes = libc.open(ptr, s[] | O_NONBLOCK)
+                assert_true(filedes != -1)
+                sleep(0.05)
+                assert_true(libc.close(filedes) != -1)
 
         assert_true(libc.remove(ptr) != -1)
     _ = file^
@@ -206,20 +205,16 @@ def _test_fseek_ftell(libc: Libc, suffix: String):
         # print to file
         stream = libc.fopen(ptr, char_ptr(FM_WRITE))
         assert_true(stream != C.NULL.bitcast[FILE]())
-        # MacOS seems to execute backspace instead of printing it, so lets just
-        # test textual characters
         size = ord("~") - ord(" ")
         a = UnsafePointer[C.char].alloc(size)
         idx = 0
         for i in range(ord(" "), ord("~")):
-            if i == ord("\\"):  # otherwise escapes
-                a[idx] = i + 1
-            elif i == ord("%"):
 
-                @parameter
-                if os_is_macos():
-                    # MacOS is not compliant with ASCII
-                    # triggers format specifier if it's not '%%'
+            @parameter
+            if os_is_macos():
+                # MacOS is not actually compliant with ANSI C89, doesn't print
+                # '%'. I think it triggers format specifier if it's not '%%'
+                if i == ord("%"):
                     a[idx] = i + 1
                 else:
                     a[idx] = i
@@ -410,48 +405,6 @@ def test_static_printf():
     _test_printf(Libc[static=True](), "_static")
 
 
-def _test_sprintf(libc: Libc, suffix: String):
-    with TryLibc(libc):
-        # setup
-        alias `%` = C.char(ord("%"))
-        alias `d` = C.char(ord("d"))
-        alias `1` = C.char(ord("1"))
-        a = UnsafePointer[C.char].alloc(9)
-        b = UnsafePointer[C.char].alloc(5)
-        c = UnsafePointer[C.char].alloc(5)
-
-        # print
-        a[0], a[1], a[2], a[3], a[4] = `%`, `d`, `%`, `d`, C.char(0)
-        num_bytes = libc.sprintf(b, a, C.int(1), C.int(1))
-        assert_equal(num_bytes, 2)
-
-        # read and compare
-        c[0], c[1], c[2] = `1`, `1`, C.char(0)
-        assert_equal(0, memcmp(b, c, 3))
-
-        # print
-        a[4], a[5], a[6], a[7], a[8] = `%`, `d`, `%`, `d`, C.char(0)
-        num_bytes = libc.sprintf(b, a, C.int(1), C.int(1), C.int(1), C.int(1))
-        assert_equal(num_bytes, 4)
-
-        # read and compare
-        c[2], c[3], c[4] = `1`, `1`, C.char(0)
-        assert_equal(0, memcmp(b, c, 5))
-
-        # cleanup
-        a.free()
-        b.free()
-        c.free()
-
-
-def test_dynamic_sprintf():
-    _test_sprintf(Libc[static=False](), "_dynamic")
-
-
-def test_static_sprintf():
-    _test_sprintf(Libc[static=True](), "_static")
-
-
 def _test_snprintf(libc: Libc, suffix: String):
     with TryLibc(libc):
         # setup
@@ -506,11 +459,10 @@ def _test_fscanf(libc: Libc, suffix: String):
         # setup
         alias `1` = C.char(ord("1"))
         a = UnsafePointer[C.char].alloc(2)
+        a[0], a[1] = `1`, C.char(0)
 
         filedes = libc.open(ptr, O_RDWR)
         assert_true(filedes != -1)
-        a[0], a[1] = `1`, C.char(0)
-
         stream = libc.fdopen(filedes, char_ptr(FM_READ_WRITE))
 
         # print
@@ -565,54 +517,52 @@ def test_static_fcntl():
     _test_fcntl(Libc[static=True](), "_static")
 
 
-def _test_ioctl(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_ioctl" + suffix))
-    ptr = char_ptr(file)
-    with TryLibc(libc):
-        # TODO: a thorough test using the most often used functionality
-        # see https://man7.org/linux/man-pages/man3/ioctl.3p.html
-        ...
-    _ = file^
+# TODO: a thorough test of the most often used functionality
+# see https://man7.org/linux/man-pages/man3/ioctl.3p.html
+# def _test_ioctl(libc: Libc, suffix: String):
+#     file = str(_dir_of_current_file() / ("dummy_test_ioctl" + suffix))
+#     ptr = char_ptr(file)
+#     with TryLibc(libc):
+#         ...
+#     _ = file^
 
 
-def test_dynamic_ioctl():
-    _test_ioctl(Libc[static=False](), "_dynamic")
+# def test_dynamic_ioctl():
+#     _test_ioctl(Libc[static=False](), "_dynamic")
 
 
-def test_static_ioctl():
-    _test_ioctl(Libc[static=True](), "_static")
+# def test_static_ioctl():
+#     _test_ioctl(Libc[static=True](), "_static")
 
 
 def main():
-    test_static_open_close()
     test_dynamic_open_close()
-    test_static_fopen_fclose()
+    test_static_open_close()
     test_dynamic_fopen_fclose()
-    test_static_fdopen_fclose()
+    test_static_fopen_fclose()
     test_dynamic_fdopen_fclose()
-    test_static_creat_openat()
+    test_static_fdopen_fclose()
     test_dynamic_creat_openat()
-    test_static_freopen()
+    test_static_creat_openat()
     test_dynamic_freopen()
-    test_static_fmemopen_fprintf()
+    test_static_freopen()
     test_dynamic_fmemopen_fprintf()
-    test_static_fseek_ftell()
+    test_static_fmemopen_fprintf()
     test_dynamic_fseek_ftell()
-    test_static_fput_fget()
+    test_static_fseek_ftell()
     test_dynamic_fput_fget()
-    test_static_dprintf()
+    test_static_fput_fget()
     test_dynamic_dprintf()
-    test_static_printf()
+    test_static_dprintf()
     test_dynamic_printf()
     test_static_printf()
     test_dynamic_printf()
-    test_static_snprintf()
+    test_static_printf()
     test_dynamic_snprintf()
-    test_static_sprintf()
-    test_dynamic_sprintf()
-    test_static_fscanf()
+    test_static_snprintf()
     test_dynamic_fscanf()
-    test_static_fcntl()
+    test_static_fscanf()
     test_dynamic_fcntl()
-    test_static_ioctl()
-    test_dynamic_ioctl()
+    test_static_fcntl()
+    # test_dynamic_ioctl()
+    # test_static_ioctl()

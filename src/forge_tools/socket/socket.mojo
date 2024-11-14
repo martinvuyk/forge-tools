@@ -356,6 +356,10 @@ struct SockPlatform:
 #        """Get the available address information.
 #        ...
 
+# TODO: fn keep_alive(
+#     seconds: UInt32, interval: UInt32 = 3, start: UInt32 = interval
+# )
+# TODO: fn reuse_address(value: Bool, *, host_and_port: Bool = True)
 
 fn current_sock_platform() -> SockPlatform:
     """Get the current platform.
