@@ -118,7 +118,7 @@ struct CalendarHashes:
     alias mask_8_d: UInt8 = CalendarHashes._3b
     alias mask_8_h: UInt8 = CalendarHashes._5b
 
-    fn __init__(inout self, selected: Int = 64):
+    fn __init__(out self, selected: Int = 64):
         """Construct a `CalendarHashes`.
 
         Args:
@@ -228,7 +228,7 @@ trait _Calendarized(CollectionElement):
         ...
 
     fn __init__(
-        inout self,
+        out self,
         *,
         min_year: UInt16,
         min_month: UInt8,
@@ -394,7 +394,7 @@ struct Calendar[T: _Calendarized = Gregorian[]]:
     """The Calendar implementation."""
 
     fn __init__(
-        inout self, min_year: UInt16, min_month: UInt8 = 1, min_day: UInt8 = 1
+        out self, min_year: UInt16, min_month: UInt8 = 1, min_day: UInt8 = 1
     ):
         """Get a Calendar with certain values.
 
@@ -414,7 +414,7 @@ struct Calendar[T: _Calendarized = Gregorian[]]:
         )
 
     fn __init__(
-        inout self,
+        out self,
         owned impl: T = T(
             min_year=T._get_default_min_year(),
             min_month=T._get_default_min_month(),
@@ -857,7 +857,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
     )
 
     fn __init__(
-        inout self,
+        out self,
         min_year: UInt16 = Self._default_min_year,
         min_month: UInt8 = Self._default_min_month,
         min_day: UInt8 = Self._default_min_day,
@@ -1504,7 +1504,7 @@ struct UTCFast(_Calendarized):
     var _greg: Gregorian[include_leapsecs=False]
 
     fn __init__(
-        inout self,
+        out self,
         *,
         min_year: UInt16 = 1970,
         min_month: UInt8 = 1,
@@ -2056,7 +2056,7 @@ struct ISOCalendar(_Calendarized):
     var _greg: Gregorian
 
     fn __init__(
-        inout self,
+        out self,
         *,
         min_year: UInt16 = 1,
         min_month: UInt8 = 1,

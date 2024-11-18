@@ -122,7 +122,7 @@ struct Date[
     fn __init__[
         T1: _IntCollect = Int, T2: _IntCollect = Int, T3: _IntCollect = Int
     ](
-        inout self,
+        out self,
         year: Optional[T1] = None,
         month: Optional[T2] = None,
         day: Optional[T3] = None,
@@ -150,7 +150,7 @@ struct Date[
         self.tz = tz.value() if tz else Self._tz()
         self.calendar = calendar
 
-    fn __init__(inout self, *, other: Self):
+    fn __init__(out self, *, other: Self):
         """Construct self with other.
 
         Args:
@@ -162,7 +162,7 @@ struct Date[
         self.tz = other.tz
         self.calendar = other.calendar
 
-    fn __init__(inout self, *, other: Self._UnboundCal, calendar: Calendar[C]):
+    fn __init__(out self, *, other: Self._UnboundCal, calendar: Calendar[C]):
         """Construct self with other.
 
         Args:
@@ -494,7 +494,7 @@ struct Date[
         return self.subtract(other)
 
     @always_inline
-    fn __iadd__(inout self, owned other: Self._UnboundCal):
+    fn __iadd__(out self, owned other: Self._UnboundCal):
         """Add Immediate.
 
         Args:
@@ -503,7 +503,7 @@ struct Date[
         self = self.add(other)
 
     @always_inline
-    fn __isub__(inout self, owned other: Self._UnboundCal):
+    fn __isub__(out self, owned other: Self._UnboundCal):
         """Subtract Immediate.
 
         Args:

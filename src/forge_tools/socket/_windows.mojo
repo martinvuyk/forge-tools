@@ -20,11 +20,11 @@ struct _WindowsSocket[
     var fd: Arc[FileDescriptor]
     """The Socket's `Arc[FileDescriptor]`."""
 
-    fn __init__(inout self) raises:
+    fn __init__(out self) raises:
         """Create a new socket object."""
         raise Error("Failed to create socket.")
 
-    fn __init__(inout self, fd: Arc[FileDescriptor]):
+    fn __init__(out self, fd: Arc[FileDescriptor]):
         """Create a new socket object from an open `Arc[FileDescriptor]`."""
         self.fd = fd
 

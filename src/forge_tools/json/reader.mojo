@@ -24,7 +24,7 @@ struct Reader[
     alias _Sp = Span[Byte, origin]
     var _buffer: Self._Sp
 
-    fn __init__(inout self, buffer: Self._Sp):
+    fn __init__(out self, buffer: Self._Sp):
         """Construct an immutable Reader from a buffer.
 
         Args:

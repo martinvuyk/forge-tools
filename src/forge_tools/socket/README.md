@@ -68,11 +68,11 @@ trait SocketInterface[
 ](CollectionElement):
     """Interface for Sockets."""
 
-    fn __init__(inout self) raises:
+    fn __init__(out self) raises:
         """Create a new socket object."""
         ...
 
-   fn __init__(inout self, fd: Arc[FileDescriptor]):
+   fn __init__(out self, fd: Arc[FileDescriptor]):
        """Create a new socket object from an open `Arc[FileDescriptor]`."""
        ...
 

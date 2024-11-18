@@ -21,7 +21,7 @@ struct ArcPointer[
     @doc_private
     @always_inline("nodebug")
     fn __init__(
-        inout self,
+        out self,
         *,
         ptr: Self._U,
         is_allocated: Bool,
@@ -46,7 +46,7 @@ struct ArcPointer[
             )
         )
 
-    fn __init__(inout self, *, ptr: Self._P):
+    fn __init__(out self, *, ptr: Self._P):
         """Constructs a Pointer from an Pointer.
 
         Args:

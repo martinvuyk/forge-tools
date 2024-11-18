@@ -39,7 +39,7 @@ struct JsonType:
     """String."""
     var _selected: StringLiteral
 
-    fn __init__(inout self, value: StringLiteral):
+    fn __init__(out self, value: StringLiteral):
         """Construct a JsonType instance.
 
         Args:

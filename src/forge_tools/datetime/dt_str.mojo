@@ -53,7 +53,7 @@ struct IsoFormat:
     """The selected IsoFormat."""
 
     fn __init__(
-        inout self, selected: StringLiteral = self.YYYY_MM_DD_T_HH_MM_SS_TZD
+        out self, selected: StringLiteral = self.YYYY_MM_DD_T_HH_MM_SS_TZD
     ):
         """Construct an IsoFormat with selected fmt string.
 

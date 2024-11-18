@@ -6,16 +6,16 @@ struct _RcInner[T: Movable]:
     var refcount: UInt64
     var payload: T
 
-    fn __init__(inout self, owned value: T):
+    fn __init__(out self, owned value: T):
         """Create an initialized instance of this with a refcount of 1."""
         self.refcount = 1
         self.payload = value^
 
-    fn add_ref(inout self):
+    fn add_ref(out self):
         """Increment the refcount."""
         self.refcount += 1
 
-    fn drop_ref(inout self):
+    fn drop_ref(out self):
         """Decrement the refcount and return true if the result hits zero."""
         self.refcount -= 1
 
@@ -27,7 +27,7 @@ struct Rc[T: Movable]:
     alias _inner_type = _RcInner[T]
     var _inner: UnsafePointer[_RcInner[T]]
 
-    fn __init__(inout self, owned value: T):
+    fn __init__(out self, owned value: T):
         """Create an initialized instance of this with a refcount of 1."""
         self._inner = UnsafePointer[Self._inner_type].alloc(1)
         # Cannot use init_pointee_move as _ArcInner isn't movable.
@@ -35,7 +35,7 @@ struct Rc[T: Movable]:
             value^
         )
 
-    fn __init__(inout self, *, other: Self):
+    fn __init__(out self, *, other: Self):
         """Copy the object.
 
         Args:
@@ -44,7 +44,7 @@ struct Rc[T: Movable]:
         other._inner[].add_ref()
         self._inner = other._inner
 
-    fn __copyinit__(inout self, existing: Self):
+    fn __copyinit__(out self, existing: Self):
         """Copy an existing reference. Increment the refcount to the object.
 
         Args:
@@ -55,10 +55,10 @@ struct Rc[T: Movable]:
         existing._inner[].add_ref()
         self._inner = existing._inner
 
-    fn increment(inout self):
+    fn increment(out self):
         self._inner[].add_ref()
 
-    fn decrement(inout self):
+    fn decrement(out self):
         self._inner[].drop_ref()
 
     @no_inline

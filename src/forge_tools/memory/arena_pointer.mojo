@@ -27,7 +27,7 @@ struct GladiatorPointer[
     var _len: Int
     """The length of the pointer."""
 
-    fn __init__(inout self):
+    fn __init__(out self):
         self._colosseum = Self._A(
             ptr=stack_allocation[1, Self._C]().bitcast[OpaquePointer](),
             is_allocated=True,
@@ -37,7 +37,7 @@ struct GladiatorPointer[
         self._start = 0
         self._len = 0
 
-    fn __init__(inout self, *, colosseum: Self._A, start: Int, length: Int):
+    fn __init__(out self, *, colosseum: Self._A, start: Int, length: Int):
         """Constructs a GladiatorPointer from a Pointer.
 
         Args:
@@ -100,13 +100,13 @@ struct ColosseumPointer[
     """A self pointer."""
     alias _G = GladiatorPointer[type, origin, address_space]
 
-    fn __init__(inout self):
+    fn __init__(out self):
         self._free_slots = UnsafePointer[Byte]()
         self._len = 0
         self._ptr = Self._P()
         self._self_ptr = Self._S.alloc(1)
 
-    fn __init__(inout self, *, owned other: Self):
+    fn __init__(out self, *, owned other: Self):
         self._free_slots = other._free_slots
         self._len = other._len
         self._ptr = other._ptr
@@ -114,7 +114,7 @@ struct ColosseumPointer[
 
     @doc_private
     @always_inline("nodebug")
-    fn __init__(inout self, *, ptr: Self._P, length: Int):
+    fn __init__(out self, *, ptr: Self._P, length: Int):
         """Constructs an ArenaPointer from an UnsafePointer.
 
         Args:
@@ -147,7 +147,7 @@ struct ColosseumPointer[
         return Self(ptr=Self._P.alloc(count), length=count)
 
     @always_inline
-    fn alloc(inout self, count: Int) -> Self._G:
+    fn alloc(out self, count: Int) -> Self._G:
         """Allocate an array with specified or default alignment.
 
         Args:
@@ -221,7 +221,7 @@ struct ColosseumPointer[
             free_slots=self._free_slots,
         )
 
-    fn _free(inout self, owned gladiator: Self._G):
+    fn _free(out self, owned gladiator: Self._G):
         p0 = self._free_slots - gladiator._start
         full_byte_start = gladiator._start // 8
         full_byte_end = gladiator._len // 8

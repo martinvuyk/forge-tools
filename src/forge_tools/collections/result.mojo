@@ -170,7 +170,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 
     @always_inline("nodebug")
     fn __init__(
-        inout self,
+        out self,
         value: NoneType = None,
         err: Error = Error("Result value was not set"),
         /,
@@ -184,7 +184,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self = Self(err=err)
 
     @always_inline("nodebug")
-    fn __init__(inout self, value: Tuple[NoneType, Error], /):
+    fn __init__(out self, value: Tuple[NoneType, Error], /):
         """Create an empty `Result` with an `Error`.
 
         Args:
@@ -196,7 +196,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             self = Self(err=value[1])
 
     @always_inline("nodebug")
-    fn __init__[A: CollectionElement](inout self, owned other: Result[A]):
+    fn __init__[A: CollectionElement](out self, owned other: Result[A]):
         """Create a `Result` by transferring another `Result`'s Error.
 
         Parameters:
@@ -208,7 +208,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self = Self(err=other.err)
 
     @always_inline("nodebug")
-    fn __init__(inout self, owned value: T):
+    fn __init__(out self, owned value: T):
         """Create a `Result` containing a value.
 
         Args:
@@ -218,7 +218,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self.err = Error()
 
     @always_inline("nodebug")
-    fn __init__(inout self, *, err: Error):
+    fn __init__(out self, *, err: Error):
         """Create an empty `Result`.
 
         Args:
@@ -261,7 +261,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         debug_assert(bool(self), ".value() on empty Result")
         return self._value.unsafe_get[T]()
 
-    fn take(inout self) -> T:
+    fn take(out self) -> T:
         """Move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved
@@ -279,7 +279,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             abort(".take() on empty `Result`")
         return self.unsafe_take()
 
-    fn unsafe_take(inout self) -> T:
+    fn unsafe_take(out self) -> T:
         """Unsafely move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved
@@ -402,7 +402,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
 
     @always_inline("nodebug")
     fn __init__(
-        inout self,
+        out self,
         value: NoneType = None,
         err: Self._err_type = Self._err_type("Result value was not set"),
         /,
@@ -416,7 +416,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self = Self(err=err)
 
     @always_inline("nodebug")
-    fn __init__(inout self, value: Tuple[NoneType, Self._err_type], /):
+    fn __init__(out self, value: Tuple[NoneType, Self._err_type], /):
         """Create an empty `Result` with an `Error`.
 
         Args:
@@ -425,7 +425,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self = Self(err=value[1])
 
     @always_inline("nodebug")
-    fn __init__[A: CollectionElement](inout self, owned other: Result2[A, E]):
+    fn __init__[A: CollectionElement](out self, owned other: Result2[A, E]):
         """Create a `Result` by transferring another `Result`'s Error.
 
         Parameters:
@@ -439,7 +439,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
     @always_inline("nodebug")
     fn __init__[
         A: CollectionElement, B: StringLiteral
-    ](inout self, owned other: Result2[A, B]):
+    ](out self, owned other: Result2[A, B]):
         """Create a `Result` by transferring another `Result`'s Error message.
 
         Parameters:
@@ -452,7 +452,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self = Self(err=Self._err_type(other.err.message))
 
     @always_inline("nodebug")
-    fn __init__(inout self, owned value: T):
+    fn __init__(out self, owned value: T):
         """Create a `Result` containing a value.
 
         Args:
@@ -462,7 +462,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self.err = Self._err_type("")
 
     @always_inline("nodebug")
-    fn __init__(inout self, *, err: Self._err_type):
+    fn __init__(out self, *, err: Self._err_type):
         """Create an empty `Result`.
 
         Args:
@@ -505,7 +505,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         debug_assert(bool(self), ".value() on empty Result")
         return self._value.unsafe_get[T]()
 
-    fn take(inout self) -> T:
+    fn take(out self) -> T:
         """Move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved
@@ -523,7 +523,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
             abort(".take() on empty `Result`")
         return self.unsafe_take()
 
-    fn unsafe_take(inout self) -> T:
+    fn unsafe_take(out self) -> T:
         """Unsafely move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved

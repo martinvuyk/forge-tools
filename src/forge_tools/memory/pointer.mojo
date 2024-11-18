@@ -74,7 +74,7 @@ struct Pointer[
     # Initializers
     # ===------------------------------------------------------------------===#
 
-    fn __init__(inout self):
+    fn __init__(out self):
         self = Self(
             ptr=UnsafePointer[type, address_space](),
             is_allocated=False,
@@ -86,7 +86,7 @@ struct Pointer[
     @doc_private
     @always_inline("nodebug")
     fn __init__(
-        inout self,
+        out self,
         *,
         _mlir_value: Self._mlir_type,
         is_allocated: Bool,
@@ -130,7 +130,7 @@ struct Pointer[
             self_is_owner=False,
         )
 
-    fn __init__(inout self, *, other: Self):
+    fn __init__(out self, *, other: Self):
         """Constructs a copy from another Pointer **(not the data)**.
 
         Args:
@@ -142,7 +142,7 @@ struct Pointer[
     @doc_private
     @always_inline("nodebug")
     fn __init__(
-        inout self,
+        out self,
         *,
         ptr: UnsafePointer[type, address_space],
         is_allocated: Bool,
@@ -279,7 +279,7 @@ struct Pointer[
             return abort[Bool]()
 
     @always_inline
-    fn __setattr__[name: StringLiteral](inout self, value: Bool):
+    fn __setattr__[name: StringLiteral](out self, value: Bool):
         """Set the attribute.
 
         Parameters:

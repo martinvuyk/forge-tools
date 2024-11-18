@@ -80,7 +80,7 @@ struct SockType:
     # TODO the rest
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -132,7 +132,7 @@ struct SockProtocol:
     """Universal Asynchronous Reciever Transmitter."""
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -187,7 +187,7 @@ struct SockPlatform:
     # TODO other important platforms
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -235,11 +235,11 @@ struct SockPlatform:
 # ](CollectionElement):
 #     """Interface for Sockets."""
 
-#     fn __init__(inout self) raises:
+#     fn __init__(out self) raises:
 #         """Create a new socket object."""
 #         ...
 
-#    fn __init__(inout self, fd: Arc[FileDescriptor]):
+#    fn __init__(out self, fd: Arc[FileDescriptor]):
 #        """Create a new socket object from an open `Arc[FileDescriptor]`."""
 #        ...
 
@@ -453,7 +453,7 @@ struct Socket[
     alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
     var _impl: Self._variant
 
-    fn __init__(inout self, impl: Self._variant):
+    fn __init__(out self, impl: Self._variant):
         """Construct a socket object from an implementation of the
         SocketInterface.
 
@@ -462,7 +462,7 @@ struct Socket[
         """
         self._impl = impl
 
-    fn __init__(inout self) raises:
+    fn __init__(out self) raises:
         """Create a new socket object."""
 
         @parameter
@@ -474,7 +474,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             self._impl = Self._linux_s()
 
-    fn __init__(inout self, fd: Arc[FileDescriptor]):
+    fn __init__(out self, fd: Arc[FileDescriptor]):
         """Create a new socket object from an open `Arc[FileDescriptor]`."""
 
         @parameter

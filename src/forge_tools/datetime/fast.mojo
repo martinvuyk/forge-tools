@@ -76,7 +76,7 @@ struct DateTime64(Hashable, Stringable):
     var hash: UInt64
     """Hash."""
 
-    fn __init__(inout self, m_seconds: UInt64, hash_val: UInt64):
+    fn __init__(out self, m_seconds: UInt64, hash_val: UInt64):
         """Construct a DateTime64.
 
         Args:
@@ -96,7 +96,7 @@ struct DateTime64(Hashable, Stringable):
         T6: _IntCollect = Int,
         T7: _IntCollect = Int,
     ](
-        inout self,
+        out self,
         owned year: Optional[T1] = None,
         owned month: Optional[T2] = None,
         owned day: Optional[T3] = None,
@@ -283,7 +283,7 @@ struct DateTime64(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(inout self, owned other: Self):
+    fn __iadd__(out self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -292,7 +292,7 @@ struct DateTime64(Hashable, Stringable):
         self.m_seconds += other.m_seconds
 
     @always_inline
-    fn __isub__(inout self, owned other: Self):
+    fn __isub__(out self, owned other: Self):
         """Subtract Immediate.
 
         Args:
@@ -643,7 +643,7 @@ struct DateTime32(Hashable, Stringable):
     var hash: UInt32
     """Hash."""
 
-    fn __init__(inout self, minutes: UInt32, hash_val: UInt32):
+    fn __init__(out self, minutes: UInt32, hash_val: UInt32):
         """Construct a DateTime32.
 
         Args:
@@ -663,7 +663,7 @@ struct DateTime32(Hashable, Stringable):
         T6: _IntCollect = Int,
         T7: _IntCollect = Int,
     ](
-        inout self,
+        out self,
         owned year: Optional[T1] = None,
         owned month: Optional[T2] = None,
         owned day: Optional[T3] = None,
@@ -809,7 +809,7 @@ struct DateTime32(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(inout self, owned other: Self):
+    fn __iadd__(out self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -818,7 +818,7 @@ struct DateTime32(Hashable, Stringable):
         self.minutes += other.minutes
 
     @always_inline
-    fn __isub__(inout self, owned other: Self):
+    fn __isub__(out self, owned other: Self):
         """Subtract Immediate.
 
         Args:
@@ -1162,7 +1162,7 @@ struct DateTime16(Hashable, Stringable):
     var hash: UInt16
     """Hash."""
 
-    fn __init__(inout self, hours: UInt16, hash_val: UInt16):
+    fn __init__(out self, hours: UInt16, hash_val: UInt16):
         """Construct a DateTime16.
 
         Args:
@@ -1179,7 +1179,7 @@ struct DateTime16(Hashable, Stringable):
         T3: _IntCollect = Int,
         T4: _IntCollect = Int,
     ](
-        inout self,
+        out self,
         owned year: Optional[T1] = None,
         owned month: Optional[T2] = None,
         owned day: Optional[T3] = None,
@@ -1308,7 +1308,7 @@ struct DateTime16(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(inout self, owned other: Self):
+    fn __iadd__(out self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -1317,7 +1317,7 @@ struct DateTime16(Hashable, Stringable):
         self.hours += other.hours
 
     @always_inline
-    fn __isub__(inout self, owned other: Self):
+    fn __isub__(out self, owned other: Self):
         """Subtract Immediate.
 
         Args:
@@ -1654,7 +1654,7 @@ struct DateTime8(Hashable, Stringable):
     var hash: UInt8
     """Hash."""
 
-    fn __init__(inout self, hours: UInt8, hash_val: UInt8):
+    fn __init__(out self, hours: UInt8, hash_val: UInt8):
         """Construct a DateTime8.
 
         Args:
@@ -1671,7 +1671,7 @@ struct DateTime8(Hashable, Stringable):
         T3: _IntCollect = Int,
         T4: _IntCollect = Int,
     ](
-        inout self,
+        out self,
         owned year: Optional[T1] = None,
         owned month: Optional[T2] = None,
         owned day: Optional[T3] = None,
@@ -1792,7 +1792,7 @@ struct DateTime8(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(inout self, owned other: Self):
+    fn __iadd__(out self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -1801,7 +1801,7 @@ struct DateTime8(Hashable, Stringable):
         self.hours += other.hours
 
     @always_inline
-    fn __isub__(inout self, owned other: Self):
+    fn __isub__(out self, owned other: Self):
         """Subtract Immediate.
 
         Args:

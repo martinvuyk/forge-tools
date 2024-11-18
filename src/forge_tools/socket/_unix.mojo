@@ -73,7 +73,7 @@ struct _UnixSocket[
         SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr
     ]
 
-    fn __init__(inout self) raises:
+    fn __init__(out self) raises:
         """Create a new socket object."""
         fd = self.lib.socket(
             Self._sock_family, Self._sock_type, Self._sock_protocol
@@ -85,7 +85,7 @@ struct _UnixSocket[
             raise Error("Failed to create socket: " + message)
         self.fd = FileDescriptor(int(fd))
 
-    fn __init__(inout self, fd: Arc[FileDescriptor]):
+    fn __init__(out self, fd: Arc[FileDescriptor]):
         """Create a new socket object from an open `Arc[FileDescriptor]`."""
         self.fd = fd
 

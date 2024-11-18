@@ -46,7 +46,7 @@ struct SockFamily:
     """
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -105,7 +105,7 @@ struct TIPCAddrType:
     """TIPC_ADDR_ID."""
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -145,7 +145,7 @@ struct TIPCScope:
     """TIPC_NODE_SCOPE."""
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -189,7 +189,7 @@ struct EtherProto:
 
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -235,7 +235,7 @@ struct EtherPacket:
 
     var _selected: StringLiteral
 
-    fn __init__(inout self, selected: StringLiteral):
+    fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
         Args:
@@ -330,7 +330,7 @@ trait SockAddr(CollectionElement, Stringable):
         )
     """
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -353,7 +353,7 @@ struct IPv4Addr(SockAddr):
     var port: UInt
     """The port."""
 
-    fn __init__(inout self: IPv4Addr, host: String = "", port: UInt = 0):
+    fn __init__(out self: IPv4Addr, host: String = "", port: UInt = 0):
         """Create an Address.
 
         Args:
@@ -364,7 +364,7 @@ struct IPv4Addr(SockAddr):
         self.host = host
         self.port = port
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -375,7 +375,7 @@ struct IPv4Addr(SockAddr):
             raise Error("port not found in String")
         self = Self(value[:idx], int(value[idx + 1 :]))
 
-    fn __init__(inout self: Self, value: Tuple[String, UInt]):
+    fn __init__(out self: Self, value: Tuple[String, UInt]):
         """Create an Address.
 
         Args:
@@ -383,7 +383,7 @@ struct IPv4Addr(SockAddr):
         """
         self = Self(value[0], value[1])
 
-    fn __init__(inout self: Self, value: Tuple[StringLiteral, UInt]):
+    fn __init__(out self: Self, value: Tuple[StringLiteral, UInt]):
         """Create an Address.
 
         Args:
@@ -391,7 +391,7 @@ struct IPv4Addr(SockAddr):
         """
         self = Self(value[0], value[1])
 
-    fn __init__(inout self, value: Tuple[String, Int]):
+    fn __init__(out self, value: Tuple[String, Int]):
         """Create an Address.
 
         Args:
@@ -399,7 +399,7 @@ struct IPv4Addr(SockAddr):
         """
         self = Self(value[0], value[1])
 
-    fn __init__(inout self: Self, value: Tuple[StringLiteral, Int]):
+    fn __init__(out self: Self, value: Tuple[StringLiteral, Int]):
         """Create an Address.
 
         Args:
@@ -437,7 +437,7 @@ struct IPv6Addr(SockAddr):
     """The scope_id."""
 
     fn __init__(
-        inout self,
+        out self,
         host: String = "::1",
         port: UInt = 0,
         flowinfo: UInt = 0,
@@ -457,7 +457,7 @@ struct IPv6Addr(SockAddr):
         self.flowinfo = flowinfo
         self.scope_id = scope_id
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -491,7 +491,7 @@ struct UnixAddr(SockAddr):
     var host: String
     """The sun_path (maximum of 108 bytes)."""
 
-    fn from_host(inout self: UnixAddr, host: String):
+    fn from_host(out self: UnixAddr, host: String):
         """Create an Address.
 
         Args:
@@ -502,7 +502,7 @@ struct UnixAddr(SockAddr):
         """
         self.host = host
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -533,7 +533,7 @@ struct NETLINKAddr(SockAddr):
     var groups: UInt
     """The groups."""
 
-    fn __init__(inout self: NETLINKAddr, pid: UInt, groups: UInt):
+    fn __init__(out self: NETLINKAddr, pid: UInt, groups: UInt):
         """NETLINKAddr.
 
         Args:
@@ -544,7 +544,7 @@ struct NETLINKAddr(SockAddr):
         self.pid = pid
         self.groups = groups
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -585,7 +585,7 @@ struct TIPCAddr(SockAddr):
     """The scope."""
 
     fn __init__(
-        inout self: TIPCAddr,
+        out self: TIPCAddr,
         addr_type: TIPCAddrType,
         v1: UInt,
         v2: UInt,
@@ -608,7 +608,7 @@ struct TIPCAddr(SockAddr):
         self.v3 = v3
         self.scope = scope
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -643,7 +643,7 @@ struct CANISOTPAddr(SockAddr):
     """The tx_addr."""
 
     fn __init__(
-        inout self: CANISOTPAddr,
+        out self: CANISOTPAddr,
         interface: String,
         rx_addr: UInt32 = 0,
         tx_addr: UInt32 = 1,
@@ -660,7 +660,7 @@ struct CANISOTPAddr(SockAddr):
         self.rx_addr = rx_addr
         self.tx_addr = tx_addr
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -698,7 +698,7 @@ struct CANJ1939Addr(SockAddr):
     """The address."""
 
     fn __init__(
-        inout self: CANJ1939Addr,
+        out self: CANJ1939Addr,
         interface: String,
         name: UInt64,
         pgn: UInt32,
@@ -718,7 +718,7 @@ struct CANJ1939Addr(SockAddr):
         self.pgn = pgn
         self.addr = addr
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -749,7 +749,7 @@ struct BTL2CAPAddr(SockAddr):
     var psm: UInt
     """The psm."""
 
-    fn __init__(inout self: BTL2CAPAddr, bdaddr: String, psm: UInt):
+    fn __init__(out self: BTL2CAPAddr, bdaddr: String, psm: UInt):
         """BTL2CAPAddr.
 
         Args:
@@ -760,7 +760,7 @@ struct BTL2CAPAddr(SockAddr):
         self.bdaddr = bdaddr
         self.psm = psm
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -791,7 +791,7 @@ struct BTRFCOMMAddr(SockAddr):
     var channel: UInt
     """The channel."""
 
-    fn __init__(inout self: BTRFCOMMAddr, bdaddr: String, channel: UInt):
+    fn __init__(out self: BTRFCOMMAddr, bdaddr: String, channel: UInt):
         """BTRFCOMMAddr.
 
         Args:
@@ -802,7 +802,7 @@ struct BTRFCOMMAddr(SockAddr):
         self.bdaddr = bdaddr
         self.channel = channel
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -830,7 +830,7 @@ struct BTHCIAddr(SockAddr):
     var device_id: UInt
     """The device_id."""
 
-    fn __init__(inout self: BTHCIAddr, device_id: UInt):
+    fn __init__(out self: BTHCIAddr, device_id: UInt):
         """BTHCIAddr.
 
         Args:
@@ -839,7 +839,7 @@ struct BTHCIAddr(SockAddr):
 
         self.device_id = device_id
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -867,7 +867,7 @@ struct BTSCOAddr(SockAddr):
     var bdaddr: UInt
     """The Bluetooth address."""
 
-    fn __init__(inout self: BTSCOAddr, bdaddr: UInt):
+    fn __init__(out self: BTSCOAddr, bdaddr: UInt):
         """BTSCOAddr.
 
         Args:
@@ -876,7 +876,7 @@ struct BTSCOAddr(SockAddr):
 
         self.bdaddr = bdaddr
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -915,7 +915,7 @@ struct ALGAddr(SockAddr):
     """The mask."""
 
     fn __init__(
-        inout self: ALGAddr,
+        out self: ALGAddr,
         type: String,
         name: String,
         feat: UInt32 = 0,
@@ -936,7 +936,7 @@ struct ALGAddr(SockAddr):
         self.feat = feat
         self.mask = mask
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -967,7 +967,7 @@ struct VSOCKAddr(SockAddr):
     var port: UInt
     """The port."""
 
-    fn __init__(inout self: VSOCKAddr, CID: UInt, port: UInt):
+    fn __init__(out self: VSOCKAddr, CID: UInt, port: UInt):
         """VSOCKAddr.
 
         Args:
@@ -978,7 +978,7 @@ struct VSOCKAddr(SockAddr):
         self.CID = CID
         self.port = port
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -1019,7 +1019,7 @@ struct PACKETAddr(SockAddr):
     """The hardware physical address."""
 
     fn __init__(
-        inout self: PACKETAddr,
+        out self: PACKETAddr,
         ifname: String,
         proto: EtherProto = EtherProto.ALL,
         pkttype: EtherPacket = EtherPacket.HOST,
@@ -1042,7 +1042,7 @@ struct PACKETAddr(SockAddr):
         self.hatype = hatype
         self.addr = addr
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -1073,7 +1073,7 @@ struct QIPCRTRAddr(SockAddr):
     var port: UInt
     """The port."""
 
-    fn __init__(inout self: QIPCRTRAddr, node: UInt, port: UInt):
+    fn __init__(out self: QIPCRTRAddr, node: UInt, port: UInt):
         """QIPCRTRAddr.
 
         Args:
@@ -1084,7 +1084,7 @@ struct QIPCRTRAddr(SockAddr):
         self.node = node
         self.port = port
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -1115,7 +1115,7 @@ struct HYPERVAddr(SockAddr):
     var service_id: String
     """The service identifier of the registered service."""
 
-    fn __init__(inout self: HYPERVAddr, vm_id: String, service_id: String):
+    fn __init__(out self: HYPERVAddr, vm_id: String, service_id: String):
         """HYPERVAddr.
 
         Args:
@@ -1126,7 +1126,7 @@ struct HYPERVAddr(SockAddr):
         self.vm_id = vm_id
         self.service_id = service_id
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -1181,7 +1181,7 @@ struct SPIAddr(SockAddr):
     """The Chip Select (pin number)."""
 
     fn __init__(
-        inout self: SPIAddr,
+        out self: SPIAddr,
         interface: String,
         address: UInt,
         frequency_hz: UInt,
@@ -1214,7 +1214,7 @@ struct SPIAddr(SockAddr):
         self.MISO = MISO
         self.CS = CS
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -1263,7 +1263,7 @@ struct I2CAddr(SockAddr):
     """The Serial Clock Line (pin number)."""
 
     fn __init__(
-        inout self: I2CAddr,
+        out self: I2CAddr,
         interface: String,
         address: UInt,
         bitrate: UInt = 100,
@@ -1290,7 +1290,7 @@ struct I2CAddr(SockAddr):
         self.SDA = SDA
         self.SCL = SCL
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:
@@ -1336,7 +1336,7 @@ struct UARTAddr(SockAddr):
     """The tx_addr."""
 
     fn __init__(
-        inout self: UARTAddr,
+        out self: UARTAddr,
         interface: String,
         baudrate: UInt = 115200,
         mode: String = "8N1",
@@ -1360,7 +1360,7 @@ struct UARTAddr(SockAddr):
         self.rx_addr = rx_addr
         self.tx_addr = tx_addr
 
-    fn __init__(inout self, value: String) raises:
+    fn __init__(out self, value: String) raises:
         """Create an Address from a String value.
 
         Args:

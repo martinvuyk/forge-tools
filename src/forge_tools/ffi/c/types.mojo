@@ -240,7 +240,7 @@ struct addrinfo:
     var ai_next: UnsafePointer[C.void]
     """Next Address Information struct."""
 
-    fn __init__(inout self):
+    fn __init__(out self):
         """Construct an empty addrinfo struct."""
         p0 = UnsafePointer[sockaddr]()
         self = Self(0, 0, 0, 0, 0, p0, UnsafePointer[C.char](), C.NULL)

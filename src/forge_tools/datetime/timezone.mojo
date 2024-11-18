@@ -83,7 +83,7 @@ struct TimeZone[
     var _no_dst: no_dst_storage
 
     fn __init__(
-        inout self,
+        out self,
         tz_str: StringLiteral = "Etc/UTC",
         offset_h: UInt8 = 0,
         offset_m: UInt8 = 0,

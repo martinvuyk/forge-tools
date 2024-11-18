@@ -25,11 +25,11 @@ struct _BSDSocket[
         SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr
     ]
 
-    fn __init__(inout self) raises:
+    fn __init__(out self) raises:
         """Create a new socket object."""
         self._sock = Self._ST()
 
-    fn __init__(inout self, fd: Arc[FileDescriptor]):
+    fn __init__(out self, fd: Arc[FileDescriptor]):
         """Create a new socket object from an open `Arc[FileDescriptor]`."""
         self._sock = Self._ST(fd=fd)
 
