@@ -279,11 +279,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
     fn __init__[
         size: Int
-    ](
-        out self,
-        owned values: SIMD[T, size],
-        length: Int = min(size, capacity),
-    ):
+    ](out self, owned values: SIMD[T, size], length: Int = min(size, capacity),):
         """Constructs an Array from the given values.
 
         Parameters:

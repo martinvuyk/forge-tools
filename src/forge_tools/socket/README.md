@@ -77,9 +77,7 @@ trait SocketInterface[
        ...
 
     fn close(owned self) raises:
-        """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
-        """
+        """Closes the Socket."""
         ...
 
     fn __del__(owned self):
@@ -88,7 +86,9 @@ trait SocketInterface[
         """
         ...
 
-    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+    fn setsockopt[
+        D: DType = C.int.element_type
+    ](self, level: C.int, option_name: C.int, option_value: Scalar[D]) raises:
         """Set socket options."""
         ...
 
@@ -127,19 +127,19 @@ trait SocketInterface[
         """Get the Socket's ARC FileDescriptor."""
         ...
 
-    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
         """Send file descriptor to the socket."""
         ...
 
-    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
+    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
         """Receive file descriptors from the socket."""
         ...
 
-    async fn send(self, buf: Span[UInt8]) -> UInt:
+    async fn send(self, buf: Span[UInt8]) -> Int:
         """Send a buffer of bytes to the socket."""
         return 0
 
-    async fn recv(self, buf: Span[UInt8]) -> UInt:
+    async fn recv(self, buf: Span[UInt8]) -> Int:
         """Receive up to `len(buf)` bytes into the buffer."""
         return 0
 
@@ -179,15 +179,27 @@ trait SocketInterface[
         """Set the socket timeout value."""
         ...
 
-   # TODO: This should return an iterator instead
-   @staticmethod
-   fn getaddrinfo(
-       address: sock_address, flags: Int = 0
-   ) raises -> List[
-       (SockFamily, SockType, SockProtocol, String, sock_address)
-   ]:
-       """Get the available address information.
-       ...
+    # TODO: This should return an iterator instead
+    @staticmethod
+    fn getaddrinfo(
+        address: sock_address, flags: Int = 0
+    ) raises -> List[
+        (SockFamily, SockType, SockProtocol, String, sock_address)
+    ]:
+        """Get the available address information."""
+        ...
+
+    fn keep_alive(
+        self, seconds: C.int, interval: C.int = 3, start: C.int = 3
+    ) -> Bool:
+        """Set the amount of seconds to keep the connection alive."""
+        ...
+
+    fn reuse_address(
+        self, value: Bool = True, *, full_duplicates: Bool = True
+    ) -> Bool:
+        """Set whether to allow duplicated addresses."""
+        ...
 ```
 
 

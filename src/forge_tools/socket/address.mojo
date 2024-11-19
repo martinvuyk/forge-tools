@@ -375,6 +375,7 @@ struct IPv4Addr(SockAddr):
             raise Error("port not found in String")
         self = Self(value[:idx], int(value[idx + 1 :]))
 
+    @implicit
     fn __init__(out self: Self, value: Tuple[String, UInt]):
         """Create an Address.
 
@@ -383,6 +384,7 @@ struct IPv4Addr(SockAddr):
         """
         self = Self(value[0], value[1])
 
+    @implicit
     fn __init__(out self: Self, value: Tuple[StringLiteral, UInt]):
         """Create an Address.
 
@@ -391,6 +393,7 @@ struct IPv4Addr(SockAddr):
         """
         self = Self(value[0], value[1])
 
+    @implicit
     fn __init__(out self, value: Tuple[String, Int]):
         """Create an Address.
 
@@ -399,6 +402,7 @@ struct IPv4Addr(SockAddr):
         """
         self = Self(value[0], value[1])
 
+    @implicit
     fn __init__(out self: Self, value: Tuple[StringLiteral, Int]):
         """Create an Address.
 

@@ -1,4 +1,4 @@
-"""Libc POSIX file syscalls."""
+"""Libc POSIX syscalls."""
 
 from collections import Optional
 from memory import UnsafePointer, stack_allocation

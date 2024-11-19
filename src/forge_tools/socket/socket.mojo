@@ -224,142 +224,151 @@ struct SockPlatform:
             in (SockPlatform.UNIX, Self.LINUX, Self.APPLE, Self.BSD)
         )
 
+    # TODO: trait declarations do not support parameters yet
+    # trait SocketInterface[
+    #     sock_family: SockFamily,
+    #     sock_type: SockType,
+    #     sock_protocol: SockProtocol,
+    #     sock_address: SockAddr,
+    #     sock_platform: SockPlatform,
+    # ](CollectionElement):
+    #     """Interface for Sockets."""
 
-# TODO: trait declarations do not support parameters yet
-# trait SocketInterface[
-#     sock_family: SockFamily,
-#     sock_type: SockType,
-#     sock_protocol: SockProtocol,
-#     sock_address: SockAddr,
-#     sock_platform: SockPlatform,
-# ](CollectionElement):
-#     """Interface for Sockets."""
+    #     fn __init__(out self) raises:
+    #         """Create a new socket object."""
+    #         ...
 
-#     fn __init__(out self) raises:
-#         """Create a new socket object."""
-#         ...
+    #    fn __init__(out self, fd: Arc[FileDescriptor]):
+    #        """Create a new socket object from an open `Arc[FileDescriptor]`."""
+    #        ...
 
-#    fn __init__(out self, fd: Arc[FileDescriptor]):
-#        """Create a new socket object from an open `Arc[FileDescriptor]`."""
-#        ...
+    #     fn close(owned self) raises:
+    #         """Closes the Socket if it's the last reference to its
+    #         `Arc[FileDescriptor]`.
+    #         """
+    #         ...
 
-#     fn close(owned self) raises:
-#         """Closes the Socket if it's the last reference to its
-#         `Arc[FileDescriptor]`.
-#         """
-#         ...
+    #     fn __del__(owned self):
+    #         """Closes the Socket if it's the last reference to its
+    #         `Arc[FileDescriptor]`.
+    #         """
+    #         ...
 
-#     fn __del__(owned self):
-#         """Closes the Socket if it's the last reference to its
-#         `Arc[FileDescriptor]`.
-#         """
-#         ...
+    #     fn setsockopt[
+    #         D: DType = C.int.element_type
+    #     ](self, level: C.int, option_name: C.int, option_value: Scalar[D]) raises:
+    #         """Set socket options."""
+    #         ...
 
-#     fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
-#         """Set socket options."""
-#         ...
+    #     fn bind(self, address: sock_address) raises:
+    #         """Bind the socket to address. The socket must not already be bound."""
+    #         ...
 
-#     fn bind(self, address: sock_address) raises:
-#         """Bind the socket to address. The socket must not already be bound."""
-#         ...
+    #     fn listen(self, backlog: UInt = 0) raises:
+    #         """Enable a server to accept connections. `backlog` specifies the number
+    #         of unaccepted connections that the system will allow before refusing
+    #         new connections. If `backlog == 0`, a default value is chosen.
+    #         """
+    #         ...
 
-#     fn listen(self, backlog: UInt = 0) raises:
-#         """Enable a server to accept connections. `backlog` specifies the number
-#         of unaccepted connections that the system will allow before refusing
-#         new connections. If `backlog == 0`, a default value is chosen.
-#         """
-#         ...
+    #     async fn connect(self, address: sock_address) raises:
+    #         """Connect to a remote socket at address."""
+    #         ...
 
-#     async fn connect(self, address: sock_address) raises:
-#         """Connect to a remote socket at address."""
-#         ...
+    #     async fn accept(self) -> Optional[(Self, sock_address)]:
+    #         """Return a new socket representing the connection, and the address of
+    #         the client."""
+    #         ...
 
-#     async fn accept(self) -> Optional[(Self, sock_address)]:
-#         """Return a new socket representing the connection, and the address of
-#         the client."""
-#         ...
+    #    # TODO: once we have async generators
+    #    fn __iter__(self) -> _SocketIter:
+    #        """Iterate asynchronously over the incoming connections."""
+    #        ...
 
-#    # TODO: once we have async generators
-#    fn __iter__(self) -> _SocketIter:
-#        """Iterate asynchronously over the incoming connections."""
-#        ...
+    #     @staticmethod
+    #     fn socketpair() raises -> (Self, Self):
+    #         """Create a pair of socket objects from the sockets returned by the
+    #         platform `socketpair()` function."""
+    #         ...
 
-#     @staticmethod
-#     fn socketpair() raises -> (Self, Self):
-#         """Create a pair of socket objects from the sockets returned by the
-#         platform `socketpair()` function."""
-#         ...
+    #     fn get_fd(self) -> Arc[FileDescriptor]:
+    #         """Get the Socket's ARC FileDescriptor."""
+    #         ...
 
-#     fn get_fd(self) -> Arc[FileDescriptor]:
-#         """Get the Socket's ARC FileDescriptor."""
-#         ...
+    #     async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    #         """Send file descriptor to the socket."""
+    #         ...
 
-#     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
-#         """Send file descriptor to the socket."""
-#         ...
+    #     async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
+    #         """Receive file descriptors from the socket."""
+    #         ...
 
-#     async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
-#         """Receive file descriptors from the socket."""
-#         ...
+    #     async fn send(self, buf: Span[UInt8]) -> UInt:
+    #         """Send a buffer of bytes to the socket."""
+    #         return 0
 
-#     async fn send(self, buf: Span[UInt8]) -> UInt:
-#         """Send a buffer of bytes to the socket."""
-#         return 0
+    #     async fn recv(self, buf: Span[UInt8]) -> UInt:
+    #         """Receive up to `len(buf)` bytes into the buffer."""
+    #         return 0
 
-#     async fn recv(self, buf: Span[UInt8]) -> UInt:
-#         """Receive up to `len(buf)` bytes into the buffer."""
-#         return 0
+    #     @staticmethod
+    #     fn gethostname() -> Optional[String]:
+    #         """Return the current hostname."""
+    #         ...
 
-#     @staticmethod
-#     fn gethostname() -> Optional[String]:
-#         """Return the current hostname."""
-#         ...
+    #     @staticmethod
+    #     fn gethostbyname(name: String) -> Optional[sock_address]:
+    #         """Map a hostname to its Address."""
+    #         ...
 
-#     @staticmethod
-#     fn gethostbyname(name: String) -> Optional[sock_address]:
-#         """Map a hostname to its Address."""
-#         ...
+    #     @staticmethod
+    #     fn gethostbyaddr(address: sock_address) -> Optional[String]:
+    #         """Map an Address to DNS info."""
+    #         ...
 
-#     @staticmethod
-#     fn gethostbyaddr(address: sock_address) -> Optional[String]:
-#         """Map an Address to DNS info."""
-#         ...
+    #     @staticmethod
+    #     fn getservbyname(
+    #         name: String, proto: SockProtocol = SockProtocol.TCP
+    #     ) -> Optional[sock_address]:
+    #         """Map a service name and a protocol name to a port number."""
+    #         ...
 
-#     @staticmethod
-#     fn getservbyname(
-#         name: String, proto: SockProtocol = SockProtocol.TCP
-#     ) -> Optional[sock_address]:
-#         """Map a service name and a protocol name to a port number."""
-#         ...
+    #     @staticmethod
+    #     fn getdefaulttimeout() -> Optional[Float64]:
+    #         """Get the default timeout value."""
+    #         ...
 
-#     @staticmethod
-#     fn getdefaulttimeout() -> Optional[Float64]:
-#         """Get the default timeout value."""
-#         ...
+    #     @staticmethod
+    #     fn setdefaulttimeout(value: Optional[Float64]) -> Bool:
+    #         """Set the default timeout value."""
+    #         ...
 
-#     @staticmethod
-#     fn setdefaulttimeout(value: Optional[Float64]) -> Bool:
-#         """Set the default timeout value."""
-#         ...
+    #     fn settimeout(self, value: Optional[Float64]) -> Bool:
+    #         """Set the socket timeout value."""
+    #         ...
 
-#     fn settimeout(self, value: Optional[Float64]) -> Bool:
-#         """Set the socket timeout value."""
-#         ...
+    #    # TODO: This should return an iterator instead
+    #    @staticmethod
+    #    fn getaddrinfo(
+    #        address: sock_address, flags: Int = 0
+    #    ) raises -> List[
+    #        (SockFamily, SockType, SockProtocol, String, sock_address)
+    #    ]:
+    #        """Get the available address information.
+    #        ...
 
-#    # TODO: This should return an iterator instead
-#    @staticmethod
-#    fn getaddrinfo(
-#        address: sock_address, flags: Int = 0
-#    ) raises -> List[
-#        (SockFamily, SockType, SockProtocol, String, sock_address)
-#    ]:
-#        """Get the available address information.
-#        ...
+    # fn keep_alive(
+    #     self, seconds: C.int, interval: C.int = 3, start: C.int = 3
+    # ) -> Bool:
+    #     """Set the amount of seconds to keep the connection alive."""
+    #     ...
 
-# TODO: fn keep_alive(
-#     seconds: UInt32, interval: UInt32 = 3, start: UInt32 = interval
-# )
-# TODO: fn reuse_address(value: Bool, *, host_and_port: Bool = True)
+    # fn reuse_address(
+    #     self, value: Bool = True, *, full_duplicates: Bool = True
+    # ) -> Bool:
+    #     """Set whether to allow duplicated addresses."""
+    #     ...
+
 
 fn current_sock_platform() -> SockPlatform:
     """Get the current platform.
@@ -453,6 +462,7 @@ struct Socket[
     alias _variant = Variant[Self._linux_s, Self._unix_s, Self._windows_s]
     var _impl: Self._variant
 
+    @implicit
     fn __init__(out self, impl: Self._variant):
         """Construct a socket object from an implementation of the
         SocketInterface.
@@ -487,9 +497,7 @@ struct Socket[
             self._impl = Self._linux_s(fd)
 
     fn close(owned self) raises:
-        """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
-        """
+        """Closes the Socket."""
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
@@ -514,7 +522,9 @@ struct Socket[
         """
         return self^
 
-    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+    fn setsockopt[
+        D: DType = C.int.element_type
+    ](self, level: C.int, option_name: C.int, option_value: Scalar[D]) raises:
         """Set socket options.
 
         Args:
@@ -589,17 +599,17 @@ struct Socket[
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            attempt = await self._impl[Self._linux_s].accept()
+            var attempt = await self._impl[Self._linux_s].accept()
             if not attempt:
                 return None
-            conn, addr = attempt.value()
-            return Self(conn), addr
+            var conn = attempt.value()[0]
+            return Self(conn), attempt.value()[1]
         elif sock_platform is SockPlatform.UNIX:
-            attempt = await self._impl[Self._unix_s].accept()
+            var attempt = await self._impl[Self._unix_s].accept()
             if not attempt:
                 return None
-            conn, addr = attempt.value()
-            return Self(conn), addr
+            var conn = attempt.value()[0]
+            return Self(conn), attempt.value()[1]
         else:
             constrained[False, "Platform not supported yet."]()
             return None
@@ -640,7 +650,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return Arc(FileDescriptor(0))
 
-    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
         """Send file descriptors to the socket.
 
         Args:
@@ -659,7 +669,9 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return False
 
-    async fn recv_fds(self, maxfds: UInt) -> Optional[List[FileDescriptor]]:
+    async fn recv_fds(
+        self, maxfds: UInt
+    ) -> Optional[List[Arc[FileDescriptor]]]:
         """Receive up to maxfds file descriptors.
 
         Args:
@@ -681,9 +693,7 @@ struct Socket[
 
         Args:
             buf: The buffer of bytes to send.
-            flags: The [optional flags](\
-https://manpages.debian.org/bookworm/manpages-dev/\
-recv.2.en.html#The_flags_argument).
+            flags: The [optional flags](https://manpages.debian.org/bookworm/manpages-dev/recv.2.en.html#The_flags_argument).
 
         Returns:
             The amount of bytes sent, -1 on error.
@@ -866,7 +876,7 @@ recv.2.en.html#The_flags_argument).
         """
 
         length = 0
-        ptr = Self._unix_s.lib.inet_ntoa(value).bitcast[UInt8]()
+        ptr = Self._unix_s.lib.inet_ntoa(in_addr(value)).bitcast[UInt8]()
         for i in range(7, 16):
             if ptr[i] == 0:
                 length = i
@@ -1004,12 +1014,16 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.create_connection(
-                address, timeout, source_address, all_errors=all_errors
+            return Self(
+                Self._linux_s.create_connection(
+                    address, timeout, source_address, all_errors=all_errors
+                )
             )
         elif sock_platform is SockPlatform.UNIX:
-            return Self._unix_s.create_connection(
-                address, timeout, source_address, all_errors=all_errors
+            return Self(
+                Self._unix_s.create_connection(
+                    address, timeout, source_address, all_errors=all_errors
+                )
             )
         else:
             constrained[False, "Platform not supported yet."]()
@@ -1041,12 +1055,16 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.create_connection(
-                address, timeout, source_address, all_errors=all_errors
+            return Self(
+                Self._linux_s.create_connection(
+                    address, timeout, source_address, all_errors=all_errors
+                )
             )
         elif sock_platform is SockPlatform.UNIX:
-            return Self._unix_s.create_connection(
-                address, timeout, source_address, all_errors=all_errors
+            return Self(
+                Self._unix_s.create_connection(
+                    address, timeout, source_address, all_errors=all_errors
+                )
             )
         else:
             constrained[False, "Platform not supported yet."]()
@@ -1102,12 +1120,16 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.create_server(
-                address, backlog=backlog, reuse_port=reuse_port
+            return Self(
+                Self._linux_s.create_server(
+                    address, backlog=backlog, reuse_port=reuse_port
+                )
             )
         elif sock_platform is SockPlatform.UNIX:
-            return Self._unix_s.create_server(
-                address, backlog=backlog, reuse_port=reuse_port
+            return Self(
+                Self._unix_s.create_server(
+                    address, backlog=backlog, reuse_port=reuse_port
+                )
             )
         else:
             constrained[False, "Platform not supported yet."]()
@@ -1164,16 +1186,20 @@ nf-ws2tcpip-getaddrinfo).
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return Self._linux_s.create_server(
-                address,
-                backlog=backlog,
-                reuse_port=reuse_port,
+            return Self(
+                Self._linux_s.create_server(
+                    address,
+                    backlog=backlog,
+                    reuse_port=reuse_port,
+                )
             )
         elif sock_platform is SockPlatform.UNIX:
-            return Self._unix_s.create_server(
-                address,
-                backlog=backlog,
-                reuse_port=reuse_port,
+            return Self(
+                Self._unix_s.create_server(
+                    address,
+                    backlog=backlog,
+                    reuse_port=reuse_port,
+                )
             )
         else:
             constrained[False, "Platform not supported yet."]()
@@ -1240,3 +1266,17 @@ nf-ws2tcpip-getaddrinfo).
         else:
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to create socket.")
+
+    # TODO
+    fn keep_alive(
+        self, seconds: C.int, interval: C.int = 3, start: C.int = 3
+    ) -> Bool:
+        """Set the amount of seconds to keep the connection alive."""
+        return False
+
+    # TODO
+    fn reuse_address(
+        self, value: Bool = True, *, full_duplicates: Bool = True
+    ) -> Bool:
+        """Set whether to allow duplicated addresses."""
+        return False

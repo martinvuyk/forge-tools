@@ -90,35 +90,33 @@ struct _UnixSocket[
         self.fd = fd
 
     fn close(owned self) raises:
-        """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
-        """
+        """Closes the Socket."""
         alias lib = Self.lib
-        if self.fd.count() == 1:
-            err = lib.shutdown(self.fd[].value, SHUT_RDWR)
-            if err == -1:
-                message = char_ptr_to_string(lib.strerror(lib.get_errno()))
-                raise Error("Failed trying to close the socket: " + message)
+        err = lib.shutdown(self.fd[].value, SHUT_RDWR)
+        if err == -1:
+            message = char_ptr_to_string(lib.strerror(lib.get_errno()))
+            raise Error("Failed trying to close the socket: " + message)
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
         `Arc[FileDescriptor]`.
         """
         try:
-            self.close()
+            if self.fd.count() == 1:
+                self.close()
         except e:
             print(e, file=STDERR_FILENO)
 
-    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+    fn setsockopt[
+        D: DType = C.int.element_type
+    ](self, level: C.int, option_name: C.int, option_value: Scalar[D]) raises:
         """Set socket options."""
-        ptr = stack_allocation[1, Int]()
+        ptr = stack_allocation[1, Scalar[D]]()
         ptr[0] = option_value
         cvoid = ptr.bitcast[C.void]()
-        s = sizeof[Int]()
-        if (
-            self.lib.setsockopt(self.fd[].value, level, option_name, cvoid, s)
-            == -1
-        ):
+        s = socklen_t(sizeof[Scalar[D]]())
+        fd = self.fd[].value
+        if self.lib.setsockopt(fd, level, option_name, cvoid, s) == -1:
             message = char_ptr_to_string(
                 self.lib.strerror(self.lib.get_errno())
             )
@@ -138,7 +136,7 @@ struct _UnixSocket[
                 raise Error("Invalid Address.")
             ip = ip_buf.bitcast[C.u_int]().load()
             zero = StaticTuple[C.char, 8]()
-            ai = sockaddr_in(Self._sock_family, port, ip, zero)
+            ai = sockaddr_in(Self._sock_family, port, in_addr(ip), zero)
             ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if (
                 self.lib.bind(self.fd[].value, ai_ptr, sizeof[sockaddr_in]())
@@ -179,7 +177,7 @@ struct _UnixSocket[
                 raise Error("Invalid Address.")
             ip = ip_buf.bitcast[C.u_int]().load()
             zero = StaticTuple[C.char, 8]()
-            ai = sockaddr_in(Self._sock_family, port, ip, zero)
+            ai = sockaddr_in(Self._sock_family, port, in_addr(ip), zero)
             ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
             if (
                 self.lib.connect(self.fd[].value, ai_ptr, sizeof[sockaddr_in]())
@@ -253,13 +251,13 @@ struct _UnixSocket[
         """
         return self.fd
 
-    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
         """Send file descriptors to the socket."""
         return False
 
-    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
+    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
         """Receive file descriptors from the socket."""
-        return List[FileDescriptor]()
+        return List[Arc[FileDescriptor]]()
 
     async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Send a buffer of bytes to the socket."""

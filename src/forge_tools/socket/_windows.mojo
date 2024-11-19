@@ -2,6 +2,7 @@ from collections import Optional
 from memory import UnsafePointer, Arc
 from sys.intrinsics import _type_is_eq
 from utils import Span
+from forge_tools.ffi.c.types import C
 from .socket import (
     # SocketInterface,
     SockType,
@@ -29,19 +30,14 @@ struct _WindowsSocket[
         self.fd = fd
 
     fn close(owned self) raises:
-        """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
-        """
+        """Closes the Socket."""
         ...  # TODO: implement
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
         `Arc[FileDescriptor]`.
         """
-        try:
-            self.close()
-        except:
-            pass
+        ...
 
     fn bind(self, address: sock_address) raises:
         """Bind the socket to address. The socket must not already be bound."""
@@ -74,13 +70,13 @@ struct _WindowsSocket[
         """Get the Socket's FileDescriptor."""
         return 0
 
-    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
         """Send file descriptors to the socket."""
         return False
 
-    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
+    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
         """Receive file descriptors from the socket."""
-        return List[FileDescriptor]()
+        return List[Arc[FileDescriptor]]()
 
     async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
         """Send a buffer of bytes to the socket."""

@@ -2,6 +2,7 @@ from collections import Optional
 from memory import UnsafePointer, Arc
 from sys.intrinsics import _type_is_eq
 from utils import Span
+from forge_tools.ffi.c.types import C
 from .socket import (
     # SocketInterface,
     SockType,
@@ -34,21 +35,18 @@ struct _BSDSocket[
         self._sock = Self._ST(fd=fd)
 
     fn close(owned self) raises:
-        """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
-        """
+        """Closes the Socket."""
         self._sock.close()
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
         `Arc[FileDescriptor]`.
         """
-        try:
-            self.close()
-        except:
-            pass
+        ...
 
-    fn setsockopt(self, level: Int, option_name: Int, option_value: Int) raises:
+    fn setsockopt[
+        D: DType = C.int.element_type
+    ](self, level: C.int, option_name: C.int, option_value: Scalar[D]) raises:
         """Set socket options."""
         self._sock.setsockopt(level, option_name, option_value)
 
@@ -87,11 +85,11 @@ struct _BSDSocket[
         """Get the Socket's ARC FileDescriptor."""
         return self._sock.get_fd()
 
-    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
+    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
         """Send file descriptors to the socket."""
         return await self._sock.send_fds(fds)
 
-    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
+    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
         """Receive file descriptors from the socket."""
         return await self._sock.recv_fds(maxfds)
 
