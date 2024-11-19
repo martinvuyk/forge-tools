@@ -533,7 +533,7 @@ struct Socket[
             option_value: A pointer to a buffer containing the option value.
 
         Notes:
-            [Reference](\
+            [Reference](
             https://man7.org/linux/man-pages/man3/setsockopt.3p.html).
         """
 
@@ -693,7 +693,9 @@ struct Socket[
 
         Args:
             buf: The buffer of bytes to send.
-            flags: The [optional flags](https://manpages.debian.org/bookworm/manpages-dev/recv.2.en.html#The_flags_argument).
+            flags: The [optional flags](
+                https://manpages.debian.org/bookworm/manpages-dev/recv.2.en.html#The_flags_argument
+                ).
 
         Returns:
             The amount of bytes sent, -1 on error.
@@ -713,9 +715,9 @@ struct Socket[
 
         Args:
             buf: The buffer to recieve to.
-            flags: The [optional flags](\
-https://manpages.debian.org/bookworm/manpages-dev/\
-recv.2.en.html#The_flags_argument).
+            flags: The [optional flags](
+                https://manpages.debian.org/bookworm/manpages-dev/recv.2.en.html#The_flags_argument
+                ).
 
         Returns:
             The amount of bytes recieved, -1 on error.
@@ -970,11 +972,10 @@ recv.2.en.html#The_flags_argument).
         """Get the available address information.
         
         Notes:
-            [Linux reference](\
-                https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
-            [Windows reference](\
-https://learn.microsoft.com/en-us/windows/win32/api/ws2tcpip/\
-nf-ws2tcpip-getaddrinfo).
+            [Linux reference](
+            https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
+            [Windows reference](
+            https://learn.microsoft.com/en-us/windows/win32/api/ws2tcpip/nf-ws2tcpip-getaddrinfo).
         """
 
         @parameter
