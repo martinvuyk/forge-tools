@@ -1,5 +1,6 @@
 from collections import Optional
 from memory import UnsafePointer, stack_allocation, Arc
+from os import abort
 from sys import sizeof
 from sys.intrinsics import _type_is_eq
 from utils import Span, StaticTuple, StringSlice
@@ -49,6 +50,11 @@ from forge_tools.ffi.c.constants import (
     SO_REUSEADDR,
     SO_REUSEPORT,
     STDERR_FILENO,
+    SO_KEEPALIVE,
+    SOL_TCP,
+    TCP_KEEPIDLE,
+    TCP_KEEPINTVL,
+    TCP_KEEPCNT,
 )
 
 
@@ -440,8 +446,7 @@ struct _UnixSocket[
         constrained[cond, "sock_address must be IPv4Addr"]()
         socket = Self()
         socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        if reuse_port:
-            socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, int(reuse_port))
         socket.bind(rebind[sock_address](address))
         socket.listen(backlog=backlog.value() if backlog else 0)
         return socket^
@@ -458,10 +463,8 @@ struct _UnixSocket[
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
         socket = Self()
-        socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
-        if reuse_port:
-            socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        socket.reuse_address(True, full_duplicates=reuse_port)
         socket.bind(rebind[sock_address](address))
         socket.listen(backlog=backlog.value() if backlog else 0)
         return socket^
@@ -475,22 +478,48 @@ struct _UnixSocket[
         reuse_port: Bool = False,
     ) raises -> (Self, Self._ipv4):
         """Create a socket, bind it to a specified address, and listen."""
-        alias S = _UnixSocket[
-            SockFamily.AF_INET, sock_type, sock_protocol, IPv4Addr
-        ]
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
         ipv6_sock = Self()
-        ipv6_sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        if dualstack_ipv6:
-            ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 0)
-        else:
-            ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
-        if reuse_port:
-            ipv6_sock.setsockopt(SOL_SOCKET, SO_REUSEPORT, 1)
+        ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, int(dualstack_ipv6))
+        ipv6_sock.reuse_address(True, full_duplicates=reuse_port)
         ipv6_sock.bind(rebind[sock_address](address))
         ipv6_sock.listen(backlog=backlog.value() if backlog else 0)
-        return ipv6_sock^, S(fd=ipv6_sock.fd) if dualstack_ipv6 else S()
+        return (
+            ipv6_sock^,
+            Self._ipv4(fd=ipv6_sock.fd) if dualstack_ipv6 else Self._ipv4(),
+        )
+
+    fn keep_alive(
+        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+    ) raises:
+        """Set the amount of seconds to keep the connection alive."""
+        @parameter
+        if sock_protocol is SockProtocol.TCP:
+            self.setsockopt(SOL_SOCKET, SO_KEEPALIVE, 1)
+            self.setsockopt(SOL_TCP, TCP_KEEPIDLE, seconds)
+            self.setsockopt(SOL_TCP, TCP_KEEPINTVL, interval)
+            self.setsockopt(
+                SOL_TCP, TCP_KEEPCNT, count.or_else(seconds // interval)
+            )
+        else:
+            constrained[False, "unsupported protocol"]()
+            return abort()
+
+    fn reuse_address(
+        self, value: Bool = True, *, full_duplicates: Bool = True
+    ) raises:
+        """Set whether to allow duplicated addresses."""
+        @parameter
+        if (
+            sock_family is SockFamily.AF_INET
+            or sock_family is SockFamily.AF_INET6
+        ):
+            self.setsockopt(SOL_SOCKET, SO_REUSEADDR, int(value))
+            self.setsockopt(SOL_SOCKET, SO_REUSEPORT, int(full_duplicates))
+        else:
+            constrained[False, "unsupported address family"]()
+            return abort()
 
 
 @always_inline("nodebug")

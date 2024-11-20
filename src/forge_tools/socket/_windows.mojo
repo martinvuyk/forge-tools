@@ -164,3 +164,15 @@ struct _WindowsSocket[
             "sock_address must be IPv6Addr",
         ]()
         raise Error("Failed to create socket.")
+
+    fn keep_alive(
+        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+    ) raises:
+        """Set the amount of seconds to keep the connection alive."""
+        raise Error("Failed to set socket options.")
+
+    fn reuse_address(
+        self, value: Bool = True, *, full_duplicates: Bool = True
+    ) raises:
+        """Set whether to allow duplicated addresses."""
+        raise Error("Failed to set socket options.")

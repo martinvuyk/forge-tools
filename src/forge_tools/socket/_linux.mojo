@@ -220,3 +220,15 @@ struct _LinuxSocket[
             reuse_port=reuse_port,
         )
         return Self(fd=s_s[0].get_fd()), Self._ipv4(fd=s_s[1].get_fd())
+
+    fn keep_alive(
+        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+    ) raises:
+        """Set the amount of seconds to keep the connection alive."""
+        return self._sock.keep_alive(seconds, interval, count)
+
+    fn reuse_address(
+        self, value: Bool = True, *, full_duplicates: Bool = True
+    ) raises:
+        """Set whether to allow duplicated addresses."""
+        return self._sock.reuse_address(value, full_duplicates=full_duplicates)

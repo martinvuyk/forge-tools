@@ -363,7 +363,7 @@ struct SockPlatform:
     #        ...
 
     # fn keep_alive(
-    #     self, seconds: C.int, interval: C.int = 3, start: C.int = 3
+    #     self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
     # ) -> Bool:
     #     """Set the amount of seconds to keep the connection alive."""
     #     ...
@@ -1299,16 +1299,34 @@ struct Socket[
                 ])
             ]()
 
-    # TODO
     fn keep_alive(
-        self, seconds: C.int, interval: C.int = 3, start: C.int = 3
-    ) -> Bool:
+        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+    ) raises:
         """Set the amount of seconds to keep the connection alive."""
-        return False
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return self._impl[Self._linux_s].keep_alive(
+                seconds, interval, count
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl[Self._unix_s].keep_alive(seconds, interval, count)
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return abort()
 
-    # TODO
     fn reuse_address(
         self, value: Bool = True, *, full_duplicates: Bool = True
-    ) -> Bool:
+    ) raises:
         """Set whether to allow duplicated addresses."""
-        return False
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return self._impl[Self._linux_s].reuse_address(
+                value, full_duplicates=full_duplicates
+            )
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl[Self._unix_s].reuse_address(
+                value, full_duplicates=full_duplicates
+            )
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return abort()

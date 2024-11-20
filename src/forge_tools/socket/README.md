@@ -196,7 +196,7 @@ trait SocketInterface[
         ...
 
     fn keep_alive(
-        self, seconds: C.int, interval: C.int = 3, start: C.int = 3
+        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
     ) -> Bool:
         """Set the amount of seconds to keep the connection alive."""
         ...
