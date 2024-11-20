@@ -478,5 +478,5 @@ async fn handler(conn_attempt: Optional[(Socket, IPv4Addr)]):
 async def main():
     server = Socket.create_server(("0.0.0.0", 8000))
     with Pool() as pool:
-        _ = await pool.map(handler, server)
+        _ = await pool.map(handler, iter(server))
 ```

@@ -40,7 +40,7 @@ struct _WASISocket[
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         ...
 
@@ -81,24 +81,25 @@ struct _WASISocket[
         s_s = Self._ST.socketpair()
         return Self(fd=s_s[0].get_fd()), Self(fd=s_s[1].get_fd())
 
-    fn get_fd(self) -> Arc[FileDescriptor]:
-        """Get the Socket's ARC FileDescriptor."""
+    fn get_fd(self) -> FileDescriptor:
+        """Get the Socket's `FileDescriptor`."""
         return self._sock.get_fd()
 
-    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket."""
         return await self._sock.send_fds(fds)
 
-    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
+    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
         """Receive file descriptors from the socket."""
         return await self._sock.recv_fds(maxfds)
 
-    async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
+    async fn send(self, buf: Span[UInt8], flags: C.int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
         return await self._sock.send(buf, flags)
 
-    async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
-        """Receive up to `len(buf)` bytes into the buffer."""
+    async fn recv[O: MutableOrigin](
+        self, buf: Span[UInt8, O], flags: C.int = 0
+    ) -> Int:
         return await self._sock.recv(buf, flags)
 
     @staticmethod

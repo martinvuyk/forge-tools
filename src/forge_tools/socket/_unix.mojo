@@ -99,7 +99,7 @@ struct _UnixSocket[
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         try:
             if self.fd.count() == 1:
@@ -243,23 +243,23 @@ struct _UnixSocket[
             fd=FileDescriptor(int(socket_vector[1]))
         )
 
-    fn get_fd(self) -> Arc[FileDescriptor]:
+    fn get_fd(self) -> FileDescriptor:
         """Get an ARC reference to the Socket's FileDescriptor.
 
         Returns:
             The ARC FileDescriptor.
         """
-        return self.fd
+        return self.fd[]
 
-    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket."""
         return False
 
-    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
+    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
         """Receive file descriptors from the socket."""
-        return List[Arc[FileDescriptor]]()
+        return List[FileDescriptor]()
 
-    async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
+    async fn send(self, buf: Span[UInt8], flags: C.int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
         ptr = buf.unsafe_ptr().bitcast[C.void]()
         sent = int(self.lib.send(self.fd[].value, ptr, len(buf), flags))
@@ -270,8 +270,9 @@ struct _UnixSocket[
             )
         return sent
 
-    async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
-        """Receive up to `len(buf)` bytes into the buffer."""
+    async fn recv[O: MutableOrigin](
+        self, buf: Span[UInt8, O], flags: C.int = 0
+    ) -> Int:
         ptr = buf.unsafe_ptr().bitcast[C.void]()
         recvd = int(self.lib.recv(self.fd[].value, ptr, len(buf), flags))
         if recvd == -1:

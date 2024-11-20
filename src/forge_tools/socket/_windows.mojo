@@ -35,7 +35,7 @@ struct _WindowsSocket[
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         ...
 
@@ -70,20 +70,21 @@ struct _WindowsSocket[
         """Get the Socket's FileDescriptor."""
         return 0
 
-    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket."""
         return False
 
-    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
+    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
         """Receive file descriptors from the socket."""
-        return List[Arc[FileDescriptor]]()
+        return List[FileDescriptor]()
 
-    async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
+    async fn send(self, buf: Span[UInt8], flags: C.int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
         return -1
 
-    async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
-        """Receive up to `len(buf)` bytes into the buffer."""
+    async fn recv[O: MutableOrigin](
+        self, buf: Span[UInt8, O], flags: C.int = 0
+    ) -> Int:
         return -1
 
     @staticmethod

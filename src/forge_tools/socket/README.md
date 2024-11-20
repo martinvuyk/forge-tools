@@ -76,13 +76,17 @@ trait SocketInterface[
        """Create a new socket object from an open `Arc[FileDescriptor]`."""
        ...
 
+   fn __init__(out self, fd: FileDescriptor):
+       """Create a new socket object from an open `FileDescriptor`."""
+       ...
+
     fn close(owned self) raises:
         """Closes the Socket."""
         ...
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         ...
 
@@ -123,25 +127,27 @@ trait SocketInterface[
         platform `socketpair()` function."""
         ...
 
-    fn get_fd(self) -> Arc[FileDescriptor]:
-        """Get the Socket's ARC FileDescriptor."""
+    fn get_fd(self) -> FileDescriptor:
+        """Get the Socket's `FileDescriptor`."""
         ...
 
-    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptor to the socket."""
         ...
 
-    async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
+    async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
         """Receive file descriptors from the socket."""
         ...
 
-    async fn send(self, buf: Span[UInt8]) -> Int:
+    async fn send(self, buf: Span[UInt8], flags: C.int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
-        return 0
+        ...
 
-    async fn recv(self, buf: Span[UInt8]) -> Int:
+    async fn recv[O: MutableOrigin](
+        self, buf: Span[UInt8, O], flags: C.int = 0
+    ) -> Int:
         """Receive up to `len(buf)` bytes into the buffer."""
-        return 0
+        ...
 
     @staticmethod
     fn gethostname() -> Optional[String]:
@@ -217,12 +223,18 @@ from forge_tools.socket import Socket
 async def main():
     # TODO: once we have async generators:
     # async for conn_attempt in Socket.create_server(("0.0.0.0", 8000)):
-    #     conn, addr = conn_attempt[]
+    #     conn_attempt = await server.accept()
+    #     if not conn_attempt:
+    #         continue
+    #     conn, addr = conn_attempt.value()
     #     ...  # handle new connection
 
     with Socket.create_server(("0.0.0.0", 8000)) as server:
         while True:
-            conn, addr = (await server.accept())[]
+            conn_attempt = await server.accept()
+            if not conn_attempt:
+                continue
+            conn, addr = conn_attempt.value()
             ...  # handle new connection
 ```
 
@@ -242,7 +254,7 @@ async fn handler(conn_attempt: Optional[Socket, IPv4Addr]):
 async def main():
     server = Socket.create_server(("0.0.0.0", 8000))
     with Pool() as pool:
-        _ = await pool.starmap(handler, server)
+        _ = await pool.map(handler, iter(server))
 ```
 
 #### On future implementation of kernel async IO protocols

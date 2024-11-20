@@ -51,6 +51,7 @@ https://docs.python.org/3/library/socket.html).
 from sys import info
 from collections import Optional
 from memory import UnsafePointer, stack_allocation, Arc
+from os import abort
 from utils import Variant, Span, StringSlice
 
 from forge_tools.ffi.c.types import C, in_addr
@@ -242,15 +243,17 @@ struct SockPlatform:
     #        """Create a new socket object from an open `Arc[FileDescriptor]`."""
     #        ...
 
+    #    fn __init__(out self, fd: FileDescriptor):
+    #        """Create a new socket object from an open `FileDescriptor`."""
+    #        ...
+
     #     fn close(owned self) raises:
-    #         """Closes the Socket if it's the last reference to its
-    #         `Arc[FileDescriptor]`.
-    #         """
+    #         """Closes the Socket."""
     #         ...
 
     #     fn __del__(owned self):
     #         """Closes the Socket if it's the last reference to its
-    #         `Arc[FileDescriptor]`.
+    #         `FileDescriptor`.
     #         """
     #         ...
 
@@ -291,25 +294,27 @@ struct SockPlatform:
     #         platform `socketpair()` function."""
     #         ...
 
-    #     fn get_fd(self) -> Arc[FileDescriptor]:
-    #         """Get the Socket's ARC FileDescriptor."""
+    #     fn get_fd(self) -> FileDescriptor:
+    #         """Get the Socket's `FileDescriptor`."""
     #         ...
 
-    #     async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    #     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
     #         """Send file descriptor to the socket."""
     #         ...
 
-    #     async fn recv_fds(self, maxfds: Int) -> List[Arc[FileDescriptor]]:
+    #     async fn recv_fds(self, maxfds: Int) -> List[FileDescriptor]:
     #         """Receive file descriptors from the socket."""
     #         ...
 
-    #     async fn send(self, buf: Span[UInt8]) -> UInt:
+    #     async fn send(self, buf: Span[UInt8]) -> Int:
     #         """Send a buffer of bytes to the socket."""
-    #         return 0
+    #         ...
 
-    #     async fn recv(self, buf: Span[UInt8]) -> UInt:
+    #     async fn recv[O: MutableOrigin](
+    #         self, buf: Span[UInt8, O], flags: Int = 0
+    #     ) -> Int:
     #         """Receive up to `len(buf)` bytes into the buffer."""
-    #         return 0
+    #         ...
 
     #     @staticmethod
     #     fn gethostname() -> Optional[String]:
@@ -419,12 +424,18 @@ struct Socket[
     async def main():
         # TODO: once we have async generators:
         # async for conn_attempt in Socket.create_server(("0.0.0.0", 8000)):
-        #     conn, addr = conn_attempt[]
+        #     conn_attempt = await server.accept()
+        #     if not conn_attempt:
+        #         continue
+        #     conn, addr = conn_attempt.value()
         #     ...  # handle new connection
 
         with Socket.create_server(("0.0.0.0", 8000)) as server:
             while True:
-                conn, addr = (await server.accept())[]
+                conn_attempt = await server.accept()
+                if not conn_attempt:
+                    continue
+                conn, addr = conn_attempt.value()
                 ...  # handle new connection
     ```
 
@@ -444,7 +455,7 @@ struct Socket[
     async def main():
         server = Socket.create_server(("0.0.0.0", 8000))
         with Pool() as pool:
-            _ = await pool.map(handler, server)
+            _ = await pool.map(handler, iter(server))
     ```
     .
     """
@@ -510,7 +521,7 @@ struct Socket[
 
     fn __del__(owned self):
         """Closes the Socket if it's the last reference to its
-        `Arc[FileDescriptor]`.
+        `FileDescriptor`.
         """
         _ = self^
 
@@ -650,7 +661,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return Arc(FileDescriptor(0))
 
-    async fn send_fds(self, fds: List[Arc[FileDescriptor]]) -> Bool:
+    async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket.
 
         Args:
@@ -669,9 +680,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return False
 
-    async fn recv_fds(
-        self, maxfds: UInt
-    ) -> Optional[List[Arc[FileDescriptor]]]:
+    async fn recv_fds(self, maxfds: UInt) -> List[FileDescriptor]:
         """Receive up to maxfds file descriptors.
 
         Args:
@@ -686,9 +695,9 @@ struct Socket[
             return await self._impl[Self._linux_s].recv_fds(maxfds)
         else:
             constrained[False, "Platform not supported yet."]()
-            return None
+            return abort[List[FileDescriptor]]()
 
-    async fn send(self, buf: Span[UInt8], flags: Int = 0) -> Int:
+    async fn send(self, buf: Span[UInt8], flags: C.int = 0) -> Int:
         """Send a buffer of bytes to the socket.
 
         Args:
@@ -710,7 +719,9 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return False
 
-    async fn recv(self, buf: Span[UInt8], flags: Int = 0) -> Int:
+    async fn recv[O: MutableOrigin](
+        self, buf: Span[UInt8, O], flags: C.int = 0
+    ) -> Int:
         """Receive up to `len(buf)` bytes into the buffer.
 
         Args:
@@ -730,7 +741,7 @@ struct Socket[
             return await self._impl[Self._unix_s].recv(buf, flags)
         else:
             constrained[False, "Platform not supported yet."]()
-            return 0
+            return abort[Int]()
 
     fn gethostname(self) -> Optional[String]:
         """Return the current hostname.
@@ -763,7 +774,7 @@ struct Socket[
             return Self._unix_s.gethostbyname(name)
         else:
             constrained[False, "Platform not supported yet."]()
-            return None
+            return abort[Optional[sock_address]]()
 
     @staticmethod
     fn gethostbyaddr(address: sock_address) -> Optional[String]:
@@ -780,7 +791,7 @@ struct Socket[
             return Self._unix_s.gethostbyaddr(address)
         else:
             constrained[False, "Platform not supported yet."]()
-            return None
+            return abort[Optional[String]]()
 
     @staticmethod
     fn getservbyname(name: String) -> Optional[sock_address]:
@@ -797,7 +808,7 @@ struct Socket[
             return Self._unix_s.getservbyname(name)
         else:
             constrained[False, "Platform not supported yet."]()
-            return None
+            return abort[Optional[sock_address]]()
 
     @staticmethod
     fn ntohs(value: UInt16) -> UInt16:
@@ -921,7 +932,7 @@ struct Socket[
             return Self._unix_s.setdefaulttimeout(value)
         else:
             constrained[False, "Platform not supported yet."]()
-            return False
+            return abort[Bool]()
 
     fn settimeout(self, value: Optional[Float64]) -> Bool:
         """Set the socket timeout value.
@@ -940,7 +951,7 @@ struct Socket[
             return self._impl[Self._unix_s].settimeout(value)
         else:
             constrained[False, "Platform not supported yet."]()
-            return False
+            return abort[Bool]()
 
     # TODO: once we have async generators
     # fn __iter__(self) -> _SocketIter:
@@ -985,9 +996,9 @@ struct Socket[
             return Self._unix_s.getaddrinfo(address, flags)
         else:
             constrained[False, "Platform not supported yet."]()
-            return List[
+            return abort[List[
                 (SockFamily, SockType, SockProtocol, String, sock_address)
-            ]()
+            ]]()
 
     @staticmethod
     fn create_connection(
@@ -1028,7 +1039,7 @@ struct Socket[
             )
         else:
             constrained[False, "Platform not supported yet."]()
-            raise Error("Failed to create socket.")
+            return abort[Self]()
 
     @staticmethod
     fn create_connection(
@@ -1069,7 +1080,7 @@ struct Socket[
             )
         else:
             constrained[False, "Platform not supported yet."]()
-            raise Error("Failed to create socket.")
+            return abort[Self]()
 
     # TODO(#3305): add structmethod constraint
     # @structmethod
@@ -1107,12 +1118,18 @@ struct Socket[
         async def main():
             # TODO: once we have async generators:
             # async for conn_attempt in Socket.create_server(("0.0.0.0", 8000)):
-            #     conn, addr = conn_attempt[]
+            #     conn_attempt = await server.accept()
+            #     if not conn_attempt:
+            #         continue
+            #     conn, addr = conn_attempt.value()
             #     ...  # handle new connection
 
             with Socket.create_server(("0.0.0.0", 8000)) as server:
                 while True:
-                    conn, addr = (await server.accept())[]
+                    conn_attempt = await server.accept()
+                    if not conn_attempt:
+                        continue
+                    conn, addr = conn_attempt.value()
                     ...  # handle new connection
 
         ```
@@ -1134,7 +1151,7 @@ struct Socket[
             )
         else:
             constrained[False, "Platform not supported yet."]()
-            raise Error("Failed to create socket.")
+            return abort[Self]()
 
     # TODO(#3305): add structmethod constraint
     # @structmethod
@@ -1174,12 +1191,17 @@ struct Socket[
             alias S = Socket[SockFamily.AF_INET6, sock_address=IPv6Addr]
             # TODO: once we have async generators:
             # async for conn_attempt in S.create_server(IPv6Addr("::1", 8000)):
-            #     conn, addr = conn_attempt[]
+            #     if not conn_attempt:
+            #         continue
+            #     conn, addr = conn_attempt.value()
             #     ...  # handle new connection
 
             with S.create_server(IPv6Addr("::1", 8000)) as server:
                 while True:
-                    conn, addr = (await server.accept())[]
+                    conn_attempt = await server.accept()
+                    if not conn_attempt:
+                        continue
+                    conn, addr = conn_attempt.value()
                     ...  # handle new connection
         ```
         .
@@ -1204,7 +1226,7 @@ struct Socket[
             )
         else:
             constrained[False, "Platform not supported yet."]()
-            raise Error("Failed to create socket.")
+            return abort[Self]()
 
     @staticmethod
     fn create_server(
@@ -1266,7 +1288,16 @@ struct Socket[
             return Self(res[0]), S(res[1])
         else:
             constrained[False, "Platform not supported yet."]()
-            raise Error("Failed to create socket.")
+            return abort[(
+                Self,
+                Socket[
+                    SockFamily.AF_INET,
+                    sock_type,
+                    sock_protocol,
+                    IPv4Addr,
+                    sock_platform,
+                ])
+            ]()
 
     # TODO
     fn keep_alive(
