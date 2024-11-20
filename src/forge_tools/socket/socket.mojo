@@ -363,15 +363,23 @@ struct SockPlatform:
     #        ...
 
     # fn keep_alive(
-    #     self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
-    # ) -> Bool:
-    #     """Set the amount of seconds to keep the connection alive."""
+    #     self,
+    #     enable: Bool = True,
+    #     idle: Optional[C.int] = None,
+    #     interval: Optional[C.int] = None,
+    #     count: Optional[C.int] = None,
+    # ) raises:
+    #     """Set how to keep the connection alive."""
     #     ...
 
     # fn reuse_address(
     #     self, value: Bool = True, *, full_duplicates: Bool = True
-    # ) -> Bool:
+    # ) raises:
     #     """Set whether to allow duplicated addresses."""
+    #     ...
+
+    # fn set_no_delay(self, value: Bool = True) raises:
+    #     """Set whether to send packets ASAP without accumulating more."""
     #     ...
 
 
@@ -1300,16 +1308,29 @@ struct Socket[
             ]()
 
     fn keep_alive(
-        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+        self,
+        enable: Bool = True,
+        idle: C.int = 2 * 60 * 60,
+        interval: C.int = 75,
+        count: C.int = 10,
     ) raises:
-        """Set the amount of seconds to keep the connection alive."""
+        """Set how to keep the connection alive.
+        
+        Args:
+            enable: Whether to enable the keepalive probes.
+            idle: The amount of time to remain idle before sending probes.
+            interval: The interval between probes.
+            count: The amount of probes to send before closing the connection.
+        """
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl[Self._linux_s].keep_alive(
-                seconds, interval, count
+                enable, idle, interval, count
             )
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl[Self._unix_s].keep_alive(seconds, interval, count)
+            return self._impl[Self._unix_s].keep_alive(
+                enable, idle, interval, count
+            )
         else:
             constrained[False, "Platform not supported yet."]()
             return abort()
@@ -1317,7 +1338,13 @@ struct Socket[
     fn reuse_address(
         self, value: Bool = True, *, full_duplicates: Bool = True
     ) raises:
-        """Set whether to allow duplicated addresses."""
+        """Set whether to allow duplicated addresses.
+        
+        Args:
+            value: Whether to enable the reuse of addresses.
+            full_duplicates: Whether to allow full duplicates (in the case of
+                TCP this includes reusing the IP address and port).
+        """
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl[Self._linux_s].reuse_address(
@@ -1327,6 +1354,21 @@ struct Socket[
             return self._impl[Self._unix_s].reuse_address(
                 value, full_duplicates=full_duplicates
             )
+        else:
+            constrained[False, "Platform not supported yet."]()
+            return abort()
+
+    fn set_no_delay(self, value: Bool = True) raises:
+        """Set whether to send packets ASAP without accumulating more.
+        
+        Args:
+            value: The value to set.
+        """
+        @parameter
+        if sock_platform is SockPlatform.LINUX:
+            return self._impl[Self._linux_s].set_no_delay(value)
+        elif sock_platform is SockPlatform.UNIX:
+            return self._impl[Self._unix_s].set_no_delay(value)
         else:
             constrained[False, "Platform not supported yet."]()
             return abort()

@@ -222,13 +222,21 @@ struct _LinuxSocket[
         return Self(fd=s_s[0].get_fd()), Self._ipv4(fd=s_s[1].get_fd())
 
     fn keep_alive(
-        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+        self,
+        enable: Bool = True,
+        idle: C.int = 2 * 60 * 60,
+        interval: C.int = 75,
+        count: C.int = 10,
     ) raises:
-        """Set the amount of seconds to keep the connection alive."""
-        return self._sock.keep_alive(seconds, interval, count)
+        """Set how to keep the connection alive."""
+        return self._sock.keep_alive(enable, idle, interval, count)
 
     fn reuse_address(
         self, value: Bool = True, *, full_duplicates: Bool = True
     ) raises:
         """Set whether to allow duplicated addresses."""
         return self._sock.reuse_address(value, full_duplicates=full_duplicates)
+
+    fn set_no_delay(self, value: Bool = True) raises:
+        """Set whether to send packets ASAP without accumulating more."""
+        return self._sock.set_no_delay(value)

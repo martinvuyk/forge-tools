@@ -55,6 +55,7 @@ from forge_tools.ffi.c.constants import (
     TCP_KEEPIDLE,
     TCP_KEEPINTVL,
     TCP_KEEPCNT,
+    TCP_NODELAY,
 )
 
 
@@ -445,10 +446,10 @@ struct _UnixSocket[
         alias cond = _type_is_eq[sock_address, IPv4Addr]()
         constrained[cond, "sock_address must be IPv4Addr"]()
         socket = Self()
-        socket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        socket.setsockopt(SOL_SOCKET, SO_REUSEPORT, int(reuse_port))
+        socket.reuse_address(True, full_duplicates=reuse_port)
+        socket.set_no_delay()
         socket.bind(rebind[sock_address](address))
-        socket.listen(backlog=backlog.value() if backlog else 0)
+        socket.listen(backlog=backlog.or_else(0))
         return socket^
 
     @staticmethod
@@ -465,8 +466,9 @@ struct _UnixSocket[
         socket = Self()
         socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
         socket.reuse_address(True, full_duplicates=reuse_port)
+        socket.set_no_delay()
         socket.bind(rebind[sock_address](address))
-        socket.listen(backlog=backlog.value() if backlog else 0)
+        socket.listen(backlog=backlog.or_else(0))
         return socket^
 
     @staticmethod
@@ -481,29 +483,33 @@ struct _UnixSocket[
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
         ipv6_sock = Self()
-        ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, int(dualstack_ipv6))
+        ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, int(not dualstack_ipv6))
         ipv6_sock.reuse_address(True, full_duplicates=reuse_port)
+        ipv6_sock.set_no_delay()
         ipv6_sock.bind(rebind[sock_address](address))
-        ipv6_sock.listen(backlog=backlog.value() if backlog else 0)
+        ipv6_sock.listen(backlog=backlog.or_else(0))
         return (
             ipv6_sock^,
             Self._ipv4(fd=ipv6_sock.fd) if dualstack_ipv6 else Self._ipv4(),
         )
 
     fn keep_alive(
-        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+        self,
+        enable: Bool = True,
+        idle: C.int = 2 * 60 * 60,
+        interval: C.int = 75,
+        count: C.int = 10,
     ) raises:
-        """Set the amount of seconds to keep the connection alive."""
+        """Set how to keep the connection alive."""
         @parameter
         if sock_protocol is SockProtocol.TCP:
-            self.setsockopt(SOL_SOCKET, SO_KEEPALIVE, 1)
-            self.setsockopt(SOL_TCP, TCP_KEEPIDLE, seconds)
-            self.setsockopt(SOL_TCP, TCP_KEEPINTVL, interval)
-            self.setsockopt(
-                SOL_TCP, TCP_KEEPCNT, count.or_else(seconds // interval)
-            )
+            self.setsockopt(SOL_SOCKET, SO_KEEPALIVE, int(enable))
+            if enable:
+                self.setsockopt(SOL_TCP, TCP_KEEPIDLE, idle)
+                self.setsockopt(SOL_TCP, TCP_KEEPINTVL, interval)
+                self.setsockopt(SOL_TCP, TCP_KEEPCNT, count)
         else:
-            constrained[False, "unsupported protocol"]()
+            constrained[False, "unsupported protocol for this function"]()
             return abort()
 
     fn reuse_address(
@@ -518,7 +524,16 @@ struct _UnixSocket[
             self.setsockopt(SOL_SOCKET, SO_REUSEADDR, int(value))
             self.setsockopt(SOL_SOCKET, SO_REUSEPORT, int(full_duplicates))
         else:
-            constrained[False, "unsupported address family"]()
+            constrained[False, "unsupported address family for this function"]()
+            return abort()
+
+    fn set_no_delay(self, value: Bool = True) raises:
+        """Set whether to send packets ASAP without accumulating more."""
+        @parameter
+        if sock_protocol is SockProtocol.TCP:
+            self.setsockopt(SOL_SOCKET, TCP_NODELAY, int(value))
+        else:
+            constrained[False, "unsupported protocol for this function"]()
             return abort()
 
 

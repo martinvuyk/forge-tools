@@ -166,9 +166,13 @@ struct _WindowsSocket[
         raise Error("Failed to create socket.")
 
     fn keep_alive(
-        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
+        self,
+        enable: Bool = True,
+        idle: C.int = 2 * 60 * 60,
+        interval: C.int = 75,
+        count: C.int = 10,
     ) raises:
-        """Set the amount of seconds to keep the connection alive."""
+        """Set how to keep the connection alive."""
         raise Error("Failed to set socket options.")
 
     fn reuse_address(

@@ -196,15 +196,23 @@ trait SocketInterface[
         ...
 
     fn keep_alive(
-        self, seconds: C.int, interval: C.int = 3, count: Optional[C.int] = None
-    ) -> Bool:
-        """Set the amount of seconds to keep the connection alive."""
+        self,
+        enable: Bool = True,
+        idle: C.int = 2 * 60 * 60,
+        interval: C.int = 75,
+        count: C.int = 10,
+    ) raises:
+        """Set how to keep the connection alive."""
         ...
 
     fn reuse_address(
         self, value: Bool = True, *, full_duplicates: Bool = True
-    ) -> Bool:
+    ) raises:
         """Set whether to allow duplicated addresses."""
+        ...
+
+    fn set_no_delay(self, value: Bool = True) raises:
+        """Set whether to send packets ASAP without accumulating more."""
         ...
 ```
 
