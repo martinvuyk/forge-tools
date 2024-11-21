@@ -228,15 +228,15 @@ struct _WASISocket[
         interval: C.int = 75,
         count: C.int = 10,
     ) raises:
-        """Set how to keep the connection alive."""
+        """Whether and how to keep the connection alive."""
         return self._sock.keep_alive(enable, idle, interval, count)
 
     fn reuse_address(
         self, value: Bool = True, *, full_duplicates: Bool = True
     ) raises:
-        """Set whether to allow duplicated addresses."""
+        """Whether to allow duplicated addresses."""
         return self._sock.reuse_address(value, full_duplicates=full_duplicates)
 
-    fn set_no_delay(self, value: Bool = True) raises:
-        """Set whether to send packets ASAP without accumulating more."""
-        return self._sock.set_no_delay(value)
+    fn no_delay(self, value: Bool = True) raises:
+        """Whether to send packets ASAP without accumulating more."""
+        return self._sock.no_delay(value)

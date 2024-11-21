@@ -280,9 +280,7 @@ def _test_setsockopt(libc: Libc):
             # FIXME: this seems to have something to do with the socket being
             # "dead" before setting the option. Maybe the socket needs to be
             # bound to an address beforehand, there is no good docs on this
-            # err = libc.setsockopt(
-            #     fd, IPPROTO_TCP, TCP_KEEPALIVE, secs_null, size
-            # )
+            # err = libc.setsockopt(fd, SOL_TCP, TCP_KEEPALIVE, secs_null, size)
             # assert_true(err != -1)
         else:
             constrained[False, "Unsupported test"]()

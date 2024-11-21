@@ -369,17 +369,17 @@ struct SockPlatform:
     #     interval: Optional[C.int] = None,
     #     count: Optional[C.int] = None,
     # ) raises:
-    #     """Set how to keep the connection alive."""
+    #     """Whether and how to keep the connection alive."""
     #     ...
 
     # fn reuse_address(
     #     self, value: Bool = True, *, full_duplicates: Bool = True
     # ) raises:
-    #     """Set whether to allow duplicated addresses."""
+    #     """Whether to allow duplicated addresses."""
     #     ...
 
-    # fn set_no_delay(self, value: Bool = True) raises:
-    #     """Set whether to send packets ASAP without accumulating more."""
+    # fn no_delay(self, value: Bool = True) raises:
+    #     """Whether to send packets ASAP without accumulating more."""
     #     ...
 
 
@@ -1358,17 +1358,17 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return abort()
 
-    fn set_no_delay(self, value: Bool = True) raises:
-        """Set whether to send packets ASAP without accumulating more.
+    fn no_delay(self, value: Bool = True) raises:
+        """Whether to send packets ASAP without accumulating more.
         
         Args:
             value: The value to set.
         """
         @parameter
         if sock_platform is SockPlatform.LINUX:
-            return self._impl[Self._linux_s].set_no_delay(value)
+            return self._impl[Self._linux_s].no_delay(value)
         elif sock_platform is SockPlatform.UNIX:
-            return self._impl[Self._unix_s].set_no_delay(value)
+            return self._impl[Self._unix_s].no_delay(value)
         else:
             constrained[False, "Platform not supported yet."]()
             return abort()

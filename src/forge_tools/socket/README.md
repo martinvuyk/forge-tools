@@ -202,17 +202,17 @@ trait SocketInterface[
         interval: C.int = 75,
         count: C.int = 10,
     ) raises:
-        """Set how to keep the connection alive."""
+        """Whether and how to keep the connection alive."""
         ...
 
     fn reuse_address(
         self, value: Bool = True, *, full_duplicates: Bool = True
     ) raises:
-        """Set whether to allow duplicated addresses."""
+        """Whether to allow duplicated addresses."""
         ...
 
-    fn set_no_delay(self, value: Bool = True) raises:
-        """Set whether to send packets ASAP without accumulating more."""
+    fn no_delay(self, value: Bool = True) raises:
+        """Whether to send packets ASAP without accumulating more."""
         ...
 ```
 

@@ -172,11 +172,11 @@ struct _WindowsSocket[
         interval: C.int = 75,
         count: C.int = 10,
     ) raises:
-        """Set how to keep the connection alive."""
+        """Whether and how to keep the connection alive."""
         raise Error("Failed to set socket options.")
 
     fn reuse_address(
         self, value: Bool = True, *, full_duplicates: Bool = True
     ) raises:
-        """Set whether to allow duplicated addresses."""
+        """Whether to allow duplicated addresses."""
         raise Error("Failed to set socket options.")
