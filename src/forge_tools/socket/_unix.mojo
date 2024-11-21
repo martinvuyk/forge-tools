@@ -448,6 +448,7 @@ struct _UnixSocket[
         socket = Self()
         socket.reuse_address(True, full_duplicates=reuse_port)
         socket.no_delay()
+        socket.keep_alive(False)
         socket.bind(rebind[sock_address](address))
         socket.listen(backlog=backlog.or_else(0))
         return socket^
@@ -467,6 +468,7 @@ struct _UnixSocket[
         socket.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, 1)
         socket.reuse_address(True, full_duplicates=reuse_port)
         socket.no_delay()
+        socket.keep_alive(False)
         socket.bind(rebind[sock_address](address))
         socket.listen(backlog=backlog.or_else(0))
         return socket^
@@ -486,6 +488,7 @@ struct _UnixSocket[
         ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, int(not dualstack_ipv6))
         ipv6_sock.reuse_address(True, full_duplicates=reuse_port)
         ipv6_sock.no_delay()
+        ipv6_sock.keep_alive(False)
         ipv6_sock.bind(rebind[sock_address](address))
         ipv6_sock.listen(backlog=backlog.or_else(0))
         return (

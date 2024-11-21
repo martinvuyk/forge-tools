@@ -411,6 +411,16 @@ struct IPv4Addr(SockAddr):
         """
         self = Self(value[0], value[1])
 
+    fn __init__(out self: Self, value: IPv6Addr) raises:
+        """Create an Address.
+
+        Args:
+            value: The IPv6 mapped IPv4 Address.
+        """
+        if not value.host.startswith("::ffff"):
+            raise Error("invalid IPv6 mapped IPv4 Address.")
+        self = Self(value.host[6:], value.port)
+
     fn __str__(self) -> String:
         """Get the String representation of the Address.
 
