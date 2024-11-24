@@ -262,7 +262,7 @@ struct DateTime[
         n_second: Optional[UInt16] = None,
         tz: Optional[Self._tz] = None,
         calendar: Optional[Calendar[T]] = None,
-    ) -> Self._UnboundCal:
+    ) -> Self._UnboundCal[T]:
         """Replace with given value/s.
 
         Args:
@@ -295,10 +295,14 @@ struct DateTime[
         self.n_second = n_second.or_else(self.n_second)
         self.tz = tz.or_else(self.tz)
         if not calendar:
-            return Self._UnboundCal(other=self, calendar=self.calendar)
+            return Self._UnboundCal(
+                other=self, calendar=rebind[Calendar[T]](self.calendar)
+            )
         return Self._UnboundCal(other=self, calendar=calendar.value())
 
-    fn to_calendar(owned self, calendar: Calendar) -> Self._UnboundCal:
+    fn to_calendar(
+        owned self, calendar: Calendar
+    ) -> Self._UnboundCal[__type_of(calendar).T]:
         """Translates the `DateTime`'s values to be on the same offset since
         its current calendar's epoch to the new calendar's epoch.
 
@@ -754,7 +758,7 @@ struct DateTime[
         return self.subtract(other)
 
     @always_inline
-    fn __iadd__(out self, owned other: Self._UnboundCal):
+    fn __iadd__(inout self, owned other: Self._UnboundCal):
         """Add Immediate.
 
         Args:
@@ -763,7 +767,7 @@ struct DateTime[
         self = self.add(other)
 
     @always_inline
-    fn __isub__(out self, owned other: Self._UnboundCal):
+    fn __isub__(inout self, owned other: Self._UnboundCal):
         """Subtract Immediate.
 
         Args:
@@ -1108,7 +1112,19 @@ struct DateTime[
         @parameter
         if add_leap:
             dt = dt.add(seconds=int(dt.leapsecs_since_epoch()))
-        return dt^
+        # FIXME: this is horrible
+        return rebind[Self](
+            dt.replace(
+                calendar=Calendar(
+                    Self.C(
+                        min_year=Self.C._get_default_min_year(),
+                        min_month=Self.C._get_default_min_month(),
+                        min_day=Self.C._get_default_min_day(),
+                        max_year=Self.C._get_default_max_year(),
+                    )
+                )
+            )
+        )
 
     @staticmethod
     fn now(

@@ -1,5 +1,5 @@
 from collections import Optional
-from memory import UnsafePointer, Arc
+from memory import UnsafePointer, ArcPointer
 from sys.intrinsics import _type_is_eq
 from utils import Span
 from forge_tools.ffi.c.types import C
@@ -30,8 +30,8 @@ struct _AppleSocket[
         """Create a new socket object."""
         self._sock = Self._ST()
 
-    fn __init__(out self, fd: Arc[FileDescriptor]):
-        """Create a new socket object from an open `Arc[FileDescriptor]`."""
+    fn __init__(out self, fd: ArcPointer[FileDescriptor]):
+        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
         self._sock = Self._ST(fd=fd)
 
     fn close(owned self) raises:

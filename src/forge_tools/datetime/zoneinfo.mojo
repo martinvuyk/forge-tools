@@ -43,6 +43,7 @@ struct Offset:
     var buf: UInt8
     """Buffer."""
 
+    @implicit
     fn __init__(out self, buf: UInt8):
         """Construct an `Offset` from a buffer.
 
@@ -56,6 +57,7 @@ struct Offset:
         self.minute = 0 if m == 0 else (30 if m == 1 else 45)
         self.buf = buf
 
+    @implicit
     fn __init__(out self, values: Tuple[UInt8, UInt8, Int8], /):
         """Construct an `Offset` from values.
 
@@ -65,6 +67,7 @@ struct Offset:
 
         self = Self(values[0], values[1], values[2])
 
+    @implicit
     fn __init__(out self, values: Tuple[Int, Int, Int], /):
         """Construct an `Offset` from values.
 
@@ -243,6 +246,7 @@ struct TzDT:
         self.hour = hour
         self.buf = (mon << 8) | (d << 5) | (eo << 4) | (w << 3) | h
 
+    @implicit
     fn __init__(out self, buf: UInt16):
         """Get the values from hash.
 
@@ -302,6 +306,7 @@ struct ZoneDST:
             | offset.buf.cast[DType.uint32]()
         )
 
+    @implicit
     fn __init__(out self, buf: UInt32):
         """Construct a `ZoneDST` from a buffer.
 
@@ -350,7 +355,7 @@ struct ZoneInfoFile32(CollectionElement):
     fn hash(key: StringLiteral) -> UInt64:
         return UInt64((hash(key) >> 48) % 512)
 
-    fn add(out self, key: StringLiteral, value: ZoneDST):
+    fn add(inout self, key: StringLiteral, value: ZoneDST):
         """Add a value to the file.
 
         Args:
@@ -433,7 +438,7 @@ struct ZoneInfoFile8(CollectionElement):
     fn hash(key: StringLiteral) -> UInt64:
         return UInt64((hash(key) >> 48) % 512)
 
-    fn add(out self, key: StringLiteral, value: Offset):
+    fn add(inout self, key: StringLiteral, value: Offset):
         """Add a value to the file.
 
         Args:
@@ -494,7 +499,7 @@ struct ZoneInfoMem32(CollectionElement):
         self._zones = Dict[StringLiteral, UInt32]()
 
     @always_inline
-    fn add(out self, key: StringLiteral, value: ZoneDST):
+    fn add(inout self, key: StringLiteral, value: ZoneDST):
         """Add a value to `ZoneInfoMem32`.
 
         Args:
@@ -532,7 +537,7 @@ struct ZoneInfoMem8(CollectionElement):
         self._zones = Dict[StringLiteral, UInt8]()
 
     @always_inline
-    fn add(out self, key: StringLiteral, value: Offset):
+    fn add(inout self, key: StringLiteral, value: Offset):
         """Add a value to `ZoneInfoMem8`.
 
         Args:
@@ -622,6 +627,7 @@ struct Leapsecs:
         self.month = month
         self.day = day
 
+    @implicit
     fn __init__(out self, values: Tuple[Int, Int, Int], /):
         """Construct an `Leapsecs` from values.
 
@@ -694,7 +700,7 @@ trait ZoneStorageDST(CollectionElement):
         """Construct a `ZoneInfo`."""
         ...
 
-    fn add(out self, key: StringLiteral, value: ZoneDST):
+    fn add(inout self, key: StringLiteral, value: ZoneDST):
         """Add a value to `ZoneInfo`.
 
         Args:
@@ -722,7 +728,7 @@ trait ZoneStorageNoDST(CollectionElement):
         """Construct a `ZoneInfo`."""
         ...
 
-    fn add(out self, key: StringLiteral, value: Offset):
+    fn add(inout self, key: StringLiteral, value: Offset):
         """Add a value to `ZoneInfo`.
 
         Args:

@@ -283,7 +283,7 @@ struct DateTime64(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(out self, owned other: Self):
+    fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -292,7 +292,7 @@ struct DateTime64(Hashable, Stringable):
         self.m_seconds += other.m_seconds
 
     @always_inline
-    fn __isub__(out self, owned other: Self):
+    fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
         Args:
@@ -809,7 +809,7 @@ struct DateTime32(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(out self, owned other: Self):
+    fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -818,7 +818,7 @@ struct DateTime32(Hashable, Stringable):
         self.minutes += other.minutes
 
     @always_inline
-    fn __isub__(out self, owned other: Self):
+    fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
         Args:
@@ -1308,7 +1308,7 @@ struct DateTime16(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(out self, owned other: Self):
+    fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -1317,7 +1317,7 @@ struct DateTime16(Hashable, Stringable):
         self.hours += other.hours
 
     @always_inline
-    fn __isub__(out self, owned other: Self):
+    fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
         Args:
@@ -1792,7 +1792,7 @@ struct DateTime8(Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(out self, owned other: Self):
+    fn __iadd__(inout self, owned other: Self):
         """Add Immediate.
 
         Args:
@@ -1801,7 +1801,7 @@ struct DateTime8(Hashable, Stringable):
         self.hours += other.hours
 
     @always_inline
-    fn __isub__(out self, owned other: Self):
+    fn __isub__(inout self, owned other: Self):
         """Subtract Immediate.
 
         Args:

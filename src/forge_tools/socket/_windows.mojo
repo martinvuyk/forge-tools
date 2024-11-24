@@ -1,5 +1,5 @@
 from collections import Optional
-from memory import UnsafePointer, Arc
+from memory import UnsafePointer, ArcPointer
 from sys.intrinsics import _type_is_eq
 from utils import Span
 from forge_tools.ffi.c.types import C
@@ -18,15 +18,15 @@ struct _WindowsSocket[
     sock_protocol: SockProtocol,
     sock_address: SockAddr,
 ]:
-    var fd: Arc[FileDescriptor]
-    """The Socket's `Arc[FileDescriptor]`."""
+    var fd: ArcPointer[FileDescriptor]
+    """The Socket's `ArcPointer[FileDescriptor]`."""
 
     fn __init__(out self) raises:
         """Create a new socket object."""
         raise Error("Failed to create socket.")
 
-    fn __init__(out self, fd: Arc[FileDescriptor]):
-        """Create a new socket object from an open `Arc[FileDescriptor]`."""
+    fn __init__(out self, fd: ArcPointer[FileDescriptor]):
+        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
         self.fd = fd
 
     fn close(owned self) raises:

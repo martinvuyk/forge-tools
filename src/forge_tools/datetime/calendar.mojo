@@ -118,6 +118,7 @@ struct CalendarHashes:
     alias mask_8_d: UInt8 = CalendarHashes._3b
     alias mask_8_h: UInt8 = CalendarHashes._5b
 
+    @implicit
     fn __init__(out self, selected: Int = 64):
         """Construct a `CalendarHashes`.
 
@@ -413,6 +414,7 @@ struct Calendar[T: _Calendarized = Gregorian[]]:
             )
         )
 
+    @implicit
     fn __init__(
         out self,
         owned impl: T = T(

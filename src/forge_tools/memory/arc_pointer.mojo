@@ -16,7 +16,7 @@ struct ArcPointer[
 
     alias _P = Pointer[type, origin, address_space]
     alias _U = UnsafePointer[type, address_space]
-    var _ptr: Arc[Self._P]
+    var _ptr: ArcPointer[Self._P]
 
     @doc_private
     @always_inline("nodebug")
@@ -36,7 +36,7 @@ struct ArcPointer[
             in_registers: Whether the pointer is allocated in registers.
             is_initialized: Whether the memory is initialized.
         """
-        self._ptr = Arc(
+        self._ptr = ArcPointer(
             Self._P(
                 ptr=ptr,
                 is_allocated=is_allocated,
@@ -52,7 +52,7 @@ struct ArcPointer[
         Args:
             ptr: The Pointer.
         """
-        self._ptr = Arc(ptr)
+        self._ptr = ArcPointer(ptr)
 
     @staticmethod
     @always_inline

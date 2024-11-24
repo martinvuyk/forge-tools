@@ -323,13 +323,13 @@ struct Parser[
             obj = Dict[String, object]()
             for item in Self.parse_object(instance).items():
                 obj[item[].key] = Self.parse_instance(item[].value)
-            output = obj
+            output = object(obj)
             return
         elif instance.type is JsonType.array:
             arr = List[object]()
             for item in Self.parse_array(instance):
                 arr.append(Self.parse_instance(item[]))
-            output = arr
+            output = object(arr)
             return
         elif instance.type is JsonType.int:
             output = Self.parse_int(instance)
@@ -341,9 +341,11 @@ struct Parser[
             output = Self.parse_float_exp(instance)
             return
         elif instance.type is JsonType.string:
-            output = StringSlice[origin](
-                ptr=instance.buffer.unsafe_ptr() + 1,
-                length=len(instance.buffer) - 1,
+            output = object(
+                StringSlice[origin](
+                    ptr=instance.buffer.unsafe_ptr() + 1,
+                    length=len(instance.buffer) - 1,
+                )
             )
             return
         elif instance.type is JsonType.true:

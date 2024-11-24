@@ -72,8 +72,8 @@ trait SocketInterface[
         """Create a new socket object."""
         ...
 
-   fn __init__(out self, fd: Arc[FileDescriptor]):
-       """Create a new socket object from an open `Arc[FileDescriptor]`."""
+   fn __init__(out self, fd: ArcPointer[FileDescriptor]):
+       """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
        ...
 
    fn __init__(out self, fd: FileDescriptor):

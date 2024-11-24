@@ -52,6 +52,7 @@ struct IsoFormat:
     var selected: StringLiteral
     """The selected IsoFormat."""
 
+    @implicit
     fn __init__(
         out self, selected: StringLiteral = self.YYYY_MM_DD_T_HH_MM_SS_TZD
     ):

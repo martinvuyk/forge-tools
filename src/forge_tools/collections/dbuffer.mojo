@@ -50,6 +50,11 @@ struct _DBufferIter[
             return self.index
 
 
+# TODO: decide whether DBuffer will be the entrypoint API for Python-like bytes
+# alias Bytes = DBuffer[Byte, _]
+# """A buffer of bytes."""
+
+
 struct DBuffer[
     is_mutable: Bool, //,
     T: CollectionElement,
@@ -148,12 +153,8 @@ struct DBuffer[
         Args:
             array: The array to which the DBuffer refers.
         """
-
         self = Self(
-            ptr=UnsafePointer.address_of(array).bitcast[T](),
-            length=size,
-            self_is_owner=True,
-            is_stack_alloc=True,
+            ptr=UnsafePointer.address_of(array).bitcast[T](), length=size
         )
 
     fn __moveinit__(out self, owned existing: Self):

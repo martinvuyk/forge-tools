@@ -39,6 +39,7 @@ struct JsonType:
     """String."""
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, value: StringLiteral):
         """Construct a JsonType instance.
 

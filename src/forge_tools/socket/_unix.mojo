@@ -1,5 +1,5 @@
 from collections import Optional
-from memory import UnsafePointer, stack_allocation, Arc
+from memory import UnsafePointer, stack_allocation, ArcPointer
 from os import abort
 from sys import sizeof
 from sys.intrinsics import _type_is_eq
@@ -68,8 +68,8 @@ struct _UnixSocket[
 ]:
     """Generic POSIX compliant socket implementation."""
 
-    var fd: Arc[FileDescriptor]
-    """The Socket's `Arc[FileDescriptor]`."""
+    var fd: ArcPointer[FileDescriptor]
+    """The Socket's `ArcPointer[FileDescriptor]`."""
     alias lib = Libc[static=False]()
     """The dynamically linked Libc."""
     alias _sock_family = _get_unix_sock_family_constant(sock_family)
@@ -92,8 +92,8 @@ struct _UnixSocket[
             raise Error("Failed to create socket: " + message)
         self.fd = FileDescriptor(int(fd))
 
-    fn __init__(out self, fd: Arc[FileDescriptor]):
-        """Create a new socket object from an open `Arc[FileDescriptor]`."""
+    fn __init__(out self, fd: ArcPointer[FileDescriptor]):
+        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
         self.fd = fd
 
     fn close(owned self) raises:

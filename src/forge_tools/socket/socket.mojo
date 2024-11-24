@@ -50,7 +50,7 @@ https://docs.python.org/3/library/socket.html).
 
 from sys import info
 from collections import Optional
-from memory import UnsafePointer, stack_allocation, Arc
+from memory import UnsafePointer, stack_allocation, ArcPointer
 from os import abort
 from utils import Variant, Span, StringSlice
 
@@ -239,8 +239,8 @@ struct SockPlatform:
     #         """Create a new socket object."""
     #         ...
 
-    #    fn __init__(out self, fd: Arc[FileDescriptor]):
-    #        """Create a new socket object from an open `Arc[FileDescriptor]`."""
+    #    fn __init__(out self, fd: ArcPointer[FileDescriptor]):
+    #        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
     #        ...
 
     #    fn __init__(out self, fd: FileDescriptor):
@@ -503,8 +503,8 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             self._impl = Self._linux_s()
 
-    fn __init__(out self, fd: Arc[FileDescriptor]):
-        """Create a new socket object from an open `Arc[FileDescriptor]`."""
+    fn __init__(out self, fd: ArcPointer[FileDescriptor]):
+        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
@@ -653,7 +653,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return Self(), Self()
 
-    fn get_fd(self) -> Arc[FileDescriptor]:
+    fn get_fd(self) -> ArcPointer[FileDescriptor]:
         """Get the Socket's ARC FileDescriptor.
 
         Returns:
@@ -667,7 +667,7 @@ struct Socket[
             return self._impl[Self._unix_s].get_fd()
         else:
             constrained[False, "Platform not supported yet."]()
-            return Arc(FileDescriptor(0))
+            return ArcPointer(FileDescriptor(0))
 
     async fn send_fds(self, fds: List[FileDescriptor]) -> Bool:
         """Send file descriptors to the socket.
