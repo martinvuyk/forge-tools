@@ -654,7 +654,7 @@ alias SOL_IP = 0
 """Constant: `SOL_IP`."""
 alias SOL_IPX = 256
 """Constant: `SOL_IPX`."""
-alias SOL_AX25 = 257 
+alias SOL_AX25 = 257
 """Constant: `SOL_AX25`."""
 alias SOL_ATALK = 258
 """Constant: `SOL_ATALK`."""

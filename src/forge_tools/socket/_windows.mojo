@@ -26,7 +26,8 @@ struct _WindowsSocket[
         raise Error("Failed to create socket.")
 
     fn __init__(out self, fd: ArcPointer[FileDescriptor]):
-        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
+        """Create a new socket object from an open `ArcPointer[FileDescriptor]`.
+        """
         self.fd = fd
 
     fn close(owned self) raises:
@@ -82,9 +83,9 @@ struct _WindowsSocket[
         """Send a buffer of bytes to the socket."""
         return -1
 
-    async fn recv[O: MutableOrigin](
-        self, buf: Span[UInt8, O], flags: C.int = 0
-    ) -> Int:
+    async fn recv[
+        O: MutableOrigin
+    ](self, buf: Span[UInt8, O], flags: C.int = 0) -> Int:
         return -1
 
     @staticmethod

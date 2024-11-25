@@ -504,7 +504,8 @@ struct Socket[
             self._impl = Self._linux_s()
 
     fn __init__(out self, fd: ArcPointer[FileDescriptor]):
-        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
+        """Create a new socket object from an open `ArcPointer[FileDescriptor]`.
+        """
 
         @parameter
         if sock_platform is SockPlatform.LINUX:
@@ -727,9 +728,9 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             return False
 
-    async fn recv[O: MutableOrigin](
-        self, buf: Span[UInt8, O], flags: C.int = 0
-    ) -> Int:
+    async fn recv[
+        O: MutableOrigin
+    ](self, buf: Span[UInt8, O], flags: C.int = 0) -> Int:
         """Receive up to `len(buf)` bytes into the buffer.
 
         Args:
@@ -989,7 +990,7 @@ struct Socket[
         (SockFamily, SockType, SockProtocol, String, sock_address)
     ]:
         """Get the available address information.
-        
+
         Notes:
             [Linux reference](
             https://man7.org/linux/man-pages/man3/freeaddrinfo.3p.html).
@@ -1004,9 +1005,9 @@ struct Socket[
             return Self._unix_s.getaddrinfo(address, flags)
         else:
             constrained[False, "Platform not supported yet."]()
-            return abort[List[
-                (SockFamily, SockType, SockProtocol, String, sock_address)
-            ]]()
+            return abort[
+                List[(SockFamily, SockType, SockProtocol, String, sock_address)]
+            ]()
 
     @staticmethod
     fn create_connection(
@@ -1296,15 +1297,17 @@ struct Socket[
             return Self(res[0]), S(res[1])
         else:
             constrained[False, "Platform not supported yet."]()
-            return abort[(
-                Self,
-                Socket[
-                    SockFamily.AF_INET,
-                    sock_type,
-                    sock_protocol,
-                    IPv4Addr,
-                    sock_platform,
-                ])
+            return abort[
+                (
+                    Self,
+                    Socket[
+                        SockFamily.AF_INET,
+                        sock_type,
+                        sock_protocol,
+                        IPv4Addr,
+                        sock_platform,
+                    ],
+                )
             ]()
 
     fn keep_alive(
@@ -1315,13 +1318,14 @@ struct Socket[
         count: C.int = 10,
     ) raises:
         """Set how to keep the connection alive.
-        
+
         Args:
             enable: Whether to enable the keepalive probes.
             idle: The amount of time to remain idle before sending probes.
             interval: The interval between probes.
             count: The amount of probes to send before closing the connection.
         """
+
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl[Self._linux_s].keep_alive(
@@ -1339,12 +1343,13 @@ struct Socket[
         self, value: Bool = True, *, full_duplicates: Bool = True
     ) raises:
         """Set whether to allow duplicated addresses.
-        
+
         Args:
             value: Whether to enable the reuse of addresses.
             full_duplicates: Whether to allow full duplicates (in the case of
                 TCP this includes reusing the IP address and port).
         """
+
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl[Self._linux_s].reuse_address(
@@ -1360,10 +1365,11 @@ struct Socket[
 
     fn no_delay(self, value: Bool = True) raises:
         """Whether to send packets ASAP without accumulating more.
-        
+
         Args:
             value: The value to set.
         """
+
         @parameter
         if sock_platform is SockPlatform.LINUX:
             return self._impl[Self._linux_s].no_delay(value)

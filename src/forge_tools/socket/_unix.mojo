@@ -93,7 +93,8 @@ struct _UnixSocket[
         self.fd = FileDescriptor(int(fd))
 
     fn __init__(out self, fd: ArcPointer[FileDescriptor]):
-        """Create a new socket object from an open `ArcPointer[FileDescriptor]`."""
+        """Create a new socket object from an open `ArcPointer[FileDescriptor]`.
+        """
         self.fd = fd
 
     fn close(owned self) raises:
@@ -277,9 +278,9 @@ struct _UnixSocket[
             )
         return sent
 
-    async fn recv[O: MutableOrigin](
-        self, buf: Span[UInt8, O], flags: C.int = 0
-    ) -> Int:
+    async fn recv[
+        O: MutableOrigin
+    ](self, buf: Span[UInt8, O], flags: C.int = 0) -> Int:
         ptr = buf.unsafe_ptr().bitcast[C.void]()
         recvd = int(self.lib.recv(self.fd[].value, ptr, len(buf), flags))
         if recvd == -1:
@@ -504,6 +505,7 @@ struct _UnixSocket[
         count: C.int = 10,
     ) raises:
         """Whether and how to keep the connection alive."""
+
         @parameter
         if sock_protocol is SockProtocol.TCP:
             self.setsockopt(SOL_SOCKET, SO_KEEPALIVE, int(enable))
@@ -519,6 +521,7 @@ struct _UnixSocket[
         self, value: Bool = True, *, full_duplicates: Bool = True
     ) raises:
         """Whether to allow duplicated addresses."""
+
         @parameter
         if (
             sock_family is SockFamily.AF_INET
@@ -532,6 +535,7 @@ struct _UnixSocket[
 
     fn no_delay(self, value: Bool = True) raises:
         """Whether to send packets ASAP without accumulating more."""
+
         @parameter
         if sock_protocol is SockProtocol.TCP:
             self.setsockopt(SOL_SOCKET, TCP_NODELAY, int(value))
