@@ -71,7 +71,7 @@ struct DBuffer[
 
     alias _intwidth = bitwidthof[Int]()
     alias _shift = Self._intwidth - 1
-    alias _len_mask = 0x7F_FF_FF_FF if Self._intwidth == 64 else 0x7F_FF
+    alias _len_mask = 0x7F_FF if Self._intwidth == 32 else 0x7F_FF_FF_FF
     alias _max_length = 2**Self._shift
     var _data: UnsafePointer[T]
     var _len: UInt
@@ -172,6 +172,16 @@ struct DBuffer[
         self = Self(
             ptr=UnsafePointer.address_of(array).bitcast[T](), length=UInt(size)
         )
+
+    @always_inline
+    @implicit
+    fn __init__(out self, span: Span[T, origin]):
+        """Construct a DBuffer from a Span.
+
+        Args:
+            span: The span from which to construct a DBuffer.
+        """
+        self = Self(ptr=span.unsafe_ptr(), length=len(span))
 
     fn __moveinit__(out self, owned existing: Self):
         """Move data of an existing DBuffer into a new one.
