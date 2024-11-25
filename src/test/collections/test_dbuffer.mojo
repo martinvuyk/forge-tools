@@ -53,7 +53,6 @@ def test_dbuffer_list_init_trivial():
     assert_equal(slice_2[3], l2[5])
     assert_equal(s2[-1], l2[-1])
 
-
     # Test mutation
     s2[0] = 9
     assert_equal(s2[0], 9)

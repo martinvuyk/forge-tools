@@ -67,6 +67,35 @@ struct DBuffer[
         is_mutable: Whether the DBuffer is mutable.
         T: The type of the elements in the DBuffer.
         origin: The origin of the DBuffer.
+
+    Examples:
+
+    ```mojo
+    fn parse(
+        owned buf: DBuffer[Byte], encoding: String = "utf-8"
+    ) raises -> String:
+        if encoding == "utf-16":
+            ...
+        elif encoding == "utf-8":
+            debug_assert(
+                len(buf) > 0 and buf[-1] == 0,
+                "parser expects null terminated data"
+            )
+            return String(ptr=buf.steal_data(), length=len(buf))
+        else:
+            raise Error("Unsupported encoding")
+
+    fn main():
+        l1 = List[Byte](ord("h"), ord("i"), 0)
+        # l1 gets implicitly built into a DBuffer that doesn't own the data.
+        # Since the DBuffer doesn't own the data, the method steal_data()
+        # makes a copy of the data to pass as owned to the String constructor
+        print(parse(l1)) # hi
+        # Passing an owned DBuffer makes the .steal_data() inside the parse
+        # method not allocate
+        print(parse(DBuffer[origin=MutableAnyOrigin].own(l1^))) # hi
+        # the compiler won't let you use l1 beyond this point
+    ```
     """
 
     alias _intwidth = bitwidthof[Int]()
@@ -145,9 +174,9 @@ struct DBuffer[
 
         Args:
             list: The list to which the DBuffer refers.
-        
+
         Examples:
-        
+
         ```mojo
         l1 = List[Int](1, 2, 3, 4, 5, 6, 7)
         s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
