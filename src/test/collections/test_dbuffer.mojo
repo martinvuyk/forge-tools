@@ -23,7 +23,7 @@ def test_dbuffer_list_init_trivial():
     # test taking ownership
     var l1 = List[Int](1, 2, 3, 4, 5, 6, 7)
     var l1_copy = List(other=l1)
-    var s1 = DBuffer[Int, MutableAnyOrigin].own(l1^)
+    var s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
     assert_true(s1.is_owner())
     assert_equal(len(s1), len(l1_copy))
     for i in range(len(s1)):
@@ -68,7 +68,7 @@ def test_dbuffer_list_init_memory():
     # test taking ownership
     var l1 = List[String]("a", "b", "c", "d", "e", "f", "g")
     var l1_copy = List(other=l1)
-    var s1 = DBuffer[String, MutableAnyOrigin].own(l1^)
+    var s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
     assert_true(s1.is_owner())
     assert_equal(len(s1), len(l1_copy))
     for i in range(len(s1)):

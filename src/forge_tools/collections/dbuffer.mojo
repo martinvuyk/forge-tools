@@ -135,18 +135,26 @@ struct DBuffer[
         """
         self = Self(ptr=list.unsafe_ptr(), length=len(list))
 
+    # TODO: this needs some sort of "SelfOrigin" which binds it to the
+    # variable that holds it
+    # TODO: this can potentially be abstracted over a `Stealable` trait
     @always_inline
     @staticmethod
-    fn own(owned list: List[T, *_]) -> DBuffer[T, MutableAnyOrigin]:
+    fn own(owned list: List[T, *_]) -> Self:
         """Construct a DBuffer from an owned List.
 
         Args:
             list: The list to which the DBuffer refers.
+        
+        Examples:
+        
+        ```mojo
+        l1 = List[Int](1, 2, 3, 4, 5, 6, 7)
+        s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
+        ```
         """
         var l_len = len(list)  # to avoid steal_data() which sets it to 0
-        return DBuffer[T, MutableAnyOrigin](
-            ptr=list.steal_data(), length=l_len, self_is_owner=True
-        )
+        return Self(ptr=list.steal_data(), length=l_len, self_is_owner=True)
 
     @always_inline
     @implicit
