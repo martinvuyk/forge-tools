@@ -1,8 +1,8 @@
 from builtin.builtin_list import _lit_mut_cast
 from collections import InlineArray, List
-from bit import rotate_bits_right
 from memory import UnsafePointer
 from sys.info import bitwidthof
+from utils import Span
 
 
 @value
@@ -71,6 +71,7 @@ struct DBuffer[
     Examples:
 
     ```mojo
+    %# from forge_tools.collections.dbuffer import DBuffer
     fn parse(
         owned buf: DBuffer[Byte], encoding: String = "utf-8"
     ) raises -> String:
@@ -85,7 +86,7 @@ struct DBuffer[
         else:
             raise Error("Unsupported encoding")
 
-    fn main():
+    fn main() raises:
         l1 = List[Byte](ord("h"), ord("i"), 0)
         # l1 gets implicitly built into a DBuffer that doesn't own the data.
         # Since the DBuffer doesn't own the data, the method steal_data()
@@ -178,6 +179,7 @@ struct DBuffer[
         Examples:
 
         ```mojo
+        %# from forge_tools.collections.dbuffer import DBuffer
         l1 = List[Int](1, 2, 3, 4, 5, 6, 7)
         s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
         ```
