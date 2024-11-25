@@ -22,18 +22,20 @@ from forge_tools.collections import DBuffer
 def test_dbuffer_list_init_trivial():
     # test taking ownership
     var l1 = List[Int](1, 2, 3, 4, 5, 6, 7)
-    var s1 = DBuffer[Int](l1^)
+    var l1_copy = List(other=l1)
+    var s1 = DBuffer[Int, MutableAnyOrigin].own(l1^)
     assert_true(s1.is_owner())
-    assert_equal(len(s1), len(l1))
+    assert_equal(len(s1), len(l1_copy))
     for i in range(len(s1)):
-        assert_equal(l1[i], s1[i])
+        assert_equal(l1_copy[i], s1[i])
     # subslice
     var slice_1 = s1[2:]
-    assert_equal(slice_1[0], l1[2])
-    assert_equal(slice_1[1], l1[3])
-    assert_equal(slice_1[2], l1[4])
-    assert_equal(slice_1[3], l1[5])
-    assert_equal(s1[-1], l1[-1])
+    assert_true(not slice_1.is_owner())
+    assert_equal(slice_1[0], l1_copy[2])
+    assert_equal(slice_1[1], l1_copy[3])
+    assert_equal(slice_1[2], l1_copy[4])
+    assert_equal(slice_1[3], l1_copy[5])
+    assert_equal(s1[-1], l1_copy[-1])
 
     # test non owning Buffer
     var l2 = List[Int](1, 2, 3, 4, 5, 6, 7)
@@ -44,11 +46,13 @@ def test_dbuffer_list_init_trivial():
         assert_equal(l2[i], s2[i])
     # subslice
     var slice_2 = s2[2:]
+    assert_true(not slice_2.is_owner())
     assert_equal(slice_2[0], l2[2])
     assert_equal(slice_2[1], l2[3])
     assert_equal(slice_2[2], l2[4])
     assert_equal(slice_2[3], l2[5])
     assert_equal(s2[-1], l2[-1])
+
 
     # Test mutation
     s2[0] = 9
@@ -63,17 +67,19 @@ def test_dbuffer_list_init_trivial():
 def test_dbuffer_list_init_memory():
     # test taking ownership
     var l1 = List[String]("a", "b", "c", "d", "e", "f", "g")
-    var s1 = DBuffer[String](l1^)
+    var l1_copy = List(other=l1)
+    var s1 = DBuffer[String, MutableAnyOrigin].own(l1^)
     assert_true(s1.is_owner())
-    assert_equal(len(s1), len(l1))
+    assert_equal(len(s1), len(l1_copy))
     for i in range(len(s1)):
-        assert_equal(l1[i], s1[i])
+        assert_equal(l1_copy[i], s1[i])
     # subslice
     var slice_1 = s1[2:]
-    assert_equal(slice_1[0], l1[2])
-    assert_equal(slice_1[1], l1[3])
-    assert_equal(slice_1[2], l1[4])
-    assert_equal(slice_1[3], l1[5])
+    assert_true(not slice_1.is_owner())
+    assert_equal(slice_1[0], l1_copy[2])
+    assert_equal(slice_1[1], l1_copy[3])
+    assert_equal(slice_1[2], l1_copy[4])
+    assert_equal(slice_1[3], l1_copy[5])
 
     # test non owning Buffer
     var l2 = List[String]("a", "b", "c", "d", "e", "f", "g")
@@ -84,6 +90,7 @@ def test_dbuffer_list_init_memory():
         assert_equal(l2[i], s2[i])
     # subslice
     var slice_2 = s2[2:]
+    assert_true(not slice_2.is_owner())
     assert_equal(slice_2[0], l2[2])
     assert_equal(slice_2[1], l2[3])
     assert_equal(slice_2[2], l2[4])

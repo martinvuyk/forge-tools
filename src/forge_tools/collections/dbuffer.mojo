@@ -1,5 +1,6 @@
 from builtin.builtin_list import _lit_mut_cast
 from collections import InlineArray, List
+from bit import rotate_bits_right
 from memory import UnsafePointer
 from sys.info import bitwidthof
 
@@ -70,7 +71,7 @@ struct DBuffer[
 
     alias _intwidth = bitwidthof[Int]()
     alias _shift = Self._intwidth - 1
-    alias _len_mask = ~(0b1 << Self._shift)
+    alias _len_mask = 0x7F_FF_FF_FF if Self._intwidth == 64 else 0x7F_FF
     alias _max_length = 2**Self._shift
     var _data: UnsafePointer[T]
     var _len: UInt
@@ -117,8 +118,12 @@ struct DBuffer[
         Args:
             other: The DBuffer to copy.
         """
-        self._data = other._data
-        self._len = len(other)
+
+        var o_len = len(other)
+        var buf = UnsafePointer[T].alloc(o_len)
+        for i in range(o_len):
+            buf[i] = other._data[i]
+        self = Self(ptr=buf, length=o_len, self_is_owner=True)
 
     @always_inline
     @implicit
@@ -131,17 +136,20 @@ struct DBuffer[
         self = Self(ptr=list.unsafe_ptr(), length=len(list))
 
     @always_inline
-    @implicit
-    fn __init__(out self, owned list: List[T, *_]):
+    @staticmethod
+    fn own(owned list: List[T, *_]) -> DBuffer[T, MutableAnyOrigin]:
         """Construct a DBuffer from an owned List.
 
         Args:
             list: The list to which the DBuffer refers.
         """
         var l_len = len(list)  # to avoid steal_data() which sets it to 0
-        self = Self(ptr=list.steal_data(), length=l_len, self_is_owner=True)
+        return DBuffer[T, MutableAnyOrigin](
+            ptr=list.steal_data(), length=l_len, self_is_owner=True
+        )
 
     @always_inline
+    @implicit
     fn __init__[
         size: Int, //
     ](inout self, ref [origin]array: InlineArray[T, size]):
@@ -154,7 +162,7 @@ struct DBuffer[
             array: The array to which the DBuffer refers.
         """
         self = Self(
-            ptr=UnsafePointer.address_of(array).bitcast[T](), length=size
+            ptr=UnsafePointer.address_of(array).bitcast[T](), length=UInt(size)
         )
 
     fn __moveinit__(out self, owned existing: Self):
@@ -225,7 +233,7 @@ struct DBuffer[
         start, end, step = slc.indices(len(self))
 
         if step == 1:
-            return Self(ptr=self._data + start, length=start - end)
+            return Self(ptr=self._data + start, length=end - start)
 
         var new_len = len(range(start, end, step))
         var buf = UnsafePointer[T].alloc(new_len)
@@ -265,7 +273,7 @@ struct DBuffer[
         Returns:
             The size of the DBuffer.
         """
-        return self._len & Self._len_mask
+        return int(self._len) & Self._len_mask
 
     fn __bool__(self) -> Bool:
         """Check if a DBuffer is non-empty.
