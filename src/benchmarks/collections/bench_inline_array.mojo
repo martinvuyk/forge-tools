@@ -36,7 +36,7 @@ fn make_inlinearray[
 
 
 @parameter
-fn bench_inlinearray_init[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_init[capacity: Int](mut b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn():
@@ -50,7 +50,7 @@ fn bench_inlinearray_init[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray Insert
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_insert[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_insert[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -72,7 +72,7 @@ fn bench_inlinearray_insert[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray Lookup
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_lookup[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_lookup[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -95,7 +95,7 @@ fn bench_inlinearray_lookup[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray contains
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_contains[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_contains[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -118,7 +118,7 @@ fn bench_inlinearray_contains[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray count
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_count[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_count[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -141,7 +141,7 @@ fn bench_inlinearray_count[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray sum
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_sum[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_sum[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -162,7 +162,7 @@ fn bench_inlinearray_sum[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray filter
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_filter[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_filter[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -189,7 +189,7 @@ fn bench_inlinearray_filter[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray apply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_apply[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_apply[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -213,7 +213,7 @@ fn bench_inlinearray_apply[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray multiply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_multiply[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_multiply[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity]()
     p = items.unsafe_ptr()
 
@@ -232,7 +232,7 @@ fn bench_inlinearray_multiply[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray reverse
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_reverse[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_reverse[capacity: Int](mut b: Bencher) raises:
     items = make_inlinearray[capacity, DType.uint8]()
     p = items.unsafe_ptr()
 
@@ -254,7 +254,7 @@ fn bench_inlinearray_reverse[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray dot
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_dot[capacity: Int](inout b: Bencher) raises:
+fn bench_inlinearray_dot[capacity: Int](mut b: Bencher) raises:
     arr1 = make_inlinearray[capacity, T = DType.float64]()
     arr2 = make_inlinearray[capacity, T = DType.float64]()
     p1 = arr1.unsafe_ptr()
@@ -279,7 +279,7 @@ fn bench_inlinearray_dot[capacity: Int](inout b: Bencher) raises:
 # Benchmark inlinearray cross
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_inlinearray_cross(inout b: Bencher) raises:
+fn bench_inlinearray_cross(mut b: Bencher) raises:
     arr1 = InlineArray[Float64, 3](
         random_float64(0, 500), random_float64(0, 500), random_float64(0, 500)
     )

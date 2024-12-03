@@ -170,7 +170,7 @@ struct Parser[
         return items^
 
     @staticmethod
-    fn _parse_num(inout iterator: _StringSliceIter[origin]) -> (Int8, Int, Int):
+    fn _parse_num(mut iterator: _StringSliceIter[origin]) -> (Int8, Int, Int):
         constrained[
             maximum_int_bitwidth <= bitwidthof[Int](),
             "can't parse an Int bigger than bitwidth[Int]()",

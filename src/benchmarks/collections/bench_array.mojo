@@ -36,7 +36,7 @@ fn make_array[
 
 
 @parameter
-fn bench_array_init[capacity: Int, static: Bool](inout b: Bencher) raises:
+fn bench_array_init[capacity: Int, static: Bool](mut b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn():
@@ -50,7 +50,7 @@ fn bench_array_init[capacity: Int, static: Bool](inout b: Bencher) raises:
 # Benchmark Array Insert
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_insert[capacity: Int, static: Bool](inout b: Bencher) raises:
+fn bench_array_insert[capacity: Int, static: Bool](mut b: Bencher) raises:
     arr = make_array[capacity, static]()
 
     @always_inline
@@ -67,7 +67,7 @@ fn bench_array_insert[capacity: Int, static: Bool](inout b: Bencher) raises:
 # Benchmark Array Lookup
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_lookup[capacity: Int, static: Bool](inout b: Bencher) raises:
+fn bench_array_lookup[capacity: Int, static: Bool](mut b: Bencher) raises:
     arr = make_array[capacity, static]()
 
     @always_inline
@@ -85,7 +85,7 @@ fn bench_array_lookup[capacity: Int, static: Bool](inout b: Bencher) raises:
 # Benchmark Array contains
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_contains[capacity: Int, static: Bool](inout b: Bencher) raises:
+fn bench_array_contains[capacity: Int, static: Bool](mut b: Bencher) raises:
     arr = make_array[capacity, static]()
 
     @always_inline
@@ -103,7 +103,7 @@ fn bench_array_contains[capacity: Int, static: Bool](inout b: Bencher) raises:
 # Benchmark Array count
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_count[capacity: Int, static: Bool](inout b: Bencher) raises:
+fn bench_array_count[capacity: Int, static: Bool](mut b: Bencher) raises:
     arr = make_array[capacity, static]()
 
     @always_inline
@@ -121,7 +121,7 @@ fn bench_array_count[capacity: Int, static: Bool](inout b: Bencher) raises:
 # Benchmark Array sum
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_sum[capacity: Int](inout b: Bencher) raises:
+fn bench_array_sum[capacity: Int](mut b: Bencher) raises:
     arr = make_array[capacity, False]()
 
     @always_inline
@@ -138,7 +138,7 @@ fn bench_array_sum[capacity: Int](inout b: Bencher) raises:
 # Benchmark Array filter
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_filter[capacity: Int, static: Bool](inout b: Bencher) raises:
+fn bench_array_filter[capacity: Int, static: Bool](mut b: Bencher) raises:
     arr = make_array[capacity, static]()
 
     fn filterfn(a: Int64) -> Scalar[DType.bool]:
@@ -158,7 +158,7 @@ fn bench_array_filter[capacity: Int, static: Bool](inout b: Bencher) raises:
 # Benchmark Array apply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_apply[capacity: Int, static: Bool](inout b: Bencher) raises:
+fn bench_array_apply[capacity: Int, static: Bool](mut b: Bencher) raises:
     arr = make_array[capacity, static]()
 
     fn applyfn(a: Int64) -> Scalar[DType.int64]:
@@ -179,7 +179,7 @@ fn bench_array_apply[capacity: Int, static: Bool](inout b: Bencher) raises:
 # Benchmark Array multiply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_multiply[capacity: Int](inout b: Bencher) raises:
+fn bench_array_multiply[capacity: Int](mut b: Bencher) raises:
     arr = make_array[capacity, False]()
 
     @always_inline
@@ -195,7 +195,7 @@ fn bench_array_multiply[capacity: Int](inout b: Bencher) raises:
 # Benchmark Array reverse
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_reverse[capacity: Int](inout b: Bencher) raises:
+fn bench_array_reverse[capacity: Int](mut b: Bencher) raises:
     arr = make_array[capacity, False, DType.int64]()
 
     @always_inline
@@ -212,7 +212,7 @@ fn bench_array_reverse[capacity: Int](inout b: Bencher) raises:
 # Benchmark Array dot
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_dot[capacity: Int](inout b: Bencher) raises:
+fn bench_array_dot[capacity: Int](mut b: Bencher) raises:
     arr1 = make_array[capacity, True, DType.float64]()
     arr2 = make_array[capacity, True, DType.float64]()
 
@@ -232,7 +232,7 @@ fn bench_array_dot[capacity: Int](inout b: Bencher) raises:
 # Benchmark Array cross
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_array_cross(inout b: Bencher) raises:
+fn bench_array_cross(mut b: Bencher) raises:
     arr1 = Array[DType.float64, 3, True](
         random_float64(0, 500), random_float64(0, 500), random_float64(0, 500)
     )

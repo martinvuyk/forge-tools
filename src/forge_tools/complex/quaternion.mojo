@@ -106,7 +106,7 @@ struct Quaternion[T: DType = DType.float64]:
         """
         return sqrt((self.vec**2).reduce_add())
 
-    fn normalize(inout self):
+    fn normalize(mut self):
         """Normalize the Quaternion."""
         self.vec /= self.__abs__()
 
@@ -152,7 +152,7 @@ struct Quaternion[T: DType = DType.float64]:
         """
         return Self(self.vec + other.vec)
 
-    fn __iadd__(inout self, other: Self):
+    fn __iadd__(mut self, other: Self):
         """Add other to self inplace.
 
         Args:
@@ -171,7 +171,7 @@ struct Quaternion[T: DType = DType.float64]:
         """
         return Self(self.vec - other.vec)
 
-    fn __isub__(inout self, other: Self):
+    fn __isub__(mut self, other: Self):
         """Subtract other from self inplace.
 
         Args:
@@ -240,7 +240,7 @@ struct Quaternion[T: DType = DType.float64]:
         k = self.dot(rev * sign3)
         return Self(w, i, j, k)
 
-    fn __imul__(inout self, other: Self):
+    fn __imul__(mut self, other: Self):
         """Calculate the Hamilton product of self with other inplace.
 
         Args:
@@ -260,7 +260,7 @@ struct Quaternion[T: DType = DType.float64]:
 
         return self * other.inverse()
 
-    fn __itruediv__(inout self, other: Self):
+    fn __itruediv__(mut self, other: Self):
         """Calculate the division of self with other inplace.
 
         Args:
@@ -355,7 +355,7 @@ struct Quaternion[T: DType = DType.float64]:
         v_new = v * ((q_magn ** (value - 1)) / sin(value * phi))
         return Self(w, v_new[1], v_new[2], v_new[3])
 
-    fn __ipow__(inout self, value: Int):
+    fn __ipow__(mut self, value: Int):
         """Raise the Quaternion to the given power inplace.
 
         Args:
@@ -572,7 +572,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         """
         return Self(self.vec + other.vec)
 
-    fn __iadd__(inout self, other: Self):
+    fn __iadd__(mut self, other: Self):
         """Add other to self inplace.
 
         Args:
@@ -591,7 +591,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         """
         return Self(self.vec - other.vec)
 
-    fn __isub__(inout self, other: Self):
+    fn __isub__(mut self, other: Self):
         """Subtract other from self inplace.
 
         Args:
@@ -616,7 +616,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         d = Quat(other.vec.slice[4, offset=4]())
         return Self((a * c).vec.join((a * d + b * c).vec))
 
-    fn __imul__(inout self, other: Self):
+    fn __imul__(mut self, other: Self):
         """Multiply self with other inplace.
 
         Args:
@@ -673,7 +673,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         """
         return sqrt((self.vec**2).reduce_add())
 
-    fn normalize(inout self):
+    fn normalize(mut self):
         """Normalize the DualQuaternion."""
         self.vec /= self.__abs__()
 
@@ -696,7 +696,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         """
         return (self.vec * other.vec).reduce_add()
 
-    fn displace(inout self, *dual_quaternions: Self):
+    fn displace(mut self, *dual_quaternions: Self):
         """Displace the DualQuaternion by a set of DualQuaternions.
 
         Args:
@@ -705,7 +705,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         for i in range(len(dual_quaternions)):
             self *= dual_quaternions[i]
 
-    fn transform(inout self, rotate: Quaternion[T], displace: Quaternion[T]):
+    fn transform(mut self, rotate: Quaternion[T], displace: Quaternion[T]):
         """Transform the DualQuaternion by a set of Quaternions.
 
         Args:

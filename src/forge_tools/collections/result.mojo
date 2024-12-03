@@ -261,7 +261,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         debug_assert(bool(self), ".value() on empty Result")
         return self._value.unsafe_get[T]()
 
-    fn take(inout self) -> T:
+    fn take(mut self) -> T:
         """Move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved
@@ -279,7 +279,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             abort(".take() on empty `Result`")
         return self.unsafe_take()
 
-    fn unsafe_take(inout self) -> T:
+    fn unsafe_take(mut self) -> T:
         """Unsafely move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved
@@ -505,7 +505,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         debug_assert(bool(self), ".value() on empty Result")
         return self._value.unsafe_get[T]()
 
-    fn take(inout self) -> T:
+    fn take(mut self) -> T:
         """Move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved
@@ -523,7 +523,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
             abort(".take() on empty `Result`")
         return self.unsafe_take()
 
-    fn unsafe_take(inout self) -> T:
+    fn unsafe_take(mut self) -> T:
         """Unsafely move the value out of the `Result`.
 
         The caller takes ownership over the new value, which is moved

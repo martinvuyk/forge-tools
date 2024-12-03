@@ -758,7 +758,7 @@ struct DateTime[
         return self.subtract(other)
 
     @always_inline
-    fn __iadd__(inout self, owned other: Self._UnboundCal):
+    fn __iadd__(mut self, owned other: Self._UnboundCal):
         """Add Immediate.
 
         Args:
@@ -767,7 +767,7 @@ struct DateTime[
         self = self.add(other)
 
     @always_inline
-    fn __isub__(inout self, owned other: Self._UnboundCal):
+    fn __isub__(mut self, owned other: Self._UnboundCal):
         """Subtract Immediate.
 
         Args:

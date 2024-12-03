@@ -35,7 +35,7 @@ fn make_list[capacity: Int, T: DType = DType.int64]() -> List[Scalar[T]]:
 
 
 @parameter
-fn bench_list_init[capacity: Int](inout b: Bencher) raises:
+fn bench_list_init[capacity: Int](mut b: Bencher) raises:
     @always_inline
     @parameter
     fn call_fn():
@@ -56,7 +56,7 @@ fn bench_list_init[capacity: Int](inout b: Bencher) raises:
 # Benchmark list Insert
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_insert[capacity: Int](inout b: Bencher) raises:
+fn bench_list_insert[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     @always_inline
@@ -74,7 +74,7 @@ fn bench_list_insert[capacity: Int](inout b: Bencher) raises:
 # Benchmark list Lookup
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_lookup[capacity: Int](inout b: Bencher) raises:
+fn bench_list_lookup[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     @always_inline
@@ -96,7 +96,7 @@ fn bench_list_lookup[capacity: Int](inout b: Bencher) raises:
 # Benchmark list contains
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_contains[capacity: Int](inout b: Bencher) raises:
+fn bench_list_contains[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     @always_inline
@@ -118,7 +118,7 @@ fn bench_list_contains[capacity: Int](inout b: Bencher) raises:
 # Benchmark list count
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_count[capacity: Int](inout b: Bencher) raises:
+fn bench_list_count[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     @always_inline
@@ -139,7 +139,7 @@ fn bench_list_count[capacity: Int](inout b: Bencher) raises:
 # Benchmark list sum
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_sum[capacity: Int](inout b: Bencher) raises:
+fn bench_list_sum[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     @always_inline
@@ -159,7 +159,7 @@ fn bench_list_sum[capacity: Int](inout b: Bencher) raises:
 # Benchmark list filter
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_filter[capacity: Int](inout b: Bencher) raises:
+fn bench_list_filter[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     fn filterfn(a: Int64) -> Scalar[DType.bool]:
@@ -185,7 +185,7 @@ fn bench_list_filter[capacity: Int](inout b: Bencher) raises:
 # Benchmark list apply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_apply[capacity: Int](inout b: Bencher) raises:
+fn bench_list_apply[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     fn applyfn(a: Int64) -> Scalar[DType.int64]:
@@ -208,7 +208,7 @@ fn bench_list_apply[capacity: Int](inout b: Bencher) raises:
 # Benchmark list multiply
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_multiply[capacity: Int](inout b: Bencher) raises:
+fn bench_list_multiply[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity]()
 
     @always_inline
@@ -226,7 +226,7 @@ fn bench_list_multiply[capacity: Int](inout b: Bencher) raises:
 # Benchmark list reverse
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_reverse[capacity: Int](inout b: Bencher) raises:
+fn bench_list_reverse[capacity: Int](mut b: Bencher) raises:
     items = make_list[capacity, DType.uint8]()
 
     @always_inline
@@ -244,7 +244,7 @@ fn bench_list_reverse[capacity: Int](inout b: Bencher) raises:
 # Benchmark list dot
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_dot[capacity: Int](inout b: Bencher) raises:
+fn bench_list_dot[capacity: Int](mut b: Bencher) raises:
     arr1 = make_list[capacity, DType.float64]()
     arr2 = make_list[capacity, DType.float64]()
 
@@ -267,7 +267,7 @@ fn bench_list_dot[capacity: Int](inout b: Bencher) raises:
 # Benchmark list cross
 # ===----------------------------------------------------------------------===#
 @parameter
-fn bench_list_cross(inout b: Bencher) raises:
+fn bench_list_cross(mut b: Bencher) raises:
     arr1 = List[Float64](capacity=3)
     arr1[0] = random_float64(0, 500)
     arr1[1] = random_float64(0, 500)

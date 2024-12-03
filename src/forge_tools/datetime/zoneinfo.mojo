@@ -355,7 +355,7 @@ struct ZoneInfoFile32(CollectionElement):
     fn hash(key: StringLiteral) -> UInt64:
         return UInt64((hash(key) >> 48) % 512)
 
-    fn add(inout self, key: StringLiteral, value: ZoneDST):
+    fn add(mut self, key: StringLiteral, value: ZoneDST):
         """Add a value to the file.
 
         Args:
@@ -438,7 +438,7 @@ struct ZoneInfoFile8(CollectionElement):
     fn hash(key: StringLiteral) -> UInt64:
         return UInt64((hash(key) >> 48) % 512)
 
-    fn add(inout self, key: StringLiteral, value: Offset):
+    fn add(mut self, key: StringLiteral, value: Offset):
         """Add a value to the file.
 
         Args:
@@ -499,7 +499,7 @@ struct ZoneInfoMem32(CollectionElement):
         self._zones = Dict[StringLiteral, UInt32]()
 
     @always_inline
-    fn add(inout self, key: StringLiteral, value: ZoneDST):
+    fn add(mut self, key: StringLiteral, value: ZoneDST):
         """Add a value to `ZoneInfoMem32`.
 
         Args:
@@ -537,7 +537,7 @@ struct ZoneInfoMem8(CollectionElement):
         self._zones = Dict[StringLiteral, UInt8]()
 
     @always_inline
-    fn add(inout self, key: StringLiteral, value: Offset):
+    fn add(mut self, key: StringLiteral, value: Offset):
         """Add a value to `ZoneInfoMem8`.
 
         Args:
@@ -564,13 +564,13 @@ struct ZoneInfoMem8(CollectionElement):
 
 # TODO
 # fn _parse_iana_zonenow(
-#     inout dst_zones: ZoneInfoMem32, inout no_dst_zones: ZoneInfoMem8
+#     mut dst_zones: ZoneInfoMem32, mut no_dst_zones: ZoneInfoMem8
 # ) raises:
 #     pass
 
 # TODO
 # fn _parse_iana_dst_transitions(
-#     inout dst_zones: ZoneInfoMem32, inout no_dst_zones: ZoneInfoMem8
+#     mut dst_zones: ZoneInfoMem32, mut no_dst_zones: ZoneInfoMem8
 # ) raises:
 #     pass
 
@@ -700,7 +700,7 @@ trait ZoneStorageDST(CollectionElement):
         """Construct a `ZoneInfo`."""
         ...
 
-    fn add(inout self, key: StringLiteral, value: ZoneDST):
+    fn add(mut self, key: StringLiteral, value: ZoneDST):
         """Add a value to `ZoneInfo`.
 
         Args:
@@ -728,7 +728,7 @@ trait ZoneStorageNoDST(CollectionElement):
         """Construct a `ZoneInfo`."""
         ...
 
-    fn add(inout self, key: StringLiteral, value: Offset):
+    fn add(mut self, key: StringLiteral, value: Offset):
         """Add a value to `ZoneInfo`.
 
         Args:

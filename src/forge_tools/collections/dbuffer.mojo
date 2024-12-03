@@ -29,7 +29,7 @@ struct _DBufferIter[
         return self
 
     @always_inline
-    fn __next__(inout self) -> ref [origin] T:
+    fn __next__(mut self) -> ref [origin] T:
         @parameter
         if forward:
             self.index += 1
@@ -97,6 +97,7 @@ struct DBuffer[
         print(parse(DBuffer[origin=MutableAnyOrigin].own(l1^))) # hi
         # the compiler won't let you use l1 beyond this point
     ```
+    .
     """
 
     alias _intwidth = bitwidthof[Int]()
@@ -176,6 +177,9 @@ struct DBuffer[
         Args:
             list: The list to which the DBuffer refers.
 
+        Returns:
+            The owned DBuffer with the data.
+
         Examples:
 
         ```mojo
@@ -183,6 +187,7 @@ struct DBuffer[
         l1 = List[Int](1, 2, 3, 4, 5, 6, 7)
         s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
         ```
+        .
         """
         var l_len = len(list)  # to avoid steal_data() which sets it to 0
         return Self(ptr=list.steal_data(), length=l_len, self_is_owner=True)
@@ -191,7 +196,7 @@ struct DBuffer[
     @implicit
     fn __init__[
         size: Int, //
-    ](inout self, ref [origin]array: InlineArray[T, size]):
+    ](mut self, ref [origin]array: InlineArray[T, size]):
         """Construct a DBuffer from an InlineArray.
 
         Parameters:
@@ -412,7 +417,7 @@ struct DBuffer[
         """
         return bool(self._len >> Self._shift)
 
-    fn steal_data(inout self) -> UnsafePointer[T]:
+    fn steal_data(mut self) -> UnsafePointer[T]:
         """Take ownership of the underlying pointer from the DBuffer if
         `self.is_owner()`, otherwise create a deep copy.
 

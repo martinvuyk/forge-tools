@@ -176,7 +176,7 @@ struct Reader[
         b5: Byte = 0,
         b6: Byte = 0,
         b7: Byte = 0,
-    ](inout iterator: _StringSliceIter) -> Bool:
+    ](mut iterator: _StringSliceIter) -> Bool:
         if not iterator.__has_next__():
             return False
 
@@ -194,9 +194,9 @@ struct Reader[
     fn _is_closed[
         closing_byte: Byte
     ](
-        inout iterator: _StringSliceIter,
-        inout b0_char: Byte,
-        inout length: UInt,
+        mut iterator: _StringSliceIter,
+        mut b0_char: Byte,
+        mut length: UInt,
     ) -> Bool:
         alias `"` = Byte(ord('"'))
         alias `\\` = Byte(ord("\\"))
@@ -223,7 +223,7 @@ struct Reader[
     @always_inline
     @staticmethod
     fn _validate_int_float(
-        inout iterator: _StringSliceIter[origin],
+        mut iterator: _StringSliceIter[origin],
         start_ptr: UnsafePointer[Byte],
         owned b0_char: Byte,
         owned length: UInt,
