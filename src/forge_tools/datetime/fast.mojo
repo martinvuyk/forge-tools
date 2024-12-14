@@ -538,7 +538,7 @@ struct DateTime64(Hashable, Stringable):
         Notes:
             This builds an instance with a hash set to default UTC epoch start.
         """
-        ms = time.now() // 1_000_000
+        ms = time.monotonic() // 1_000_000 # FIXME
         s = ms // 1_000
         return Self.from_unix_epoch(s).add(m_seconds=ms)
 
@@ -1060,7 +1060,7 @@ struct DateTime32(Hashable, Stringable):
         Notes:
             This builds an instance with a hash set to default UTC epoch start.
         """
-        return Self.from_unix_epoch(time.now() // 1_000_000_000)
+        return Self.from_unix_epoch(time.monotonic() // 1_000_000_000) # FIXME
 
     @always_inline
     fn timestamp(self) -> Float64:
@@ -1551,7 +1551,7 @@ struct DateTime16(Hashable, Stringable):
         Notes:
             This builds an instance with a hash set to default UTC epoch start.
         """
-        return Self.from_unix_epoch(time.now() // 1_000_000_000)
+        return Self.from_unix_epoch(time.monotonic() // 1_000_000_000) # FIXME
 
     @always_inline
     fn timestamp(self) -> Float64:
@@ -2035,7 +2035,7 @@ struct DateTime8(Hashable, Stringable):
         Notes:
             This builds an instance with a hash set to default UTC epoch start.
         """
-        return Self.from_unix_epoch(time.now() // 1_000_000_000)
+        return Self.from_unix_epoch(time.monotonic() // 1_000_000_000) # FIXME
 
     @always_inline
     fn timestamp(self) -> Float64:

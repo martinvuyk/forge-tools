@@ -1,7 +1,7 @@
 from collections import Optional
 from memory import UnsafePointer, ArcPointer
 from sys.intrinsics import _type_is_eq
-from utils import Span
+from memory import Span
 from forge_tools.ffi.c.types import C
 from .socket import (
     # SocketInterface,

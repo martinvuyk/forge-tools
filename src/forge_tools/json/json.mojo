@@ -1,6 +1,6 @@
 """Json module."""
 
-from utils import Span
+from memory import Span
 
 # TODO: write tests with https://github.com/miloyip/nativejson-benchmark/tree/master/data/jsonchecker
 # TODO: read python impl https://github.com/python/cpython/blob/main/Lib/json/scanner.py
@@ -83,7 +83,7 @@ struct JsonType:
 
 
 @value
-struct JsonInstance[origin: Origin[False].type]:
+struct JsonInstance[origin: Origin[False]]:
     """A JsonInstance.
 
     Parameters:

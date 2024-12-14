@@ -1,15 +1,14 @@
 """JSON Reader module."""
 
-from memory import UnsafePointer
+from memory import UnsafePointer, Span
 from sys.intrinsics import unlikely
 from utils.string_slice import StringSlice, _StringSliceIter
-from utils.span import Span
 from .json import JsonInstance, JsonType
 
 
 # TODO: UTF-16. _StringSliceIter should actually support it, then this code stays unchanged
 struct Reader[
-    origin: Origin[False].type,
+    origin: Origin[False],
     allow_trailing_comma: Bool = True,
     allow_c_whitespace: Bool = True,
 ]:

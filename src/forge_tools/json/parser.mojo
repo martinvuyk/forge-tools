@@ -3,7 +3,7 @@
 from math import log10, nan
 from bit import bit_ceil
 from collections import Dict
-from utils import Span
+from memory import Span
 from utils.string_slice import StringSlice, _StringSliceIter
 from sys.info import bitwidthof
 
@@ -12,7 +12,7 @@ from .json import JsonInstance, JsonType
 
 # TODO: UTF-16
 struct Parser[
-    origin: Origin[False].type,
+    origin: Origin[False],
     allow_trailing_comma: Bool = True,
     allow_c_whitespace: Bool = True,
     maximum_int_bitwidth: UInt = bitwidthof[Int](),

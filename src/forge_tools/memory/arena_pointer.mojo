@@ -2,7 +2,7 @@
 
 from memory import UnsafePointer, memset, stack_allocation
 from collections import Optional
-from utils import Span
+from memory import Span
 from sys.info import bitwidthof, simdwidthof
 from sys.ffi import OpaquePointer
 from os import abort
@@ -12,7 +12,7 @@ from .arc_pointer import ArcPointer
 struct GladiatorPointer[
     is_mutable: Bool, //,
     type: AnyType,
-    origin: Origin[is_mutable].type,
+    origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
     """Gladiator Pointer (Weak Arena Pointer) that resides in an Arena."""
@@ -82,7 +82,7 @@ struct GladiatorPointer[
 struct ColosseumPointer[
     is_mutable: Bool, //,
     type: AnyType,
-    origin: Origin[is_mutable].type,
+    origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
     """Colosseum Pointer (Arena Owner Pointer) that deallocates the arena when
@@ -252,7 +252,7 @@ struct ColosseumPointer[
 struct SpartacusPointer[
     is_mutable: Bool, //,
     type: AnyType,
-    origin: Origin[is_mutable].type,
+    origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
     """Reference Counted Arena Pointer that deallocates the arena when it's the
@@ -278,7 +278,7 @@ struct SpartacusPointer[
 struct FlammaPointer[
     is_mutable: Bool, //,
     type: AnyType,
-    origin: Origin[is_mutable].type,
+    origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
     """Atomic Reference Counted Arena Pointer that deallocates the arena when

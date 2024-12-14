@@ -872,7 +872,7 @@ struct Date[
         """
 
         zone = tz.value() if tz else Self._tz()
-        s = time.now() // 1_000_000_000
+        s = time.monotonic() // 1_000_000_000 # FIXME
         return Self.from_unix_epoch(s, zone).replace(calendar=calendar)
 
     @always_inline

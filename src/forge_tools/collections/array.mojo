@@ -384,14 +384,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
     fn __init__(
         out self,
         *,
-        unsafe_pointer: UnsafePointer[Self._scalar],
+        ptr: UnsafePointer[Self._scalar],
         length: Int,
         unsafe_simd_size: Bool = False,
     ):
         """Constructs an Array from a pointer and its length.
 
         Args:
-            unsafe_pointer: The pointer to the data.
+            ptr: The pointer to the data.
             length: The number of elements pointed to.
             unsafe_simd_size: Whether to unsafely load assuming the pointer has
                 Self.simd_size allocated and length elements that are part of
@@ -403,7 +403,6 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
         if unsafe_simd_size:
-            ptr = unsafe_pointer
             self.vec = ptr.load[width = Self.simd_size]()
             self.capacity_left = capacity - length
             return
@@ -411,7 +410,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         s = min(capacity, length)
         self.vec = Self._vec_type(0)
         for i in range(s):  # FIXME: is there no faster way?
-            self.vec[i] = unsafe_pointer[i]
+            self.vec[i] = ptr[i]
 
         @parameter
         if static:
@@ -419,6 +418,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         else:
             self.capacity_left = capacity - s
 
+    @implicit
     fn __init__(out self, existing: List[Self._scalar]):
         """Constructs an Array from an existing List.
 
@@ -430,9 +430,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         """
 
         constrained[capacity <= 256, "Maximum capacity is 256."]()
-        self = Self(unsafe_pointer=existing.unsafe_ptr(), length=len(existing))
+        self = Self(ptr=existing.unsafe_ptr(), length=len(existing))
         _ = existing
 
+    @implicit
     fn __init__[size: Int](out self, owned existing: List[Self._scalar]):
         """Constructs an Array from an existing List.
 
@@ -1669,8 +1670,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         return acos(self.cos(other))
 
     fn cross(
-        self: Array[T, capacity, True], other: Array[T, capacity, True]
-    ) -> Array[T, capacity, True]:
+        self: Array[T, capacity, True], other: __type_of(self)
+    ) -> __type_of(self):
         """Calculates the cross product between two Arrays.
 
         Args:
@@ -1690,7 +1691,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         if capacity == 3:
             s = self.vec.shuffle[1, 2, 0, 3]()
             o = other.vec.shuffle[2, 0, 1, 3]()
-            return s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
+            return __type_of(self)(
+                s.fma(o, -(s * other.vec).shuffle[1, 2, 0, 3]())
+            )
         elif capacity == size:
             x0 = self.vec.rotate_left[1]()
             y0 = other.vec.rotate_left[2]()
@@ -1698,7 +1701,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             x1 = self.vec.rotate_left[2]()
             y1 = other.vec.rotate_left[1]()
             vec1 = x1.join(y1)
-            return vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
+            return __type_of(self)(
+                vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
+            )
         else:
             s_vec_l = self.vec
             o_vec_l = other.vec
@@ -1715,7 +1720,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             vec0 = x0.join(y0)
             x1 = s_vec_l.shift_left[2]()
             vec1 = x1.join(y1)
-            return vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
+            return __type_of(self)(
+                vec0.reduce_mul[size]() - vec1.reduce_mul[size]()
+            )
 
     fn map[
         D: DType
@@ -1762,7 +1769,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 res_p[i] = func(s_p[i])
 
             res = Array[D, capacity, static](
-                unsafe_pointer=res_p, length=len(self), unsafe_simd_size=True
+                ptr=res_p, length=len(self), unsafe_simd_size=True
             )
             res_p.free()
             s_p.free()
@@ -1897,7 +1904,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 idx += 1
 
         res = Array[T, capacity, False](
-            unsafe_pointer=res_p, length=(idx + 1), unsafe_simd_size=True
+            ptr=res_p, length=(idx + 1), unsafe_simd_size=True
         )
         res_p.free()
         s_p.free()

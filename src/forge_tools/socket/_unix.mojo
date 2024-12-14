@@ -1,9 +1,9 @@
 from collections import Optional
-from memory import UnsafePointer, stack_allocation, ArcPointer
+from memory import UnsafePointer, stack_allocation, ArcPointer, Span
 from os import abort
 from sys import sizeof
 from sys.intrinsics import _type_is_eq
-from utils import Span, StaticTuple, StringSlice
+from utils import StaticTuple, StringSlice
 from .socket import (
     # SocketInterface,
     SockType,

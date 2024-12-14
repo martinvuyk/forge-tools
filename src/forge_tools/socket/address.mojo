@@ -46,6 +46,7 @@ struct SockFamily:
     """
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
@@ -145,6 +146,7 @@ struct TIPCScope:
     """TIPC_NODE_SCOPE."""
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
@@ -189,6 +191,7 @@ struct EtherProto:
 
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
@@ -235,6 +238,7 @@ struct EtherPacket:
 
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 

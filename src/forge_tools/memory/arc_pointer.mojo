@@ -9,7 +9,7 @@ from .pointer import Pointer
 struct ArcPointer[
     is_mutable: Bool, //,
     type: AnyType,
-    origin: Origin[is_mutable].type,
+    origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
 ]:
     """Atomic Reference Counted Pointer."""

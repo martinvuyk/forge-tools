@@ -50,9 +50,9 @@ https://docs.python.org/3/library/socket.html).
 
 from sys import info
 from collections import Optional
-from memory import UnsafePointer, stack_allocation, ArcPointer
+from memory import UnsafePointer, stack_allocation, ArcPointer, Span
 from os import abort
-from utils import Variant, Span, StringSlice
+from utils import Variant, StringSlice
 
 from forge_tools.ffi.c.types import C, in_addr
 
@@ -81,6 +81,7 @@ struct SockType:
     # TODO the rest
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
@@ -133,6 +134,7 @@ struct SockProtocol:
     """Universal Asynchronous Reciever Transmitter."""
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 
@@ -188,6 +190,7 @@ struct SockPlatform:
     # TODO other important platforms
     var _selected: StringLiteral
 
+    @implicit
     fn __init__(out self, selected: StringLiteral):
         """Construct an instance.
 

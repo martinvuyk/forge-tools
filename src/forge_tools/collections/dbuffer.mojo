@@ -1,15 +1,14 @@
-from builtin.builtin_list import _lit_mut_cast
 from collections import InlineArray, List
 from memory import UnsafePointer
 from sys.info import bitwidthof
-from utils import Span
+from memory import Span
 
 
 @value
 struct _DBufferIter[
     is_mutable: Bool, //,
     T: CollectionElement,
-    origin: Origin[is_mutable].type,
+    origin: Origin[is_mutable],
     forward: Bool = True,
 ]:
     """Iterator for DBuffer.
@@ -59,7 +58,7 @@ struct _DBufferIter[
 struct DBuffer[
     is_mutable: Bool, //,
     T: CollectionElement,
-    origin: Origin[is_mutable].type,
+    origin: Origin[is_mutable],
 ](CollectionElementNew):
     """A potentially owning view of contiguous data.
 
@@ -441,13 +440,13 @@ struct DBuffer[
             (buf + i).init_pointee_copy(self[i])
         return buf
 
-    fn get_immutable(self) -> DBuffer[T, _lit_mut_cast[origin, False].result]:
+    fn get_immutable(self) -> DBuffer[T, Origin[False].cast_from[origin].result]:
         """Return an immutable version of this DBuffer.
 
         Returns:
             A DBuffer covering the same elements, but without mutability.
         """
-        return DBuffer[T, _lit_mut_cast[origin, False].result](
+        return DBuffer[T, Origin[False].cast_from[origin].result](
             ptr=self.unsafe_ptr(), length=len(self)
         )
 
