@@ -198,7 +198,7 @@ struct Parser[
             b0_char = iterator.__next__().unsafe_ptr()[0]
 
         v = _align_base_10[w](values ^ 0x30, idx)
-        result = (v * base_10_multipliers).cast[DType.uint64]().reduce_add()
+        result = (v * base_10_multipliers).cast[DType.index]().reduce_add()
         return sign, idx, int(sign) * int(result)
 
     @staticmethod

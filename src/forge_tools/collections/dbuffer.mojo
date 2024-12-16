@@ -137,9 +137,19 @@ struct DBuffer[
             length <= Self._max_length, "length must be <= ", Self._max_length
         )
         self._data = ptr
-        self._len = length | (
+        self._len = (length & Self._len_mask) | (
             UInt(self_is_owner and not is_stack_alloc) << Self._shift
         )
+
+    @always_inline
+    @implicit
+    fn __init__[O1: ImmutableOrigin, O2: MutableOrigin, //](out self: DBuffer[T, O1], other: DBuffer[T, O2]):
+        """Explicitly construct a deep copy of the provided DBuffer.
+
+        Args:
+            other: The DBuffer to copy.
+        """
+        self = __type_of(self)(ptr=other.unsafe_ptr(), length=len(other))
 
     @always_inline
     fn __init__(out self, *, other: Self):
