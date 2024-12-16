@@ -199,7 +199,7 @@ struct Parser[
 
         v = _align_base_10[w](values ^ 0x30, idx)
         result = (v * base_10_multipliers).cast[DType.index]().reduce_add()
-        return sign, idx, int(sign) * int(result)
+        return sign, idx, int(result)
 
     @staticmethod
     fn parse_int(instance: Self._J) -> Int:
@@ -215,7 +215,8 @@ struct Parser[
 
         debug_assert(instance.type is JsonType.int, "instance type is not int")
         iterator = StringSlice(unsafe_from_utf8=instance.buffer).__iter__()
-        return Self._parse_num(iterator)[2]
+        sign, _, num = Self._parse_num(iterator)
+        return int(sign) * num
 
     @staticmethod
     fn parse_float_dot(instance: Self._J) -> Float64:
@@ -237,10 +238,9 @@ struct Parser[
         sign, _, whole = Self._parse_num(iterator)
         debug_assert(iterator.__has_next__(), "iterator has no more values")
         _ = iterator.__next__()  # dot
-        _, idx, decimal = Self._parse_num(iterator)
-        return (
-            Float64(whole)
-            + sign.cast[DType.float64]() * Float64(decimal) / 10**idx
+        exp_sign, idx, decimal = Self._parse_num(iterator)
+        return sign.cast[DType.float64]() * (
+            Float64(whole) + Float64(decimal) * 10 ** (int(exp_sign) * idx)
         )
 
     @staticmethod
@@ -262,11 +262,13 @@ struct Parser[
             "instance type is not float_exp",
         )
         iterator = StringSlice(unsafe_from_utf8=instance.buffer).__iter__()
-        whole = Self._parse_num(iterator)[2]
+        sign, _, whole = Self._parse_num(iterator)
         debug_assert(iterator.__has_next__(), "iterator has no more values")
         _ = iterator.__next__()  # e or E
-        exponent = Self._parse_num(iterator)[2]
-        return Float64(whole) * Float64(10) ** Float64(exponent)
+        exp_sign, _, exponent = Self._parse_num(iterator)
+        return sign.cast[DType.float64]() * (
+            Float64(whole) * 10 ** (int(exp_sign) * exponent)
+        )
 
     fn loads(self) raises -> object:
         """Parse Json from the start of the span. Evaluate arrays and objects

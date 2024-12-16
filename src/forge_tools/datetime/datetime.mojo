@@ -1141,7 +1141,7 @@ struct DateTime[
         """
 
         zone = tz.or_else(Self._tz())
-        ns = UInt16(time.monotonic()) # FIXME
+        ns = UInt16(time.monotonic())  # FIXME
         dt = Self.from_unix_epoch(int(ns // 1_000_000_000), zone)
         dt.m_second, dt.u_second, dt.n_second = ns // 1_000_000, ns // 1_000, ns
         return dt^

@@ -143,7 +143,9 @@ struct DBuffer[
 
     @always_inline
     @implicit
-    fn __init__[O1: ImmutableOrigin, O2: MutableOrigin, //](out self: DBuffer[T, O1], other: DBuffer[T, O2]):
+    fn __init__[
+        O1: ImmutableOrigin, O2: MutableOrigin, //
+    ](out self: DBuffer[T, O1], other: DBuffer[T, O2]):
         """Explicitly construct a deep copy of the provided DBuffer.
 
         Args:
@@ -450,7 +452,9 @@ struct DBuffer[
             (buf + i).init_pointee_copy(self[i])
         return buf
 
-    fn get_immutable(self) -> DBuffer[T, Origin[False].cast_from[origin].result]:
+    fn get_immutable(
+        self,
+    ) -> DBuffer[T, Origin[False].cast_from[origin].result]:
         """Return an immutable version of this DBuffer.
 
         Returns:
