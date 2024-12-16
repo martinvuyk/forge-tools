@@ -189,7 +189,7 @@ struct Parser[
         alias Si = Scalar[DType.index]
         alias w = int(bit_ceil(log10(Si(2**maximum_int_bitwidth))))
         alias base_10_multipliers = _get_base_10_multipliers[DType.uint8, w]()
-        values = SIMD[DType.uint8, w](0x30)
+        values = SIMD[DType.uint8, w](`0`)
         idx = 0
         while iterator.__has_next__():
             debug_assert(`0` <= b0_char <= `9`, "value is not a  digit")
@@ -197,7 +197,7 @@ struct Parser[
             idx += 1
             b0_char = iterator.__next__().unsafe_ptr()[0]
 
-        v = _align_base_10[w](values ^ 0x30, idx)
+        v = _align_base_10[w](values ^ `0`, idx)
         result = (v * base_10_multipliers).cast[DType.index]().reduce_add()
         return sign, idx, int(result)
 
@@ -237,7 +237,8 @@ struct Parser[
         iterator = StringSlice(unsafe_from_utf8=instance.buffer).__iter__()
         sign, _, whole = Self._parse_num(iterator)
         debug_assert(iterator.__has_next__(), "iterator has no more values")
-        _ = iterator.__next__()  # dot
+        dot = iterator.__next__()
+        debug_assert(dot == ord("."), "expected a dot")
         exp_sign, idx, decimal = Self._parse_num(iterator)
         return sign.cast[DType.float64]() * (
             Float64(whole) + Float64(decimal) * 10 ** (int(exp_sign) * idx)
@@ -264,7 +265,11 @@ struct Parser[
         iterator = StringSlice(unsafe_from_utf8=instance.buffer).__iter__()
         sign, _, whole = Self._parse_num(iterator)
         debug_assert(iterator.__has_next__(), "iterator has no more values")
-        _ = iterator.__next__()  # e or E
+        exp_letter = iterator.__next__()  # e or E
+        debug_assert(
+            exp_letter in (ord("e"), ord("E")),
+            "expected 'e' or 'E' as exponent start.",
+        )
         exp_sign, _, exponent = Self._parse_num(iterator)
         return sign.cast[DType.float64]() * (
             Float64(whole) * 10 ** (int(exp_sign) * exponent)
