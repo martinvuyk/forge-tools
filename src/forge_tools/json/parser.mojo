@@ -238,7 +238,7 @@ struct Parser[
         sign, _, whole = Self._parse_num(iterator)
         debug_assert(iterator.__has_next__(), "iterator has no more values")
         dot = iterator.__next__()
-        debug_assert(dot == ord("."), "expected a dot")
+        debug_assert(dot == ".", "expected a dot")
         exp_sign, idx, decimal = Self._parse_num(iterator)
         return sign.cast[DType.float64]() * (
             Float64(whole) + Float64(decimal) * 10 ** (int(exp_sign) * idx)
@@ -265,9 +265,9 @@ struct Parser[
         iterator = StringSlice(unsafe_from_utf8=instance.buffer).__iter__()
         sign, _, whole = Self._parse_num(iterator)
         debug_assert(iterator.__has_next__(), "iterator has no more values")
-        exp_letter = iterator.__next__()  # e or E
+        exp_letter = iterator.__next__()
         debug_assert(
-            exp_letter in (ord("e"), ord("E")),
+            exp_letter in ("e", "E"),
             "expected 'e' or 'E' as exponent start.",
         )
         exp_sign, _, exponent = Self._parse_num(iterator)
