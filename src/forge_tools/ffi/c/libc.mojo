@@ -36,7 +36,7 @@ struct TryLibc[static: Bool]:
             The exit value.
         """
         raise Error(
-            str(error)
+            String(error)
             + "\nLibc Error: "
             + char_ptr_to_string(self._lib.strerror(self._lib.get_errno()))
         )

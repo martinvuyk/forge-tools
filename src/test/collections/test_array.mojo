@@ -410,9 +410,9 @@ def test_constructor_from_other_list_through_pointer():
 
 def test_array_to_string():
     my_array = Array[DType.int8, 3](1, 2, 3)
-    assert_equal(str(my_array), "[1, 2, 3]")
+    assert_equal(String(my_array), "[1, 2, 3]")
     my_array4 = Array[DType.uint64, 10](0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-    assert_equal(str(my_array4), "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]")
+    assert_equal(String(my_array4), "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]")
 
 
 def test_array_count():
@@ -433,18 +433,18 @@ def test_array_concat():
     a.append(b)
     assert_equal(len(a), 6)
     assert_equal(len(b), 3)
-    assert_equal(str(a), "[1, 2, 3, 4, 5, 6]")
+    assert_equal(String(a), "[1, 2, 3, 4, 5, 6]")
 
     c = Array[DType.int8, 3](1, 2, 3)
     c.append(b)
     assert_equal(len(c), 3)
-    assert_equal(str(c), "[1, 2, 3]")
+    assert_equal(String(c), "[1, 2, 3]")
 
     d = Array[DType.int8, 21](1, 2, 3)
     e = Array[DType.int8, 15](4, 5, 6)
     f = d.concat(e)
     assert_equal(len(f), 6)
-    assert_equal(str(f), "[1, 2, 3, 4, 5, 6]")
+    assert_equal(String(f), "[1, 2, 3, 4, 5, 6]")
 
     l = Array[DType.int8, 3](1, 2, 3)
     l.append(Array[DType.int8, 3]())

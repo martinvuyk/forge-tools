@@ -66,7 +66,7 @@ print(a.concat(a.reversed() // 2)) # [3, 4, 2, 1, 2, 1]
 
 from math import sqrt, acos, sin
 from algorithm import vectorize
-from bit import bit_ceil
+from bit import next_power_of_two
 from sys import info
 from collections import Optional
 from collections._index_normalization import normalize_index
@@ -187,7 +187,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             methods like append(), concat(), etc. do.
     """
 
-    alias simd_size = bit_ceil(capacity)
+    alias simd_size = next_power_of_two(capacity)
     """The size of the underlying SIMD vector."""
     alias _vec_type = SIMD[T, Self.simd_size]
     var vec: Self._vec_type
@@ -598,17 +598,17 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         ```mojo
         from forge_tools.collections import Array
-        print(str(Array[DType.uint8, 3](1, 2, 3))) # [1, 2, 3]
+        print(String(Array[DType.uint8, 3](1, 2, 3))) # [1, 2, 3]
         %# from testing import assert_equal
-        %# assert_equal(str(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
+        %# assert_equal(String(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
         ```
         .
         """
         # we do a rough estimation of the number of chars that we'll see
-        # in the final string, we assume that str(x) will be at least one char.
+        # in the final string, we assume that String(x) will be at least one char.
         minimum_capacity = (
             2  # '[' and ']'
-            + len(self) * 3  # str(x) and ", "
+            + len(self) * 3  # String(x) and ", "
             - 2  # remove the last ", "
         )
         string_buffer = List[UInt8](capacity=minimum_capacity)
@@ -616,7 +616,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         result = String(string_buffer^)
         result += "["
         for i in range(len(self)):
-            result += str(self.vec[i])
+            result += String(self.vec[i])
             if i < len(self) - 1:
                 result += ", "
         result += "]"
@@ -635,11 +635,11 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         my_array = Array[DType.uint8, 3](1, 2, 3)
         print(repr(my_array)) # [1, 2, 3]
         %# from testing import assert_equal
-        %# assert_equal(str(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
+        %# assert_equal(String(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
         ```
         .
         """
-        return str(self)
+        return String(self)
 
     @always_inline
     fn insert(mut self, i: Int, owned value: Self._scalar):
@@ -1750,7 +1750,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         arr = Array[DType.int8, 3](3, 2, 1)
         print(arr.map(mapfunc)) # [False, True, True]
         %# from testing import assert_equal
-        %# assert_equal(str(arr.map(mapfunc)), "[False, True, True]")
+        %# assert_equal(String(arr.map(mapfunc)), "[False, True, True]")
         ```
         .
         """
@@ -1817,7 +1817,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         arr.apply(applyfunc)
         print(arr) # [6, 4, 2]
         %# from testing import assert_equal
-        %# assert_equal(str(arr), "[6, 4, 2]")
+        %# assert_equal(String(arr), "[6, 4, 2]")
         ```
         .
         """
@@ -1854,7 +1854,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         arr.apply(applyfunc, where=filterfunc)
         print(arr) # [3, 4, 2]
         %# from testing import assert_equal
-        %# assert_equal(str(arr), "[3, 4, 2]")
+        %# assert_equal(String(arr), "[3, 4, 2]")
         ```
         .
         """
@@ -1884,7 +1884,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         arr = Array[DType.int8, 3](3, 2, 1)
         print(arr.filter(filterfunc)) # [2, 1]
         %# from testing import assert_equal
-        %# assert_equal(str(arr.filter(filterfunc)), "[2, 1]")
+        %# assert_equal(String(arr.filter(filterfunc)), "[2, 1]")
         ```
         .
         """

@@ -225,7 +225,7 @@ struct _UnixSocket[
                 addr_str = String(ptr=p.bitcast[UInt8](), length=int(sin_size))
                 return Self(fd=FileDescriptor(fd)), sock_address(addr_str^)
             except e:
-                print(str(e), file=STDERR_FILENO)
+                print(String(e), file=STDERR_FILENO)
                 return None
         else:
             constrained[False, "currently unsupported Address type"]()
@@ -346,7 +346,7 @@ struct _UnixSocket[
         hints.ai_flags = flags
         hints.ai_protocol = Self._sock_protocol
         hints_p = UnsafePointer[addrinfo].address_of(hints)
-        nodename = str(address)
+        nodename = String(address)
         result = addrinfo()
         alias UP = UnsafePointer
         res_p = C.ptr_addr(Int(UP[addrinfo].address_of(result)))
@@ -401,7 +401,7 @@ struct _UnixSocket[
                 await socket.connect(res[][4])
                 return socket^
             except e:
-                errors[idx] = str(e)
+                errors[idx] = String(e)
                 if all_errors:
                     idx += 1
 
@@ -430,7 +430,7 @@ struct _UnixSocket[
                 await socket.connect(res[][4])
                 return socket^
             except e:
-                errors[idx] = str(e)
+                errors[idx] = String(e)
                 if all_errors:
                     idx += 1
 

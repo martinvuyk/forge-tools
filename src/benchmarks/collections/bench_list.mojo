@@ -308,37 +308,37 @@ def main():
     for i in range(7):
         alias size = sizes.get[i, Int]()
         # m.bench_function[bench_list_init[size]](
-        #     BenchId("bench_list_init[" + str(size) + "]")
+        #     BenchId("bench_list_init[" + String(size) + "]")
         # )
         # m.bench_function[bench_list_insert[size]](
-        #     BenchId("bench_list_insert[" + str(size) + "]")
+        #     BenchId("bench_list_insert[" + String(size) + "]")
         # )
         # m.bench_function[bench_list_lookup[size]](
-        #     BenchId("bench_list_lookup[" + str(size) + "]")
+        #     BenchId("bench_list_lookup[" + String(size) + "]")
         # )
         # m.bench_function[bench_list_contains[size]](
-        #     BenchId("bench_list_contains[" + str(size) + "]")
+        #     BenchId("bench_list_contains[" + String(size) + "]")
         # )
         # m.bench_function[bench_list_count[size]](
-        #     BenchId("bench_list_count[" + str(size) + "]")
+        #     BenchId("bench_list_count[" + String(size) + "]")
         # )
         m.bench_function[bench_list_sum[size]](
-            BenchId("bench_list_sum[" + str(size) + "]")
+            BenchId("bench_list_sum[" + String(size) + "]")
         )
         m.bench_function[bench_list_filter[size]](
-            BenchId("bench_list_filter[" + str(size) + "]")
+            BenchId("bench_list_filter[" + String(size) + "]")
         )
         m.bench_function[bench_list_apply[size]](
-            BenchId("bench_list_apply[" + str(size) + "]")
+            BenchId("bench_list_apply[" + String(size) + "]")
         )
         m.bench_function[bench_list_multiply[size]](
-            BenchId("bench_list_multiply[" + str(size) + "]")
+            BenchId("bench_list_multiply[" + String(size) + "]")
         )
         # m.bench_function[bench_list_reverse[size]](
-        #     BenchId("bench_list_reverse[" + str(size) + "]")
+        #     BenchId("bench_list_reverse[" + String(size) + "]")
         # )
         # m.bench_function[bench_list_dot[size]](
-        #     BenchId("bench_list_dot[" + str(size) + "]")
+        #     BenchId("bench_list_dot[" + String(size) + "]")
         # )
         # m.bench_function[bench_list_cross](BenchId("bench_list_cross"))
     print("")

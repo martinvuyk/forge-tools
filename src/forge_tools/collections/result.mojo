@@ -50,9 +50,9 @@ if c.err:
     print("c had an error")
 
 # TODO: pattern matching
-if str(d.err) == "error 1":
+if String(d.err) == "error 1":
     print("d had error 1")
-elif str(d.err) == "error 2":
+elif String(d.err) == "error 2":
     print("d had error 2")
 ```
 
@@ -134,9 +134,9 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         print("c had an error")
 
     # TODO: pattern matching
-    if str(d.err) == "error 1":
+    if String(d.err) == "error 1":
         print("d had error 1")
-    elif str(d.err) == "error 2":
+    elif String(d.err) == "error 2":
         print("d had error 2")
     ```
 
@@ -381,7 +381,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
 
     fn do_something(i: Int) -> Result2[Int, "IndexError"]:
         if i < 0:
-            return None, Error2["IndexError"]("index out of bounds: " + str(i))
+            return None, Error2["IndexError"]("index out of bounds: " + String(i))
         return 1
 
     fn do_some_other_thing() -> Result2[String, "OtherError"]:

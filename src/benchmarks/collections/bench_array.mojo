@@ -264,59 +264,59 @@ def main():
     for i in range(7):
         alias size = sizes.get[i, Int]()
         # m.bench_function[bench_array_init[size, False]](
-        #     BenchId("bench_array_init[" + str(size) + "]")
+        #     BenchId("bench_array_init[" + String(size) + "]")
         # )
         # FIXME: for some reason, static does not appear faster in these benchmarks
         # m.bench_function[bench_array_init[size, True]](
-        #     BenchId("bench_array_init_static[" + str(size) + "]")
+        #     BenchId("bench_array_init_static[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_insert[size, False]](
-        #     BenchId("bench_array_insert[" + str(size) + "]")
+        #     BenchId("bench_array_insert[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_insert[size, True]](
-        #     BenchId("bench_array_insert_static[" + str(size) + "]")
+        #     BenchId("bench_array_insert_static[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_lookup[size, False]](
-        #     BenchId("bench_array_lookup[" + str(size) + "]")
+        #     BenchId("bench_array_lookup[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_lookup[size, True]](
-        #     BenchId("bench_array_lookup_static[" + str(size) + "]")
+        #     BenchId("bench_array_lookup_static[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_contains[size, False]](
-        #     BenchId("bench_array_contains[" + str(size) + "]")
+        #     BenchId("bench_array_contains[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_contains[size, True]](
-        #     BenchId("bench_array_contains_static[" + str(size) + "]")
+        #     BenchId("bench_array_contains_static[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_count[size, False]](
-        #     BenchId("bench_array_count[" + str(size) + "]")
+        #     BenchId("bench_array_count[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_count[size, True]](
-        #     BenchId("bench_array_count_static[" + str(size) + "]")
+        #     BenchId("bench_array_count_static[" + String(size) + "]")
         # )
         m.bench_function[bench_array_sum[size]](
-            BenchId("bench_array_sum[" + str(size) + "]")
+            BenchId("bench_array_sum[" + String(size) + "]")
         )
         m.bench_function[bench_array_filter[size, False]](
-            BenchId("bench_array_filter[" + str(size) + "]")
+            BenchId("bench_array_filter[" + String(size) + "]")
         )
         # m.bench_function[bench_array_filter[size, True]](
-        #     BenchId("bench_array_filter_static[" + str(size) + "]")
+        #     BenchId("bench_array_filter_static[" + String(size) + "]")
         # )
         m.bench_function[bench_array_apply[size, True]](
-            BenchId("bench_array_apply[" + str(size) + "]")
+            BenchId("bench_array_apply[" + String(size) + "]")
         )
         # m.bench_function[bench_array_apply[size, True]](
-        #     BenchId("bench_array_apply_static[" + str(size) + "]")
+        #     BenchId("bench_array_apply_static[" + String(size) + "]")
         # )
         m.bench_function[bench_array_multiply[size]](
-            BenchId("bench_array_multiply[" + str(size) + "]")
+            BenchId("bench_array_multiply[" + String(size) + "]")
         )
         # m.bench_function[bench_array_reverse[size]](
-        #     BenchId("bench_array_reverse[" + str(size) + "]")
+        #     BenchId("bench_array_reverse[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_dot[size]](
-        #     BenchId("bench_array_dot[" + str(size) + "]")
+        #     BenchId("bench_array_dot[" + String(size) + "]")
         # )
         # m.bench_function[bench_array_cross](BenchId("bench_array_cross"))
 

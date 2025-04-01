@@ -40,71 +40,71 @@ def _returning_none_err[T: CollectionElement](value: T) raises -> Result[T]:
 
 def test_none_err_constructor():
     res1 = _returning_none_err(String("some string"))
-    assert_true(not res1 and res1.err and str(res1.err) == "some error")
+    assert_true(not res1 and res1.err and String(res1.err) == "some error")
     res2 = _returning_none_err[String]("some string")
-    assert_true(not res2 and res2.err and str(res2.err) == "some error")
+    assert_true(not res2 and res2.err and String(res2.err) == "some error")
     res3 = _returning_none_err[StringLiteral]("some string")
-    assert_true(not res3 and res3.err and str(res3.err) == "some error")
+    assert_true(not res3 and res3.err and String(res3.err) == "some error")
     res4 = _returning_none_err("some string")
-    assert_true(not res4 and res4.err and str(res4.err) == "some error")
+    assert_true(not res4 and res4.err and String(res4.err) == "some error")
 
 
 def test_error_transfer():
     res1 = _returning_transferred_err(String("some string"))
-    assert_true(res1 is None and str(res1.err) == "some error")
+    assert_true(res1 is None and String(res1.err) == "some error")
     res2 = _returning_transferred_err[String]("some string")
-    assert_true(res2 is None and str(res2.err) == "some error")
+    assert_true(res2 is None and String(res2.err) == "some error")
     res3 = _returning_transferred_err[StringLiteral]("some string")
-    assert_true(res3 is None and str(res3.err) == "some error")
+    assert_true(res3 is None and String(res3.err) == "some error")
     res4 = _returning_transferred_err("some string")
-    assert_true(res4 is None and str(res4.err) == "some error")
+    assert_true(res4 is None and String(res4.err) == "some error")
 
 
 def test_returning_err():
     item_s = _returning_err(String("string"))
-    assert_true(not item_s and item_s.err and str(item_s.err) == "something")
+    assert_true(not item_s and item_s.err and String(item_s.err) == "something")
     # item_ti = _returning_err(Tuple[Int]())
-    # assert_true(not item_ti and item_ti.err and str(item_ti.err) == "something")
+    # assert_true(not item_ti and item_ti.err and String(item_ti.err) == "something")
     # item_ts = _returning_err(Tuple[String]())
-    # assert_true(not item_ts and item_ts.err and str(item_ts.err) == "something")
+    # assert_true(not item_ts and item_ts.err and String(item_ts.err) == "something")
     item_li = _returning_err(List[Int]())
-    assert_true(not item_li and item_li.err and str(item_li.err) == "something")
+    assert_true(not item_li and item_li.err and String(item_li.err) == "something")
     item_ls = _returning_err(List[String]())
-    assert_true(not item_ls and item_ls.err and str(item_ls.err) == "something")
+    assert_true(not item_ls and item_ls.err and String(item_ls.err) == "something")
     item_dii = _returning_err(Dict[Int, Int]())
     assert_true(
-        not item_dii and item_dii.err and str(item_dii.err) == "something"
+        not item_dii and item_dii.err and String(item_dii.err) == "something"
     )
     item_dss = _returning_err(Dict[String, String]())
     assert_true(
-        not item_dss and item_dss.err and str(item_dss.err) == "something"
+        not item_dss and item_dss.err and String(item_dss.err) == "something"
     )
     item_oi = _returning_err(Result[Int]())
-    assert_true(not item_oi and item_oi.err and str(item_oi.err) == "something")
+    assert_true(not item_oi and item_oi.err and String(item_oi.err) == "something")
     item_os = _returning_err(Result[String]())
-    assert_true(not item_os and item_os.err and str(item_os.err) == "something")
+    assert_true(not item_os and item_os.err and String(item_os.err) == "something")
 
 
 def test_returning_ok():
     # this one would fail if the String gets implicitly cast to Error(src: String)
     item_s = _returning_ok(String("string"))
-    assert_true(item_s and not item_s.err and str(item_s.err) == "")
+    assert_true(item_s and not item_s.err and String(item_s.err) == "")
     # item_ti = _returning_ok(Tuple[Int]())
-    # assert_true(item_ti and not item_ti.err and str(item_ti.err) == "")
+    # assert_true(item_ti and not item_ti.err and String(item_ti.err) == "")
     # item_ts = _returning_ok(Tuple[String]())
-    # assert_true(item_ts and not item_ts.err and str(item_ts.err) == "")
+    # assert_true(item_ts and not item_ts.err and String(item_ts.err) == "")
     item_li = _returning_ok(List[Int]())
-    assert_true(item_li and not item_li.err and str(item_li.err) == "")
+    assert_true(item_li and not item_li.err and String(item_li.err) == "")
     item_ls = _returning_ok(List[String]())
-    assert_true(item_ls and not item_ls.err and str(item_ls.err) == "")
+    assert_true(item_ls and not item_ls.err and String(item_ls.err) == "")
     item_dii = _returning_ok(Dict[Int, Int]())
-    assert_true(item_dii and not item_dii.err and str(item_dii.err) == "")
+    assert_true(item_dii and not item_dii.err and String(item_dii.err) == "")
     item_dss = _returning_ok(Dict[String, String]())
-    assert_true(item_dss and not item_dss.err and str(item_dss.err) == "")
+    assert_true(item_dss and not item_dss.err and String(item_dss.err) == "")
     item_oi = _returning_ok(Result[Int]())
-    assert_true(item_oi and not item_oi.err and str(item_oi.err) == "")
+    assert_true(item_oi and not item_oi.err and String(item_oi.err) == "")
     item_os = _returning_ok(Result[String]())
-    assert_true(item_os and not item_os.err and str(item_os.err) == "")
+    assert_true(item_os and not item_os.err and String(item_os.err) == "")
 
 
 def test_basic():
@@ -168,14 +168,14 @@ def test_result_isnot():
 
 def _do_something(i: Int) -> Result2[Int, "IndexError"]:
     if i < 0:
-        return None, Error2["IndexError"]("index out of bounds: " + str(i))
+        return None, Error2["IndexError"]("index out of bounds: " + String(i))
     return 1
 
 
 def _do_some_other_thing() -> Result2[String, "OtherError"]:
     a = _do_something(-1)
     if a.err:
-        print(str(a.err))  # IndexError: index out of bounds: -1
+        print(String(a.err))  # IndexError: index out of bounds: -1
         return a
     return "success"
 

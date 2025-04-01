@@ -431,7 +431,7 @@ struct IPv4Addr(SockAddr):
         Returns:
             The String representation.
         """
-        return self.host + str(self.port)
+        return self.host + String(self.port)
 
 
 @value
@@ -492,7 +492,7 @@ struct IPv6Addr(SockAddr):
         Returns:
             The String representation.
         """
-        return self.host + str(self.port)
+        return self.host + String(self.port)
 
 
 @value

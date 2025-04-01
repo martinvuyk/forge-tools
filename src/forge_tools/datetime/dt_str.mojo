@@ -80,20 +80,20 @@ struct IsoFormat:
 fn _get_strings(
     year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int
 ) -> (String, String, String, String, String, String):
-    yyyy = str(min(year, 9999))
+    yyyy = String(min(year, 9999))
     if year < 1000:
         prefix = "0"
         if year < 100:
             prefix = "00"
             if year < 10:
                 prefix = "000"
-        yyyy = prefix + str(year)
+        yyyy = prefix + String(year)
 
-    mm = str(min(month, 99)) if month > 9 else "0" + str(month)
-    dd = str(min(day, 99)) if day > 9 else "0" + str(day)
-    hh = str(min(hour, 99)) if hour > 9 else "0" + str(hour)
-    m_str = str(min(minute, 99)) if minute > 9 else "0" + str(minute)
-    ss = str(min(second, 99)) if second > 9 else "0" + str(second)
+    mm = String(min(month, 99)) if month > 9 else "0" + String(month)
+    dd = String(min(day, 99)) if day > 9 else "0" + String(day)
+    hh = String(min(hour, 99)) if hour > 9 else "0" + String(hour)
+    m_str = String(min(minute, 99)) if minute > 9 else "0" + String(minute)
+    ss = String(min(second, 99)) if second > 9 else "0" + String(second)
     return yyyy, mm, dd, hh, m_str, ss
 
 
@@ -381,7 +381,7 @@ fn strftime[
         )
         # FIXME: python issue https://github.com/python/cpython/issues/120713
         # remove after EOL of 3.11 (2027-10)
-        return str(date.strftime(format_str.replace("%Y", "%4Y")))
+        return String(date.strftime(format_str.replace("%Y", "%4Y")))
     except:
         pass
     return ""

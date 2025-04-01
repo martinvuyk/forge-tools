@@ -317,37 +317,37 @@ def main():
     for i in range(7):
         alias size = sizes.get[i, Int]()
         m.bench_function[bench_inlinearray_init[size]](
-            BenchId("bench_inlinearray_init[" + str(size) + "]")
+            BenchId("bench_inlinearray_init[" + String(size) + "]")
         )
         # m.bench_function[bench_inlinearray_insert[size]](
-        #     BenchId("bench_inlinearray_insert[" + str(size) + "]")
+        #     BenchId("bench_inlinearray_insert[" + String(size) + "]")
         # )
         m.bench_function[bench_inlinearray_lookup[size]](
-            BenchId("bench_inlinearray_lookup[" + str(size) + "]")
+            BenchId("bench_inlinearray_lookup[" + String(size) + "]")
         )
         m.bench_function[bench_inlinearray_contains[size]](
-            BenchId("bench_inlinearray_contains[" + str(size) + "]")
+            BenchId("bench_inlinearray_contains[" + String(size) + "]")
         )
         m.bench_function[bench_inlinearray_count[size]](
-            BenchId("bench_inlinearray_count[" + str(size) + "]")
+            BenchId("bench_inlinearray_count[" + String(size) + "]")
         )
         # m.bench_function[bench_inlinearray_sum[size]](
-        #     BenchId("bench_inlinearray_sum[" + str(size) + "]")
+        #     BenchId("bench_inlinearray_sum[" + String(size) + "]")
         # )
         # m.bench_function[bench_inlinearray_filter[size]](
-        #     BenchId("bench_inlinearray_filter[" + str(size) + "]")
+        #     BenchId("bench_inlinearray_filter[" + String(size) + "]")
         # )
         # m.bench_function[bench_inlinearray_apply[size]](
-        #     BenchId("bench_inlinearray_apply[" + str(size) + "]")
+        #     BenchId("bench_inlinearray_apply[" + String(size) + "]")
         # )
         # m.bench_function[bench_inlinearray_multiply[size]](
-        #     BenchId("bench_inlinearray_multiply[" + str(size) + "]")
+        #     BenchId("bench_inlinearray_multiply[" + String(size) + "]")
         # )
         # m.bench_function[bench_inlinearray_reverse[size]](
-        #     BenchId("bench_inlinearray_reverse[" + str(size) + "]")
+        #     BenchId("bench_inlinearray_reverse[" + String(size) + "]")
         # )
         # m.bench_function[bench_inlinearray_dot[size]](
-        #     BenchId("bench_inlinearray_dot[" + str(size) + "]")
+        #     BenchId("bench_inlinearray_dot[" + String(size) + "]")
         # )
         # m.bench_function[bench_inlinearray_cross](
         #     BenchId("bench_inlinearray_cross")

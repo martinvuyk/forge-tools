@@ -14,7 +14,7 @@ from forge_tools.ffi.c.constants import *
 
 
 def _test_open_close(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_open_close" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_open_close" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.open(ptr, O_RDWR | O_CREAT | O_TRUNC, 0o666)
@@ -41,7 +41,7 @@ def test_static_open_close():
 
 
 def _test_fopen_fclose(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_fopen_fclose" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_fopen_fclose" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -72,7 +72,7 @@ def test_static_fopen_fclose():
 
 
 def _test_fdopen_fclose(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_fdopen_fclose" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_fdopen_fclose" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -105,7 +105,7 @@ def test_static_fdopen_fclose():
 
 
 def _test_creat_openat(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_creat_openat" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_creat_openat" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -127,7 +127,7 @@ def test_static_creat_openat():
 
 
 def _test_freopen(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_freopen" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_freopen" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -152,7 +152,7 @@ def test_static_freopen():
 
 
 def _test_fmemopen_fprintf(libc: Libc, suffix: String):
-    file = str(
+    file = String(
         _dir_of_current_file() / ("dummy_test_fmemopen_fprintf" + suffix)
     )
     ptr = char_ptr(file)
@@ -196,7 +196,7 @@ def test_static_fmemopen_fprintf():
 
 
 def _test_fseek_ftell(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_fseek_ftell" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_fseek_ftell" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -250,7 +250,7 @@ def test_static_fseek_ftell():
 
 
 def _test_fput_fget(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_fput_fget" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_fput_fget" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -306,7 +306,7 @@ def test_static_fput_fget():
 
 
 def _test_dprintf(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_dprintf" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_dprintf" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -450,7 +450,7 @@ def test_static_snprintf():
 
 
 def _test_fscanf(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_fscanf" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_fscanf" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -494,7 +494,7 @@ def test_static_fscanf():
 
 
 def _test_fcntl(libc: Libc, suffix: String):
-    file = str(_dir_of_current_file() / ("dummy_test_fcntl" + suffix))
+    file = String(_dir_of_current_file() / ("dummy_test_fcntl" + suffix))
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)
@@ -520,7 +520,7 @@ def test_static_fcntl():
 # TODO: a thorough test of the most often used functionality
 # see https://man7.org/linux/man-pages/man3/ioctl.3p.html
 # def _test_ioctl(libc: Libc, suffix: String):
-#     file = str(_dir_of_current_file() / ("dummy_test_ioctl" + suffix))
+#     file = String(_dir_of_current_file() / ("dummy_test_ioctl" + suffix))
 #     ptr = char_ptr(file)
 #     with TryLibc(libc):
 #         ...

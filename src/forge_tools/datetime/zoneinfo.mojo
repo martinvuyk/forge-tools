@@ -159,8 +159,8 @@ struct Offset:
         m = self.minute
 
         sign = "-" if self.sign == -1 and not (h == 0 and m == 0) else "+"
-        hh = str(h) if h > 9 else "0" + str(h)
-        mm = str(m) if m > 9 else "0" + str(m)
+        hh = String(h) if h > 9 else "0" + String(h)
+        mm = String(m) if m > 9 else "0" + String(m)
         return sign + hh + ":" + mm
 
     fn __str__(self) -> String:
@@ -268,7 +268,7 @@ struct TzDT:
         Returns:
             The string of self.
         """
-        return str(bin(self.buf))
+        return String(bin(self.buf))
 
     @always_inline("nodebug")
     fn __eq__(self, other: Self) -> Bool:

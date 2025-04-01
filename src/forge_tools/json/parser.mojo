@@ -1,7 +1,7 @@
 """JSON Parser module."""
 
 from math import log10, nan
-from bit import bit_ceil
+from bit import next_power_of_two
 from collections import Dict
 from memory import Span
 from utils.string_slice import StringSlice, _StringSliceIter
@@ -71,7 +71,7 @@ struct Parser[
                 b0_char = char.unsafe_ptr()[0]
                 is_escaped = not is_escaped and b0_char == `\\`
                 length += char.byte_length()
-            name = str(
+            name = String(
                 StringSlice[origin](ptr=start_ptr + offset, length=length)
             )
             offset += length
@@ -187,7 +187,7 @@ struct Parser[
             b0_char = iterator.__next__().unsafe_ptr()[0]
 
         alias Si = Scalar[DType.index]
-        alias w = Int(bit_ceil(log10(Si(2**maximum_int_bitwidth))))
+        alias w = Int(next_power_of_two(log10(Si(2**maximum_int_bitwidth))))
         alias base_10_multipliers = _get_base_10_multipliers[DType.uint8, w]()
         values = SIMD[DType.uint8, w](`0`)
         idx = 0

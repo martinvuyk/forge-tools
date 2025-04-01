@@ -51,7 +51,7 @@ struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
         Returns:
             A printable representation of the Error message.
         """
-        return str(self)
+        return String(self)
 
     fn __eq__[A: StringLiteral](self, other: Error2[A]) -> Bool:
         """Whether the Errors have the same message.

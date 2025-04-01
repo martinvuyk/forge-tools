@@ -420,7 +420,7 @@ struct Quaternion[T: DType = DType.float64]:
         for i in range(8):
             if i > 0:
                 s += ", "
-            s += str(self.vec[i])
+            s += String(self.vec[i])
 
         s += "]"
         return s^
@@ -888,7 +888,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         for i in range(8):
             if i > 0:
                 s += ", "
-            s += str(self.vec[i])
+            s += String(self.vec[i])
 
         s += "]"
         return s^
