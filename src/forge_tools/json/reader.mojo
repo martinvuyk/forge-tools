@@ -265,7 +265,7 @@ struct Reader[
             alias str_signs = SIMD[DType.uint8, 2](`+`, `-`)
             comparison = (str_signs == b0_char).cast[DType.int8]()
             sign = (comparison * num_signs).reduce_or()
-            if sign * int(iterator.__has_next__()) == 0:
+            if sign * Int(iterator.__has_next__()) == 0:
                 output = invalid
                 return
             length += 1

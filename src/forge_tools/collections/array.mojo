@@ -470,7 +470,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         if static:
             return capacity
         else:
-            return capacity - int(self.capacity_left.cast[DType.uint64]())
+            return capacity - Int(self.capacity_left.cast[DType.uint64]())
 
     @always_inline
     fn append(mut self, owned value: Self._scalar):
@@ -742,7 +742,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 idxes[i] = (ind * vec.cast[DType.uint8]()).reduce_max()
 
             idx = idxes.reduce_max()
-        res = Self.simd_size - int(idx.cast[DType.uint64]())
+        res = Self.simd_size - Int(idx.cast[DType.uint64]())
 
         if idx == 0:
             return None
@@ -936,13 +936,13 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             for i in range(Self.simd_size // size):
                 vec = self.vec.slice[size, offset = i * size]() == value
                 amnt += vec.cast[DType.uint8]().reduce_add()
-            return int(amnt - null_amnt)
+            return Int(amnt - null_amnt)
 
         @parameter
         for i in range(Self.simd_size // size):
             vec = self.vec.slice[size, offset = i * size]() == value
             amnt += vec.cast[DType.uint8]().reduce_add()
-        return int(amnt)
+        return Int(amnt)
 
     @always_inline
     fn unsafe_ptr(self) -> UnsafePointer[Self._scalar]:
@@ -1032,7 +1032,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         @parameter
         if D == DType.bool:
             return rebind[Scalar[D]](
-                bool(round(self.sum[DType.uint8]() / len(self)))
+                Bool(round(self.sum[DType.uint8]() / len(self)))
             )
         return self.sum[D]() / len(self)
 
@@ -1335,7 +1335,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             The result.
         """
 
-        return int(sqrt((self.vec.cast[DType.index]() ** 2).reduce_add()))
+        return Int(sqrt((self.vec.cast[DType.index]() ** 2).reduce_add()))
 
     @always_inline
     fn __add__(self, other: Self) -> Self:

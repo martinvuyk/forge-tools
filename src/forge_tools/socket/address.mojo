@@ -377,7 +377,7 @@ struct IPv4Addr(SockAddr):
         idx = value.rfind(":")
         if idx == -1:
             raise Error("port not found in String")
-        self = Self(value[:idx], int(value[idx + 1 :]))
+        self = Self(value[:idx], Int(value[idx + 1 :]))
 
     @implicit
     fn __init__(out self: Self, value: Tuple[String, UInt]):
@@ -484,7 +484,7 @@ struct IPv6Addr(SockAddr):
         idx = value.rfind(":")
         if idx == -1:
             raise Error("port not found in String")
-        self = Self(value[:idx], int(value[idx + 1 :]))
+        self = Self(value[:idx], Int(value[idx + 1 :]))
 
     fn __str__(self) -> String:
         """Get the String representation of the Address.

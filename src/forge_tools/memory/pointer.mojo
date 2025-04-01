@@ -267,13 +267,13 @@ struct Pointer[
 
         @parameter
         if name == "in_registers":
-            return bool((self._flags >> 7) & 0b1)
+            return Bool((self._flags >> 7) & 0b1)
         elif name == "is_allocated":
-            return bool((self._flags >> 6) & 0b1)
+            return Bool((self._flags >> 6) & 0b1)
         elif name == "is_initialized":
-            return bool((self._flags >> 5) & 0b1)
+            return Bool((self._flags >> 5) & 0b1)
         elif name == "self_is_owner":
-            return bool((self._flags >> 4) & 0b1)
+            return Bool((self._flags >> 4) & 0b1)
         else:
             constrained[False, "unknown attribute"]()
             return abort[Bool]()
@@ -305,7 +305,7 @@ struct Pointer[
         return (self._flags & 0b0110_0000) == 0b0110_0000
 
     fn __int__(self) -> Int:
-        return int(
+        return Int(
             rebind[Pointer[type, MutableAnyOrigin, address_space]](
                 self
             ).unsafe_ptr()

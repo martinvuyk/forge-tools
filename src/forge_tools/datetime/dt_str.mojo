@@ -98,13 +98,13 @@ fn _get_strings(
 
 
 fn to_iso[
+    T1: Intable,
+    T2: Intable,
+    T3: Intable,
+    T4: Intable,
+    T5: Intable,
+    T6: Intable,
     iso: IsoFormat = IsoFormat(),
-    T1: Intable = Int,
-    T2: Intable = Int,
-    T3: Intable = Int,
-    T4: Intable = Int,
-    T5: Intable = Int,
-    T6: Intable = Int,
 ](
     year: T1,
     month: T2,
@@ -139,8 +139,9 @@ fn to_iso[
         String.
     """
 
+    # TODO: preallocate according to the selected iso string length
     s = _get_strings(
-        int(year), int(month), int(day), int(hour), int(minute), int(second)
+        Int(year), Int(month), Int(day), Int(hour), Int(minute), Int(second)
     )
     yyyy_mm_dd = s[0] + "-" + s[1] + "-" + s[2]
     hh_mm_ss = s[3] + ":" + s[4] + ":" + s[5]
@@ -311,14 +312,14 @@ fn strptime(s: String, format_str: StringLiteral) -> Optional[_DateTime]:
         dt = Python.import_module("datetime")
         date = dt.datetime.strptime(s, format_str)
         return _DateTime(
-            UInt16(int(date.year)),
-            UInt8(int(date.month)),
-            UInt8(int(date.day)),
-            UInt8(int(date.hour)),
-            UInt8(int(date.minute)),
-            UInt8(int(date.second)),
-            UInt16(int(date.microsecond) // 1000),
-            UInt16(int(date.microsecond) % 1000),
+            UInt16(Int(date.year)),
+            UInt8(Int(date.month)),
+            UInt8(Int(date.day)),
+            UInt8(Int(date.hour)),
+            UInt8(Int(date.minute)),
+            UInt8(Int(date.second)),
+            UInt16(Int(date.microsecond) // 1000),
+            UInt16(Int(date.microsecond) % 1000),
             UInt16(0),
         )
     except:
@@ -370,13 +371,13 @@ fn strftime[
 
         dt = Python.import_module("datetime")
         date = dt.datetime(
-            int(year),
-            int(month),
-            int(day),
-            int(hour),
-            int(minute),
-            int(second),
-            microsecond=(int(m_second) * 1000 + int(u_second)),
+            Int(year),
+            Int(month),
+            Int(day),
+            Int(hour),
+            Int(minute),
+            Int(second),
+            microsecond=(Int(m_second) * 1000 + Int(u_second)),
         )
         # FIXME: python issue https://github.com/python/cpython/issues/120713
         # remove after EOL of 3.11 (2027-10)

@@ -16,24 +16,24 @@ from forge_tools.datetime.calendar import (
 
 def _get_dates_as_lists(t1: _date, t2: _date) -> (List[Int], List[Int]):
     l1 = List[Int](
-        int(t1[0]),
-        int(t1[1]),
-        int(t1[2]),
-        int(t1[3]),
-        int(t1[4]),
-        int(t1[5]),
-        int(t1[6]),
-        int(t1[7]),
+        Int(t1[0]),
+        Int(t1[1]),
+        Int(t1[2]),
+        Int(t1[3]),
+        Int(t1[4]),
+        Int(t1[5]),
+        Int(t1[6]),
+        Int(t1[7]),
     )
     l2 = List[Int](
-        int(t2[0]),
-        int(t2[1]),
-        int(t2[2]),
-        int(t2[3]),
-        int(t2[4]),
-        int(t2[5]),
-        int(t2[6]),
-        int(t2[7]),
+        Int(t2[0]),
+        Int(t2[1]),
+        Int(t2[2]),
+        Int(t2[3]),
+        Int(t2[4]),
+        Int(t2[5]),
+        Int(t2[6]),
+        Int(t2[7]),
     )
     return l1^, l2^
 
@@ -127,7 +127,7 @@ def test_python_calendar():
     assert_equal(120, cal.seconds_since_epoch(1, 1, 1, 0, 2, 0))
     assert_equal(120 * 1_000, cal.m_seconds_since_epoch(1, 1, 1, 0, 2, 0, 0))
     assert_equal(
-        int(120 * 1e9), cal.n_seconds_since_epoch(1, 1, 1, 0, 2, 0, 0, 0, 0)
+        Int(120 * 1e9), cal.n_seconds_since_epoch(1, 1, 1, 0, 2, 0, 0, 0, 0)
     )
     d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
     d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
@@ -137,7 +137,7 @@ def test_python_calendar():
     assert_equal(120 * 1_000, d1 - d2)
     d1 = cal.n_seconds_since_epoch(500, 1, 1, 0, 2, 0, 0, 0, 0)
     d2 = cal.n_seconds_since_epoch(500, 1, 1, 0, 0, 0, 0, 0, 0)
-    assert_equal(int(120 * 1e9), d1 - d2)
+    assert_equal(Int(120 * 1e9), d1 - d2)
 
     alias day_to_sec = 24 * 60 * 60
     alias sec_to_nano = 1_000_000_000
@@ -168,7 +168,7 @@ def test_gregorian_utc_calendar():
     assert_equal(120, cal.seconds_since_epoch(1970, 1, 1, 0, 2, 0))
     assert_equal(120 * 1_000, cal.m_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0))
     assert_equal(
-        int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
+        Int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
     )
     d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
     d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
@@ -178,7 +178,7 @@ def test_gregorian_utc_calendar():
     assert_equal(120 * 1_000, d1 - d2)
     d1 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0, 0, 0)
     d2 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0, 0, 0)
-    assert_equal(int(120 * 1e9), d1 - d2)
+    assert_equal(Int(120 * 1e9), d1 - d2)
 
     alias day_to_sec = 24 * 60 * 60
     alias sec_to_nano = 1_000_000_000
@@ -212,7 +212,7 @@ def test_utcfast_calendar():
     assert_equal(120, cal.seconds_since_epoch(1970, 1, 1, 0, 2, 0))
     assert_equal(120 * 1_000, cal.m_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0))
     assert_equal(
-        int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
+        Int(120 * 1e9), cal.n_seconds_since_epoch(1970, 1, 1, 0, 2, 0, 0, 0, 0)
     )
     d1 = cal.seconds_since_epoch(2024, 1, 1, 0, 2, 0)
     d2 = cal.seconds_since_epoch(2024, 1, 1, 0, 0, 0)
@@ -222,7 +222,7 @@ def test_utcfast_calendar():
     assert_equal(120 * 1_000, d1 - d2)
     d1 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 2, 0, 0, 0, 0)
     d2 = cal.n_seconds_since_epoch(2024, 1, 1, 0, 0, 0, 0, 0, 0)
-    assert_equal(int(120 * 1e9), d1 - d2)
+    assert_equal(Int(120 * 1e9), d1 - d2)
 
     alias day_to_sec = 24 * 60 * 60
     alias sec_to_nano = 1_000_000_000

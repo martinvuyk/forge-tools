@@ -418,7 +418,7 @@ def _test_getaddrinfo(libc: Libc):
     hints_p = UnsafePointer[addrinfo].address_of(hints)
 
     result = addrinfo()
-    res_p = C.ptr_addr(int(UnsafePointer[addrinfo].address_of(result)))
+    res_p = C.ptr_addr(Int(UnsafePointer[addrinfo].address_of(result)))
     res_p_p = UnsafePointer[C.ptr_addr].address_of(res_p)
 
     err = libc.getaddrinfo(

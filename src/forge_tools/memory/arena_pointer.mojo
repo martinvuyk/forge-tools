@@ -72,10 +72,10 @@ struct GladiatorPointer[
         self._colosseum._ptr.unsafe_ptr()[].bitcast[Self._C]()[]._free(self^)
 
     fn __int__(self) -> Int:
-        return int(self._colosseum._ptr.unsafe_ptr()[])
+        return Int(self._colosseum._ptr.unsafe_ptr()[])
 
     fn __bool__(self) -> Bool:
-        return bool(self._colosseum._ptr.unsafe_ptr()[])
+        return Bool(self._colosseum._ptr.unsafe_ptr()[])
 
 
 @value
@@ -123,7 +123,7 @@ struct ColosseumPointer[
         """
         s = Self()
         s._ptr = ptr
-        amnt = length // 8 + int(length < 8)
+        amnt = length // 8 + Int(length < 8)
         p = UnsafePointer[Byte].alloc(amnt)
         memset(p, 0xFF, amnt)
         s._free_slots = p
@@ -165,7 +165,7 @@ struct ColosseumPointer[
 
         alias widths = (128, 64, 32, 16, 8)
         ptr = self._free_slots.bitcast[DType.index]()
-        num_bytes = self._len // 8 + int(self._len < 8)
+        num_bytes = self._len // 8 + Int(self._len < 8)
         amnt = UInt8(0)
         start = 0
 
@@ -236,10 +236,10 @@ struct ColosseumPointer[
         return self._ptr.bitcast[address_space=address_space]()
 
     fn __int__(self) -> Int:
-        return int(self._ptr)
+        return Int(self._ptr)
 
     fn __bool__(self) -> Bool:
-        return bool(self._ptr)
+        return Bool(self._ptr)
 
     fn __del__(owned self):
         """Free the memory referenced by the pointer or ignore."""

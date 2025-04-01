@@ -1024,7 +1024,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         """
 
         days = Self._monthdays[int(month)]
-        return days + int(unlikely(month == 2 and Self.is_leapyear(year)))
+        return days + Int(unlikely(month == 2 and Self.is_leapyear(year)))
 
     @always_inline
     fn day_of_week(self, year: UInt16, month: UInt8, day: UInt8) -> UInt8:
@@ -1054,7 +1054,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         Returns:
             Day of the year: [1, 366] (for Gregorian calendar).
         """
-        total = UInt16(int(month > 2 and Self.is_leapyear(year)))
+        total = UInt16(Int(month > 2 and Self.is_leapyear(year)))
         total += Self._days_before_month[int(month)].cast[DType.uint16]()
         return total + day.cast[DType.uint16]()
 
@@ -1086,7 +1086,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         c = (Self._days_before_month < day_of_year).cast[DType.uint8]()
         idx = c.reduce_add() - 1
         rest = day_of_year - Self._days_before_month[int(idx)]
-        rest -= int(idx > 2 and Self.is_leapyear(year))
+        rest -= Int(idx > 2 and Self.is_leapyear(year))
         return idx, rest.cast[DType.uint8]()
 
     @always_inline
@@ -1213,9 +1213,9 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         Returns:
             The amount.
         """
-        y = int(year - 1)
+        y = Int(year - 1)
         l = Self.is_leapyear(year) and (month > 2 or (month == 2 and day == 29))
-        return y // 4 - y // 100 + y // 400 + int(l)
+        return y // 4 - y // 100 + y // 400 + Int(l)
 
     @always_inline("nodebug")
     fn is_default_calendar(self) -> Bool:
@@ -1432,17 +1432,17 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         elif cal_h.selected == cal_h.UINT16:
             pass
         elif cal_h.selected == cal_h.UINT32:  # hash for `Date`
-            result = (int(year) << (5 + 5)) | (int(month) << 5) | int(day)
+            result = (Int(year) << (5 + 5)) | (Int(month) << 5) | Int(day)
         elif cal_h.selected == cal_h.UINT64:  # hash for `DateTime`
             result = (
-                (int(year) << cal_h.shift_64_y)
-                | (int(month) << cal_h.shift_64_mon)
-                | (int(day) << cal_h.shift_64_d)
-                | (int(hour) << cal_h.shift_64_h)
-                | (int(minute) << cal_h.shift_64_m)
-                | (int(second) << cal_h.shift_64_s)
-                | (int(m_second) << cal_h.shift_64_ms)
-                | (int(u_second) << cal_h.shift_64_us)
+                (Int(year) << cal_h.shift_64_y)
+                | (Int(month) << cal_h.shift_64_mon)
+                | (Int(day) << cal_h.shift_64_d)
+                | (Int(hour) << cal_h.shift_64_h)
+                | (Int(minute) << cal_h.shift_64_m)
+                | (Int(second) << cal_h.shift_64_s)
+                | (Int(m_second) << cal_h.shift_64_ms)
+                | (Int(u_second) << cal_h.shift_64_us)
             )
         return result
 
@@ -1471,18 +1471,18 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         elif cal_h.selected == cal_h.UINT16:
             pass
         elif cal_h.selected == cal_h.UINT32:  # hash for `Date`
-            result[0] = int(value >> (5 + 5))
-            result[1] = int((value >> 5) & 0b1_1111)
-            result[2] = int(value & 0b1_1111)
+            result[0] = Int(value >> (5 + 5))
+            result[1] = Int((value >> 5) & 0b1_1111)
+            result[2] = Int(value & 0b1_1111)
         elif cal_h.selected == cal_h.UINT64:  # hash for `DateTime`
-            result[0] = int((value >> cal_h.shift_64_y) & cal_h.mask_64_y)
-            result[1] = int((value >> cal_h.shift_64_mon) & cal_h.mask_64_mon)
-            result[2] = int((value >> cal_h.shift_64_d) & cal_h.mask_64_d)
-            result[3] = int((value >> cal_h.shift_64_h) & cal_h.mask_64_h)
-            result[4] = int((value >> cal_h.shift_64_m) & cal_h.mask_64_m)
-            result[5] = int((value >> cal_h.shift_64_s) & cal_h.mask_64_s)
-            result[6] = int((value >> cal_h.shift_64_ms) & cal_h.mask_64_ms)
-            result[7] = int((value >> cal_h.shift_64_us) & cal_h.mask_64_us)
+            result[0] = Int((value >> cal_h.shift_64_y) & cal_h.mask_64_y)
+            result[1] = Int((value >> cal_h.shift_64_mon) & cal_h.mask_64_mon)
+            result[2] = Int((value >> cal_h.shift_64_d) & cal_h.mask_64_d)
+            result[3] = Int((value >> cal_h.shift_64_h) & cal_h.mask_64_h)
+            result[4] = Int((value >> cal_h.shift_64_m) & cal_h.mask_64_m)
+            result[5] = Int((value >> cal_h.shift_64_s) & cal_h.mask_64_s)
+            result[6] = Int((value >> cal_h.shift_64_ms) & cal_h.mask_64_ms)
+            result[7] = Int((value >> cal_h.shift_64_us) & cal_h.mask_64_us)
         return result^
 
     @staticmethod
@@ -1852,32 +1852,32 @@ struct UTCFast(_Calendarized):
 
         @parameter
         if cal_h.selected == cal_h.UINT8:
-            result = (int(day) << cal_h.shift_8_d) | (
-                int(hour) << cal_h.shift_8_h
+            result = (Int(day) << cal_h.shift_8_d) | (
+                Int(hour) << cal_h.shift_8_h
             )
         elif cal_h.selected == cal_h.UINT16:
             result = (
-                (int(year) << cal_h.shift_16_y)
-                | (int(self.day_of_year(year, month, day)) << cal_h.shift_16_d)
-                | (int(hour) << cal_h.shift_16_h)
+                (Int(year) << cal_h.shift_16_y)
+                | (Int(self.day_of_year(year, month, day)) << cal_h.shift_16_d)
+                | (Int(hour) << cal_h.shift_16_h)
             )
         elif cal_h.selected == cal_h.UINT32:
             result = (
-                (int(year) << cal_h.shift_32_y)
-                | (int(month) << cal_h.shift_32_mon)
-                | (int(day) << cal_h.shift_32_d)
-                | (int(hour) << cal_h.shift_32_h)
-                | (int(minute) << cal_h.shift_32_m)
+                (Int(year) << cal_h.shift_32_y)
+                | (Int(month) << cal_h.shift_32_mon)
+                | (Int(day) << cal_h.shift_32_d)
+                | (Int(hour) << cal_h.shift_32_h)
+                | (Int(minute) << cal_h.shift_32_m)
             )
         elif cal_h.selected == cal_h.UINT64:
             result = (
-                (int(year) << (cal_h.shift_64_y - cal_h.shift_64_ms))
-                | (int(month) << (cal_h.shift_64_mon - cal_h.shift_64_ms))
-                | (int(day) << (cal_h.shift_64_d - cal_h.shift_64_ms))
-                | (int(hour) << (cal_h.shift_64_h - cal_h.shift_64_ms))
-                | (int(minute) << (cal_h.shift_64_m - cal_h.shift_64_ms))
-                | (int(second) << (cal_h.shift_64_s - cal_h.shift_64_ms))
-                | int(m_second)
+                (Int(year) << (cal_h.shift_64_y - cal_h.shift_64_ms))
+                | (Int(month) << (cal_h.shift_64_mon - cal_h.shift_64_ms))
+                | (Int(day) << (cal_h.shift_64_d - cal_h.shift_64_ms))
+                | (Int(hour) << (cal_h.shift_64_h - cal_h.shift_64_ms))
+                | (Int(minute) << (cal_h.shift_64_m - cal_h.shift_64_ms))
+                | (Int(second) << (cal_h.shift_64_s - cal_h.shift_64_ms))
+                | Int(m_second)
             )
         return result
 
@@ -1902,47 +1902,47 @@ struct UTCFast(_Calendarized):
 
         @parameter
         if cal_h.selected == cal_h.UINT8:
-            result[2] = int((value >> cal_h.shift_8_d) & cal_h.mask_8_d)
-            result[3] = int((value >> cal_h.shift_8_h) & cal_h.mask_8_h)
+            result[2] = Int((value >> cal_h.shift_8_d) & cal_h.mask_8_d)
+            result[3] = Int((value >> cal_h.shift_8_h) & cal_h.mask_8_h)
         elif cal_h.selected == cal_h.UINT16:
-            result[0] = int((value >> cal_h.shift_16_y) & cal_h.mask_16_y)
-            doy = int((value >> cal_h.shift_16_d) & cal_h.mask_16_d)
+            result[0] = Int((value >> cal_h.shift_16_y) & cal_h.mask_16_y)
+            doy = Int((value >> cal_h.shift_16_d) & cal_h.mask_16_d)
             res = self.day_of_month(result[0], doy)
             result[1] = res[0]
             result[2] = res[1]
-            result[3] = int((value >> cal_h.shift_16_h) & cal_h.mask_16_h)
+            result[3] = Int((value >> cal_h.shift_16_h) & cal_h.mask_16_h)
         elif cal_h.selected == cal_h.UINT32:
-            result[0] = int((value >> cal_h.shift_32_y) & cal_h.mask_32_y)
-            result[1] = int((value >> cal_h.shift_32_mon) & cal_h.mask_32_mon)
-            result[2] = int((value >> cal_h.shift_32_d) & cal_h.mask_32_d)
-            result[3] = int((value >> cal_h.shift_32_h) & cal_h.mask_32_h)
-            result[4] = int((value >> cal_h.shift_32_m) & cal_h.mask_32_m)
+            result[0] = Int((value >> cal_h.shift_32_y) & cal_h.mask_32_y)
+            result[1] = Int((value >> cal_h.shift_32_mon) & cal_h.mask_32_mon)
+            result[2] = Int((value >> cal_h.shift_32_d) & cal_h.mask_32_d)
+            result[3] = Int((value >> cal_h.shift_32_h) & cal_h.mask_32_h)
+            result[4] = Int((value >> cal_h.shift_32_m) & cal_h.mask_32_m)
         elif cal_h.selected == cal_h.UINT64:
-            result[0] = int(
+            result[0] = Int(
                 (value >> (cal_h.shift_64_y - cal_h.shift_64_ms))
                 & cal_h.mask_64_y
             )
-            result[1] = int(
+            result[1] = Int(
                 (value >> (cal_h.shift_64_mon - cal_h.shift_64_ms))
                 & cal_h.mask_64_mon
             )
-            result[2] = int(
+            result[2] = Int(
                 (value >> (cal_h.shift_64_d - cal_h.shift_64_ms))
                 & cal_h.mask_64_d
             )
-            result[3] = int(
+            result[3] = Int(
                 (value >> (cal_h.shift_64_h - cal_h.shift_64_ms))
                 & cal_h.mask_64_h
             )
-            result[4] = int(
+            result[4] = Int(
                 (value >> (cal_h.shift_64_m - cal_h.shift_64_ms))
                 & cal_h.mask_64_m
             )
-            result[5] = int(
+            result[5] = Int(
                 (value >> (cal_h.shift_64_s - cal_h.shift_64_ms))
                 & cal_h.mask_64_s
             )
-            result[6] = int(value & cal_h.mask_64_ms)
+            result[6] = Int(value & cal_h.mask_64_ms)
         return result^
 
     @staticmethod

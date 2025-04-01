@@ -25,7 +25,7 @@ a = Result(1)
 b = Result[Int]()
 if a:
     print(a.value())  # prints 1
-if b:  # bool(b) is False, so no print
+if b:  # Bool(b) is False, so no print
     print(b.value())
 c = a.or_else(2)
 d = b.or_else(2)
@@ -109,7 +109,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     b = Result[Int]()
     if a:
         print(a.value())  # prints 1
-    if b:  # bool(b) is False, so no print
+    if b:  # Bool(b) is False, so no print
         print(b.value())
     c = a.or_else(2)
     d = b.or_else(2)
@@ -258,7 +258,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             A reference to the contained data of the `Result` as a Reference[T].
         """
-        debug_assert(bool(self), ".value() on empty Result")
+        debug_assert(Bool(self), ".value() on empty Result")
         return self._value.unsafe_get[T]()
 
     fn take(mut self) -> T:
@@ -293,7 +293,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             The contained data of the option as an owned T value.
         """
-        debug_assert(bool(self), ".unsafe_take() on empty Result")
+        debug_assert(Bool(self), ".unsafe_take() on empty Result")
         return self._value.unsafe_take[T]()
 
     fn or_else(self, default: T) -> T:
@@ -336,7 +336,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         Returns:
             True if the `Result` has a value and False otherwise.
         """
-        return bool(self)
+        return Bool(self)
 
     @always_inline("nodebug")
     fn __bool__(self) -> Bool:
@@ -502,7 +502,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         Returns:
             A reference to the contained data of the `Result` as a Reference[T].
         """
-        debug_assert(bool(self), ".value() on empty Result")
+        debug_assert(Bool(self), ".value() on empty Result")
         return self._value.unsafe_get[T]()
 
     fn take(mut self) -> T:
@@ -537,7 +537,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         Returns:
             The contained data of the option as an owned T value.
         """
-        debug_assert(bool(self), ".unsafe_take() on empty Result")
+        debug_assert(Bool(self), ".unsafe_take() on empty Result")
         return self._value.unsafe_take[T]()
 
     fn or_else(self, default: T) -> T:
@@ -580,7 +580,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         Returns:
             True if the `Result` has a value and False otherwise.
         """
-        return bool(self)
+        return Bool(self)
 
     @always_inline("nodebug")
     fn __bool__(self) -> Bool:

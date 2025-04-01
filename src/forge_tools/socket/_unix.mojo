@@ -90,7 +90,7 @@ struct _UnixSocket[
                 self.lib.strerror(self.lib.get_errno())
             )
             raise Error("Failed to create socket: " + message)
-        self.fd = FileDescriptor(int(fd))
+        self.fd = FileDescriptor(Int(fd))
 
     fn __init__(out self, fd: ArcPointer[FileDescriptor]):
         """Create a new socket object from an open `ArcPointer[FileDescriptor]`.
@@ -212,7 +212,7 @@ struct _UnixSocket[
                 addr_ptr = stack_allocation[1, sockaddr]()
                 sin_size = socklen_t(sizeof[socklen_t]())
                 size_ptr = UnsafePointer[socklen_t].address_of(sin_size)
-                fd = int(self.lib.accept(self.fd[].value, addr_ptr, size_ptr))
+                fd = Int(self.lib.accept(self.fd[].value, addr_ptr, size_ptr))
                 if fd == -1:
                     message = char_ptr_to_string(
                         self.lib.strerror(self.lib.get_errno())
@@ -247,8 +247,8 @@ struct _UnixSocket[
                 Self.lib.strerror(Self.lib.get_errno())
             )
             raise Error("Failed to create socket: " + message)
-        return Self(fd=FileDescriptor(int(socket_vector[0]))), Self(
-            fd=FileDescriptor(int(socket_vector[1]))
+        return Self(fd=FileDescriptor(Int(socket_vector[0]))), Self(
+            fd=FileDescriptor(Int(socket_vector[1]))
         )
 
     fn get_fd(self) -> FileDescriptor:
@@ -270,7 +270,7 @@ struct _UnixSocket[
     async fn send(self, buf: Span[UInt8], flags: C.int = 0) -> Int:
         """Send a buffer of bytes to the socket."""
         ptr = buf.unsafe_ptr().bitcast[C.void]()
-        sent = int(self.lib.send(self.fd[].value, ptr, len(buf), flags))
+        sent = Int(self.lib.send(self.fd[].value, ptr, len(buf), flags))
         if sent == -1:
             print(
                 char_ptr_to_string(self.lib.strerror(self.lib.get_errno())),
@@ -282,7 +282,7 @@ struct _UnixSocket[
         O: MutableOrigin
     ](self, buf: Span[UInt8, O], flags: C.int = 0) -> Int:
         ptr = buf.unsafe_ptr().bitcast[C.void]()
-        recvd = int(self.lib.recv(self.fd[].value, ptr, len(buf), flags))
+        recvd = Int(self.lib.recv(self.fd[].value, ptr, len(buf), flags))
         if recvd == -1:
             print(
                 char_ptr_to_string(self.lib.strerror(self.lib.get_errno())),
@@ -349,7 +349,7 @@ struct _UnixSocket[
         nodename = str(address)
         result = addrinfo()
         alias UP = UnsafePointer
-        res_p = C.ptr_addr(int(UP[addrinfo].address_of(result)))
+        res_p = C.ptr_addr(Int(UP[addrinfo].address_of(result)))
         res_p_p = UP[C.ptr_addr].address_of(res_p)
         err = Self.lib.getaddrinfo(
             char_ptr(nodename), char_ptr(C.NULL), hints_p, res_p_p
@@ -361,17 +361,17 @@ struct _UnixSocket[
         first = True
         while first or next_addr != C.NULL:
             first = False
-            af = _parse_unix_sock_family_constant(int(result.ai_family))
-            st = _parse_unix_sock_type_constant(int(result.ai_socktype))
-            pt = _parse_unix_sock_protocol_constant(int(result.ai_protocol))
-            addrlen = int(result.ai_addrlen)
+            af = _parse_unix_sock_family_constant(Int(result.ai_family))
+            st = _parse_unix_sock_type_constant(Int(result.ai_socktype))
+            pt = _parse_unix_sock_protocol_constant(Int(result.ai_protocol))
+            addrlen = Int(result.ai_addrlen)
             addr_ptr = result.ai_addr.bitcast[UInt8]()
             alias S = StringSlice[ImmutableAnyOrigin]
             addr = String(S(ptr=addr_ptr, length=addrlen))
             can = String()
             if flags != 0:
                 p = result.ai_canonname
-                l = int(Self.lib.strlen(p))
+                l = Int(Self.lib.strlen(p))
                 can = String(S(ptr=p.bitcast[UInt8](), length=l))
             info.append((af, st, pt, can^, sock_address(addr^)))
             result = next_addr.bitcast[addrinfo]()[0]
@@ -486,7 +486,7 @@ struct _UnixSocket[
         alias cond = _type_is_eq[sock_address, IPv6Addr]()
         constrained[cond, "sock_address must be IPv6Addr"]()
         ipv6_sock = Self()
-        ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, int(not dualstack_ipv6))
+        ipv6_sock.setsockopt(IPPROTO_IPV6, IPV6_V6ONLY, Int(not dualstack_ipv6))
         ipv6_sock.reuse_address(True, full_duplicates=reuse_port)
         ipv6_sock.no_delay()
         ipv6_sock.keep_alive(False)
@@ -508,7 +508,7 @@ struct _UnixSocket[
 
         @parameter
         if sock_protocol is SockProtocol.TCP:
-            self.setsockopt(SOL_SOCKET, SO_KEEPALIVE, int(enable))
+            self.setsockopt(SOL_SOCKET, SO_KEEPALIVE, Int(enable))
             if enable:
                 self.setsockopt(SOL_TCP, TCP_KEEPIDLE, idle)
                 self.setsockopt(SOL_TCP, TCP_KEEPINTVL, interval)
@@ -527,8 +527,8 @@ struct _UnixSocket[
             sock_family is SockFamily.AF_INET
             or sock_family is SockFamily.AF_INET6
         ):
-            self.setsockopt(SOL_SOCKET, SO_REUSEADDR, int(value))
-            self.setsockopt(SOL_SOCKET, SO_REUSEPORT, int(full_duplicates))
+            self.setsockopt(SOL_SOCKET, SO_REUSEADDR, Int(value))
+            self.setsockopt(SOL_SOCKET, SO_REUSEPORT, Int(full_duplicates))
         else:
             constrained[False, "unsupported address family for this function"]()
             return abort()
@@ -538,7 +538,7 @@ struct _UnixSocket[
 
         @parameter
         if sock_protocol is SockProtocol.TCP:
-            self.setsockopt(SOL_SOCKET, TCP_NODELAY, int(value))
+            self.setsockopt(SOL_SOCKET, TCP_NODELAY, Int(value))
         else:
             constrained[False, "unsupported protocol for this function"]()
             return abort()

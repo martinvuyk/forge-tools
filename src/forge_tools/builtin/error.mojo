@@ -33,7 +33,7 @@ struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
         Returns:
           True if the Error object contains a message and False otherwise.
         """
-        return bool(self.message)
+        return Bool(self.message)
 
     @always_inline("nodebug")
     fn __str__(self) -> String:
@@ -76,4 +76,4 @@ struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
             The Result.
         """
 
-        return bool(self) and (self.kind == value or value == "AnyError")
+        return Bool(self) and (self.kind == value or value == "AnyError")

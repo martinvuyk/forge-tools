@@ -187,7 +187,7 @@ struct Parser[
             b0_char = iterator.__next__().unsafe_ptr()[0]
 
         alias Si = Scalar[DType.index]
-        alias w = int(bit_ceil(log10(Si(2**maximum_int_bitwidth))))
+        alias w = Int(bit_ceil(log10(Si(2**maximum_int_bitwidth))))
         alias base_10_multipliers = _get_base_10_multipliers[DType.uint8, w]()
         values = SIMD[DType.uint8, w](`0`)
         idx = 0
@@ -199,7 +199,7 @@ struct Parser[
 
         v = _align_base_10[w](values ^ `0`, idx)
         result = (v * base_10_multipliers).cast[DType.index]().reduce_add()
-        return sign, idx, int(result)
+        return sign, idx, Int(result)
 
     @staticmethod
     fn parse_int(instance: Self._J) -> Int:
@@ -216,7 +216,7 @@ struct Parser[
         debug_assert(instance.type is JsonType.int, "instance type is not int")
         iterator = StringSlice(unsafe_from_utf8=instance.buffer).__iter__()
         sign, _, num = Self._parse_num(iterator)
-        return int(sign) * num
+        return Int(sign) * num
 
     @staticmethod
     fn parse_float_dot(instance: Self._J) -> Float64:
@@ -241,7 +241,7 @@ struct Parser[
         debug_assert(dot == ".", "expected a dot")
         exp_sign, idx, decimal = Self._parse_num(iterator)
         return sign.cast[DType.float64]() * (
-            Float64(whole) + Float64(decimal) * 10 ** (int(exp_sign) * idx)
+            Float64(whole) + Float64(decimal) * 10 ** (Int(exp_sign) * idx)
         )
 
     @staticmethod
@@ -272,7 +272,7 @@ struct Parser[
         )
         exp_sign, _, exponent = Self._parse_num(iterator)
         return sign.cast[DType.float64]() * (
-            Float64(whole) * 10 ** (int(exp_sign) * exponent)
+            Float64(whole) * 10 ** (Int(exp_sign) * exponent)
         )
 
     fn loads(self) raises -> object:

@@ -187,23 +187,23 @@ struct DateTime[
             calendar: Calendar.
         """
 
-        self.year = int(year.value()) if year else int(calendar.min_year)
-        self.month = int(month.value()) if month else int(calendar.min_month)
-        self.day = int(day.value()) if day else int(calendar.min_day)
-        self.hour = int(hour.value()) if hour else int(calendar.min_hour)
-        self.minute = int(minute.value()) if minute else int(
+        self.year = Int(year.value()) if year else Int(calendar.min_year)
+        self.month = Int(month.value()) if month else Int(calendar.min_month)
+        self.day = Int(day.value()) if day else Int(calendar.min_day)
+        self.hour = Int(hour.value()) if hour else Int(calendar.min_hour)
+        self.minute = Int(minute.value()) if minute else Int(
             calendar.min_minute
         )
-        self.second = int(second.value()) if second else int(
+        self.second = Int(second.value()) if second else Int(
             calendar.min_second
         )
-        self.m_second = int(m_second.value()) if m_second else int(
+        self.m_second = Int(m_second.value()) if m_second else Int(
             calendar.min_milisecond
         )
-        self.u_second = int(u_second.value()) if u_second else int(
+        self.u_second = Int(u_second.value()) if u_second else Int(
             calendar.min_microsecond
         )
-        self.n_second = int(n_second.value()) if n_second else int(
+        self.n_second = Int(n_second.value()) if n_second else Int(
             calendar.min_nanosecond
         )
         self.tz = tz.value() if tz else Self._tz()
@@ -336,8 +336,8 @@ struct DateTime[
         offset = self.tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
-        of_h = int(offset.hour)
-        of_m = int(offset.minute)
+        of_h = Int(offset.hour)
+        of_m = Int(offset.minute)
         if offset.sign == -1:
             self = self.add(hours=of_h, minutes=of_m)
         else:
@@ -362,13 +362,13 @@ struct DateTime[
         offset = tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
-        h, m = int(offset.hour), int(offset.minute)
+        h, m = Int(offset.hour), Int(offset.minute)
         var new_self: Self
         if offset.sign == 1:
             new_self = self.add(hours=h, minutes=m)
         else:
             new_self = self.subtract(hours=h, minutes=m)
-        leapsecs = int(
+        leapsecs = Int(
             new_self.calendar.leapsecs_since_epoch(
                 new_self.year, new_self.month, new_self.day
             )
@@ -496,40 +496,40 @@ struct DateTime[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        max_year = int(self.calendar.max_year)
-        y = int(self.year) + years
+        max_year = Int(self.calendar.max_year)
+        y = Int(self.year) + years
         if y > max_year:
             self.year = self.calendar.min_year
             self = self.add(years=y - (max_year + 1))
         else:
             self.year = y
 
-        max_mon = int(self.calendar.max_month)
-        mon = int(self.month) + months
+        max_mon = Int(self.calendar.max_month)
+        mon = Int(self.month) + months
         if mon > max_mon:
             self.month = self.calendar.min_month
             self = self.add(years=1, months=mon - (max_mon + 1))
         else:
             self.month = mon
 
-        max_day = int(self.calendar.max_days_in_month(self.year, self.month))
-        d = int(self.day) + days
+        max_day = Int(self.calendar.max_days_in_month(self.year, self.month))
+        d = Int(self.day) + days
         if d > max_day:
             self.day = self.calendar.min_day
             self = self.add(months=1, days=d - (max_day + 1))
         else:
             self.day = d
 
-        max_hour = int(self.calendar.max_hour)
-        h = int(self.hour) + hours
+        max_hour = Int(self.calendar.max_hour)
+        h = Int(self.hour) + hours
         if h > max_hour:
             self.hour = self.calendar.min_hour
             self = self.add(days=1, hours=h - (max_hour + 1))
         else:
             self.hour = h
 
-        max_min = int(self.calendar.max_minute)
-        mi = int(self.minute) + minutes
+        max_min = Int(self.calendar.max_minute)
+        mi = Int(self.minute) + minutes
         if mi > max_min:
             self.minute = self.calendar.min_minute
             self = self.add(hours=1, minutes=mi - (max_min + 1))
@@ -539,31 +539,31 @@ struct DateTime[
         max_sec = self.calendar.max_second(
             self.year, self.month, self.day, self.hour, self.minute
         )
-        s = int(self.second) + seconds
-        if s > int(max_sec):
+        s = Int(self.second) + seconds
+        if s > Int(max_sec):
             self.second = self.calendar.min_second
-            self = self.add(minutes=1, seconds=s - (int(max_sec) + 1))
+            self = self.add(minutes=1, seconds=s - (Int(max_sec) + 1))
         else:
             self.second = s
 
-        max_msec = int(self.calendar.max_milisecond)
-        ms = int(self.m_second) + m_seconds
+        max_msec = Int(self.calendar.max_milisecond)
+        ms = Int(self.m_second) + m_seconds
         if ms > max_msec:
             self.m_second = self.calendar.min_milisecond
             self = self.add(seconds=1, m_seconds=ms - (max_msec + 1))
         else:
             self.m_second = ms
 
-        max_usec = int(self.calendar.max_microsecond)
-        us = int(self.u_second) + u_seconds
+        max_usec = Int(self.calendar.max_microsecond)
+        us = Int(self.u_second) + u_seconds
         if us > max_usec:
             self.u_second = self.calendar.min_microsecond
             self = self.add(m_seconds=1, u_seconds=us - (max_usec + 1))
         else:
             self.u_second = us
 
-        max_nsec = int(self.calendar.max_nanosecond)
-        ns = int(self.n_second) + n_seconds
+        max_nsec = Int(self.calendar.max_nanosecond)
+        ns = Int(self.n_second) + n_seconds
         if ns > max_nsec:
             self.n_second = self.calendar.min_nanosecond
             self = self.add(u_seconds=1, n_seconds=ns - (max_nsec + 1))
@@ -607,81 +607,81 @@ struct DateTime[
             and keeps evaluating until valid.
         """
 
-        min_nsec = int(self.calendar.min_nanosecond)
-        ns = int(self.n_second) - n_seconds
+        min_nsec = Int(self.calendar.min_nanosecond)
+        ns = Int(self.n_second) - n_seconds
         if ns < min_nsec:
             self.n_second = self.calendar.max_nanosecond
             self = self.subtract(
-                u_seconds=1, n_seconds=(int(min_nsec) - 1) - ns
+                u_seconds=1, n_seconds=(Int(min_nsec) - 1) - ns
             )
         else:
             self.n_second = ns
 
-        min_usec = int(self.calendar.min_microsecond)
-        us = int(self.u_second) - u_seconds
+        min_usec = Int(self.calendar.min_microsecond)
+        us = Int(self.u_second) - u_seconds
         if us < min_usec:
             self.u_second = self.calendar.max_microsecond
             self = self.subtract(
-                m_seconds=1, u_seconds=(int(min_usec) - 1) - us
+                m_seconds=1, u_seconds=(Int(min_usec) - 1) - us
             )
         else:
             self.u_second = us
 
-        min_msec = int(self.calendar.min_milisecond)
-        ms = int(self.m_second) - m_seconds
+        min_msec = Int(self.calendar.min_milisecond)
+        ms = Int(self.m_second) - m_seconds
         if ms < min_msec:
             self.m_second = self.calendar.max_milisecond
-            self = self.subtract(seconds=1, m_seconds=(int(min_msec) - 1) - ms)
+            self = self.subtract(seconds=1, m_seconds=(Int(min_msec) - 1) - ms)
         else:
             self.m_second = ms
 
-        min_sec = int(self.calendar.min_second)
-        s = int(self.second) - seconds
+        min_sec = Int(self.calendar.min_second)
+        s = Int(self.second) - seconds
         if s < min_sec:
             sec = self.calendar.max_second(
                 self.year, self.month, self.day, self.hour, self.minute
             )
             self.second = sec
-            self = self.subtract(minutes=1, seconds=(int(min_sec) - 1) - s)
+            self = self.subtract(minutes=1, seconds=(Int(min_sec) - 1) - s)
         else:
             self.second = s
 
-        min_min = int(self.calendar.min_minute)
-        mi = int(self.minute) - minutes
+        min_min = Int(self.calendar.min_minute)
+        mi = Int(self.minute) - minutes
         if mi < min_min:
             self.minute = self.calendar.max_minute
-            self = self.subtract(hours=1, minutes=(int(min_min) - 1) - mi)
+            self = self.subtract(hours=1, minutes=(Int(min_min) - 1) - mi)
         else:
             self.minute = mi
 
-        min_hour = int(self.calendar.min_hour)
-        h = int(self.hour) - hours
+        min_hour = Int(self.calendar.min_hour)
+        h = Int(self.hour) - hours
         if h < min_hour:
             self.hour = self.calendar.max_hour
-            self = self.subtract(days=1, hours=(int(min_hour) - 1) - h)
+            self = self.subtract(days=1, hours=(Int(min_hour) - 1) - h)
         else:
             self.hour = h
 
-        min_day = int(self.calendar.min_day)
-        d = int(self.day) - days
+        min_day = Int(self.calendar.min_day)
+        d = Int(self.day) - days
         if d < min_day:
             self.day = 1
             self = self.subtract(months=1)
             self.day = self.calendar.max_days_in_month(self.year, self.month)
-            self = self.subtract(days=(int(min_day) - 1) - d)
+            self = self.subtract(days=(Int(min_day) - 1) - d)
         else:
             self.day = d
 
-        min_month = int(self.calendar.min_month)
-        mon = int(self.month) - months
+        min_month = Int(self.calendar.min_month)
+        mon = Int(self.month) - months
         if mon < min_month:
             self.month = self.calendar.max_month
-            self = self.subtract(years=1, months=(int(min_month) - 1) - mon)
+            self = self.subtract(years=1, months=(Int(min_month) - 1) - mon)
         else:
             self.month = mon
 
-        min_year = int(self.calendar.min_year)
-        y = int(self.year) - years
+        min_year = Int(self.calendar.min_year)
+        y = Int(self.year) - years
         if y < min_year:
             self.year = self.calendar.max_year
             self = self.subtract(years=(min_year - 1) - y)
@@ -1142,7 +1142,7 @@ struct DateTime[
 
         zone = tz.or_else(Self._tz())
         ns = UInt16(time.monotonic())  # FIXME
-        dt = Self.from_unix_epoch(int(ns // 1_000_000_000), zone)
+        dt = Self.from_unix_epoch(Int(ns // 1_000_000_000), zone)
         dt.m_second, dt.u_second, dt.n_second = ns // 1_000_000, ns // 1_000, ns
         return dt^
 
@@ -1395,15 +1395,15 @@ fn timedelta[
         for instances in the same timezone.
     """
     output = __type_of(output)(
-        int(years),
-        int(months),
-        int(days),
-        int(hours),
-        int(minutes),
-        int(seconds),
-        int(m_seconds),
-        int(u_seconds),
-        int(n_seconds),
+        Int(years),
+        Int(months),
+        Int(days),
+        Int(hours),
+        Int(minutes),
+        Int(seconds),
+        Int(m_seconds),
+        Int(u_seconds),
+        Int(n_seconds),
         tz,
         ZeroCalendar,
     )

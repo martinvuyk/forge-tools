@@ -229,15 +229,15 @@ struct TzDT:
             hour: {20, 21, 22, 23, 0, 1, 2, 3} Hour at which DST starts/ends.
         """
 
-        mon = int(month - 1)
-        d = int(dow)
-        eo = int(eomon)
-        w = int(week)
+        mon = Int(month - 1)
+        d = Int(dow)
+        eo = Int(eomon)
+        w = Int(week)
 
         alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
         alias indices = SIMD[DType.uint8, 8](0, 1, 2, 3, 4, 5, 6, 7)
         result = (hours == hour).cast[DType.uint8]() * indices
-        h = int(result.reduce_max())
+        h = Int(result.reduce_max())
 
         self.month = month
         self.dow = dow
@@ -396,10 +396,10 @@ struct ZoneInfoFile32(CollectionElement):
                 _ = f.seek(Self.hash(key) * 4)
                 bufs = f.read_bytes(4)
                 value = (
-                    (int(bufs[0]) << 24)
-                    | (int(bufs[1]) << 16)
-                    | (int(bufs[2]) << 8)
-                    | int(bufs[3])
+                    (Int(bufs[0]) << 24)
+                    | (Int(bufs[1]) << 16)
+                    | (Int(bufs[2]) << 8)
+                    | Int(bufs[3])
                 )
             return ZoneDST(value)
         except:
@@ -833,8 +833,8 @@ fn get_zoneinfo[
     #         tz = requests.get("https://timeapi.io/TimeZone/" + item[]).text
     #         data = json.loads(tz)
     #         utc_offset = data["standardUtcOffset"]["seconds"] // 60
-    #         h = int(utc_offset // 60)
-    #         m = int(utc_offset % 60)
+    #         h = Int(utc_offset // 60)
+    #         m = Int(utc_offset % 60)
     #         sign = 1 if utc_offset >= 0 else -1
 
     #         dst_start: PythonObject = ""
@@ -850,16 +850,16 @@ fn get_zoneinfo[
     #         dst_end = data["dstInterval"]["dstEnd"].__getitem__(0, -1)
 
     #         dt_start = datetime.datetime(dst_start)
-    #         month_start = UInt8(int(dst_start.month))
-    #         dow_start = UInt8(int(dt_start.weekday()))
+    #         month_start = UInt8(Int(dst_start.month))
+    #         dow_start = UInt8(Int(dt_start.weekday()))
     #         eom_start = UInt8(0 if dt_start <= 15 else 1)
     #         week_start = 0  # TODO
-    #         h_start = UInt8(int(dt_start.hour))
+    #         h_start = UInt8(Int(dt_start.hour))
     #         dt_end = datetime.datetime(dst_end)
-    #         month_end = UInt8(int(dst_end.month))
+    #         month_end = UInt8(Int(dst_end.month))
     #         week_end = 0  # TODO
-    #         h_end = UInt8(int(dt_end.hour))
-    #         dow_end = UInt8(int(dt_end.weekday()))
+    #         h_end = UInt8(Int(dt_end.hour))
+    #         dow_end = UInt8(Int(dt_end.weekday()))
     #         eom_end = UInt8(0 if dt_end <= 15 else 1)
 
     #         # TODO: somehow force cast python object to StringLiteral

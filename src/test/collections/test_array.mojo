@@ -319,7 +319,7 @@ def test_array_iter():
     def sum(vs: Array[DType.index, 3]) -> Int:
         sum = 0
         for v in vs:
-            sum += int(v)
+            sum += Int(v)
         return sum
 
     assert_equal(6, sum(vs))
@@ -333,7 +333,7 @@ def test_array_iter_not_mutable():
         v += 1
     sum = 0
     for v in vs:
-        sum += int(v)
+        sum += Int(v)
     assert_equal(6, sum)
 
 

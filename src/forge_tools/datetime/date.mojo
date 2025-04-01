@@ -144,9 +144,9 @@ struct Date[
             calendar: Calendar.
         """
 
-        self.year = int(year.value()) if year else int(calendar.min_year)
-        self.month = int(month.value()) if month else int(calendar.min_month)
-        self.day = int(day.value()) if day else int(calendar.min_day)
+        self.year = Int(year.value()) if year else Int(calendar.min_year)
+        self.month = Int(month.value()) if month else Int(calendar.min_month)
+        self.day = Int(day.value()) if day else Int(calendar.min_day)
         self.tz = tz.value() if tz else Self._tz()
         self.calendar = calendar
 
@@ -267,14 +267,14 @@ struct Date[
         maxmin = self.calendar.max_minute
         maxsec = self.calendar.max_typical_second
         offset = tz.offset_at(self.year, self.month, self.day, 0, 0, 0)
-        of_h = int(offset.hour)
-        of_m = int(offset.minute)
-        amnt = int(of_h * maxmin * maxsec + of_m * maxsec)
+        of_h = Int(offset.hour)
+        of_m = Int(offset.minute)
+        amnt = Int(of_h * maxmin * maxsec + of_m * maxsec)
         if offset.sign == 1:
             self = self.add(seconds=amnt)
         else:
             self = self.subtract(seconds=amnt)
-        leapsecs = int(
+        leapsecs = Int(
             self.calendar.leapsecs_since_epoch(self.year, self.month, self.day)
         )
         return self.add(seconds=leapsecs).replace(tz=tz)
@@ -333,16 +333,16 @@ struct Date[
             calendar's epoch and keeps evaluating until valid.
         """
 
-        max_year = int(self.calendar.max_year)
-        y = int(self.year) + int(years)
+        max_year = Int(self.calendar.max_year)
+        y = Int(self.year) + Int(years)
         if y > max_year:
             self.year = self.calendar.min_year
             self = self.add(years=y - (max_year + 1))
         else:
             self.year = y
 
-        max_mon = int(self.calendar.max_month)
-        mon = int(self.month) + int(months)
+        max_mon = Int(self.calendar.max_month)
+        mon = Int(self.month) + Int(months)
         if mon > max_mon:
             self.month = self.calendar.min_month
             self = self.add(years=1, months=mon - (max_mon + 1))
@@ -351,14 +351,14 @@ struct Date[
 
         max_day = self.calendar.max_days_in_month(self.year, self.month)
         s_to_day = (
-            int(self.calendar.max_hour + 1)
-            * int(self.calendar.max_minute + 1)
-            * int(self.calendar.max_typical_second + 1)
+            Int(self.calendar.max_hour + 1)
+            * Int(self.calendar.max_minute + 1)
+            * Int(self.calendar.max_typical_second + 1)
         )
-        d = int(self.day) + int(days) + int(seconds) // s_to_day
-        if d > int(max_day):
+        d = Int(self.day) + Int(days) + Int(seconds) // s_to_day
+        if d > Int(max_day):
             self.day = self.calendar.min_day
-            self = self^.add(months=1, days=d - (int(max_day) + 1))
+            self = self^.add(months=1, days=d - (Int(max_day) + 1))
         else:
             self.day = d
         return self^
@@ -391,29 +391,29 @@ struct Date[
 
         min_day = self.calendar.min_day
         s_to_day = (
-            int(self.calendar.max_hour + 1)
-            * int(self.calendar.max_minute + 1)
-            * int(self.calendar.max_typical_second + 1)
+            Int(self.calendar.max_hour + 1)
+            * Int(self.calendar.max_minute + 1)
+            * Int(self.calendar.max_typical_second + 1)
         )
-        d = int(self.day) - int(days) - int(seconds) // s_to_day
-        if d < int(min_day):
+        d = Int(self.day) - Int(days) - Int(seconds) // s_to_day
+        if d < Int(min_day):
             self.day = min_day
             self = self.subtract(months=1)
             self.day = self.calendar.max_days_in_month(self.year, self.month)
-            self = self.subtract(days=(int(min_day) - 1) - d)
+            self = self.subtract(days=(Int(min_day) - 1) - d)
         else:
             self.day = d
 
-        min_month = int(self.calendar.min_month)
-        mon = int(self.month) - int(months)
+        min_month = Int(self.calendar.min_month)
+        mon = Int(self.month) - Int(months)
         if mon < min_month:
             self.month = self.calendar.max_month
             self = self.subtract(years=1, months=(min_month - 1) - mon)
         else:
             self.month = mon
 
-        min_year = int(self.calendar.min_year)
-        y = int(self.year) - int(years)
+        min_year = Int(self.calendar.min_year)
+        y = Int(self.year) - Int(years)
         if y < min_year:
             self.year = self.calendar.max_year
             self = self.subtract(years=(min_year - 1) - y)
@@ -1017,5 +1017,5 @@ struct Date[
         """
 
         zone = tz.value() if tz else Self._tz()
-        d = calendar.from_hash[_cal_hash](int(value))
+        d = calendar.from_hash[_cal_hash](Int(value))
         return Self(d[0], d[1], d[2], zone, calendar)

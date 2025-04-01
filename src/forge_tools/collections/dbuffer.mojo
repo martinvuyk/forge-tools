@@ -273,7 +273,7 @@ struct DBuffer[
 
         # TODO: use normalize_index
         debug_assert(
-            -len(self) <= int(idx) < len(self), "index must be within bounds"
+            -len(self) <= Int(idx) < len(self), "index must be within bounds"
         )
         var offset = idx
         if offset < 0:
@@ -338,7 +338,7 @@ struct DBuffer[
         Returns:
             The size of the DBuffer.
         """
-        return int(self._len) & Self._len_mask
+        return Int(self._len) & Self._len_mask
 
     fn __bool__(self) -> Bool:
         """Check if a DBuffer is non-empty.
@@ -426,7 +426,7 @@ struct DBuffer[
         Notes:
             If the pointer is stack allocated, this will always return False.
         """
-        return bool(self._len >> Self._shift)
+        return Bool(self._len >> Self._shift)
 
     fn steal_data(mut self) -> UnsafePointer[T]:
         """Take ownership of the underlying pointer from the DBuffer if

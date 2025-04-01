@@ -129,15 +129,15 @@ struct DateTime64(Hashable, Stringable):
             hash_val: Hash_val.
         """
 
-        y = int(year.take()) if year else int(_cal.min_year)
-        mon = int(month.take()) if month else int(_cal.min_month)
-        d = int(day.take()) if day else int(_cal.min_day)
-        h = int(hour.take()) if hour else int(_cal.min_hour)
-        m = int(minute.take()) if minute else int(_cal.min_minute)
-        s = int(second.take()) if second else int(_cal.min_second)
-        ms = int(m_second.take()) if m_second else int(_cal.min_milisecond)
+        y = Int(year.take()) if year else Int(_cal.min_year)
+        mon = Int(month.take()) if month else Int(_cal.min_month)
+        d = Int(day.take()) if day else Int(_cal.min_day)
+        h = Int(hour.take()) if hour else Int(_cal.min_hour)
+        m = Int(minute.take()) if minute else Int(_cal.min_minute)
+        s = Int(second.take()) if second else Int(_cal.min_second)
+        ms = Int(m_second.take()) if m_second else Int(_cal.min_milisecond)
         self.m_seconds = _cal.m_seconds_since_epoch(y, mon, d, h, m, s, ms)
-        self.hash = int(hash_val.take()) if hash_val else int(
+        self.hash = Int(hash_val.take()) if hash_val else Int(
             _cal.hash[_cal_h64](y, mon, d, h, m, s, ms)
         )
 
@@ -307,7 +307,7 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             Result.
         """
-        return int(self.hash)
+        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -567,7 +567,7 @@ struct DateTime64(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        d = _cal.from_hash[_cal_h64](int(self.hash))
+        d = _cal.from_hash[_cal_h64](Int(self.hash))
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -609,7 +609,7 @@ struct DateTime64(Hashable, Stringable):
         Returns:
             Self.
         """
-        d = _cal.from_hash[_cal_h64](int(value))
+        d = _cal.from_hash[_cal_h64](Int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], d[5], d[6], hash_val=value)
 
 
@@ -691,16 +691,16 @@ struct DateTime32(Hashable, Stringable):
             minute: Minute.
             hash_val: Hash_val.
         """
-        y = int(year.take()) if year else int(_cal.min_year)
-        mon = int(month.take()) if month else int(_cal.min_month)
-        d = int(day.take()) if day else int(_cal.min_day)
-        h = int(hour.take()) if hour else int(_cal.min_hour)
-        m = int(minute.take()) if minute else int(_cal.min_minute)
+        y = Int(year.take()) if year else Int(_cal.min_year)
+        mon = Int(month.take()) if month else Int(_cal.min_month)
+        d = Int(day.take()) if day else Int(_cal.min_day)
+        h = Int(hour.take()) if hour else Int(_cal.min_hour)
+        m = Int(minute.take()) if minute else Int(_cal.min_minute)
         self.minutes = (
-            _cal.seconds_since_epoch(y, mon, d, h, m, int(_cal.min_second))
+            _cal.seconds_since_epoch(y, mon, d, h, m, Int(_cal.min_second))
             // 60
         ).cast[DType.uint32]()
-        self.hash = int(hash_val.take()) if hash_val else int(
+        self.hash = Int(hash_val.take()) if hash_val else Int(
             _cal.hash[_cal_h32](y, mon, d, h, m)
         )
 
@@ -833,7 +833,7 @@ struct DateTime32(Hashable, Stringable):
         Returns:
             Result.
         """
-        return int(self.hash)
+        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -1087,7 +1087,7 @@ struct DateTime32(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        d = _cal.from_hash[_cal_h32](int(self.hash))
+        d = _cal.from_hash[_cal_h32](Int(self.hash))
         return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
 
     @staticmethod
@@ -1129,7 +1129,7 @@ struct DateTime32(Hashable, Stringable):
         Returns:
             Self.
         """
-        d = _cal.from_hash[_cal_h32](int(value))
+        d = _cal.from_hash[_cal_h32](Int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], value)
 
 
@@ -1202,16 +1202,16 @@ struct DateTime16(Hashable, Stringable):
             hour: Hour.
             hash_val: Hash_val.
         """
-        y = int(year.take()) if year else int(_cal.min_year)
-        mon = int(month.take()) if month else int(_cal.min_month)
-        d = int(day.take()) if day else int(_cal.min_day)
-        h = int(hour.take()) if hour else int(_cal.min_hour)
-        m = int(_cal.min_minute)
-        s = int(_cal.min_second)
-        self.hours = int(
+        y = Int(year.take()) if year else Int(_cal.min_year)
+        mon = Int(month.take()) if month else Int(_cal.min_month)
+        d = Int(day.take()) if day else Int(_cal.min_day)
+        h = Int(hour.take()) if hour else Int(_cal.min_hour)
+        m = Int(_cal.min_minute)
+        s = Int(_cal.min_second)
+        self.hours = Int(
             _cal.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         )
-        self.hash = int(hash_val.take()) if hash_val else int(
+        self.hash = Int(hash_val.take()) if hash_val else Int(
             _cal.hash[_cal_h16](y - _cal.min_year, mon, d, h, m, s)
         )
 
@@ -1332,7 +1332,7 @@ struct DateTime16(Hashable, Stringable):
         Returns:
             Result.
         """
-        return int(self.hash)
+        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -1578,7 +1578,7 @@ struct DateTime16(Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        d = _cal.from_hash[_cal_h16](int(self.hash))
+        d = _cal.from_hash[_cal_h16](Int(self.hash))
         y = d[0] + _cal.min_year
         return dt_str.to_iso[iso](y, d[1], d[2], d[3], d[4], d[5])
 
@@ -1621,7 +1621,7 @@ struct DateTime16(Hashable, Stringable):
         Returns:
             Self.
         """
-        d = _cal.from_hash[_cal_h16](int(value))
+        d = _cal.from_hash[_cal_h16](Int(value))
         y = d[0] + _cal.min_year
         return Self(year=y, month=d[1], day=d[2], hour=d[3], hash_val=value)
 
@@ -1694,16 +1694,16 @@ struct DateTime8(Hashable, Stringable):
             hour: Hour.
             hash_val: Hash_val.
         """
-        y = int(year.take()) if year else int(_cal.min_year)
-        mon = int(month.take()) if month else int(_cal.min_month)
-        d = int(day.take()) if day else int(_cal.min_day)
-        h = int(hour.take()) if hour else int(_cal.min_hour)
-        m = int(_cal.min_minute)
-        s = int(_cal.min_second)
+        y = Int(year.take()) if year else Int(_cal.min_year)
+        mon = Int(month.take()) if month else Int(_cal.min_month)
+        d = Int(day.take()) if day else Int(_cal.min_day)
+        h = Int(hour.take()) if hour else Int(_cal.min_hour)
+        m = Int(_cal.min_minute)
+        s = Int(_cal.min_second)
         self.hours = (
             _cal.seconds_since_epoch(y, mon, d, h, m, s) // (60 * 60)
         ).cast[DType.uint8]()
-        self.hash = int(hash_val.take()) if hash_val else int(
+        self.hash = Int(hash_val.take()) if hash_val else Int(
             _cal.hash[_cal_h8](y, mon, d, h, m, s)
         )
 
@@ -1816,7 +1816,7 @@ struct DateTime8(Hashable, Stringable):
         Returns:
             Result.
         """
-        return int(self.hash)
+        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -2106,5 +2106,5 @@ struct DateTime8(Hashable, Stringable):
             Self.
         """
 
-        d = _cal.from_hash[_cal_h8](int(value))
+        d = _cal.from_hash[_cal_h8](Int(value))
         return Self(day=int(d[2]), hash_val=value).add(hours=int(d[3]))

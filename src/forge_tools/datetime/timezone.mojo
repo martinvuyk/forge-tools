@@ -226,8 +226,8 @@ struct TimeZone[
                 local = dt.datetime(year, month, day, hour, tzinfo=zone)
                 offset = local.utcoffset()
                 sign = 1 if offset.days == -1 else -1
-                hours = int(offset.seconds) // (60 * 60) - int(hour)
-                minutes = int(offset.seconds) % 60
+                hours = Int(offset.seconds) // (60 * 60) - Int(hour)
+                minutes = Int(offset.seconds) % 60
                 return Offset(hours, minutes, sign)
             except:
                 pass
