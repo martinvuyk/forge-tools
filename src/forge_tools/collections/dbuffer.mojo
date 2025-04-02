@@ -154,18 +154,14 @@ struct DBuffer[
         self = __type_of(self)(ptr=other.unsafe_ptr(), length=len(other))
 
     @always_inline
-    fn __init__(out self, *, other: Self):
-        """Explicitly construct a deep copy of the provided DBuffer.
+    fn copy(self: Self) -> Self:
+        """Explicitly construct a deep copy of the DBuffer."""
 
-        Args:
-            other: The DBuffer to copy.
-        """
-
-        var o_len = len(other)
+        var o_len = len(self)
         var buf = UnsafePointer[T].alloc(o_len)
         for i in range(o_len):
-            buf[i] = other._data[i]
-        self = Self(ptr=buf, length=o_len, self_is_owner=True)
+            buf[i] = self._data[i]
+        return Self(ptr=buf, length=o_len, self_is_owner=True)
 
     @always_inline
     @implicit
@@ -207,7 +203,7 @@ struct DBuffer[
     @implicit
     fn __init__[
         size: Int, //
-    ](mut self, ref [origin]array: InlineArray[T, size]):
+    ](out self, ref [origin]array: InlineArray[T, size]):
         """Construct a DBuffer from an InlineArray.
 
         Parameters:

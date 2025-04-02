@@ -223,7 +223,7 @@ struct Pointer[
 
     fn bitcast[
         T: AnyType = Self.type
-    ](self) -> Pointer[T, origin, address_space] as output:
+    ](self, out output: Pointer[T, origin, address_space]):
         """Bitcasts a `Pointer` to a different type.
 
         Parameters:
@@ -245,7 +245,7 @@ struct Pointer[
             )
         )
 
-    fn unsafe_ptr(self) -> UnsafePointer[type, address_space] as output:
+    fn unsafe_ptr(self, out output: UnsafePointer[type, address_space]):
         """Get a raw pointer to the underlying data.
 
         Returns:

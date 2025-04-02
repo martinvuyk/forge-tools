@@ -2,11 +2,11 @@
 
 from memory import UnsafePointer, Span
 from sys.intrinsics import unlikely
-from utils.string_slice import StringSlice, _StringSliceIter
+from collections.string.string_slice import StringSlice, CodepointSliceIter
 from .json import JsonInstance, JsonType
 
 
-# TODO: UTF-16. _StringSliceIter should actually support it, then this code stays unchanged
+# TODO: UTF-16. CodepointSliceIter should actually support it, then this code stays unchanged
 struct Reader[
     origin: Origin[False],
     allow_trailing_comma: Bool = True,
@@ -33,8 +33,8 @@ struct Reader[
 
     @staticmethod
     fn get_json_instance(
-        span: Self._Sp, start: UInt = 0
-    ) -> JsonInstance[origin] as output:
+        span: Self._Sp, start: UInt = 0, out output: JsonInstance[origin]
+    ):
         """Get the `JsonInstance` starting at start **skipping over starting
         whitespace**.
 
@@ -175,7 +175,7 @@ struct Reader[
         b5: Byte = 0,
         b6: Byte = 0,
         b7: Byte = 0,
-    ](mut iterator: _StringSliceIter) -> Bool:
+    ](mut iterator: CodepointSliceIter) -> Bool:
         if not iterator.__has_next__():
             return False
 
@@ -184,7 +184,7 @@ struct Reader[
         @parameter
         for i in range(amount):
             b0_char = iterator.__next__().unsafe_ptr()[0]
-            if not iterator.__has_next__() or b0_char != items.get[i, Byte]():
+            if not iterator.__has_next__() or b0_char != items[i]:
                 return False
         return True
 
@@ -193,7 +193,7 @@ struct Reader[
     fn _is_closed[
         closing_byte: Byte
     ](
-        mut iterator: _StringSliceIter,
+        mut iterator: CodepointSliceIter,
         mut b0_char: Byte,
         mut length: UInt,
     ) -> Bool:
@@ -222,11 +222,12 @@ struct Reader[
     @always_inline
     @staticmethod
     fn _validate_int_float(
-        mut iterator: _StringSliceIter[origin],
+        mut iterator: CodepointSliceIter[origin],
         start_ptr: UnsafePointer[Byte],
         owned b0_char: Byte,
         owned length: UInt,
-    ) -> JsonInstance[origin] as output:
+        out output: JsonInstance[origin],
+    ):
         # digit
         alias `0` = Byte(ord("0"))
         alias `9` = Byte(ord("9"))
@@ -312,7 +313,7 @@ struct Reader[
         return Span[Byte, origin](ptr=ptr, length=length)
 
     @staticmethod
-    fn find(span: Self._Sp, key: StringSlice) -> JsonInstance[origin] as output:
+    fn find(span: Self._Sp, key: StringSlice, out output: JsonInstance[origin]):
         """Find a json value by key: `"` + `name` + `"`.
 
         Args:

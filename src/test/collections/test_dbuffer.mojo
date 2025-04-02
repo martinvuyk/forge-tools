@@ -7,7 +7,7 @@ from forge_tools.collections import DBuffer
 def test_dbuffer_list_init_trivial():
     # test taking ownership
     var l1 = List[Int](1, 2, 3, 4, 5, 6, 7)
-    var l1_copy = List(other=l1)
+    var l1_copy = l1.copy()
     var s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
     assert_true(s1.is_owner())
     assert_equal(len(s1), len(l1_copy))
@@ -51,7 +51,7 @@ def test_dbuffer_list_init_trivial():
 def test_dbuffer_list_init_memory():
     # test taking ownership
     var l1 = List[String]("a", "b", "c", "d", "e", "f", "g")
-    var l1_copy = List(other=l1)
+    var l1_copy = l1.copy()
     var s1 = DBuffer[origin=MutableAnyOrigin].own(l1^)
     assert_true(s1.is_owner())
     assert_equal(len(s1), len(l1_copy))
@@ -141,7 +141,7 @@ def test_indexing():
     var l = InlineArray[Int, 7](1, 2, 3, 4, 5, 6, 7)
     var s = DBuffer[Int](array=l)
     assert_equal(s[True], 2)
-    assert_equal(s[int(0)], 1)
+    assert_equal(s[Int(0)], 1)
     assert_equal(s[3], 4)
 
 

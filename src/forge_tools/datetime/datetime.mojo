@@ -319,7 +319,7 @@ struct DateTime[
         tmp = self.replace(calendar=self.calendar.from_year(year))
         ns = tmp.n_seconds_since_epoch()
         return Self._UnboundCal(calendar=calendar).add(
-            years=int(year), n_seconds=int(ns)
+            years=Int(year), n_seconds=Int(ns)
         )
 
     fn to_utc(owned self) -> Self:
@@ -700,15 +700,15 @@ struct DateTime[
             A `DateTime` with the `TimeZone` and `Calendar` of `self`.
         """
         return self.add(
-            years=int(other.year),
-            months=int(other.month),
-            days=int(other.day),
-            hours=int(other.hour),
-            minutes=int(other.minute),
-            seconds=int(other.second),
-            m_seconds=int(other.m_second),
-            u_seconds=int(other.u_second),
-            n_seconds=int(other.n_second),
+            years=Int(other.year),
+            months=Int(other.month),
+            days=Int(other.day),
+            hours=Int(other.hour),
+            minutes=Int(other.minute),
+            seconds=Int(other.second),
+            m_seconds=Int(other.m_second),
+            u_seconds=Int(other.u_second),
+            n_seconds=Int(other.n_second),
         )
 
     @always_inline
@@ -722,15 +722,15 @@ struct DateTime[
             A `DateTime` with the `TimeZone` and `Calendar` of `self`.
         """
         return self.subtract(
-            years=int(other.year),
-            months=int(other.month),
-            days=int(other.day),
-            hours=int(other.hour),
-            minutes=int(other.minute),
-            seconds=int(other.second),
-            m_seconds=int(other.m_second),
-            u_seconds=int(other.u_second),
-            n_seconds=int(other.n_second),
+            years=Int(other.year),
+            months=Int(other.month),
+            days=Int(other.day),
+            hours=Int(other.hour),
+            minutes=Int(other.minute),
+            seconds=Int(other.second),
+            m_seconds=Int(other.m_second),
+            u_seconds=Int(other.u_second),
+            n_seconds=Int(other.n_second),
         )
 
     @always_inline
@@ -1111,7 +1111,7 @@ struct DateTime[
 
         @parameter
         if add_leap:
-            dt = dt.add(seconds=int(dt.leapsecs_since_epoch()))
+            dt = dt.add(seconds=Int(dt.leapsecs_since_epoch()))
         # FIXME: this is horrible
         return rebind[Self](
             dt.replace(
@@ -1368,13 +1368,14 @@ fn timedelta[
             native=native,
         ]._tz
     ] = None,
-) -> DateTime[
-    dst_storage=dst_storage,
-    no_dst_storage=no_dst_storage,
-    iana=iana,
-    pyzoneinfo=pyzoneinfo,
-    native=native,
-] as output:
+    out output: DateTime[
+        dst_storage=dst_storage,
+        no_dst_storage=no_dst_storage,
+        iana=iana,
+        pyzoneinfo=pyzoneinfo,
+        native=native,
+    ],
+):
     """Return a `DateTime` with `ZeroCalendar`.
 
     Args:

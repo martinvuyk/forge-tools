@@ -259,7 +259,7 @@ struct TzDT:
         self.eomon = ((buf >> 4) & 0b1).cast[DType.uint8]()
         self.week = ((buf >> 3) & 0b1).cast[DType.uint8]()
         alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
-        self.hour = hours[int(buf & 0b111)]
+        self.hour = hours[Int(buf & 0b111)]
         self.buf = buf
 
     fn __str__(self) -> String:
@@ -374,7 +374,7 @@ struct ZoneInfoFile32(CollectionElement):
                     (value.buf >> 0).cast[DType.uint8](),
                     0,
                 )
-                f.write(String(items))
+                f.write(String(buffer=items))
         except:
             # TODO: propper logging
             print("could not save zoneinfo to file")
@@ -450,7 +450,7 @@ struct ZoneInfoFile8(CollectionElement):
             with open(self._file, "wb") as f:
                 _ = f.seek(Self.hash(key))
                 # FIXME: this is ugly
-                f.write(String(List[UInt8](value.buf, 0)))
+                f.write(String(buffer=List[UInt8](value.buf, 0)))
         except:
             # TODO: propper logging
             print("could not save zoneinfo to file")

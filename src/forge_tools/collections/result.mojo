@@ -184,6 +184,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self = Self(err=err)
 
     @always_inline("nodebug")
+    @implicit
     fn __init__(out self, value: Tuple[NoneType, Error], /):
         """Create an empty `Result` with an `Error`.
 
@@ -196,6 +197,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
             self = Self(err=value[1])
 
     @always_inline("nodebug")
+    @implicit
     fn __init__[A: CollectionElement](out self, owned other: Result[A]):
         """Create a `Result` by transferring another `Result`'s Error.
 
@@ -208,6 +210,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
         self = Self(err=other.err)
 
     @always_inline("nodebug")
+    @implicit
     fn __init__(out self, owned value: T):
         """Create a `Result` containing a value.
 
@@ -416,6 +419,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self = Self(err=err)
 
     @always_inline("nodebug")
+    @implicit
     fn __init__(out self, value: Tuple[NoneType, Self._err_type], /):
         """Create an empty `Result` with an `Error`.
 
@@ -425,6 +429,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self = Self(err=value[1])
 
     @always_inline("nodebug")
+    @implicit
     fn __init__[A: CollectionElement](out self, owned other: Result2[A, E]):
         """Create a `Result` by transferring another `Result`'s Error.
 
@@ -437,6 +442,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self = Self(err=other.err)
 
     @always_inline("nodebug")
+    @implicit
     fn __init__[
         A: CollectionElement, B: StringLiteral
     ](out self, owned other: Result2[A, B]):
@@ -452,6 +458,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         self = Self(err=Self._err_type(other.err.message))
 
     @always_inline("nodebug")
+    @implicit
     fn __init__(out self, owned value: T):
         """Create a `Result` containing a value.
 

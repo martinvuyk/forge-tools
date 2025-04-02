@@ -222,7 +222,7 @@ struct _UnixSocket[
                 if sa_family != Self._sock_family:
                     raise Error("Wrong Address Family for this socket.")
                 p = (addr_ptr.bitcast[sa_family_t]() + 1).bitcast[C.char]()
-                addr_str = String(ptr=p.bitcast[UInt8](), length=int(sin_size))
+                addr_str = String(ptr=p.bitcast[UInt8](), length=Int(sin_size))
                 return Self(fd=FileDescriptor(fd)), sock_address(addr_str^)
             except e:
                 print(String(e), file=STDERR_FILENO)

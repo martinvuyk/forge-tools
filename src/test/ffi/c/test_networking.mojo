@@ -194,10 +194,10 @@ def _test_socket_create(libc: Libc):
 
         @parameter
         for i in range(len(socket_combinations)):
-            alias combo = socket_combinations.get[i, Tuple[Int, Int, Int]]()
-            alias address_family = combo.get[0, Int]()
-            alias socket_type = combo.get[1, Int]()
-            alias socket_protocol = combo.get[2, Int]()
+            alias combo = socket_combinations[i]
+            alias address_family = combo[0]
+            alias socket_type = combo[1]
+            alias socket_protocol = combo[2]
 
             @parameter
             if os_is_macos():
@@ -482,27 +482,27 @@ def _test_gai_strerror(libc: Libc):
 
         @parameter
         for i in range(len(gai_err_msg_macos)):
-            errno_msg = gai_err_msg_macos.get[i, Tuple[Int, StringLiteral]]()
-            errno = errno_msg.get[0, Int]()
-            msg = errno_msg.get[1, StringLiteral]()
+            errno_msg = gai_err_msg_macos[i]
+            errno = errno_msg[0]
+            msg = errno_msg[1]
             res = char_ptr_to_string(libc.gai_strerror(errno))
             assert_equal(res, msg)
     elif os_is_windows():
 
         @parameter
         for i in range(len(gai_err_msg_windows)):
-            errno_msg = gai_err_msg_windows.get[i, Tuple[Int, StringLiteral]]()
-            errno = errno_msg.get[0, Int]()
-            msg = errno_msg.get[1, StringLiteral]()
+            errno_msg = gai_err_msg_windows[i]
+            errno = errno_msg[0]
+            msg = errno_msg[1]
             res = char_ptr_to_string(libc.gai_strerror(errno))
             assert_equal(res, msg)
     else:
 
         @parameter
         for i in range(len(gai_err_msg_linux)):
-            errno_msg = gai_err_msg_linux.get[i, Tuple[Int, StringLiteral]]()
-            errno = errno_msg.get[0, Int]()
-            msg = errno_msg.get[1, StringLiteral]()
+            errno_msg = gai_err_msg_linux[i]
+            errno = errno_msg[0]
+            msg = errno_msg[1]
             res = char_ptr_to_string(libc.gai_strerror(errno))
             assert_equal(res, msg)
 

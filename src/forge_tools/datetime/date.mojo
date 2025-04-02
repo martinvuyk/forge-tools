@@ -227,7 +227,7 @@ struct Date[
         if self.calendar == calendar:
             return self.replace(calendar=calendar)
         s = self.seconds_since_epoch()
-        return Self._UnboundCal(calendar=calendar).add(seconds=int(s))
+        return Self._UnboundCal(calendar=calendar).add(seconds=Int(s))
 
     fn to_utc(owned self) -> Self:
         """Returns a new instance of `Self` transformed to UTC. If
@@ -432,7 +432,7 @@ struct Date[
             A `Date` with the `TimeZone` and `Calendar` of `self`.
         """
         return self.add(
-            years=int(other.year), months=int(other.month), days=int(other.day)
+            years=Int(other.year), months=Int(other.month), days=Int(other.day)
         )
 
     @always_inline
@@ -446,7 +446,7 @@ struct Date[
             A `Date` with the `TimeZone` and `Calendar` of `self`.
         """
         return self.subtract(
-            years=int(other.year), months=int(other.month), days=int(other.day)
+            years=Int(other.year), months=Int(other.month), days=Int(other.day)
         )
 
     @always_inline
@@ -841,7 +841,7 @@ struct Date[
 
         @parameter
         if add_leap:
-            dt = dt.add(seconds=int(dt.leapsecs_since_epoch()))
+            dt = dt.add(seconds=Int(dt.leapsecs_since_epoch()))
         # FIXME: this is horrible
         return rebind[Self](
             dt.replace(

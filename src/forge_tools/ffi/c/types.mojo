@@ -87,17 +87,35 @@ fn _c_u_long_dtype() -> DType:
         return DType.uint32  # ILP32
 
 
-trait _UnsafePtrU8:
-    fn unsafe_ptr(self) -> UnsafePointer[UInt8]:
-        ...
+@always_inline
+fn char_ptr(item: String) -> UnsafePointer[C.char]:
+    """Get the `C.char` pointer.
+
+    Args:
+        item: The item.
+
+    Returns:
+        The pointer.
+    """
+    return item.unsafe_ptr().bitcast[C.char]()
 
 
 @always_inline
-fn char_ptr[T: _UnsafePtrU8](item: T) -> UnsafePointer[C.char]:
+fn char_ptr(item: StringSlice) -> UnsafePointer[C.char]:
     """Get the `C.char` pointer.
 
-    Parameters:
-        T: The type.
+    Args:
+        item: The item.
+
+    Returns:
+        The pointer.
+    """
+    return item.unsafe_ptr().bitcast[C.char]()
+
+
+@always_inline
+fn char_ptr(item: StringLiteral) -> UnsafePointer[C.char]:
+    """Get the `C.char` pointer.
 
     Args:
         item: The item.

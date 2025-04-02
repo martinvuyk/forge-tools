@@ -5,23 +5,21 @@ from collections import Dict
 from forge_tools.collections.result import Result, Result2, Error2
 
 
-def _returning_err[T: CollectionElement](value: T) raises -> Result[T]:
+def _returning_err[T: CollectionElement](value: T) -> Result[T]:
     result = Result[T](err=Error("something"))
     if not result:
         return result
     raise Error("shouldn't get here")
 
 
-def _returning_ok[T: CollectionElement](value: T) raises -> Result[T]:
+def _returning_ok[T: CollectionElement](value: T) -> Result[T]:
     result = Result[T](value)
     if result:
         return result
     raise Error("shouldn't get here")
 
 
-def _returning_transferred_err[
-    T: CollectionElement
-](value: T) raises -> Result[T]:
+def _returning_transferred_err[T: CollectionElement](value: T) -> Result[T]:
     # this value and err at the same time will never happen, just for testing
     # the value "some other string" should NOT get transferred
     res1 = Result(String("some other string"))
@@ -31,7 +29,7 @@ def _returning_transferred_err[
     raise Error("shouldn't get here")
 
 
-def _returning_none_err[T: CollectionElement](value: T) raises -> Result[T]:
+def _returning_none_err[T: CollectionElement](value: T) -> Result[T]:
     res1 = Result[String](err=Error("some error"))
     if res1.err:
         return None, res1.err
@@ -68,9 +66,13 @@ def test_returning_err():
     # item_ts = _returning_err(Tuple[String]())
     # assert_true(not item_ts and item_ts.err and String(item_ts.err) == "something")
     item_li = _returning_err(List[Int]())
-    assert_true(not item_li and item_li.err and String(item_li.err) == "something")
+    assert_true(
+        not item_li and item_li.err and String(item_li.err) == "something"
+    )
     item_ls = _returning_err(List[String]())
-    assert_true(not item_ls and item_ls.err and String(item_ls.err) == "something")
+    assert_true(
+        not item_ls and item_ls.err and String(item_ls.err) == "something"
+    )
     item_dii = _returning_err(Dict[Int, Int]())
     assert_true(
         not item_dii and item_dii.err and String(item_dii.err) == "something"
@@ -80,9 +82,13 @@ def test_returning_err():
         not item_dss and item_dss.err and String(item_dss.err) == "something"
     )
     item_oi = _returning_err(Result[Int]())
-    assert_true(not item_oi and item_oi.err and String(item_oi.err) == "something")
+    assert_true(
+        not item_oi and item_oi.err and String(item_oi.err) == "something"
+    )
     item_os = _returning_err(Result[String]())
-    assert_true(not item_os and item_os.err and String(item_os.err) == "something")
+    assert_true(
+        not item_os and item_os.err and String(item_os.err) == "something"
+    )
 
 
 def test_returning_ok():

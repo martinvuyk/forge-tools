@@ -54,7 +54,7 @@ struct IsoFormat:
 
     @implicit
     fn __init__(
-        out self, selected: StringLiteral = self.YYYY_MM_DD_T_HH_MM_SS_TZD
+        out self, selected: StringLiteral = Self.YYYY_MM_DD_T_HH_MM_SS_TZD
     ):
         """Construct an IsoFormat with selected fmt string.
 
@@ -98,13 +98,13 @@ fn _get_strings(
 
 
 fn to_iso[
-    T1: Intable,
-    T2: Intable,
-    T3: Intable,
-    T4: Intable,
-    T5: Intable,
-    T6: Intable,
     iso: IsoFormat = IsoFormat(),
+    T1: Intable = Int,
+    T2: Intable = Int,
+    T3: Intable = Int,
+    T4: Intable = Int,
+    T5: Intable = Int,
+    T6: Intable = Int,
 ](
     year: T1,
     month: T2,

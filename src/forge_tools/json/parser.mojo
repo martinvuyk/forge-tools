@@ -4,7 +4,7 @@ from math import log10, nan
 from bit import next_power_of_two
 from collections import Dict
 from memory import Span
-from utils.string_slice import StringSlice, _StringSliceIter
+from collections.string.string_slice import StringSlice, CodepointSliceIter
 from sys.info import bitwidthof
 
 from .json import JsonInstance, JsonType
@@ -33,7 +33,7 @@ struct Parser[
     var _buffer: Self._Sp
 
     @staticmethod
-    fn parse_object(instance: Self._J) -> Dict[String, Self._J] as output:
+    fn parse_object(instance: Self._J, out output: Dict[String, Self._J]):
         """Parse an object from the start of the span **with no leading
         whitespace and assuming the start and end were validated previously**.
 
@@ -108,7 +108,7 @@ struct Parser[
         return items^
 
     @staticmethod
-    fn parse_array(instance: Self._J) -> List[Self._J] as output:
+    fn parse_array(instance: Self._J, out output: List[Self._J]):
         """Parse an array from the start of the span **with no leading
         whitespace and assuming the start and end were validated previously**.
 
@@ -170,7 +170,7 @@ struct Parser[
         return items^
 
     @staticmethod
-    fn _parse_num(mut iterator: _StringSliceIter[origin]) -> (Int8, Int, Int):
+    fn _parse_num(mut iterator: CodepointSliceIter[origin]) -> (Int8, Int, Int):
         constrained[
             maximum_int_bitwidth <= bitwidthof[Int](),
             "can't parse an Int bigger than bitwidth[Int]()",
@@ -301,7 +301,7 @@ struct Parser[
         return Self.parse_instance(Self._R.get_json_instance(self._buffer))
 
     @staticmethod
-    fn parse_instance(instance: Self._J) -> object as output:
+    fn parse_instance(instance: Self._J, out output: object):
         """Parse a JsonInstance from the start of the span **with no leading
         whitespace and assuming the start and end were validated previously**.
 
@@ -330,13 +330,17 @@ struct Parser[
             obj = Dict[String, object]()
             for item in Self.parse_object(instance).items():
                 obj[item[].key] = Self.parse_instance(item[].value)
-            output = object(obj)
+            # FIXME
+            # output = object(obj)
+            output = None
             return
         elif instance.type is JsonType.array:
             arr = List[object]()
             for item in Self.parse_array(instance):
                 arr.append(Self.parse_instance(item[]))
-            output = object(arr)
+            # FIXME
+            # output = object(arr)
+            output = None
             return
         elif instance.type is JsonType.int:
             output = Self.parse_int(instance)

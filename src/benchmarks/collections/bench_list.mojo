@@ -306,7 +306,7 @@ def main():
 
     @parameter
     for i in range(7):
-        alias size = sizes.get[i, Int]()
+        alias size = sizes[i]
         # m.bench_function[bench_list_init[size]](
         #     BenchId("bench_list_init[" + String(size) + "]")
         # )

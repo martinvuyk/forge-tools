@@ -315,7 +315,7 @@ def main():
 
     @parameter
     for i in range(7):
-        alias size = sizes.get[i, Int]()
+        alias size = sizes[i]
         m.bench_function[bench_inlinearray_init[size]](
             BenchId("bench_inlinearray_init[" + String(size) + "]")
         )

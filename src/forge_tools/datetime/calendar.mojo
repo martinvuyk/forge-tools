@@ -1023,7 +1023,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             The amount of days.
         """
 
-        days = Self._monthdays[int(month)]
+        days = Self._monthdays[Int(month)]
         return days + Int(unlikely(month == 2 and Self.is_leapyear(year)))
 
     @always_inline
@@ -1055,7 +1055,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             Day of the year: [1, 366] (for Gregorian calendar).
         """
         total = UInt16(Int(month > 2 and Self.is_leapyear(year)))
-        total += Self._days_before_month[int(month)].cast[DType.uint16]()
+        total += Self._days_before_month[Int(month)].cast[DType.uint16]()
         return total + day.cast[DType.uint16]()
 
     fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
@@ -1085,7 +1085,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
 
         c = (Self._days_before_month < day_of_year).cast[DType.uint8]()
         idx = c.reduce_add() - 1
-        rest = day_of_year - Self._days_before_month[int(idx)]
+        rest = day_of_year - Self._days_before_month[Int(idx)]
         rest -= Int(idx > 2 and Self.is_leapyear(year))
         return idx, rest.cast[DType.uint8]()
 

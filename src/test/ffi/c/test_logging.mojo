@@ -150,8 +150,8 @@ alias error_message = (
 def _test_errno(libc: Libc):
     @parameter
     for i in range(len(error_message)):
-        errno_msg = error_message.get[i, Tuple[Int, StringLiteral]]()
-        errno = errno_msg.get[0, Int]()
+        errno_msg = error_message[i]
+        errno = errno_msg[0]
         libc.set_errno(i)
         assert_equal(libc.get_errno(), i)
     libc.set_errno(0)
@@ -168,9 +168,9 @@ def test_static_errno():
 def _test_strerror(libc: Libc):
     @parameter
     for i in range(len(error_message)):
-        errno_msg = error_message.get[i, Tuple[Int, StringLiteral]]()
-        errno = errno_msg.get[0, Int]()
-        msg = errno_msg.get[1, StringLiteral]()
+        errno_msg = error_message[i]
+        errno = errno_msg[0]
+        msg = errno_msg[1]
         res = char_ptr_to_string(libc.strerror(errno))
 
         @parameter
@@ -189,8 +189,8 @@ def test_static_strerror():
 def _test_perror(libc: Libc):
     @parameter
     for i in range(len(error_message)):
-        errno_msg = error_message.get[i, Tuple[Int, StringLiteral]]()
-        errno = errno_msg.get[0, Int]()
+        errno_msg = error_message[i]
+        errno = errno_msg[0]
         libc.set_errno(errno)
         libc.perror()
     libc.set_errno(0)
@@ -245,15 +245,15 @@ def _test_log(libc: Libc):
 
         @parameter
         for i in range(len(log_levels)):
-            alias level = log_levels.get[i, Int]()
+            alias level = log_levels[i]
 
             @parameter
             for j in range(len(log_options)):
-                alias option = log_options.get[j, Int]()
+                alias option = log_options[j]
 
                 @parameter
                 for k in range(len(log_facilities)):
-                    alias facility = log_facilities.get[k, Int]()
+                    alias facility = log_facilities[k]
                     libc.openlog(identity, option, facility)
                     _ = libc.setlogmask(level)
                     libc.syslog(

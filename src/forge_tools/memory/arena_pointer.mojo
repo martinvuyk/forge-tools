@@ -171,7 +171,7 @@ struct ColosseumPointer[
 
         @parameter
         for i in range(len(widths)):
-            alias w = widths.get[i, Int]()
+            alias w = widths[i]
 
             @parameter
             if simdwidthof[Int]() >= w:

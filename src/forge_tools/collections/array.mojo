@@ -68,10 +68,10 @@ from math import sqrt, acos, sin
 from algorithm import vectorize
 from bit import next_power_of_two
 from sys import info
-from collections import Optional
+from collections import Optional, InlineArray
 from collections._index_normalization import normalize_index
 from benchmark import clobber_memory
-from memory import UnsafePointer
+from memory import UnsafePointer, memcpy
 from utils import IndexList
 from os import abort
 
@@ -115,6 +115,13 @@ struct _ArrayIter[
             return len(self.src) - self.index
         else:
             return self.index
+
+    fn __has_next__(self) -> Bool:
+        @parameter
+        if forward:
+            return len(self.src) > self.index
+        else:
+            return self.index > 0
 
 
 @register_passable("trivial")
@@ -279,8 +286,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         size: Int
     ](
         out self,
-        owned values: SIMD[T, size],
+        vec: SIMD[T, size],
         length: Int = min(size, capacity),
+        already_masked: Bool = False,
     ):
         """Constructs an Array from the given values.
 
@@ -288,8 +296,9 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             size: The size of the SIMD vector.
 
         Args:
-            values: The values to populate the Array with.
+            vec: The values to populate the Array with.
             length: The amount of items to populate the Array with.
+            already_masked: Whether the vector is already masked.
 
         Constraints:
             Maximum capacity is 256.
@@ -299,14 +308,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if static and size == Self.simd_size:
-            self.vec = rebind[Self._vec_type](values)
+            self.vec = rebind[Self._vec_type](vec)
             self.capacity_left = 0
         elif static:
             self.vec = Self._vec_type(0)
 
             @parameter
             fn closure[simd_width: Int](i: Int):
-                self.vec[i] = values[i]
+                self.vec[i] = vec[i]
 
             self.capacity_left = 0
             vectorize[
@@ -316,14 +325,23 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
                 unroll_factor = Self._slice_simd_size,
             ]()
         elif size == Self.simd_size:
-            self.vec = rebind[Self._vec_type](values)
-            Self._mask_vec_size(self.vec, length)
+            self.vec = rebind[Self._vec_type](vec)
+            if not already_masked:
+                Self._mask_vec_size(self.vec, length)
             self.capacity_left = capacity - length
         else:
+            self.capacity_left = capacity - length
+
+            @parameter
+            if size > Self.simd_size:
+                if already_masked:
+                    self.vec = rebind[Self._vec_type](
+                        vec.slice[Self.simd_size]()
+                    )
+                    return
             self.vec = Self._vec_type(0)
             for i in range(length):
-                self.vec[i] = values[i]
-            self.capacity_left = capacity - length
+                self.vec[i] = vec[i]
 
     fn __init__[
         D: DType = T, cap: Int = capacity
@@ -489,20 +507,19 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         self.vec[len(self)] = value
         self.capacity_left -= 1
 
-    # FIXME
-    # fn append(out self, other: Array[T, *_]):
-    #     """Appends the values of another Array up to Self.capacity.
+    fn append(mut self, other: Array[T, *_]):
+        """Appends the values of another Array up to Self.capacity.
 
-    #     Args:
-    #         other: The Array to append.
+        Args:
+            other: The Array to append.
 
-    #     Constraints:
-    #         Array can't be static.
-    #     """
+        Constraints:
+            Array can't be static.
+        """
 
-    #     constrained[not static, "Array can't be static."]()
-    #     for i in range(min(self.capacity_left, len(other))):
-    #         self.append(other.vec[i])
+        constrained[not static, "Array can't be static."]()
+        for i in range(min(Int(self.capacity_left), len(other))):
+            self.append(other.vec[i])
 
     fn __iter__(
         self,
@@ -613,7 +630,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         )
         string_buffer = List[UInt8](capacity=minimum_capacity)
         string_buffer.append(0)  # Null terminator
-        result = String(string_buffer^)
+        result = String(buffer=string_buffer^)
         result += "["
         for i in range(len(self)):
             result += String(self.vec[i])
@@ -785,7 +802,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         .
         """
 
-        start_norm = normalize_index["Array"](start, self)
+        start_norm = normalize_index["Array"](start, len(self))
         stop_norm = min(len(self) + 1, stop) if stop > -1 else (
             len(self) + stop
         )
@@ -904,7 +921,7 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             A copy of the element at the given index.
         """
-        norm_idx = normalize_index["Array"](idx, self)
+        norm_idx = normalize_index["Array"](idx, len(self))
         return self.vec[norm_idx]
 
     fn count(self, value: Self._scalar) -> Int:
@@ -951,7 +968,8 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         Returns:
             An UnsafePointer to a copy of the SIMD vector.
         """
-        ptr = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
+        data = InlineArray[Scalar[T], Self.simd_size](fill=0)
+        ptr = data.unsafe_ptr().origin_cast[mut=True]()
         alias size = Self._slice_simd_size
 
         @parameter
@@ -1487,6 +1505,10 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             The result.
         """
 
+        print(self.__str__())
+        print()
+        print(other.__str__())
+
         @parameter
         if static:
             return Array[DType.bool, capacity, static](self.vec == other.vec)
@@ -1640,14 +1662,14 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             The result.
         """
 
-        alias i = DType.uint64
+        alias i = DType.int64
 
         @parameter
         if T.is_floating_point():
             alias f = DType.float64
             var magn1: Scalar[f] = (self.vec.cast[f]() ** 2).reduce_add()
             var magn2: Scalar[f] = (other.vec.cast[f]() ** 2).reduce_add()
-            return rebind[Float64](self.dot[f](other) / (magn1 * magn2))
+            return (self.dot[f](other) / (magn1 * magn2)).cast[DType.float64]()
         elif T.is_signed():
             var magn1: Scalar[i] = (self.vec.cast[i]() ** 2).reduce_add()
             var magn2: Scalar[i] = (other.vec.cast[i]() ** 2).reduce_add()
@@ -1757,25 +1779,16 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
         @parameter
         if D != T:
-            # FIXME: experimental
-            res_p = UnsafePointer[Scalar[D]].alloc(Self.simd_size)
-            alias size = Self._slice_simd_size
-
-            for i in range(len(self), Self.simd_size):
-                res_p[i] = Scalar[D](0)
-            s_p = self.unsafe_ptr()
+            vec = SIMD[D, Self.simd_size](0)
 
             for i in range(len(self)):
-                res_p[i] = func(s_p[i])
+                vec[i] = func(self.vec[i])
 
-            res = Array[D, capacity, static](
-                ptr=res_p, length=len(self), unsafe_simd_size=True
+            return Array[D, capacity, static](
+                vec=vec, length=len(self), already_masked=True
             )
-            res_p.free()
-            s_p.free()
-            return res
 
-        res = Array[D, capacity, static](fill=0)
+        vec = SIMD[D, Self.simd_size](0)
         alias size = Self._slice_simd_size
 
         @parameter
@@ -1788,16 +1801,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
 
                 @parameter
                 for j in range(size):
-                    res.vec[offset + j] = func(sliced[j])
+                    vec[offset + j] = func(sliced[j])
 
             else:
                 for j in range(min(size, (len(self) - offset))):
-                    res.vec[offset + j] = func(sliced[j])
+                    vec[offset + j] = func(sliced[j])
 
-        @parameter
-        if not static:
-            res.capacity_left = capacity - len(self)
-        return res
+        return Array[D, capacity, static](
+            vec=vec, length=len(self), already_masked=True
+        )
 
     fn apply(
         mut self,
@@ -1889,23 +1901,15 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         .
         """
 
-        res_p = UnsafePointer[Scalar[T]].alloc(Self.simd_size)
+        vec = SIMD[T, Self.simd_size](0)
         alias size = Self._slice_simd_size
-
-        @parameter
-        for i in range(Self.simd_size // size):
-            res_p.store(i * size, SIMD[T, size](0))
-        s_p = self.unsafe_ptr()
         idx = 0
         for i in range(len(self)):
-            val = s_p[i]
+            val = self.vec[i]
             if func(val):
-                res_p[idx] = val
+                vec[idx] = val
                 idx += 1
 
-        res = Array[T, capacity, False](
-            ptr=res_p, length=(idx + 1), unsafe_simd_size=True
+        return Array[T, capacity, False](
+            vec=vec, length=(idx + 1), already_masked=True
         )
-        res_p.free()
-        s_p.free()
-        return res

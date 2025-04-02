@@ -72,7 +72,9 @@ def test_static_fopen_fclose():
 
 
 def _test_fdopen_fclose(libc: Libc, suffix: String):
-    file = String(_dir_of_current_file() / ("dummy_test_fdopen_fclose" + suffix))
+    file = String(
+        _dir_of_current_file() / ("dummy_test_fdopen_fclose" + suffix)
+    )
     ptr = char_ptr(file)
     with TryLibc(libc):
         filedes = libc.creat(ptr, 0o666)

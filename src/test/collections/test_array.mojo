@@ -374,7 +374,7 @@ def test_constructor_from_pointer():
     new_pointer[2] = 2
     # rest is not initialized
 
-    some_array = Array[DType.int8, 3](unsafe_pointer=new_pointer, length=3)
+    some_array = Array[DType.int8, 3](ptr=new_pointer, length=3)
     assert_equal(some_array[0], 0)
     assert_equal(some_array[1], 1)
     assert_equal(some_array[2], 2)
@@ -398,7 +398,7 @@ def test_constructor_from_other_list_through_pointer():
     size = len(initial_list)
     capacity = initial_list.capacity
     some_array = Array[DType.uint8, 3](
-        unsafe_pointer=initial_list.unsafe_ptr(), length=size
+        ptr=initial_list.unsafe_ptr(), length=size
     )
     assert_equal(some_array[0], 0)
     assert_equal(some_array[1], 1)
@@ -477,7 +477,7 @@ def test_array_contains():
 
 def test_indexing():
     l = Array[DType.int8, 3](1, 2, 3)
-    assert_equal(l[int(1)], 2)
+    assert_equal(l[Int(1)], 2)
     assert_equal(l[False], 1)
     assert_equal(l[True], 2)
     assert_equal(l[2], 3)
@@ -723,7 +723,7 @@ def test_reverse():
 
 
 def test_apply():
-    def mult[T: DType](x: Scalar[T]) -> Scalar[T]:
+    fn mult[T: DType](x: Scalar[T]) -> Scalar[T]:
         return x * Scalar[T](2)
 
     def test[T: DType]():
@@ -748,16 +748,30 @@ def test_apply():
 
 
 def test_map():
-    def func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
+    fn func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
         return x == 1
 
     def test[T: DType]():
         arr = Array[T, 53](
             1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 18
         )
-        assert_true((arr.map(func[T]) == (arr.vec == 1)).reduce_and())
+        alias A = Array[DType.bool, 53]
+        alias S = SIMD[DType.bool, 64]
+        assert_true(
+            (
+                rebind[A](arr.map(func[T]))
+                == Array[DType.bool, 53](rebind[S](arr.vec == 1), len(arr))
+            ).reduce_and()
+        )
         arr3 = Array[T, 256](fill=1)
-        assert_true((arr3.map(func[T]) == (arr3.vec == 1)).reduce_and())
+        alias A2 = Array[DType.bool, 256]
+        alias S2 = SIMD[DType.bool, 256]
+        assert_true(
+            (
+                rebind[A2](arr3.map(func[T]))
+                == Array[DType.bool, 256](rebind[S2](arr3.vec == 1), len(arr3))
+            ).reduce_and()
+        )
 
     test[DType.uint8]()
     test[DType.uint16]()
@@ -773,7 +787,7 @@ def test_map():
 
 
 def test_filter():
-    def func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
+    fn func[T: DType](x: Scalar[T]) -> Scalar[DType.bool]:
         return x < 11
 
     def test[T: DType]():

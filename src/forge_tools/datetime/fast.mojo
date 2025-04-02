@@ -2107,4 +2107,4 @@ struct DateTime8(Hashable, Stringable):
         """
 
         d = _cal.from_hash[_cal_h8](Int(value))
-        return Self(day=int(d[2]), hash_val=value).add(hours=int(d[3]))
+        return Self(day=Int(d[2]), hash_val=value).add(hours=Int(d[3]))
