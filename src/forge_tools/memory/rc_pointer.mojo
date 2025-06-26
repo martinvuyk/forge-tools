@@ -5,13 +5,12 @@ from .pointer import Pointer
 from .rc import Rc
 
 
-@value
 struct RcPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable.value].type,
     address_space: AddressSpace = AddressSpace.GENERIC,
-]:
+](Copyable, Movable):
     """Reference Counted Pointer.
 
     Safety:

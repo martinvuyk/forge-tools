@@ -3,7 +3,7 @@ from memory import UnsafePointer, stack_allocation, ArcPointer, Span
 from os import abort
 from sys import sizeof
 from sys.intrinsics import _type_is_eq
-from utils import StaticTuple, StringSlice
+from utils import StaticTuple
 from .socket import (
     # SocketInterface,
     SockType,
@@ -59,13 +59,12 @@ from forge_tools.ffi.c.constants import (
 )
 
 
-@value
 struct _UnixSocket[
     sock_family: SockFamily,
     sock_type: SockType,
     sock_protocol: SockProtocol,
     sock_address: SockAddr,
-]:
+](Copyable, Movable):
     """Generic POSIX compliant socket implementation."""
 
     var fd: ArcPointer[FileDescriptor]
@@ -145,7 +144,7 @@ struct _UnixSocket[
             ip = ip_buf.bitcast[C.u_int]().load()
             zero = StaticTuple[C.char, 8]()
             ai = sockaddr_in(Self._sock_family, port, in_addr(ip), zero)
-            ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
+            ai_ptr = UnsafePointer(to=ai).bitcast[sockaddr]()
             if (
                 self.lib.bind(self.fd[].value, ai_ptr, sizeof[sockaddr_in]())
                 == -1
@@ -186,7 +185,7 @@ struct _UnixSocket[
             ip = ip_buf.bitcast[C.u_int]().load()
             zero = StaticTuple[C.char, 8]()
             ai = sockaddr_in(Self._sock_family, port, in_addr(ip), zero)
-            ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
+            ai_ptr = UnsafePointer(to=ai).bitcast[sockaddr]()
             if (
                 self.lib.connect(self.fd[].value, ai_ptr, sizeof[sockaddr_in]())
                 == -1

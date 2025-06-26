@@ -23,8 +23,7 @@ from .timezone import (
 )
 
 
-@value
-# @register_passable("trivial")
+@register_passable("trivial")
 struct IsoFormat:
     """Available formats to parse from and to
     [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)."""
@@ -49,12 +48,12 @@ struct IsoFormat:
     """e.g. `1970-01-01T00:00:00`"""
     alias YYYY_MM_DD_T_HH_MM_SS_TZD = Self.YYYY_MM_DD + "T" + Self.HH_MM_SS + Self.TZD
     """e.g. `1970-01-01T00:00:00+00:00`"""
-    var selected: StringLiteral
+    var selected: StaticString
     """The selected IsoFormat."""
 
     @implicit
     fn __init__(
-        out self, selected: StringLiteral = Self.YYYY_MM_DD_T_HH_MM_SS_TZD
+        out self, selected: StaticString = Self.YYYY_MM_DD_T_HH_MM_SS_TZD
     ):
         """Construct an IsoFormat with selected fmt string.
 
@@ -80,21 +79,22 @@ struct IsoFormat:
 fn _get_strings(
     year: Int, month: Int, day: Int, hour: Int, minute: Int, second: Int
 ) -> (String, String, String, String, String, String):
-    yyyy = String(min(year, 9999))
     if year < 1000:
-        prefix = "0"
+        var prefix: StaticString = "0"
         if year < 100:
             prefix = "00"
             if year < 10:
                 prefix = "000"
-        yyyy = prefix + String(year)
+        yyyy = String(prefix, year)
+    else:
+        yyyy = String(min(year, 9999))
 
-    mm = String(min(month, 99)) if month > 9 else "0" + String(month)
-    dd = String(min(day, 99)) if day > 9 else "0" + String(day)
-    hh = String(min(hour, 99)) if hour > 9 else "0" + String(hour)
-    m_str = String(min(minute, 99)) if minute > 9 else "0" + String(minute)
-    ss = String(min(second, 99)) if second > 9 else "0" + String(second)
-    return yyyy, mm, dd, hh, m_str, ss
+    mm = String(min(month, 99)) if month > 9 else String("0", month)
+    dd = String(min(day, 99)) if day > 9 else String("0", day)
+    hh = String(min(hour, 99)) if hour > 9 else String("0", hour)
+    m_str = String(min(minute, 99)) if minute > 9 else String("0", minute)
+    ss = String(min(second, 99)) if second > 9 else String("0", second)
+    return yyyy^, mm^, dd^, hh^, m_str^, ss^
 
 
 fn to_iso[
@@ -143,28 +143,28 @@ fn to_iso[
     s = _get_strings(
         Int(year), Int(month), Int(day), Int(hour), Int(minute), Int(second)
     )
-    yyyy_mm_dd = s[0] + "-" + s[1] + "-" + s[2]
-    hh_mm_ss = s[3] + ":" + s[4] + ":" + s[5]
+    yyyy_mm_dd = String(s[0], "-", s[1], "-", s[2])
+    hh_mm_ss = String(s[3], ":", s[4], ":", s[5])
 
     @parameter
     if iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS:
-        return yyyy_mm_dd + "T" + hh_mm_ss
+        return String(yyyy_mm_dd, "T", hh_mm_ss)
     elif iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS_TZD:
-        return yyyy_mm_dd + "T" + hh_mm_ss + tzd
+        return String(yyyy_mm_dd, "T", hh_mm_ss, tzd)
     elif iso.selected == iso.YYYY_MM_DD___HH_MM_SS:
-        return yyyy_mm_dd + " " + hh_mm_ss
+        return String(yyyy_mm_dd, " ", hh_mm_ss)
     elif iso.selected == iso.YYYYMMDDHHMMSS:
-        return s[0] + s[1] + s[2] + s[3] + s[4] + s[5]
+        return String(s[0], s[1], s[2], s[3], s[4], s[5])
     elif iso.selected == iso.YYYYMMDDHHMMSSTZD:
-        return s[0] + s[1] + s[2] + s[3] + s[4] + s[5] + tzd[:3] + tzd[-2:]
+        return String(s[0], s[1], s[2], s[3], s[4], s[5], tzd[:3], tzd[-2:])
     elif iso.selected == iso.YYYYMMDD:
-        return s[0] + s[1] + s[2] + s[3]
+        return String(s[0], s[1], s[2], s[3])
     elif iso.selected == iso.HHMMSS:
-        return s[3] + s[4] + s[5]
+        return String(s[3], s[4], s[5])
     elif iso.selected == iso.YYYY_MM_DD:
         return yyyy_mm_dd
     elif iso.selected == iso.HH_MM_SS:
-        return s[3] + ":" + s[4] + ":" + s[5]
+        return String(s[3], ":", s[4], ":", s[5])
     else:
         constrained[False, "that IsoFormat is not yet supported"]()
         return ""
@@ -260,7 +260,7 @@ fn from_iso[
         if s[19] == "-":
             sign = -1
         h = atol(s[20:22])
-        m = 0
+        m: Int
         if s[22] == ":":
             m = atol(s[23:25])
         else:
@@ -271,7 +271,7 @@ fn from_iso[
         if s[14] == "-":
             sign = -1
         h = atol(s[15:17])
-        m = 0
+        m: Int
         if s[17] == ":":
             m = atol(s[18:20])
         else:
@@ -281,8 +281,8 @@ fn from_iso[
     return result^
 
 
-@value
-struct _DateTime:
+@fieldwise_init
+struct _DateTime(Copyable, Movable):
     var year: UInt16
     var month: UInt8
     var day: UInt8
@@ -294,7 +294,7 @@ struct _DateTime:
     var n_second: UInt16
 
 
-fn strptime(s: String, format_str: StringLiteral) -> Optional[_DateTime]:
+fn strptime(s: String, format_str: StaticString) -> Optional[_DateTime]:
     """Parses time from a `String`.
 
     Args:

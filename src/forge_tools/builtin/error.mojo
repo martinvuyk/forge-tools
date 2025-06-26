@@ -17,8 +17,10 @@
 # ===----------------------------------------------------------------------===#
 
 
-@value
-struct Error2[T: StringLiteral = "AnyError"](Stringable, Boolable):
+@fieldwise_init
+struct Error2[T: StaticString = "AnyError"](
+    Boolable, Copyable, Movable, Stringable
+):
     """This type represents a parametric Error."""
 
     alias kind = T

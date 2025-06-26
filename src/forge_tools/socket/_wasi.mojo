@@ -12,13 +12,12 @@ from .address import SockFamily, SockAddr, IPv4Addr, IPv6Addr
 from ._unix import _UnixSocket
 
 
-@value
 struct _WASISocket[
     sock_family: SockFamily,
     sock_type: SockType,
     sock_protocol: SockProtocol,
     sock_address: SockAddr,
-]:
+](Copyable, Movable):
     alias _ST = _UnixSocket[sock_family, sock_type, sock_protocol, sock_address]
     var _sock: Self._ST
 

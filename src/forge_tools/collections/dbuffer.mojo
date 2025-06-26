@@ -4,13 +4,13 @@ from sys.info import bitwidthof
 from memory import Span
 
 
-@value
+@fieldwise_init
 struct _DBufferIter[
     is_mutable: Bool, //,
-    T: CollectionElement,
+    T: Copyable & Movable,
     origin: Origin[is_mutable],
     forward: Bool = True,
-]:
+](Copyable, Movable):
     """Iterator for DBuffer.
 
     Parameters:
@@ -57,9 +57,9 @@ struct _DBufferIter[
 
 struct DBuffer[
     is_mutable: Bool, //,
-    T: CollectionElement,
+    T: Copyable & Movable,
     origin: Origin[is_mutable],
-](CollectionElementNew):
+](Boolable, Copyable, Movable, Sized):
     """A potentially owning view of contiguous data.
 
     Parameters:
@@ -212,9 +212,7 @@ struct DBuffer[
         Args:
             array: The array to which the DBuffer refers.
         """
-        self = Self(
-            ptr=UnsafePointer.address_of(array).bitcast[T](), length=UInt(size)
-        )
+        self = Self(ptr=UnsafePointer(to=array).bitcast[T](), length=UInt(size))
 
     @always_inline
     @implicit
@@ -350,13 +348,13 @@ struct DBuffer[
     # accesses to the origin.
     @__unsafe_disable_nested_origin_exclusivity
     fn __eq__[
-        T: EqualityComparableCollectionElement, //
+        T: EqualityComparable & Copyable & Movable, //
     ](self: DBuffer[T, origin], rhs: DBuffer[T]) -> Bool:
         """Verify if DBuffer is equal to another DBuffer.
 
         Parameters:
             T: The type of the elements in the DBuffer. Must implement the
-                traits `EqualityComparable` and `CollectionElement`.
+                traits `EqualityComparable`, `Copyable`, and `Movable`.
 
         Args:
             rhs: The DBuffer to compare against.
@@ -382,13 +380,13 @@ struct DBuffer[
 
     @always_inline
     fn __ne__[
-        T: EqualityComparableCollectionElement, //
+        T: EqualityComparable & Copyable & Movable, //
     ](self: DBuffer[T, origin], rhs: DBuffer[T]) -> Bool:
         """Verify if DBuffer is not equal to another DBuffer.
 
         Parameters:
             T: The type of the elements in the DBuffer. Must implement the
-              traits `EqualityComparable` and `CollectionElement`.
+              traits `EqualityComparable`, `Copyable`, and `Movable`.
 
         Args:
             rhs: The DBuffer to compare against.

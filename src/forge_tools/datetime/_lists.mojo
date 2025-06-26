@@ -14,7 +14,7 @@
 
 from .zoneinfo import Leapsecs
 
-alias tz_list = List[StringLiteral](
+alias tz_list = List[StaticString](
     "Africa/Abidjan",
     "Africa/Algiers",
     "Africa/Bissau",

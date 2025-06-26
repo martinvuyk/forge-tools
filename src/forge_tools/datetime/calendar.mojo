@@ -135,7 +135,7 @@ struct CalendarHashes:
         self.selected = selected
 
 
-trait _Calendarized(CollectionElement):
+trait _Calendarized(Copyable, Movable):
     @staticmethod
     fn _get_default_max_year() -> UInt16:
         ...
@@ -343,8 +343,7 @@ trait _Calendarized(CollectionElement):
         ...
 
 
-@value
-struct Calendar[T: _Calendarized = Gregorian[]]:
+struct Calendar[T: _Calendarized = Gregorian[]](Copyable, Movable):
     """`Calendar` struct.
 
     Parameters:
@@ -819,7 +818,6 @@ struct Calendar[T: _Calendarized = Gregorian[]]:
 alias _m: UInt16 = 2**16 - 1
 
 
-@value
 struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
     """`Gregorian` Calendar.
 
@@ -1499,7 +1497,6 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
 
-@value
 struct UTCFast(_Calendarized):
     """`UTCFast` Calendar."""
 
@@ -2051,7 +2048,6 @@ struct UTCFast(_Calendarized):
         return Gregorian._get_min_nanosecond()
 
 
-@value
 struct ISOCalendar(_Calendarized):
     """`ISOCalendar` Calendar."""
 

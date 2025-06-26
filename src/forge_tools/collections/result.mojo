@@ -59,10 +59,10 @@ elif String(d.err) == "error 2":
 A Result with an Error can also be retuned early:
 
 ```mojo
-fn func_that_can_err[A: CollectionElement]() -> Result[A]:
+fn func_that_can_err[A: Copyable & Movable]() -> Result[A]:
     ...
 
-fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T]:
+fn return_early_if_err[T: Copyable & Movable, A: Copyable & Movable]() -> Result[T]:
     result: Result[A] = func_that_can_err[A]()
     if not result:
         # the internal err gets transferred to a Result[T]
@@ -86,8 +86,7 @@ from utils import Variant
 # ===----------------------------------------------------------------------===#
 
 
-@value
-struct Result[T: CollectionElement](CollectionElement, Boolable):
+struct Result[T: Copyable & Movable](Boolable, Copyable, Movable):
     """A type modeling a value which may or may not be present.
     With an Error in the case of failure.
 
@@ -95,7 +94,7 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     Your value can take on a value or `None`, and you need to check
     and explicitly extract the value to get it out.
 
-    Currently T is required to be a `CollectionElement` so we can implement
+    Currently T is required to be `Copyable & Movable` so we can implement
     copy/move for Result and allow it to be used in collections itself.
 
     Parameters:
@@ -143,10 +142,10 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
     A Result with an Error can also be retuned early:
 
     ```mojo
-    fn func_that_can_err[A: CollectionElement]() -> Result[A]:
+    fn func_that_can_err[A: Copyable & Movable]() -> Result[A]:
         return Error("failed")
 
-    fn return_early_if_err[T: CollectionElement, A: CollectionElement]() -> Result[T]:
+    fn return_early_if_err[T: Copyable & Movable, A: Copyable & Movable]() -> Result[T]:
         result: Result[A] = func_that_can_err[A]()
         if not result:
             # the internal err gets transferred to a Result[T]
@@ -185,20 +184,17 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 
     @always_inline("nodebug")
     @implicit
-    fn __init__(out self, value: Tuple[NoneType, Error], /):
+    fn __init__(out self, value: Tuple[NoneType, Error]):
         """Create an empty `Result` with an `Error`.
 
         Args:
             value: Must be exactly (`None`, `Error`).
         """
-        if len(value) < 2:
-            self = Self()
-        else:
-            self = Self(err=value[1])
+        self = Self(err=value[1])
 
     @always_inline("nodebug")
     @implicit
-    fn __init__[A: CollectionElement](out self, owned other: Result[A]):
+    fn __init__[A: Copyable & Movable](out self, owned other: Result[A]):
         """Create a `Result` by transferring another `Result`'s Error.
 
         Parameters:
@@ -367,8 +363,9 @@ struct Result[T: CollectionElement](CollectionElement, Boolable):
 from forge_tools.builtin.error import Error2
 
 
-@value
-struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
+struct Result2[T: Copyable & Movable, E: StaticString](
+    Boolable, Copyable, Movable
+):
     """A parametric `Result2` type. A type modeling a value which may or may not
     be present. With an Error in the case of failure.
 
@@ -392,7 +389,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
         if a.err:
             print(a.err) # IndexError: index out of bounds: -1
             return a # error message ("index out of bounds: -1") gets transferred
-        return "success"
+        return String("success")
     ```
     .
     """
@@ -430,7 +427,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
 
     @always_inline("nodebug")
     @implicit
-    fn __init__[A: CollectionElement](out self, owned other: Result2[A, E]):
+    fn __init__[A: Copyable & Movable](out self, owned other: Result2[A, E]):
         """Create a `Result` by transferring another `Result`'s Error.
 
         Parameters:
@@ -444,7 +441,7 @@ struct Result2[T: CollectionElement, E: StringLiteral](Boolable):
     @always_inline("nodebug")
     @implicit
     fn __init__[
-        A: CollectionElement, B: StringLiteral
+        A: Copyable & Movable, B: StaticString
     ](out self, owned other: Result2[A, B]):
         """Create a `Result` by transferring another `Result`'s Error message.
 

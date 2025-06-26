@@ -47,11 +47,6 @@ alias _max_delta = (~UInt64(0) // (365 * 24 * 60 * 60 * 1_000_000_000)).cast[
 Gregorian calendar with year = 365 d * 24 h, 60 min, 60 s, 10^9 ns"""
 
 
-trait _IntCollect(Intable):
-    ...
-
-
-@value
 # @register_passable("trivial")
 struct DateTime[
     dst_storage: ZoneStorageDST = ZoneInfoMem32,
@@ -60,7 +55,7 @@ struct DateTime[
     pyzoneinfo: Bool = True,
     native: Bool = False,
     C: _Calendarized = Gregorian[],
-](Hashable, Stringable):
+](Copyable, EqualityComparable, Hashable, Movable, Stringable):
     """Custom `Calendar` and `TimeZone` may be passed in.
     By default, it uses `PythonCalendar` which is a Gregorian
     calendar with its given epoch and max year:
@@ -137,15 +132,15 @@ struct DateTime[
     ]
 
     fn __init__[
-        T1: _IntCollect = Int,
-        T2: _IntCollect = Int,
-        T3: _IntCollect = Int,
-        T4: _IntCollect = Int,
-        T5: _IntCollect = Int,
-        T6: _IntCollect = Int,
-        T7: _IntCollect = Int,
-        T8: _IntCollect = Int,
-        T9: _IntCollect = Int,
+        T1: Intable = Int,
+        T2: Intable = Int,
+        T3: Intable = Int,
+        T4: Intable = Int,
+        T5: Intable = Int,
+        T6: Intable = Int,
+        T7: Intable = Int,
+        T8: Intable = Int,
+        T9: Intable = Int,
     ](
         out self,
         year: Optional[T1] = None,
@@ -163,15 +158,15 @@ struct DateTime[
         """Construct a `DateTime` from valid values.
 
         Parameters:
-            T1: Any type that is Intable and CollectionElement.
-            T2: Any type that is Intable and CollectionElement.
-            T3: Any type that is Intable and CollectionElement.
-            T4: Any type that is Intable and CollectionElement.
-            T5: Any type that is Intable and CollectionElement.
-            T6: Any type that is Intable and CollectionElement.
-            T7: Any type that is Intable and CollectionElement.
-            T8: Any type that is Intable and CollectionElement.
-            T9: Any type that is Intable and CollectionElement.
+            T1: Any type that is Intable.
+            T2: Any type that is Intable.
+            T3: Any type that is Intable.
+            T4: Any type that is Intable.
+            T5: Any type that is Intable.
+            T6: Any type that is Intable.
+            T7: Any type that is Intable.
+            T8: Any type that is Intable.
+            T9: Any type that is Intable.
 
         Args:
             year: Year.
@@ -852,7 +847,7 @@ struct DateTime[
         )
 
     @always_inline
-    fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
+    fn _compare[op: StaticString](self, other: Self._UnboundCal) -> Bool:
         var s: UInt
         var o: UInt
         if self.tz != other.tz:
@@ -1229,7 +1224,7 @@ struct DateTime[
     @staticmethod
     fn strptime(
         s: String,
-        format_str: StringLiteral,
+        format_str: StaticString,
         tz: Optional[Self._tz] = None,
         calendar: Calendar[C] = Calendar[C](),
     ) -> Optional[Self]:
@@ -1301,7 +1296,7 @@ struct DateTime[
             day = p[2]
 
             @parameter
-            if iso.selected in (iso.HHMMSS, iso.HH_MM_SS):
+            if iso.selected in [iso.HHMMSS, iso.HH_MM_SS]:
                 year = calendar.min_year
                 month = calendar.min_month
                 day = calendar.min_day

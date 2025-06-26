@@ -3,7 +3,7 @@
 from sys.info import is_64bit, os_is_windows
 from sys.ffi import external_call
 from os import abort
-from utils import StaticTuple, StringSlice
+from utils import StaticTuple
 from memory import memcpy, UnsafePointer
 
 # ===----------------------------------------------------------------------=== #
@@ -154,10 +154,11 @@ fn char_ptr_to_string(s: UnsafePointer[C.char]) -> String:
     idx = 0
     while s[idx] != 0:
         idx += 1
-    idx += 1
-    buf = UnsafePointer[UInt8].alloc(idx)
-    memcpy(buf.bitcast[C.char](), s, idx)
-    return String(ptr=buf, length=idx)
+    return String(
+        bytes=rebind[Span[Byte, MutableAnyOrigin]](
+            Span(ptr=s.bitcast[Byte](), length=idx)
+        )
+    )
 
 
 # ===----------------------------------------------------------------------=== #
@@ -174,7 +175,7 @@ alias in_port_t = C.u_short
 """Type: `in_port_t`."""
 
 
-@value
+@fieldwise_init
 @register_passable("trivial")
 struct in_addr:
     """Incoming IPv4 Socket Address."""
@@ -183,7 +184,7 @@ struct in_addr:
     """Source Address."""
 
 
-@value
+@fieldwise_init
 @register_passable("trivial")
 struct in6_addr:
     """Incoming IPv6 Socket Address."""
@@ -192,7 +193,7 @@ struct in6_addr:
     """Source IPv6 Address."""
 
 
-@value
+@fieldwise_init
 @register_passable("trivial")
 struct sockaddr:
     """Socket Address."""
@@ -203,7 +204,7 @@ struct sockaddr:
     """Socket Address."""
 
 
-@value
+@fieldwise_init
 @register_passable("trivial")
 struct sockaddr_in:
     """Incoming Socket Address."""
@@ -218,7 +219,7 @@ struct sockaddr_in:
     """Socket zero padding."""
 
 
-@value
+@fieldwise_init
 @register_passable("trivial")
 struct sockaddr_in6:
     """Incoming IPv6 Socket Address."""
@@ -235,7 +236,7 @@ struct sockaddr_in6:
     """Scope ID."""
 
 
-@value
+@fieldwise_init
 @register_passable("trivial")
 struct addrinfo:
     """Address Information."""

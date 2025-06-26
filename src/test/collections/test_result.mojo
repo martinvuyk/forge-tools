@@ -5,21 +5,21 @@ from collections import Dict
 from forge_tools.collections.result import Result, Result2, Error2
 
 
-def _returning_err[T: CollectionElement](value: T) -> Result[T]:
+def _returning_err[T: Copyable & Movable](value: T) -> Result[T]:
     result = Result[T](err=Error("something"))
     if not result:
         return result
     raise Error("shouldn't get here")
 
 
-def _returning_ok[T: CollectionElement](value: T) -> Result[T]:
+def _returning_ok[T: Copyable & Movable](value: T) -> Result[T]:
     result = Result[T](value)
     if result:
         return result
     raise Error("shouldn't get here")
 
 
-def _returning_transferred_err[T: CollectionElement](value: T) -> Result[T]:
+def _returning_transferred_err[T: Copyable & Movable](value: T) -> Result[T]:
     # this value and err at the same time will never happen, just for testing
     # the value "some other string" should NOT get transferred
     res1 = Result(String("some other string"))
@@ -29,7 +29,7 @@ def _returning_transferred_err[T: CollectionElement](value: T) -> Result[T]:
     raise Error("shouldn't get here")
 
 
-def _returning_none_err[T: CollectionElement](value: T) -> Result[T]:
+def _returning_none_err[T: Copyable & Movable](value: T) -> Result[T]:
     res1 = Result[String](err=Error("some error"))
     if res1.err:
         return None, res1.err
@@ -41,7 +41,7 @@ def test_none_err_constructor():
     assert_true(not res1 and res1.err and String(res1.err) == "some error")
     res2 = _returning_none_err[String]("some string")
     assert_true(not res2 and res2.err and String(res2.err) == "some error")
-    res3 = _returning_none_err[StringLiteral]("some string")
+    res3 = _returning_none_err[StaticString]("some string")
     assert_true(not res3 and res3.err and String(res3.err) == "some error")
     res4 = _returning_none_err("some string")
     assert_true(not res4 and res4.err and String(res4.err) == "some error")
@@ -52,7 +52,7 @@ def test_error_transfer():
     assert_true(res1 is None and String(res1.err) == "some error")
     res2 = _returning_transferred_err[String]("some string")
     assert_true(res2 is None and String(res2.err) == "some error")
-    res3 = _returning_transferred_err[StringLiteral]("some string")
+    res3 = _returning_transferred_err[StaticString]("some string")
     assert_true(res3 is None and String(res3.err) == "some error")
     res4 = _returning_transferred_err("some string")
     assert_true(res4 is None and String(res4.err) == "some error")
@@ -183,7 +183,7 @@ def _do_some_other_thing() -> Result2[String, "OtherError"]:
     if a.err:
         print(String(a.err))  # IndexError: index out of bounds: -1
         return a
-    return "success"
+    return String("success")
 
 
 def test_result2():

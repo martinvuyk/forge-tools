@@ -316,7 +316,7 @@ def _test_bind_listen(libc: Libc):
         ip = ip_buf.bitcast[C.u_int]().load()
         zero = StaticTuple[C.char, 8]()
         ai = sockaddr_in(AF_INET, port, ip, zero)
-        ai_ptr = UnsafePointer.address_of(ai).bitcast[sockaddr]()
+        ai_ptr = UnsafePointer(to=ai).bitcast[sockaddr]()
         assert_true(libc.bind(fd, ai_ptr, sizeof[sockaddr_in]()) != -1)
         _ = ai
         assert_true(libc.listen(fd, C.int(0)) != -1)

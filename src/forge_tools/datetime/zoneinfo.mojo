@@ -21,7 +21,6 @@ from .calendar import PythonCalendar
 alias _cal = PythonCalendar
 
 
-# @value
 @register_passable("trivial")
 struct Offset:
     """Only supports hour offsets: [0, 15] and minute offsets
@@ -185,7 +184,6 @@ struct Offset:
         return self.buf == other.buf
 
 
-# @value
 @register_passable("trivial")
 struct TzDT:
     """`TzDT` stores the rules for DST start/end."""
@@ -283,7 +281,6 @@ struct TzDT:
         return self.buf == other.buf
 
 
-# @value
 @register_passable("trivial")
 struct ZoneDST:
     """`ZoneDST` stores both start and end dates, and
@@ -334,8 +331,8 @@ struct ZoneDST:
         )
 
 
-@value
-struct ZoneInfoFile32(CollectionElement):
+@fieldwise_init
+struct ZoneInfoFile32(ZoneStorageDST):
     """ZoneInfo to store Offset of tz with DST, lives in a file. Smallest memory
     footprint but only supports 512 timezones (there are ~ 418). The closer
     to that number the more likely collisions in the hashing function might
@@ -352,10 +349,10 @@ struct ZoneInfoFile32(CollectionElement):
             self._file = Path(".") / "zoneinfo_dump"
 
     @staticmethod
-    fn hash(key: StringLiteral) -> UInt64:
+    fn hash(key: String) -> UInt64:
         return UInt64((hash(key) >> 48) % 512)
 
-    fn add(mut self, key: StringLiteral, value: ZoneDST):
+    fn add(mut self, key: String, value: ZoneDST):
         """Add a value to the file.
 
         Args:
@@ -374,13 +371,13 @@ struct ZoneInfoFile32(CollectionElement):
                     (value.buf >> 0).cast[DType.uint8](),
                     0,
                 )
-                f.write(String(buffer=items))
+                f.write(String(bytes=items))
         except:
             # TODO: propper logging
             print("could not save zoneinfo to file")
             pass
 
-    fn get(self, key: StringLiteral) -> OptionalReg[ZoneDST]:
+    fn get(self, key: String) -> OptionalReg[ZoneDST]:
         """Get a value from the file.
 
         Args:
@@ -417,8 +414,8 @@ struct ZoneInfoFile32(CollectionElement):
             pass
 
 
-@value
-struct ZoneInfoFile8(CollectionElement):
+@fieldwise_init
+struct ZoneInfoFile8(ZoneStorageNoDST):
     """ZoneInfo to store Offset of tz with no DST, lives in a file. Smallest
     memory footprint but only supports 512 timezones (there are ~ 418). The
     closer to that number the more likely collisions in the hashing function
@@ -435,10 +432,10 @@ struct ZoneInfoFile8(CollectionElement):
             self._file = Path(".") / "zoneinfo_dump"
 
     @staticmethod
-    fn hash(key: StringLiteral) -> UInt64:
+    fn hash(key: String) -> UInt64:
         return UInt64((hash(key) >> 48) % 512)
 
-    fn add(mut self, key: StringLiteral, value: Offset):
+    fn add(mut self, key: String, value: Offset):
         """Add a value to the file.
 
         Args:
@@ -450,13 +447,15 @@ struct ZoneInfoFile8(CollectionElement):
             with open(self._file, "wb") as f:
                 _ = f.seek(Self.hash(key))
                 # FIXME: this is ugly
-                f.write(String(buffer=List[UInt8](value.buf, 0)))
+                var val = String(capacity=1)
+                val.append_byte(value.buf)
+                f.write(val)
         except:
             # TODO: propper logging
             print("could not save zoneinfo to file")
             pass
 
-    fn get(self, key: StringLiteral) -> OptionalReg[Offset]:
+    fn get(self, key: String) -> OptionalReg[Offset]:
         """Get a value from the file.
 
         Args:
@@ -487,19 +486,19 @@ struct ZoneInfoFile8(CollectionElement):
             pass
 
 
-@value
-struct ZoneInfoMem32(CollectionElement):
+@fieldwise_init
+struct ZoneInfoMem32(ZoneStorageDST):
     """`ZoneInfo` that lives in memory. For zones that have DST."""
 
-    var _zones: Dict[StringLiteral, UInt32]
+    var _zones: Dict[String, UInt32]
 
     fn __init__(out self):
         """Construct a `ZoneInfoMem32`."""
 
-        self._zones = Dict[StringLiteral, UInt32]()
+        self._zones = Dict[String, UInt32]()
 
     @always_inline
-    fn add(mut self, key: StringLiteral, value: ZoneDST):
+    fn add(mut self, key: String, value: ZoneDST):
         """Add a value to `ZoneInfoMem32`.
 
         Args:
@@ -510,7 +509,7 @@ struct ZoneInfoMem32(CollectionElement):
         self._zones[key] = value.buf
 
     @always_inline
-    fn get(self, key: StringLiteral) -> OptionalReg[ZoneDST]:
+    fn get(self, key: String) -> OptionalReg[ZoneDST]:
         """Get value from `ZoneInfoMem32`.
 
         Args:
@@ -526,18 +525,18 @@ struct ZoneInfoMem32(CollectionElement):
         return ZoneDST(value.unsafe_take())
 
 
-@value
-struct ZoneInfoMem8(CollectionElement):
+@fieldwise_init
+struct ZoneInfoMem8(ZoneStorageNoDST):
     """`ZoneInfo` that lives in memory. For zones that have no DST."""
 
-    var _zones: Dict[StringLiteral, UInt8]
+    var _zones: Dict[String, UInt8]
 
     fn __init__(out self):
         """Construct a `ZoneInfoMem8`."""
-        self._zones = Dict[StringLiteral, UInt8]()
+        self._zones = Dict[String, UInt8]()
 
     @always_inline
-    fn add(mut self, key: StringLiteral, value: Offset):
+    fn add(mut self, key: String, value: Offset):
         """Add a value to `ZoneInfoMem8`.
 
         Args:
@@ -547,7 +546,7 @@ struct ZoneInfoMem8(CollectionElement):
         self._zones[key] = value.buf
 
     @always_inline
-    fn get(self, key: StringLiteral) -> OptionalReg[Offset]:
+    fn get(self, key: String) -> OptionalReg[Offset]:
         """Get value from `ZoneInfoMem8`.
 
         Args:
@@ -693,14 +692,14 @@ struct Leapsecs:
 #     return leapsecs
 
 
-trait ZoneStorageDST(CollectionElement):
+trait ZoneStorageDST(Copyable, Movable):
     """Trait that defines ZoneInfo storage structs."""
 
     fn __init__(out self):
         """Construct a `ZoneInfo`."""
         ...
 
-    fn add(mut self, key: StringLiteral, value: ZoneDST):
+    fn add(mut self, key: String, value: ZoneDST):
         """Add a value to `ZoneInfo`.
 
         Args:
@@ -709,7 +708,7 @@ trait ZoneStorageDST(CollectionElement):
         """
         ...
 
-    fn get(self, key: StringLiteral) -> OptionalReg[ZoneDST]:
+    fn get(self, key: String) -> OptionalReg[ZoneDST]:
         """Get value from `ZoneInfo`.
 
         Args:
@@ -721,14 +720,14 @@ trait ZoneStorageDST(CollectionElement):
         ...
 
 
-trait ZoneStorageNoDST(CollectionElement):
+trait ZoneStorageNoDST(Copyable, Movable):
     """Trait that defines ZoneInfo storage structs."""
 
     fn __init__(out self):
         """Construct a `ZoneInfo`."""
         ...
 
-    fn add(mut self, key: StringLiteral, value: Offset):
+    fn add(mut self, key: String, value: Offset):
         """Add a value to `ZoneInfo`.
 
         Args:
@@ -737,7 +736,7 @@ trait ZoneStorageNoDST(CollectionElement):
         """
         ...
 
-    fn get(self, key: StringLiteral) -> OptionalReg[Offset]:
+    fn get(self, key: String) -> OptionalReg[Offset]:
         """Get value from `ZoneInfo`.
 
         Args:
@@ -749,8 +748,8 @@ trait ZoneStorageNoDST(CollectionElement):
         ...
 
 
-@value
-struct ZoneInfo[T: ZoneStorageDST, A: ZoneStorageNoDST]:
+@fieldwise_init
+struct ZoneInfo[T: ZoneStorageDST, A: ZoneStorageNoDST](Copyable, Movable):
     """ZoneInfo.
 
     Parameters:
@@ -768,9 +767,7 @@ struct ZoneInfo[T: ZoneStorageDST, A: ZoneStorageNoDST]:
 
 fn get_zoneinfo[
     T: ZoneStorageDST = ZoneInfoMem32, A: ZoneStorageNoDST = ZoneInfoMem8
-](owned timezones: List[StringLiteral] = List[StringLiteral]()) -> Optional[
-    ZoneInfo[T, A]
-]:
+](owned timezones: List[String] = List[String]()) -> Optional[ZoneInfo[T, A]]:
     """Get all zoneinfo available. First tries to get it
     from the OS, then from the internet, then falls back
     on hardcoded values.
@@ -807,12 +804,12 @@ fn get_zoneinfo[
         Meanwhile 2 public APIs can be used https://worldtimeapi.org/api
         and https://timeapi.io/swagger/index.html .
     """
-    dst_zones = T()
-    no_dst_zones = A()
+    _dst_zones = T()
+    _no_dst_zones = A()
     # if len(timezones) == 0:
     #     from ._lists import tz_list
 
-    #     timezones = List[StringLiteral](tz_list)
+    #     timezones = List[String](tz_list)
     # try:
     #     # TODO: this should get zoneinfo from the OS it's compiled in
     #     # for Linux the files are under /usr/share/zoneinfo
@@ -841,7 +838,7 @@ fn get_zoneinfo[
     #         dst_end: PythonObject = ""
     #         if not data["hasDayLightSaving"]:
     #             _ = h, m, sign
-    #             # TODO: somehow force cast python object to StringLiteral
+    #             # TODO: somehow force cast python object to String
     #             no_dst_zones.add(item[], Offset(abs(h), abs(m), sign))
     #             continue
     #         # -1 is to avoid Z timezone designation that
@@ -862,7 +859,7 @@ fn get_zoneinfo[
     #         dow_end = UInt8(Int(dt_end.weekday()))
     #         eom_end = UInt8(0 if dt_end <= 15 else 1)
 
-    #         # TODO: somehow force cast python object to StringLiteral
+    #         # TODO: somehow force cast python object to String
     #         dst_zones.add(
     #             item[],
     #             ZoneDST(

@@ -34,14 +34,13 @@ from .zoneinfo import (
 )
 
 
-@value
 struct TimeZone[
     dst_storage: ZoneStorageDST = ZoneInfoMem32,
     no_dst_storage: ZoneStorageNoDST = ZoneInfoMem8,
     iana: Bool = True,
     pyzoneinfo: Bool = True,
     native: Bool = False,
-]:
+](Copyable, Movable, Writable):
     """`TimeZone` struct. Because of a POSIX standard, if you set
     the tz_str e.g. Etc/UTC-4 it means 4 hours east of UTC
     which is UTC + 4 in numbers. That is:
@@ -74,7 +73,7 @@ struct TimeZone[
             using the given offsets when the timezone was constructed.
     """
 
-    var tz_str: StringLiteral
+    var tz_str: StaticString
     """[`TZ identifier`](
         https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)."""
     var has_dst: Bool
@@ -84,7 +83,7 @@ struct TimeZone[
 
     fn __init__(
         out self,
-        tz_str: StringLiteral = "Etc/UTC",
+        tz_str: StaticString = "Etc/UTC",
         offset_h: UInt8 = 0,
         offset_m: UInt8 = 0,
         sign: UInt8 = 1,
@@ -149,7 +148,7 @@ struct TimeZone[
                 return
             self._no_dst.add(tz_str, tz.value())
 
-    fn __getattr__(self, name: StringLiteral) raises -> Int8:
+    fn __getattr__(self, name: StaticString) raises -> Int8:
         """Get the attribute.
 
         Args:
@@ -162,7 +161,7 @@ struct TimeZone[
             "ZoneInfo not found".
         """
 
-        if name not in List("offset_h", "offset_m", "sign"):
+        if name not in ["offset_h", "offset_m", "sign"]:
             constrained[False, "there is no such attribute"]()
             return 0
 
@@ -237,8 +236,12 @@ struct TimeZone[
             return data.value()
         return Offset(0, 0, 1)
 
+    @always_inline
+    fn write_to[W: Writer](self, mut writer: W):
+        writer.write(self.tz_str)
+
     @always_inline("nodebug")
-    fn __str__(self) -> StringLiteral:
+    fn __str__(self) -> String:
         """Str.
 
         Returns:
@@ -247,7 +250,7 @@ struct TimeZone[
         return self.tz_str
 
     @always_inline("nodebug")
-    fn __repr__(self) -> StringLiteral:
+    fn __repr__(self) -> String:
         """Repr.
 
         Returns:

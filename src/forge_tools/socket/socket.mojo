@@ -235,7 +235,7 @@ struct SockPlatform:
     #     sock_protocol: SockProtocol,
     #     sock_address: SockAddr,
     #     sock_platform: SockPlatform,
-    # ](CollectionElement):
+    # ](Copyable, Movable):
     #     """Interface for Sockets."""
 
     #     fn __init__(out self) raises:
@@ -406,14 +406,13 @@ fn current_sock_platform() -> SockPlatform:
         return SockPlatform.UNIX
 
 
-@value
 struct Socket[
     sock_family: SockFamily = SockFamily.AF_INET,
     sock_type: SockType = SockType.SOCK_STREAM,
     sock_protocol: SockProtocol = SockProtocol.TCP,
     sock_address: SockAddr = IPv4Addr,
     sock_platform: SockPlatform = current_sock_platform(),
-](CollectionElement):
+](Copyable, Movable):
     """Struct for using Sockets. In the future this struct should be able to
     use any implementation that conforms to the `SocketInterface` trait, once
     traits can be parametrized. This will allow the user to implement the

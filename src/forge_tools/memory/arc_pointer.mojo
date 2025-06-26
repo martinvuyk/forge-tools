@@ -5,13 +5,12 @@ from memory import UnsafePointer
 from .pointer import Pointer
 
 
-@value
 struct ArcPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
-]:
+](Copyable, Movable):
     """Atomic Reference Counted Pointer."""
 
     alias _P = Pointer[type, origin, address_space]

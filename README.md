@@ -11,7 +11,7 @@ constantly changing.
 Clone the repo and run the package script
 
 ```bash
-magic run ./scripts/package-lib.sh
+pixi run build
 ```
 The semi-compiled package will be under `./build/forge_tools.mojopkg`
 
@@ -22,12 +22,12 @@ an update. I try to keep it updated to latest nightly.
 ## How to run tests
 Test an entire directory or subdirectory or specific file
 ```bash
-magic run ./scripts/test.sh src/test/
+pixi run test
 ```
 ## How to run benchmarks
 Run an entire directory or subdirectory or specific file (sequentially)
 ```bash
-magic run ./scripts/benchmark.sh src/benchmarks/
+pixi run benchmark
 ```
 
 # Packages

@@ -43,11 +43,6 @@ import .dt_str
 alias _cal_hash = CalendarHashes(32)
 
 
-trait _IntCollect(Intable):
-    ...
-
-
-@value
 # @register_passable("trivial")
 struct Date[
     dst_storage: ZoneStorageDST = ZoneInfoMem32,
@@ -56,7 +51,7 @@ struct Date[
     pyzoneinfo: Bool = True,
     native: Bool = False,
     C: _Calendarized = Gregorian[],
-](Hashable, Stringable):
+](Copyable, EqualityComparable, Hashable, Movable, Stringable):
     """Custom `Calendar` and `TimeZone` may be passed in.
     By default uses `PythonCalendar` which is a proleptic
     Gregorian calendar with its given epoch and max years:
@@ -120,7 +115,7 @@ struct Date[
     ]
 
     fn __init__[
-        T1: _IntCollect = Int, T2: _IntCollect = Int, T3: _IntCollect = Int
+        T1: Intable = Int, T2: Intable = Int, T3: Intable = Int
     ](
         out self,
         year: Optional[T1] = None,
@@ -132,9 +127,9 @@ struct Date[
         """Construct a `DateTime` from valid values.
 
         Parameters:
-            T1: Any type that is Intable and CollectionElement.
-            T2: Any type that is Intable and CollectionElement.
-            T3: Any type that is Intable and CollectionElement.
+            T1: Any type that is Intable.
+            T2: Any type that is Intable.
+            T3: Any type that is Intable.
 
         Args:
             year: Year.
@@ -582,7 +577,7 @@ struct Date[
         return self.calendar.hash[_cal_hash](self.year, self.month, self.day)
 
     @always_inline
-    fn _compare[op: StringLiteral](self, other: Self._UnboundCal) -> Bool:
+    fn _compare[op: StaticString](self, other: Self._UnboundCal) -> Bool:
         var s: UInt
         var o: UInt
         if self.tz != other.tz:
@@ -927,7 +922,7 @@ struct Date[
     @staticmethod
     fn strptime(
         s: String,
-        format_str: StringLiteral,
+        format_str: StaticString,
         tz: Optional[Self._tz] = None,
         calendar: Calendar[C] = Calendar[C](),
     ) -> Optional[Self]:
@@ -985,7 +980,7 @@ struct Date[
             year, month, day = p[0], p[1], p[2]
 
             @parameter
-            if iso.selected in (iso.HHMMSS, iso.HH_MM_SS):
+            if iso.selected in [iso.HHMMSS, iso.HH_MM_SS]:
                 year = calendar.min_year
                 month = calendar.min_month
                 day = calendar.min_day

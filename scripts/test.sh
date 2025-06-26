@@ -29,4 +29,4 @@ if [[ $# -gt 0 ]]; then
 fi
 
 # Run the tests
-mojo test -I build/ $TEST_PATH
+mojo test -D ASSERT=all -I build/ $TEST_PATH

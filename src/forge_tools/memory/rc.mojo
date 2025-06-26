@@ -89,4 +89,4 @@ struct Rc[T: Movable]:
         Returns:
             The UnsafePointer to the underlying memory.
         """
-        return UnsafePointer.address_of(self._inner[0].payload)
+        return UnsafePointer(to=self._inner[0].payload)

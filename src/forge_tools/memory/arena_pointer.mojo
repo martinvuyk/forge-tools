@@ -78,13 +78,12 @@ struct GladiatorPointer[
         return Bool(self._colosseum._ptr.unsafe_ptr()[])
 
 
-@value
 struct ColosseumPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
-]:
+](Copyable, Movable):
     """Colosseum Pointer (Arena Owner Pointer) that deallocates the arena when
     deleted."""
 
@@ -128,9 +127,7 @@ struct ColosseumPointer[
         memset(p, 0xFF, amnt)
         s._free_slots = p
         s._len = length // 8 + length % 8
-        s._self_ptr = Self._S(
-            UnsafePointer.address_of(s).bitcast[OpaquePointer]()
-        )
+        s._self_ptr = Self._S(UnsafePointer(to=s).bitcast[OpaquePointer]())
         self = Self(other=s)
 
     @staticmethod
@@ -248,13 +245,12 @@ struct ColosseumPointer[
         self._ptr.free()
 
 
-@value
 struct SpartacusPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
-]:
+](Copyable, Movable):
     """Reference Counted Arena Pointer that deallocates the arena when it's the
     last one.
 
@@ -274,13 +270,12 @@ struct SpartacusPointer[
     ...
 
 
-@value
 struct FlammaPointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
-]:
+](Copyable, Movable):
     """Atomic Reference Counted Arena Pointer that deallocates the arena when
     it's the last one.
 

@@ -11,13 +11,12 @@ from .socket import (
 from .address import SockFamily, SockAddr, IPv4Addr, IPv6Addr
 
 
-@value
 struct _WindowsSocket[
     sock_family: SockFamily,
     sock_type: SockType,
     sock_protocol: SockProtocol,
     sock_address: SockAddr,
-]:
+](Copyable, Movable):
     var fd: ArcPointer[FileDescriptor]
     """The Socket's `ArcPointer[FileDescriptor]`."""
 

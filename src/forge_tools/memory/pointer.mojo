@@ -28,13 +28,12 @@ trait SafePointer:
         ...
 
 
-@value
 struct Pointer[
     is_mutable: Bool, //,
     type: AnyType,
     origin: Origin[is_mutable],
     address_space: AddressSpace = AddressSpace.GENERIC,
-]:
+](Copyable, Movable):
     """Defines a base pointer.
 
     Safety:

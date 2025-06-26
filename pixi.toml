@@ -7,6 +7,10 @@ platforms = ["osx-arm64", "linux-aarch64", "linux-64"]
 version = "0.1.0"
 
 [tasks]
+build = { cmd = "./scripts/package-lib.sh" }
+format = { cmd = "mojo format ./src" }
+test = { cmd = "./scripts/test.sh" }
+benchmark = { cmd = "./scripts/benchmark.sh" }
 
 [dependencies]
-max = ">=25.3.0.dev2025040115,<26"
+max = ">=25.5.0.dev2025062505,<26"

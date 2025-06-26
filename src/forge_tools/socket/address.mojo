@@ -270,7 +270,7 @@ struct EtherPacket:
         return self._selected == value
 
 
-trait SockAddr(CollectionElement, Stringable):
+trait SockAddr(Copyable, Movable, Stringable):
     """Socket Address.
 
     Parameters:
@@ -343,8 +343,8 @@ trait SockAddr(CollectionElement, Stringable):
         ...
 
 
-@value
-struct IPv4Addr(SockAddr):
+@fieldwise_init
+struct IPv4Addr(Copyable, Movable, SockAddr):
     """IPv4 Address (AF_INET).
 
     Args:
@@ -434,8 +434,8 @@ struct IPv4Addr(SockAddr):
         return self.host + String(self.port)
 
 
-@value
-struct IPv6Addr(SockAddr):
+@fieldwise_init
+struct IPv6Addr(Copyable, Movable, SockAddr):
     """IPv6 Address (AF_INET6).
 
     Args:
@@ -495,8 +495,8 @@ struct IPv6Addr(SockAddr):
         return self.host + String(self.port)
 
 
-@value
-struct UnixAddr(SockAddr):
+@fieldwise_init
+struct UnixAddr(Copyable, Movable, SockAddr):
     """Unix local Address.
 
     Args:
@@ -537,8 +537,8 @@ struct UnixAddr(SockAddr):
         return self.host
 
 
-@value
-struct NETLINKAddr(SockAddr):
+@fieldwise_init
+struct NETLINKAddr(Copyable, Movable, SockAddr):
     """NETLINKAddr.
 
     Args:
@@ -579,8 +579,8 @@ struct NETLINKAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct TIPCAddr(SockAddr):
+@fieldwise_init
+struct TIPCAddr(Copyable, Movable, SockAddr):
     """TIPCAddr.
 
     Args:
@@ -643,8 +643,8 @@ struct TIPCAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct CANISOTPAddr(SockAddr):
+@fieldwise_init
+struct CANISOTPAddr(Copyable, Movable, SockAddr):
     """CANISOTPAddr.
 
     Args:
@@ -695,8 +695,8 @@ struct CANISOTPAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct CANJ1939Addr(SockAddr):
+@fieldwise_init
+struct CANJ1939Addr(Copyable, Movable, SockAddr):
     """CANJ1939Addr.
 
     Args:
@@ -753,8 +753,8 @@ struct CANJ1939Addr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct BTL2CAPAddr(SockAddr):
+@fieldwise_init
+struct BTL2CAPAddr(Copyable, Movable, SockAddr):
     """BTL2CAPAddr.
 
     Args:
@@ -795,8 +795,8 @@ struct BTL2CAPAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct BTRFCOMMAddr(SockAddr):
+@fieldwise_init
+struct BTRFCOMMAddr(Copyable, Movable, SockAddr):
     """BTRFCOMMAddr.
 
     Args:
@@ -837,8 +837,8 @@ struct BTRFCOMMAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct BTHCIAddr(SockAddr):
+@fieldwise_init
+struct BTHCIAddr(Copyable, Movable, SockAddr):
     """BTHCIAddr.
 
     Args:
@@ -874,8 +874,8 @@ struct BTHCIAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct BTSCOAddr(SockAddr):
+@fieldwise_init
+struct BTSCOAddr(Copyable, Movable, SockAddr):
     """BTSCOAddr.
 
     Args:
@@ -911,8 +911,8 @@ struct BTSCOAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct ALGAddr(SockAddr):
+@fieldwise_init
+struct ALGAddr(Copyable, Movable, SockAddr):
     """ALGAddr.
 
     Args:
@@ -971,8 +971,8 @@ struct ALGAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct VSOCKAddr(SockAddr):
+@fieldwise_init
+struct VSOCKAddr(Copyable, Movable, SockAddr):
     """VSOCKAddr.
 
     Args:
@@ -1013,8 +1013,8 @@ struct VSOCKAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct PACKETAddr(SockAddr):
+@fieldwise_init
+struct PACKETAddr(Copyable, Movable, SockAddr):
     """PACKETAddr.
 
     Args:
@@ -1077,8 +1077,8 @@ struct PACKETAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct QIPCRTRAddr(SockAddr):
+@fieldwise_init
+struct QIPCRTRAddr(Copyable, Movable, SockAddr):
     """QIPCRTRAddr.
 
     Args:
@@ -1119,8 +1119,8 @@ struct QIPCRTRAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct HYPERVAddr(SockAddr):
+@fieldwise_init
+struct HYPERVAddr(Copyable, Movable, SockAddr):
     """HYPERVAddr.
 
     Args:
@@ -1161,8 +1161,8 @@ struct HYPERVAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct SPIAddr(SockAddr):
+@fieldwise_init
+struct SPIAddr(Copyable, Movable, SockAddr):
     """Serial Peripheral Interface Address.
 
     Args:
@@ -1249,8 +1249,8 @@ struct SPIAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct I2CAddr(SockAddr):
+@fieldwise_init
+struct I2CAddr(Copyable, Movable, SockAddr):
     """Inter Integrated Circuit Address.
 
     Args:
@@ -1325,8 +1325,8 @@ struct I2CAddr(SockAddr):
         return ""  # TODO
 
 
-@value
-struct UARTAddr(SockAddr):
+@fieldwise_init
+struct UARTAddr(Copyable, Movable, SockAddr):
     """Universal Asynchronous Reciever Transmitter Address.
 
     Args:

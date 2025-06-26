@@ -8,8 +8,7 @@ from sys.info import os_is_windows, os_is_macos, os_is_linux, is_nvidia_gpu
 from .types import C, char_ptr, char_ptr_to_string
 
 
-@value
-struct TryLibc[static: Bool]:
+struct TryLibc[static: Bool](Copyable, Movable):
     """Try to execute Libc code, append the Libc Error, and rethrow.
 
     Parameters:
@@ -42,8 +41,7 @@ struct TryLibc[static: Bool]:
         )
 
 
-@value
-struct Libc[*, static: Bool]:
+struct Libc[*, static: Bool](Copyable, Movable):
     """An implementation of Libc. Can be dynamically or statically linked.
 
     Parameters:
@@ -62,7 +60,7 @@ struct Libc[*, static: Bool]:
 
     var _lib: Optional[DLHandle]
 
-    fn __init__(out self: Libc[static=False], path: StringLiteral):
+    fn __init__(out self: Libc[static=False], path: StaticString) raises:
         """Construct a Libc instance.
 
         Args:
@@ -70,22 +68,21 @@ struct Libc[*, static: Bool]:
         """
         self._lib = DLHandle(path)
 
-    fn __init__(out self):
+    fn __init__(out self) raises:
         """Construct a Libc instance using the default dylib location for the
         given OS."""
 
+        # FIXME: this has no reason to need to be in this function. path could
+        # default to this. But there is an issue with overload resolution
         @parameter
         if static:
             self._lib = None
-            return
-
-        @parameter
-        if os_is_windows():
-            self._lib = DLHandle("msvcrt")
-        elif os_is_macos():
-            self._lib = DLHandle("libc.dylib")
         else:
-            self._lib = DLHandle("libc.so.6")
+            self._lib = DLHandle(
+                "msvcrt" if os_is_windows() else (
+                    "libc.dylib" if os_is_macos() else "libc.so.6"
+                )
+            )
 
     # ===------------------------------------------------------------------=== #
     # Logging
@@ -829,7 +826,7 @@ struct Libc[*, static: Bool]:
 
         @parameter
         if is_nvidia_gpu():
-            p = UnsafePointer.address_of(a)
+            p = UnsafePointer(to=a)
 
             @parameter
             if static:

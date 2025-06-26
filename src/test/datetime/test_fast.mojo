@@ -227,7 +227,7 @@ def test_bitwise8():
 
 def test_iso64():
     ref1 = DateTime64(2024, 6, 16, 18, 51, 20)
-    iso_str = "2024-06-16T18:51:20+00:00"
+    iso_str: StaticString = "2024-06-16T18:51:20+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_equal(ref1, DateTime64.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
@@ -266,7 +266,7 @@ def test_iso64():
 
 def test_iso32():
     ref1 = DateTime32(2024, 6, 16, 18, 51)
-    iso_str = "2024-06-16T18:51:00+00:00"
+    iso_str: StaticString = "2024-06-16T18:51:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_equal(ref1, DateTime32.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
@@ -303,7 +303,7 @@ def test_iso32():
 
 def test_iso16():
     ref1 = DateTime16(1973, 6, 16, 18)
-    iso_str = "1973-06-16T18:00:00+00:00"
+    iso_str: StaticString = "1973-06-16T18:00:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_equal(ref1, DateTime16.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
@@ -338,7 +338,7 @@ def test_iso16():
 
 def test_iso8():
     ref1 = DateTime8(1970, 1, 6, 18)
-    iso_str = "1970-01-06T18:00:00+00:00"
+    iso_str: StaticString = "1970-01-06T18:00:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_equal(ref1, DateTime8.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())

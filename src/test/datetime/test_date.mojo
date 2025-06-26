@@ -239,7 +239,7 @@ def test_iso():
     tz_0_ = TZ("Etc/UTC", 0, 0)
 
     ref1 = date(1970, 1, 1, tz_0_, unixcal)
-    iso_str = "1970-01-01T00:00:00+00:00"
+    iso_str: StaticString = "1970-01-01T00:00:00+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_equal(ref1, date.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
@@ -297,7 +297,7 @@ def test_hash():
 
 
 def test_strftime():
-    fstr = "mojo: %Y🔥%m🤯%d"
+    fstr: StaticString = "mojo: %Y🔥%m🤯%d"
     alias dt = Date[iana=False, pyzoneinfo=False, native=False]
     assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
     fstr = "%Y-%m-%d %H:%M:%S.%f"
@@ -305,8 +305,8 @@ def test_strftime():
 
 
 def test_strptime():
-    fstr = "mojo: %Y🔥%m🤯%d"
-    vstr = "mojo: 0009🔥06🤯01"
+    fstr: StaticString = "mojo: %Y🔥%m🤯%d"
+    vstr: StaticString = "mojo: 0009🔥06🤯01"
     alias dt = Date[iana=False, pyzoneinfo=False, native=False]
     ref1 = dt(9, 6, 1)
     parsed = dt.strptime(vstr, fstr)

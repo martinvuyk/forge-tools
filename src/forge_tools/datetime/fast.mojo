@@ -39,13 +39,8 @@ alias _cal_h16 = CalendarHashes(CalendarHashes.UINT16)
 alias _cal_h8 = CalendarHashes(CalendarHashes.UINT8)
 
 
-trait _IntCollect(Intable):
-    ...
-
-
-@value
 @register_passable("trivial")
-struct DateTime64(Hashable, Stringable):
+struct DateTime64(EqualityComparable, Hashable, Stringable):
     """Fast `DateTime64` struct. This is a "normal"
     `DateTime` with milisecond resolution. Uses
     UTCFastCal epoch [1970-01-01, 9999-12-31] and other
@@ -88,13 +83,13 @@ struct DateTime64(Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: _IntCollect = Int,
-        T2: _IntCollect = Int,
-        T3: _IntCollect = Int,
-        T4: _IntCollect = Int,
-        T5: _IntCollect = Int,
-        T6: _IntCollect = Int,
-        T7: _IntCollect = Int,
+        T1: Intable = Int,
+        T2: Intable = Int,
+        T3: Intable = Int,
+        T4: Intable = Int,
+        T5: Intable = Int,
+        T6: Intable = Int,
+        T7: Intable = Int,
     ](
         out self,
         owned year: Optional[T1] = None,
@@ -110,13 +105,13 @@ struct DateTime64(Hashable, Stringable):
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable and CollectionElement.
-            T2: Any type that is Intable and CollectionElement.
-            T3: Any type that is Intable and CollectionElement.
-            T4: Any type that is Intable and CollectionElement.
-            T5: Any type that is Intable and CollectionElement.
-            T6: Any type that is Intable and CollectionElement.
-            T7: Any type that is Intable and CollectionElement.
+            T1: Any type that is Intable.
+            T2: Any type that is Intable.
+            T3: Any type that is Intable.
+            T4: Any type that is Intable.
+            T5: Any type that is Intable.
+            T6: Any type that is Intable.
+            T7: Any type that is Intable.
 
         Args:
             year: Year.
@@ -613,9 +608,8 @@ struct DateTime64(Hashable, Stringable):
         return Self(d[0], d[1], d[2], d[3], d[4], d[5], d[6], hash_val=value)
 
 
-@value
 @register_passable("trivial")
-struct DateTime32(Hashable, Stringable):
+struct DateTime32(EqualityComparable, Hashable, Stringable):
     """Fast `DateTime32 ` struct. This is a "normal" `DateTime`
     with minute resolution. Uses UTCFastCal epoch
     [1970-01-01, 9999-12-31] and other params at build time.
@@ -655,13 +649,13 @@ struct DateTime32(Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: _IntCollect = Int,
-        T2: _IntCollect = Int,
-        T3: _IntCollect = Int,
-        T4: _IntCollect = Int,
-        T5: _IntCollect = Int,
-        T6: _IntCollect = Int,
-        T7: _IntCollect = Int,
+        T1: Intable = Int,
+        T2: Intable = Int,
+        T3: Intable = Int,
+        T4: Intable = Int,
+        T5: Intable = Int,
+        T6: Intable = Int,
+        T7: Intable = Int,
     ](
         out self,
         owned year: Optional[T1] = None,
@@ -675,13 +669,13 @@ struct DateTime32(Hashable, Stringable):
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable and CollectionElement.
-            T2: Any type that is Intable and CollectionElement.
-            T3: Any type that is Intable and CollectionElement.
-            T4: Any type that is Intable and CollectionElement.
-            T5: Any type that is Intable and CollectionElement.
-            T6: Any type that is Intable and CollectionElement.
-            T7: Any type that is Intable and CollectionElement.
+            T1: Any type that is Intable.
+            T2: Any type that is Intable.
+            T3: Any type that is Intable.
+            T4: Any type that is Intable.
+            T5: Any type that is Intable.
+            T6: Any type that is Intable.
+            T7: Any type that is Intable.
 
         Args:
             year: Year.
@@ -1133,9 +1127,8 @@ struct DateTime32(Hashable, Stringable):
         return Self(d[0], d[1], d[2], d[3], d[4], value)
 
 
-@value
 @register_passable("trivial")
-struct DateTime16(Hashable, Stringable):
+struct DateTime16(EqualityComparable, Hashable, Stringable):
     """Fast `DateTime16` struct. This is a `DateTime` with
     hour resolution, it can be used as a year, dayofyear,
     hour representation. Uses UTCFastCal epoch
@@ -1174,10 +1167,10 @@ struct DateTime16(Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: _IntCollect = Int,
-        T2: _IntCollect = Int,
-        T3: _IntCollect = Int,
-        T4: _IntCollect = Int,
+        T1: Intable = Int,
+        T2: Intable = Int,
+        T3: Intable = Int,
+        T4: Intable = Int,
     ](
         out self,
         owned year: Optional[T1] = None,
@@ -1190,10 +1183,10 @@ struct DateTime16(Hashable, Stringable):
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable and CollectionElement.
-            T2: Any type that is Intable and CollectionElement.
-            T3: Any type that is Intable and CollectionElement.
-            T4: Any type that is Intable and CollectionElement.
+            T1: Any type that is Intable.
+            T2: Any type that is Intable.
+            T3: Any type that is Intable.
+            T4: Any type that is Intable.
 
         Args:
             year: Year.
@@ -1626,9 +1619,8 @@ struct DateTime16(Hashable, Stringable):
         return Self(year=y, month=d[1], day=d[2], hour=d[3], hash_val=value)
 
 
-@value
 @register_passable("trivial")
-struct DateTime8(Hashable, Stringable):
+struct DateTime8(EqualityComparable, Hashable, Stringable):
     """Fast `DateTime8` struct. This is a `DateTime`
     with hour resolution, it can be used as a dayofweek,
     hour representation. Uses UTCFastCal epoch
@@ -1666,10 +1658,10 @@ struct DateTime8(Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: _IntCollect = Int,
-        T2: _IntCollect = Int,
-        T3: _IntCollect = Int,
-        T4: _IntCollect = Int,
+        T1: Intable = Int,
+        T2: Intable = Int,
+        T3: Intable = Int,
+        T4: Intable = Int,
     ](
         out self,
         owned year: Optional[T1] = None,
@@ -1682,10 +1674,10 @@ struct DateTime8(Hashable, Stringable):
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable and CollectionElement.
-            T2: Any type that is Intable and CollectionElement.
-            T3: Any type that is Intable and CollectionElement.
-            T4: Any type that is Intable and CollectionElement.
+            T1: Any type that is Intable.
+            T2: Any type that is Intable.
+            T3: Any type that is Intable.
+            T4: Any type that is Intable.
 
         Args:
             year: Year.

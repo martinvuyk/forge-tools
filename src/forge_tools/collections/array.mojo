@@ -81,10 +81,10 @@ from os import abort
 # ===----------------------------------------------------------------------===#
 
 
-@value
+@fieldwise_init
 struct _ArrayIter[
     T: DType, capacity: Int, static: Bool = False, forward: Bool = True
-](Sized):
+](Copyable, Movable, Sized):
     """Iterator for Array.
 
     Parameters:
@@ -126,7 +126,7 @@ struct _ArrayIter[
 
 @register_passable("trivial")
 struct Array[T: DType, capacity: Int, static: Bool = False](
-    CollectionElement, Sized, Boolable
+    Boolable, Copyable, Movable, Sized, Writable
 ):
     """An Array allocated on the stack with a capacity known at compile
     time.
@@ -619,7 +619,6 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
         %# from testing import assert_equal
         %# assert_equal(String(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
         ```
-        .
         """
         # we do a rough estimation of the number of chars that we'll see
         # in the final string, we assume that String(x) will be at least one char.
@@ -628,16 +627,28 @@ struct Array[T: DType, capacity: Int, static: Bool = False](
             + len(self) * 3  # String(x) and ", "
             - 2  # remove the last ", "
         )
-        string_buffer = List[UInt8](capacity=minimum_capacity)
-        string_buffer.append(0)  # Null terminator
-        result = String(buffer=string_buffer^)
-        result += "["
-        for i in range(len(self)):
-            result += String(self.vec[i])
-            if i < len(self) - 1:
-                result += ", "
-        result += "]"
+        result = String(capacity=minimum_capacity)
+        result.write(self)
         return result^
+
+    fn write_to[W: Writer](self, mut writer: W):
+        """Returns a string representation of an `Array`.
+
+        Examples:
+
+        ```mojo
+        from forge_tools.collections import Array
+        print(String(Array[DType.uint8, 3](1, 2, 3))) # [1, 2, 3]
+        %# from testing import assert_equal
+        %# assert_equal(String(Array[DType.uint8, 3](1, 2, 3)), "[1, 2, 3]")
+        ```
+        """
+        writer.write("[")
+        for i in range(len(self)):
+            writer.write(String(self.vec[i]))
+            if i < len(self) - 1:
+                writer.write(", ")
+        writer.write("]")
 
     fn __repr__(self) -> String:
         """Returns a string representation of an `Array`.

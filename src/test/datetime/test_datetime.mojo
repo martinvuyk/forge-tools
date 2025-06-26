@@ -201,6 +201,7 @@ def test_subtract():
     assert_equal(result, offset_0)
     assert_equal(result, offset_p_1)
     assert_equal(result, offset_n_1)
+    assert_equal(result, sub_seconds)
 
     # test negative overflow pycal
     result = dt(1, 1, 1, tz=tz_0_, calendar=pycal) - dt(
@@ -278,7 +279,7 @@ def test_iso():
     tz_0_ = TZ("Etc/UTC", 0, 0)
 
     ref1 = dt(2024, 6, 16, 18, 51, 20, tz=tz_0_, calendar=pycal)
-    iso_str = "2024-06-16T18:51:20+00:00"
+    iso_str: StaticString = "2024-06-16T18:51:20+00:00"
     alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
     assert_equal(ref1, dt.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
@@ -335,7 +336,7 @@ def test_hash():
 
 def test_strftime():
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
-    fstr = "mojo: %Y🔥%m🤯%d"
+    fstr: StaticString = "mojo: %Y🔥%m🤯%d"
     assert_equal("mojo: 0009🔥06🤯01", dt(9, 6, 1).strftime(fstr))
     fstr = "%Y-%m-%d %H:%M:%S.%f"
     ref1 = dt(2024, 9, 9, 9, 9, 9, 9, 9)
@@ -343,8 +344,8 @@ def test_strftime():
 
 
 def test_strptime():
-    fstr = "mojo: %Y🔥%m🤯%d"
-    vstr = "mojo: 0009🔥06🤯01"
+    fstr: StaticString = "mojo: %Y🔥%m🤯%d"
+    vstr: StaticString = "mojo: 0009🔥06🤯01"
     alias dt = DateTime[iana=False, pyzoneinfo=False, native=False]
     ref1 = dt(9, 6, 1)
     parsed = dt.strptime(vstr, fstr)

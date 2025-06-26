@@ -118,7 +118,7 @@ struct Quaternion[T: DType = DType.float64]:
         """
         return self.vec / self.__abs__()
 
-    fn __getattr__[name: StringLiteral](self) -> Self._scalar_type:
+    fn __getattr__[name: StaticString](self) -> Self._scalar_type:
         """Get the attribute.
 
         Parameters:
@@ -529,7 +529,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         sin_vec = screw_vec * sin_theta_2_vec
         self = Self((sin_vec + l_vec).rotate_right[1]())
 
-    fn __getattr__[name: StringLiteral](self) -> Self._scalar_type:
+    fn __getattr__[name: StaticString](self) -> Self._scalar_type:
         """Get the attribute.
 
         Parameters:
