@@ -29,11 +29,11 @@ struct _WindowsSocket[
         """
         self.fd = fd
 
-    fn close(owned self) raises:
+    fn close(var self) raises:
         """Closes the Socket."""
         ...  # TODO: implement
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Closes the Socket if it's the last reference to its
         `FileDescriptor`.
         """

@@ -67,7 +67,7 @@ struct GladiatorPointer[
             .alloc(count)
         )
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Free the memory referenced by the pointer or ignore."""
         self._colosseum._ptr.unsafe_ptr()[].bitcast[Self._C]()[]._free(self^)
 
@@ -105,7 +105,7 @@ struct ColosseumPointer[
         self._ptr = Self._P()
         self._self_ptr = Self._S.alloc(1)
 
-    fn __init__(out self, *, owned other: Self):
+    fn __init__(out self, *, var other: Self):
         self._free_slots = other._free_slots
         self._len = other._len
         self._ptr = other._ptr
@@ -218,7 +218,7 @@ struct ColosseumPointer[
             free_slots=self._free_slots,
         )
 
-    fn _free(out self, owned gladiator: Self._G):
+    fn _free(out self, var gladiator: Self._G):
         p0 = self._free_slots - gladiator._start
         full_byte_start = gladiator._start // 8
         full_byte_end = gladiator._len // 8
@@ -238,7 +238,7 @@ struct ColosseumPointer[
     fn __bool__(self) -> Bool:
         return Bool(self._ptr)
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Free the memory referenced by the pointer or ignore."""
         self._free_slots.free()
         self._owner_is_alive[0] = False  # mark as deleted first

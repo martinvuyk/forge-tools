@@ -238,6 +238,14 @@ struct TimeZone[
 
     @always_inline
     fn write_to[W: Writer](self, mut writer: W):
+        """Write the `TimeZone` to a writer.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write to.
+        """
         writer.write(self.tz_str)
 
     @always_inline("nodebug")

@@ -225,9 +225,12 @@ def test_bitwise():
     assert_true((ref1 ^ date(1970, 1, 1, tz_1, unixcal)) == 0)
     assert_true((ref1 ^ date(1969, 12, 31, tz1_, pycal)) != 0)
     assert_true((ref1 ^ date(1970, 1, 2, tz_0_, pycal)) != 0)
-    assert_true((ref1 | (date(1970, 1, 2, tz_0_, pycal) & 0)) == hash(ref1))
-    # assert_true((hash(ref1) & ~hash(ref1)) == 0) # FIXME: uint has no ~ yet
-    # assert_true(~(hash(ref1) ^ ~hash(ref1)) == 0)
+    assert_true(
+        (ref1.hash() | (date(1970, 1, 2, tz_0_, pycal).hash() & 0))
+        == ref1.hash()
+    )
+    # assert_true((ref1.hash() & ~ref1.hash()) == 0) # FIXME: uint has no ~ yet
+    # assert_true(~(ref1.hash() ^ ~ref1.hash()) == 0)
 
 
 def test_iso():
@@ -240,32 +243,32 @@ def test_iso():
 
     ref1 = date(1970, 1, 1, tz_0_, unixcal)
     iso_str: StaticString = "1970-01-01T00:00:00+00:00"
-    alias fmt1 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD)
+    alias fmt1 = IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD
     assert_equal(ref1, date.from_iso[fmt1](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt1]())
 
     iso_str = "1970-01-01 00:00:00"
-    alias fmt2 = IsoFormat(IsoFormat.YYYY_MM_DD___HH_MM_SS)
+    alias fmt2 = IsoFormat.YYYY_MM_DD___HH_MM_SS
     assert_equal(ref1, date.from_iso[fmt2](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt2]())
 
     iso_str = "1970-01-01T00:00:00"
-    alias fmt3 = IsoFormat(IsoFormat.YYYY_MM_DD_T_HH_MM_SS)
+    alias fmt3 = IsoFormat.YYYY_MM_DD_T_HH_MM_SS
     assert_equal(ref1, date.from_iso[fmt3](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt3]())
 
     iso_str = "19700101000000"
-    alias fmt4 = IsoFormat(IsoFormat.YYYYMMDDHHMMSS)
+    alias fmt4 = IsoFormat.YYYYMMDDHHMMSS
     assert_equal(ref1, date.from_iso[fmt4](iso_str).value())
     assert_equal(iso_str, ref1.to_iso[fmt4]())
 
     iso_str = "00:00:00"
-    alias fmt5 = IsoFormat(IsoFormat.HH_MM_SS)
+    alias fmt5 = IsoFormat.HH_MM_SS
     assert_equal(ref1, date.from_iso[fmt5](iso_str, calendar=unixcal).value())
     assert_equal(iso_str, ref1.to_iso[fmt5]())
 
     iso_str = "000000"
-    alias fmt6 = IsoFormat(IsoFormat.HHMMSS)
+    alias fmt6 = IsoFormat.HHMMSS
     assert_equal(ref1, date.from_iso[fmt6](iso_str, calendar=unixcal).value())
     assert_equal(iso_str, ref1.to_iso[fmt6]())
 
@@ -285,11 +288,11 @@ def test_hash():
     alias TZ = dt._tz
     tz_0_ = TZ("Etc/UTC", 0, 0)
     ref1 = dt(1970, 1, 1, tz_0_, pycal)
-    data = hash(ref1)
+    data = ref1.hash()
     parsed = dt.from_hash(data, tz_0_)
     assert_true(ref1 == parsed)
     ref2 = dt(1970, 1, 1, tz_0_, unixcal)
-    data2 = hash(ref2)
+    data2 = ref2.hash()
     parsed2 = dt.from_hash(data2, tz_0_)
     assert_true(ref2 == parsed2)
     # both should be the same

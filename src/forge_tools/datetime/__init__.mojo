@@ -37,7 +37,7 @@ from forge_tools.datetime.calendar import PythonCalendar, UTCCalendar
 alias DateT = DateTime[iana=False, pyzoneinfo=False, native=False]
 dt = DateT(2024, 6, 18, 22, 14, 7)
 print(dt) # 2024-06-18T22:14:07+00:00
-alias fstr = IsoFormat(IsoFormat.HH_MM_SS) 
+alias fstr = IsoFormat.HH_MM_SS 
 iso_str = dt.to_iso[fstr]()
 dt = (
     DateT.from_iso[fstr](iso_str, calendar=Calendar(2024, 6, 18))

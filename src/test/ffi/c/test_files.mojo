@@ -6,7 +6,6 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 from pathlib import _dir_of_current_file
 from time import sleep
 from memory import UnsafePointer, memset, memcmp, stack_allocation
-from sys.info import os_is_macos
 
 from forge_tools.ffi.c.types import C, char_ptr, FILE
 from forge_tools.ffi.c.libc import TryLibc, Libc
@@ -21,7 +20,7 @@ def _test_open_close(libc: Libc, suffix: String):
         assert_true(filedes != -1)
         sleep(0.05)
         assert_true(libc.close(filedes) != -1)
-        if not os_is_macos():  # Permission denied
+        if not CompilationTarget.is_macos():  # Permission denied
             for s in List(O_RDONLY, O_WRONLY, O_RDWR):
                 filedes = libc.open(ptr, s[])
                 assert_true(filedes != -1)
@@ -213,7 +212,7 @@ def _test_fseek_ftell(libc: Libc, suffix: String):
         for i in range(ord(" "), ord("~")):
 
             @parameter
-            if os_is_macos():
+            if CompilationTarget.is_macos():
                 # MacOS is not actually compliant with ANSI C89, doesn't print
                 # '%'. I think it triggers format specifier if it's not '%%'
                 if i == ord("%"):

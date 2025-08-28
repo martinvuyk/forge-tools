@@ -72,7 +72,7 @@ struct DBuffer[
     ```mojo
     %# from forge_tools.collections.dbuffer import DBuffer
     fn parse(
-        owned buf: DBuffer[Byte], encoding: String = "utf-8"
+        var buf: DBuffer[Byte], encoding: String = "utf-8"
     ) raises -> String:
         if encoding == "utf-16":
             ...
@@ -178,7 +178,7 @@ struct DBuffer[
     # TODO: this can potentially be abstracted over a `Stealable` trait
     @always_inline
     @staticmethod
-    fn own(owned list: List[T, *_]) -> Self:
+    fn own(var list: List[T, *_]) -> Self:
         """Construct a DBuffer from an owned List.
 
         Args:
@@ -224,7 +224,7 @@ struct DBuffer[
         """
         self = Self(ptr=span.unsafe_ptr(), length=len(span))
 
-    fn __moveinit__(out self, owned existing: Self):
+    fn __moveinit__(out self, deinit existing: Self):
         """Move data of an existing DBuffer into a new one.
 
         Args:
@@ -241,7 +241,7 @@ struct DBuffer[
         """
         self = Self(ptr=existing.unsafe_ptr(), length=len(existing))
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """If self.is_owner(), destroy all elements in the DBuffer and free its
         memory."""
 
@@ -448,13 +448,13 @@ struct DBuffer[
 
     fn get_immutable(
         self,
-    ) -> DBuffer[T, Origin[False].cast_from[origin].result]:
+    ) -> DBuffer[T, Origin[False].cast_from[origin]]:
         """Return an immutable version of this DBuffer.
 
         Returns:
             A DBuffer covering the same elements, but without mutability.
         """
-        return DBuffer[T, Origin[False].cast_from[origin].result](
+        return DBuffer[T, Origin[False].cast_from[origin]](
             ptr=self.unsafe_ptr(), length=len(self)
         )
 

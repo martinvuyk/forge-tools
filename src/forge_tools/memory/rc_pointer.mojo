@@ -75,7 +75,7 @@ struct RcPointer[
             is_initialized=False,
         )
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Free the memory referenced by the pointer or ignore."""
 
         @parameter

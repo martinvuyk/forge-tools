@@ -96,7 +96,7 @@ struct _UnixSocket[
         """
         self.fd = fd
 
-    fn close(owned self) raises:
+    fn close(var self) raises:
         """Closes the Socket."""
         alias lib = Self.lib
         err = lib.shutdown(self.fd[].value, SHUT_RDWR)
@@ -104,7 +104,7 @@ struct _UnixSocket[
             message = char_ptr_to_string(lib.strerror(lib.get_errno()))
             raise Error("Failed trying to close the socket: " + message)
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Closes the Socket if it's the last reference to its
         `FileDescriptor`.
         """

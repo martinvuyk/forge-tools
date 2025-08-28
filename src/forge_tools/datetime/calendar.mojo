@@ -336,7 +336,7 @@ trait _Calendarized(Copyable, Movable):
         m_second: UInt16,
         u_second: UInt16,
         n_second: UInt16,
-    ) -> Int:
+    ) -> UInt:
         ...
 
     fn from_hash[cal_hash: CalendarHashes](self, value: Int) -> _date:
@@ -416,7 +416,7 @@ struct Calendar[T: _Calendarized = Gregorian[]](Copyable, Movable):
     @implicit
     fn __init__(
         out self,
-        owned impl: T = T(
+        var impl: T = T(
             min_year=T._get_default_min_year(),
             min_month=T._get_default_min_month(),
             min_day=T._get_default_min_day(),
@@ -718,7 +718,7 @@ struct Calendar[T: _Calendarized = Gregorian[]](Copyable, Movable):
         m_second: UInt16 = 0,
         u_second: UInt16 = 0,
         n_second: UInt16 = 0,
-    ) -> Int:
+    ) -> UInt:
         """Hash the given values according to the calendar's bitshifted
         component lengths, BigEndian (i.e. yyyymmdd...).
 
@@ -815,7 +815,7 @@ struct Calendar[T: _Calendarized = Gregorian[]](Copyable, Movable):
         return not (self == other)
 
 
-alias _m: UInt16 = 2**16 - 1
+alias _m = UInt16.MAX
 
 
 struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
@@ -1081,7 +1081,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             - day: Day of the month: [1, 31] (for Gregorian calendar).
         """
 
-        c = (Self._days_before_month < day_of_year).cast[DType.uint8]()
+        c = Self._days_before_month.lt(day_of_year).cast[DType.uint8]()
         idx = c.reduce_add() - 1
         rest = day_of_year - Self._days_before_month[Int(idx)]
         rest -= Int(idx > 2 and Self.is_leapyear(year))
@@ -1399,7 +1399,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         m_second: UInt16 = 0,
         u_second: UInt16 = 0,
         n_second: UInt16 = 0,
-    ) -> Int:
+    ) -> UInt:
         """Hash the given values according to the calendar's bitshifted
         component lengths, BigEndian (i.e. yyyymmdd...).
 
@@ -1822,7 +1822,7 @@ struct UTCFast(_Calendarized):
         m_second: UInt16 = 0,
         u_second: UInt16 = 0,
         n_second: UInt16 = 0,
-    ) -> Int:
+    ) -> UInt:
         """Hash the given values according to the calendar's bitshifted
         component lengths, BigEndian (i.e. yyyymmdd...).
 
@@ -2381,7 +2381,7 @@ struct ISOCalendar(_Calendarized):
         m_second: UInt16 = 0,
         u_second: UInt16 = 0,
         n_second: UInt16 = 0,
-    ) -> Int:
+    ) -> UInt:
         """Hash the given values according to the calendar's bitshifted
         component lengths, BigEndian (i.e. yyyymmdd...).
 

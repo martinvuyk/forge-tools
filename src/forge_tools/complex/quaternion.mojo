@@ -411,7 +411,7 @@ struct Quaternion[T: DType = DType.float64]:
         Returns:
             The result.
         """
-        return (self.vec == other.vec).reduce_and()
+        return self.vec == other.vec
 
     fn __str__(self) -> String:
         s = String("[")
@@ -879,7 +879,7 @@ struct DualQuaternion[T: DType = DType.float64]:
         Returns:
             The result.
         """
-        return (self.vec == other.vec).reduce_and()
+        return self.vec == other.vec
 
     fn __str__(self) -> String:
         s = String("[")

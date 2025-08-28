@@ -12,7 +12,7 @@
 # ===----------------------------------------------------------------------=== #
 """`DateTime` and `Date` String parsing module."""
 
-from collections import Optional
+from os import abort
 from .timezone import (
     TimeZone,
     ZoneInfo,
@@ -23,56 +23,74 @@ from .timezone import (
 )
 
 
+@fieldwise_init
 @register_passable("trivial")
 struct IsoFormat:
     """Available formats to parse from and to
     [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)."""
 
     alias TZD_REGEX = "+|-[0-9]{2}:?[0-9]{2}"
-    alias TZD = "%z"
-    alias YYYYMMDD = "%4Y%m%d"
+    alias YYYYMMDD = IsoFormat("%4Y%m%d")
     """e.g. `19700101`"""
-    alias YYYY_MM_DD = "%4Y-%m-%d"
+    alias YYYY_MM_DD = IsoFormat("%4Y-%m-%d")
     """e.g. `1970-01-01`"""
-    alias HHMMSS = "%H%M%S"
+    alias HHMMSS = IsoFormat("%H%M%S")
     """e.g. `000000`"""
-    alias HH_MM_SS = "%H:%M:%S"
+    alias HH_MM_SS = IsoFormat("%H:%M:%S")
     """e.g. `00:00:00`"""
-    alias YYYYMMDDHHMMSS = Self.YYYYMMDD + Self.HHMMSS
+    alias YYYYMMDDHHMMSS = IsoFormat("%4Y%m%d%H%M%S")
     """e.g. `19700101000000`"""
-    alias YYYYMMDDHHMMSSTZD = Self.YYYYMMDD + Self.HHMMSS + Self.TZD
+    alias YYYYMMDDHHMMSSTZD = IsoFormat("%4Y%m%d%H%M%S%z")
     """e.g. `19700101000000+0000`"""
-    alias YYYY_MM_DD___HH_MM_SS = Self.YYYY_MM_DD + " " + Self.HH_MM_SS
+    alias YYYY_MM_DD___HH_MM_SS = IsoFormat("%4Y-%m-%d %H:%M:%S")
     """e.g. `1970-01-01 00:00:00`"""
-    alias YYYY_MM_DD_T_HH_MM_SS = Self.YYYY_MM_DD + "T" + Self.HH_MM_SS
+    alias YYYY_MM_DD_T_HH_MM_SS = IsoFormat("%4Y-%m-%dT%H:%M:%S")
     """e.g. `1970-01-01T00:00:00`"""
-    alias YYYY_MM_DD_T_HH_MM_SS_TZD = Self.YYYY_MM_DD + "T" + Self.HH_MM_SS + Self.TZD
+    alias YYYY_MM_DD_T_HH_MM_SS_TZD = IsoFormat("%4Y-%m-%dT%H:%M:%S%z")
     """e.g. `1970-01-01T00:00:00+00:00`"""
-    var selected: StaticString
+    var fmt_str: StaticString
     """The selected IsoFormat."""
 
-    @implicit
-    fn __init__(
-        out self, selected: StaticString = Self.YYYY_MM_DD_T_HH_MM_SS_TZD
-    ):
-        """Construct an IsoFormat with selected fmt string.
+    # @implicit
+    # fn __init__(
+    #     out self,
+    #     selected: StaticString = Self.YYYY_MM_DD_T_HH_MM_SS_TZD.fmt_str,
+    # ):
+    #     """Construct an IsoFormat with selected fmt string.
 
-        Args:
-            selected: The selected IsoFormat.
+    #     Args:
+    #         selected: The selected IsoFormat.
+    #     """
+    #     debug_assert(self.byte_length() > 0, "`IsoFormat` not implemented")
+    #     self.selected = selected
+
+    fn byte_length(self) -> UInt:
+        """Get the byte length of the selected `IsoFormat`.
+
+        Returns:
+            The selected `IsoFormat`'s byte length.
         """
-        debug_assert(
-            selected == self.YYYYMMDD
-            or selected == self.YYYY_MM_DD
-            or selected == self.HHMMSS
-            or selected == self.HH_MM_SS
-            or selected == self.YYYYMMDDHHMMSS
-            or selected == self.YYYYMMDDHHMMSSTZD
-            or selected == self.YYYY_MM_DD___HH_MM_SS
-            or selected == self.YYYY_MM_DD_T_HH_MM_SS
-            or selected == self.YYYY_MM_DD_T_HH_MM_SS_TZD,
-            "that ISO8601 string format is not supported yet",
-        )
-        self.selected = selected
+
+        if self.fmt_str == self.YYYYMMDD.fmt_str:
+            return "YYYYMMDD".byte_length()
+        elif self.fmt_str == self.YYYY_MM_DD.fmt_str:
+            return "YYYY_MM_DD".byte_length()
+        elif self.fmt_str == self.HHMMSS.fmt_str:
+            return "HHMMSS".byte_length()
+        elif self.fmt_str == self.HH_MM_SS.fmt_str:
+            return "HH_MM_SS".byte_length()
+        elif self.fmt_str == self.YYYYMMDDHHMMSS.fmt_str:
+            return "YYYYMMDDHHMMSS".byte_length()
+        elif self.fmt_str == self.YYYYMMDDHHMMSSTZD.fmt_str:
+            return "YYYYMMDDHHMMSSTZD".byte_length()
+        elif self.fmt_str == self.YYYY_MM_DD___HH_MM_SS.fmt_str:
+            return "YYYY_MM_DD___HH_MM_SS".byte_length()
+        elif self.fmt_str == self.YYYY_MM_DD_T_HH_MM_SS.fmt_str:
+            return "YYYY_MM_DD_T_HH_MM_SS".byte_length()
+        elif self.fmt_str == self.YYYY_MM_DD_T_HH_MM_SS_TZD.fmt_str:
+            return "YYYY_MM_DD_T_HH_MM_SS_TZD".byte_length()
+        else:
+            return 0
 
 
 @always_inline
@@ -97,15 +115,20 @@ fn _get_strings(
     return yyyy^, mm^, dd^, hh^, m_str^, ss^
 
 
+alias _IntCopyable = Intable & Copyable & Movable
+
+
 fn to_iso[
-    iso: IsoFormat = IsoFormat(),
-    T1: Intable = Int,
-    T2: Intable = Int,
-    T3: Intable = Int,
-    T4: Intable = Int,
-    T5: Intable = Int,
-    T6: Intable = Int,
+    W: Writer, //,
+    iso: IsoFormat = IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD,
+    T1: _IntCopyable = Int,
+    T2: _IntCopyable = Int,
+    T3: _IntCopyable = Int,
+    T4: _IntCopyable = Int,
+    T5: _IntCopyable = Int,
+    T6: _IntCopyable = Int,
 ](
+    mut writer: W,
     year: T1,
     month: T2,
     day: T3,
@@ -113,20 +136,22 @@ fn to_iso[
     minute: T5,
     second: T6,
     tzd: String = "+00:00",
-) -> String:
+):
     """Build an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
     `String`.
 
     Parameters:
+        W: The writer type.
         iso: The chosen IsoFormat.
-        T1: An Intable Type.
-        T2: An Intable Type.
-        T3: An Intable Type.
-        T4: An Intable Type.
-        T5: An Intable Type.
-        T6: An Intable Type.
+        T1: A Type that is `Intable & Copyable & Movable`.
+        T2: A Type that is `Intable & Copyable & Movable`.
+        T3: A Type that is `Intable & Copyable & Movable`.
+        T4: A Type that is `Intable & Copyable & Movable`.
+        T5: A Type that is `Intable & Copyable & Movable`.
+        T6: A Type that is `Intable & Copyable & Movable`.
 
     Args:
+        writer: The writer to write to.
         year: Year.
         month: Month.
         day: Day.
@@ -134,44 +159,37 @@ fn to_iso[
         minute: Minute.
         second: Second.
         tzd: Time Zone designation String (full format i.e. `+00:00`).
-
-    Returns:
-        String.
     """
 
-    # TODO: preallocate according to the selected iso string length
-    s = _get_strings(
+    ref (yyyy, mm, dd, HH, MM, SS) = _get_strings(
         Int(year), Int(month), Int(day), Int(hour), Int(minute), Int(second)
     )
-    yyyy_mm_dd = String(s[0], "-", s[1], "-", s[2])
-    hh_mm_ss = String(s[3], ":", s[4], ":", s[5])
 
     @parameter
-    if iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS:
-        return String(yyyy_mm_dd, "T", hh_mm_ss)
-    elif iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS_TZD:
-        return String(yyyy_mm_dd, "T", hh_mm_ss, tzd)
-    elif iso.selected == iso.YYYY_MM_DD___HH_MM_SS:
-        return String(yyyy_mm_dd, " ", hh_mm_ss)
-    elif iso.selected == iso.YYYYMMDDHHMMSS:
-        return String(s[0], s[1], s[2], s[3], s[4], s[5])
-    elif iso.selected == iso.YYYYMMDDHHMMSSTZD:
-        return String(s[0], s[1], s[2], s[3], s[4], s[5], tzd[:3], tzd[-2:])
-    elif iso.selected == iso.YYYYMMDD:
-        return String(s[0], s[1], s[2], s[3])
-    elif iso.selected == iso.HHMMSS:
-        return String(s[3], s[4], s[5])
-    elif iso.selected == iso.YYYY_MM_DD:
-        return yyyy_mm_dd
-    elif iso.selected == iso.HH_MM_SS:
-        return String(s[3], ":", s[4], ":", s[5])
+    if iso.fmt_str == iso.YYYY_MM_DD_T_HH_MM_SS.fmt_str:
+        writer.write(yyyy, "-", mm, "-", dd, "T", HH, ":", MM, ":", SS)
+    elif iso.fmt_str == iso.YYYY_MM_DD_T_HH_MM_SS_TZD.fmt_str:
+        writer.write(yyyy, "-", mm, "-", dd, "T", HH, ":", MM, ":", SS, tzd)
+    elif iso.fmt_str == iso.YYYY_MM_DD___HH_MM_SS.fmt_str:
+        writer.write(yyyy, "-", mm, "-", dd, " ", HH, ":", MM, ":", SS)
+    elif iso.fmt_str == iso.YYYYMMDDHHMMSS.fmt_str:
+        writer.write(yyyy, mm, dd, HH, MM, SS)
+    elif iso.fmt_str == iso.YYYYMMDDHHMMSSTZD.fmt_str:
+        writer.write(yyyy, mm, dd, HH, MM, SS, tzd[:3], tzd[-2:])
+    elif iso.fmt_str == iso.YYYYMMDD.fmt_str:
+        writer.write(yyyy, mm, dd)
+    elif iso.fmt_str == iso.HHMMSS.fmt_str:
+        writer.write(HH, MM, SS)
+    elif iso.fmt_str == iso.YYYY_MM_DD.fmt_str:
+        writer.write(yyyy, "-", mm, "-", dd)
+    elif iso.fmt_str == iso.HH_MM_SS.fmt_str:
+        writer.write(HH, ":", MM, ":", SS)
     else:
         constrained[False, "that IsoFormat is not yet supported"]()
-        return ""
 
 
 fn from_iso[
-    iso: IsoFormat = IsoFormat(),
+    iso: IsoFormat = IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD,
     dst_storage: ZoneStorageDST = ZoneInfoMem32,
     no_dst_storage: ZoneStorageNoDST = ZoneInfoMem8,
     iana: Bool = True,
@@ -223,39 +241,39 @@ fn from_iso[
     result = UInt16(0), num0, num0, num0, num0, num0, tz()
 
     @parameter
-    if iso.YYYYMMDD in iso.selected:
+    if iso.YYYYMMDD.fmt_str in iso.fmt_str:
         result[0] = atol(s[:4])
         result[1] = atol(s[4:6])
 
         @parameter
-        if iso.selected == iso.YYYYMMDD:
+        if iso.fmt_str == iso.YYYYMMDD.fmt_str:
             return result^
         result[2] = atol(s[6:8])
         result[3] = atol(s[8:10])
         result[4] = atol(s[10:12])
         result[5] = atol(s[12:14])
-    elif iso.YYYY_MM_DD in iso.selected:
+    elif iso.YYYY_MM_DD.fmt_str in iso.fmt_str:
         result[0] = atol(s[:4])
         result[1] = atol(s[5:7])
 
         @parameter
-        if iso.selected == iso.YYYY_MM_DD:
+        if iso.fmt_str == iso.YYYY_MM_DD.fmt_str:
             return result^
         result[2] = atol(s[8:10])
         result[3] = atol(s[11:13])
         result[4] = atol(s[14:16])
         result[5] = atol(s[17:19])
-    elif iso.selected == iso.HH_MM_SS:
+    elif iso.fmt_str == iso.HH_MM_SS.fmt_str:
         result[3] = atol(s[:2])
         result[4] = atol(s[3:5])
         result[5] = atol(s[6:8])
-    elif iso.selected == iso.HHMMSS:
+    elif iso.fmt_str == iso.HHMMSS.fmt_str:
         result[3] = atol(s[:2])
         result[4] = atol(s[2:4])
         result[5] = atol(s[4:6])
 
     @parameter
-    if iso.selected == iso.YYYY_MM_DD_T_HH_MM_SS_TZD:
+    if iso.fmt_str == iso.YYYY_MM_DD_T_HH_MM_SS_TZD.fmt_str:
         sign = 1
         if s[19] == "-":
             sign = -1
@@ -266,7 +284,7 @@ fn from_iso[
         else:
             m = atol(s[22:24])
         result[6] = tz.from_offset(result[0], result[1], result[2], h, m, sign)
-    elif iso.selected == iso.YYYYMMDDHHMMSSTZD:
+    elif iso.fmt_str == iso.YYYYMMDDHHMMSSTZD.fmt_str:
         sign = 1
         if s[14] == "-":
             sign = -1
@@ -328,14 +346,14 @@ fn strptime(s: String, format_str: StaticString) -> Optional[_DateTime]:
 
 
 fn strftime[
-    T1: Intable = Int,
-    T2: Intable = Int,
-    T3: Intable = Int,
-    T4: Intable = Int,
-    T5: Intable = Int,
-    T6: Intable = Int,
-    T7: Intable = Int,
-    T8: Intable = Int,
+    T1: _IntCopyable = Int,
+    T2: _IntCopyable = Int,
+    T3: _IntCopyable = Int,
+    T4: _IntCopyable = Int,
+    T5: _IntCopyable = Int,
+    T6: _IntCopyable = Int,
+    T7: _IntCopyable = Int,
+    T8: _IntCopyable = Int,
 ](
     format_str: String,
     year: T1,

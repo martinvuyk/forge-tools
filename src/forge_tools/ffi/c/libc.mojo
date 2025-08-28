@@ -3,7 +3,7 @@
 from collections import Optional
 from memory import UnsafePointer, stack_allocation
 from sys.ffi import external_call, DLHandle
-from sys.info import os_is_windows, os_is_macos, os_is_linux, is_nvidia_gpu
+from sys.info import is_nvidia_gpu
 
 from .types import C, char_ptr, char_ptr_to_string
 
@@ -79,8 +79,8 @@ struct Libc[*, static: Bool](Copyable, Movable):
             self._lib = None
         else:
             self._lib = DLHandle(
-                "msvcrt" if os_is_windows() else (
-                    "libc.dylib" if os_is_macos() else "libc.so.6"
+                "msvcrt" if CompilationTarget.is_windows() else (
+                    "libc.dylib" if CompilationTarget.is_macos() else "libc.so.6"
                 )
             )
 
@@ -97,7 +97,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
         """
 
         @parameter
-        if os_is_windows():
+        if CompilationTarget.is_windows():
             var errno = stack_allocation[1, C.int]()
 
             @parameter
@@ -107,7 +107,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
                 _ = self._lib.value().call["_get_errno", C.void](errno)
             return errno[]
         else:
-            alias loc = "__error" if os_is_macos() else "__errno_location"
+            alias loc = "__error" if CompilationTarget.is_macos() else "__errno_location"
 
             @parameter
             if static:
@@ -123,7 +123,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
         """
 
         @parameter
-        if os_is_windows():
+        if CompilationTarget.is_windows():
 
             @parameter
             if static:
@@ -131,7 +131,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
             else:
                 _ = self._lib.value().call["_set_errno", C.int](errno)
         else:
-            alias loc = "__error" if os_is_macos() else "__errno_location"
+            alias loc = "__error" if CompilationTarget.is_macos() else "__errno_location"
 
             @parameter
             if static:
@@ -466,7 +466,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
             [Reference](https://man7.org/linux/man-pages/man3/fdopen.3p.html).
             Fn signature: `FILE *fdopen(int fildes, const char *mode)`.
         """
-        alias name = "_fdopen" if os_is_windows() else "fdopen"
+        alias name = "_fdopen" if CompilationTarget.is_windows() else "fdopen"
 
         @parameter
         if static:
@@ -833,7 +833,9 @@ struct Libc[*, static: Bool](Copyable, Movable):
                 return external_call["vprintf", C.int](format, p)
             else:
                 return self._lib.value().call["vprintf", C.int](format, p)
-        elif os_is_macos():  # workaround for non null termination of printf
+        elif (
+            CompilationTarget.is_macos()
+        ):  # workaround for non null termination of printf
             var length = self.strlen(format)
             var buf = UnsafePointer[C.char].alloc(length + 1)
             _ = self.snprintf(buf, length + 1, format, args)
@@ -917,7 +919,9 @@ struct Libc[*, static: Bool](Copyable, Movable):
         """
 
         @parameter
-        if os_is_macos():  # workaround for non null termination of fprintf
+        if (
+            CompilationTarget.is_macos()
+        ):  # workaround for non null termination of fprintf
             var length = self.strlen(format)
             var buf = UnsafePointer[C.char].alloc(length + 1)
             _ = self.snprintf(buf, length + 1, format, args)
@@ -1024,7 +1028,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
         """
 
         @parameter
-        if static and os_is_linux():
+        if static and CompilationTarget.is_linux():
             # FIXME: externall_call should handle this
             return __mlir_op.`pop.external_call`[
                 func = "dprintf".value,
@@ -1036,7 +1040,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
                 ],
                 _type = C.int,
             ](fd, format, args.get_loaded_kgen_pack())
-        elif os_is_linux():
+        elif CompilationTarget.is_linux():
             return self._lib.value().call["dprintf", C.int](
                 fd, format, args.get_loaded_kgen_pack()
             )
@@ -1098,7 +1102,7 @@ struct Libc[*, static: Bool](Copyable, Movable):
 
         # workaround for mac libc.dylib snprintf prints beyond null
         @parameter
-        if static or os_is_macos():
+        if static or CompilationTarget.is_macos():
             # FIXME: externall_call should handle this
             return __mlir_op.`pop.external_call`[
                 func = "snprintf".value,
@@ -1187,7 +1191,9 @@ struct Libc[*, static: Bool](Copyable, Movable):
         """
 
         @parameter
-        if static or os_is_macos():  # libc.dylib fscanf segfaults on MacOS
+        if (
+            static or CompilationTarget.is_macos()
+        ):  # libc.dylib fscanf segfaults on MacOS
             # FIXME: externall_call should handle this
             return __mlir_op.`pop.external_call`[
                 func = "fscanf".value,

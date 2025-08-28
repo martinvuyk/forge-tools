@@ -39,6 +39,8 @@ from .calendar import (
 )
 import .dt_str
 
+alias _IntCopyable = Intable & Copyable & Movable
+
 alias _cal_hash = CalendarHashes(64)
 alias _max_delta = (~UInt64(0) // (365 * 24 * 60 * 60 * 1_000_000_000)).cast[
     DType.uint16
@@ -55,7 +57,7 @@ struct DateTime[
     pyzoneinfo: Bool = True,
     native: Bool = False,
     C: _Calendarized = Gregorian[],
-](Copyable, EqualityComparable, Hashable, Movable, Stringable):
+](Copyable, EqualityComparable, Movable, Stringable):
     """Custom `Calendar` and `TimeZone` may be passed in.
     By default, it uses `PythonCalendar` which is a Gregorian
     calendar with its given epoch and max year:
@@ -132,15 +134,15 @@ struct DateTime[
     ]
 
     fn __init__[
-        T1: Intable = Int,
-        T2: Intable = Int,
-        T3: Intable = Int,
-        T4: Intable = Int,
-        T5: Intable = Int,
-        T6: Intable = Int,
-        T7: Intable = Int,
-        T8: Intable = Int,
-        T9: Intable = Int,
+        T1: _IntCopyable = Int,
+        T2: _IntCopyable = Int,
+        T3: _IntCopyable = Int,
+        T4: _IntCopyable = Int,
+        T5: _IntCopyable = Int,
+        T6: _IntCopyable = Int,
+        T7: _IntCopyable = Int,
+        T8: _IntCopyable = Int,
+        T9: _IntCopyable = Int,
     ](
         out self,
         year: Optional[T1] = None,
@@ -158,15 +160,15 @@ struct DateTime[
         """Construct a `DateTime` from valid values.
 
         Parameters:
-            T1: Any type that is Intable.
-            T2: Any type that is Intable.
-            T3: Any type that is Intable.
-            T4: Any type that is Intable.
-            T5: Any type that is Intable.
-            T6: Any type that is Intable.
-            T7: Any type that is Intable.
-            T8: Any type that is Intable.
-            T9: Any type that is Intable.
+            T1: Any type that is `Intable & Copyable & Movable`.
+            T2: Any type that is `Intable & Copyable & Movable`.
+            T3: Any type that is `Intable & Copyable & Movable`.
+            T4: Any type that is `Intable & Copyable & Movable`.
+            T5: Any type that is `Intable & Copyable & Movable`.
+            T6: Any type that is `Intable & Copyable & Movable`.
+            T7: Any type that is `Intable & Copyable & Movable`.
+            T8: Any type that is `Intable & Copyable & Movable`.
+            T9: Any type that is `Intable & Copyable & Movable`.
 
         Args:
             year: Year.
@@ -244,7 +246,7 @@ struct DateTime[
     fn replace[
         T: _Calendarized = C
     ](
-        owned self,
+        var self,
         *,
         year: Optional[UInt16] = None,
         month: Optional[UInt8] = None,
@@ -296,7 +298,7 @@ struct DateTime[
         return Self._UnboundCal(other=self, calendar=calendar.value())
 
     fn to_calendar(
-        owned self, calendar: Calendar
+        var self, calendar: Calendar
     ) -> Self._UnboundCal[__type_of(calendar).T]:
         """Translates the `DateTime`'s values to be on the same offset since
         its current calendar's epoch to the new calendar's epoch.
@@ -317,7 +319,7 @@ struct DateTime[
             years=Int(year), n_seconds=Int(ns)
         )
 
-    fn to_utc(owned self) -> Self:
+    fn to_utc(var self) -> Self:
         """Returns a new instance of `Self` transformed to UTC. If
         `self.tz` is UTC it returns early.
 
@@ -340,7 +342,7 @@ struct DateTime[
         self.tz = TZ_UTC
         return self^
 
-    fn from_utc(owned self, tz: Self._tz) -> Self:
+    fn from_utc(var self, tz: Self._tz) -> Self:
         """Translate `TimeZone` from UTC. If `self.tz` is UTC
         it returns early.
 
@@ -456,7 +458,7 @@ struct DateTime[
         return self_ns, other_ns, overflow, sign
 
     fn add(
-        owned self,
+        var self,
         *,
         years: UInt = 0,
         months: UInt = 0,
@@ -567,7 +569,7 @@ struct DateTime[
         return self^
 
     fn subtract(
-        owned self,
+        var self,
         *,
         years: UInt = 0,
         months: UInt = 0,
@@ -685,7 +687,7 @@ struct DateTime[
         return self^.add(days=0)  #  to correct days and months
 
     @always_inline
-    fn add(owned self, other: Self._UnboundCal) -> Self:
+    fn add(var self, other: Self._UnboundCal) -> Self:
         """Adds another `DateTime`.
 
         Args:
@@ -707,7 +709,7 @@ struct DateTime[
         )
 
     @always_inline
-    fn subtract(owned self, other: Self._UnboundCal) -> Self:
+    fn subtract(var self, other: Self._UnboundCal) -> Self:
         """Subtracts another `DateTime`.
 
         Args:
@@ -729,7 +731,7 @@ struct DateTime[
         )
 
     @always_inline
-    fn __add__(owned self, other: Self._UnboundCal) -> Self:
+    fn __add__(var self, other: Self._UnboundCal) -> Self:
         """Add.
 
         Args:
@@ -741,7 +743,7 @@ struct DateTime[
         return self.add(other)
 
     @always_inline
-    fn __sub__(owned self, other: Self._UnboundCal) -> Self:
+    fn __sub__(var self, other: Self._UnboundCal) -> Self:
         """Subtract.
 
         Args:
@@ -753,7 +755,7 @@ struct DateTime[
         return self.subtract(other)
 
     @always_inline
-    fn __iadd__(mut self, owned other: Self._UnboundCal):
+    fn __iadd__(mut self, var other: Self._UnboundCal):
         """Add Immediate.
 
         Args:
@@ -762,7 +764,7 @@ struct DateTime[
         self = self.add(other)
 
     @always_inline
-    fn __isub__(mut self, owned other: Self._UnboundCal):
+    fn __isub__(mut self, var other: Self._UnboundCal):
         """Subtract Immediate.
 
         Args:
@@ -828,7 +830,7 @@ struct DateTime[
         return dt.calendar.leapsecs_since_epoch(dt.year, dt.month, dt.day)
 
     @always_inline
-    fn __hash__(self) -> UInt:
+    fn hash(self) -> UInt:
         """Hash.
 
         Returns:
@@ -851,9 +853,10 @@ struct DateTime[
         var s: UInt
         var o: UInt
         if self.tz != other.tz:
-            s, o = hash(self.to_utc()), hash(other.to_utc())
+            s, o = self.to_utc().hash(), other.to_utc().hash()
+
         else:
-            s, o = hash(self), hash(other)
+            s, o = self.hash(), other.hash()
 
         @parameter
         if op == "==":
@@ -1017,11 +1020,10 @@ struct DateTime[
         return self._compare["<="](other)
 
     @always_inline
-    fn __and__[T: Hashable](self, other: T) -> UInt64:
+    fn __and__(self, other: Self) -> UInt64:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1029,14 +1031,13 @@ struct DateTime[
         Returns:
             Result.
         """
-        return hash(self) & hash(other)
+        return self.hash() & other.hash()
 
     @always_inline
-    fn __or__[T: Hashable](self, other: T) -> UInt64:
+    fn __or__(self, other: Self) -> UInt64:
         """Or.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1044,14 +1045,13 @@ struct DateTime[
         Returns:
             Result.
         """
-        return hash(self) | hash(other)
+        return self.hash() | other.hash()
 
     @always_inline
-    fn __xor__[T: Hashable](self, other: T) -> UInt64:
+    fn __xor__(self, other: Self) -> UInt64:
         """Xor.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1059,7 +1059,7 @@ struct DateTime[
         Returns:
             Result.
         """
-        return hash(self) ^ hash(other)
+        return self.hash() ^ other.hash()
 
     @always_inline
     fn __int__(self) -> Int:
@@ -1068,7 +1068,7 @@ struct DateTime[
         Returns:
             Result.
         """
-        return hash(self)
+        return self.hash()
 
     @always_inline
     fn __str__(self) -> String:
@@ -1177,9 +1177,11 @@ struct DateTime[
         return self.strftime(fmt)
 
     @always_inline
-    fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
+    fn to_iso[
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD
+    ](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
-        compliant formatted `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_TZD`
+        compliant formatted `String` e.g. `IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD`
         -> `1970-01-01T00:00:00+00:00` .
 
         Parameters:
@@ -1189,10 +1191,13 @@ struct DateTime[
             String.
         """
 
-        offset = self.tz.offset_at(
+        var offset = self.tz.offset_at(
             self.year, self.month, self.day, self.hour, self.minute, self.second
         )
-        return dt_str.to_iso[iso](
+        alias amnt = iso.byte_length()
+        var res = String(capacity=amnt)
+        dt_str.to_iso[iso](
+            res,
             self.year,
             self.month,
             self.day,
@@ -1201,6 +1206,7 @@ struct DateTime[
             self.second,
             offset.to_iso(),
         )
+        return res
 
     @always_inline
     fn timestamp(self) -> Float64:
@@ -1261,7 +1267,7 @@ struct DateTime[
 
     @staticmethod
     fn from_iso[
-        iso: dt_str.IsoFormat = dt_str.IsoFormat()
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD
     ](
         s: String,
         tz: Optional[Self._tz] = None,
@@ -1296,7 +1302,7 @@ struct DateTime[
             day = p[2]
 
             @parameter
-            if iso.selected in [iso.HHMMSS, iso.HH_MM_SS]:
+            if iso.fmt_str in [iso.HHMMSS.fmt_str, iso.HH_MM_SS.fmt_str]:
                 year = calendar.min_year
                 month = calendar.min_month
                 day = calendar.min_day
@@ -1335,6 +1341,30 @@ struct DateTime[
         ns = calendar.min_nanosecond
         return Self(
             d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], ns, zone, calendar
+        )
+
+    @always_inline
+    fn write_to[W: Writer](self, mut writer: W):
+        """Write the `DateTime` to a writer.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write to.
+        """
+        var offset = self.tz.offset_at(
+            self.year, self.month, self.day, self.hour, self.minute, self.second
+        )
+        dt_str.to_iso[dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS_TZD](
+            writer,
+            self.year,
+            self.month,
+            self.day,
+            self.hour,
+            self.minute,
+            self.second,
+            offset.to_iso(),
         )
 
 

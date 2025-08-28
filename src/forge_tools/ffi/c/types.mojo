@@ -1,6 +1,6 @@
 """C POSIX types."""
 
-from sys.info import is_64bit, os_is_windows
+from sys.info import is_64bit
 from sys.ffi import external_call
 from os import abort
 from utils import StaticTuple
@@ -67,7 +67,7 @@ fn _c_long_dtype() -> DType:
     # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
 
     @parameter
-    if is_64bit() and os_is_windows():
+    if is_64bit() and CompilationTarget.is_windows():
         return DType.int32  # LLP64
     elif is_64bit():
         return DType.int64  # LP64
@@ -79,7 +79,7 @@ fn _c_u_long_dtype() -> DType:
     # https://en.wikipedia.org/wiki/64-bit_computing#64-bit_data_models
 
     @parameter
-    if is_64bit() and os_is_windows():
+    if is_64bit() and CompilationTarget.is_windows():
         return DType.uint32  # LLP64
     elif is_64bit():
         return DType.uint64  # LP64

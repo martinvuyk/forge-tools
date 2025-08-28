@@ -309,7 +309,8 @@ struct DualQuaternion[T: DType = DType.float64]:
 
 ## datetime
 
-**Plans for the datetime package in Mojo's stdlib:** Waiting for the Mojo team.
+**Plans for the datetime package in Mojo's stdlib:** Waiting for default trait
+methods, then polishing it some more.
 
 - `DateTime`
     - A structure aware of TimeZone, Calendar, and leap days and seconds.
@@ -396,8 +397,10 @@ assert_equal(ref1, parsed.value())
 
 ## socket
 
-**Plans for the socket package in Mojo's stdlib:** Development is still ongoing
-but this will most probably get merged fast once it works.
+**Plans for the socket package in Mojo's stdlib:** The IO interfaces are going
+through a lot of design and might require this module to be changed
+significantly. I still hope the abstractions themselves and the structure of
+the implementation here becomes the eventual implementation in the stdlib.
 
 #### Current outlook
 

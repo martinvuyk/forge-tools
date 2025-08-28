@@ -5,13 +5,17 @@ Notes:
     requests to extend support are welcome.
 """
 
-from sys.info import os_is_linux, os_is_macos, os_is_windows
+from sys.info import CompilationTarget
 
-alias _mac_or_windows = os_is_macos() or os_is_windows()
-alias _mac_or_linux = os_is_macos() or os_is_linux()
-alias _windows = os_is_windows()
-alias _mac = os_is_macos()
-alias _linux = os_is_linux()
+alias _mac_or_windows = (
+    CompilationTarget.is_macos() or CompilationTarget.is_windows()
+)
+alias _mac_or_linux = (
+    CompilationTarget.is_macos() or CompilationTarget.is_linux()
+)
+alias _windows = CompilationTarget.is_windows()
+alias _mac = CompilationTarget.is_macos()
+alias _linux = CompilationTarget.is_linux()
 
 # ===----------------------------------------------------------------------=== #
 # Error constants (errno.h)

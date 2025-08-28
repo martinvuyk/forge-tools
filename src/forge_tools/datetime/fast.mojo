@@ -32,6 +32,8 @@ from collections.optional import Optional
 from .calendar import UTCFastCal, CalendarHashes
 import .dt_str
 
+alias _IntCopyable = Intable & Copyable & Movable
+
 alias _cal = UTCFastCal
 alias _cal_h64 = CalendarHashes(CalendarHashes.UINT64)
 alias _cal_h32 = CalendarHashes(CalendarHashes.UINT32)
@@ -40,7 +42,7 @@ alias _cal_h8 = CalendarHashes(CalendarHashes.UINT8)
 
 
 @register_passable("trivial")
-struct DateTime64(EqualityComparable, Hashable, Stringable):
+struct DateTime64(Copyable, EqualityComparable, Movable, Stringable):
     """Fast `DateTime64` struct. This is a "normal"
     `DateTime` with milisecond resolution. Uses
     UTCFastCal epoch [1970-01-01, 9999-12-31] and other
@@ -83,35 +85,35 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: Intable = Int,
-        T2: Intable = Int,
-        T3: Intable = Int,
-        T4: Intable = Int,
-        T5: Intable = Int,
-        T6: Intable = Int,
-        T7: Intable = Int,
+        T1: _IntCopyable = Int,
+        T2: _IntCopyable = Int,
+        T3: _IntCopyable = Int,
+        T4: _IntCopyable = Int,
+        T5: _IntCopyable = Int,
+        T6: _IntCopyable = Int,
+        T7: _IntCopyable = Int,
     ](
         out self,
-        owned year: Optional[T1] = None,
-        owned month: Optional[T2] = None,
-        owned day: Optional[T3] = None,
-        owned hour: Optional[T4] = None,
-        owned minute: Optional[T5] = None,
-        owned second: Optional[T6] = None,
-        owned m_second: Optional[T7] = None,
-        owned hash_val: Optional[UInt64] = None,
+        var year: Optional[T1] = None,
+        var month: Optional[T2] = None,
+        var day: Optional[T3] = None,
+        var hour: Optional[T4] = None,
+        var minute: Optional[T5] = None,
+        var second: Optional[T6] = None,
+        var m_second: Optional[T7] = None,
+        var hash_val: Optional[UInt64] = None,
     ):
         """Construct a `DateTime64` from valid values.
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable.
-            T2: Any type that is Intable.
-            T3: Any type that is Intable.
-            T4: Any type that is Intable.
-            T5: Any type that is Intable.
-            T6: Any type that is Intable.
-            T7: Any type that is Intable.
+            T1: Any type that is `Intable & Copyable & Movable`.
+            T2: Any type that is `Intable & Copyable & Movable`.
+            T3: Any type that is `Intable & Copyable & Movable`.
+            T4: Any type that is `Intable & Copyable & Movable`.
+            T5: Any type that is `Intable & Copyable & Movable`.
+            T6: Any type that is `Intable & Copyable & Movable`.
+            T7: Any type that is `Intable & Copyable & Movable`.
 
         Args:
             year: Year.
@@ -181,15 +183,15 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
             return 0
 
     fn replace(
-        owned self,
+        var self,
         *,
-        owned year: Optional[Int] = None,
-        owned month: Optional[Int] = None,
-        owned day: Optional[Int] = None,
-        owned hour: Optional[Int] = None,
-        owned minute: Optional[Int] = None,
-        owned second: Optional[Int] = None,
-        owned m_second: Optional[Int] = None,
+        var year: Optional[Int] = None,
+        var month: Optional[Int] = None,
+        var day: Optional[Int] = None,
+        var hour: Optional[Int] = None,
+        var minute: Optional[Int] = None,
+        var second: Optional[Int] = None,
+        var m_second: Optional[Int] = None,
     ) -> Self:
         """Replace values inside the hash.
 
@@ -252,7 +254,7 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         return self.m_seconds
 
     @always_inline
-    fn __add__(owned self, owned other: Self) -> Self:
+    fn __add__(var self, var other: Self) -> Self:
         """Add.
 
         Args:
@@ -265,7 +267,7 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __sub__(owned self, owned other: Self) -> Self:
+    fn __sub__(var self, var other: Self) -> Self:
         """Subtract.
 
         Args:
@@ -278,7 +280,7 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(mut self, owned other: Self):
+    fn __iadd__(mut self, var other: Self):
         """Add Immediate.
 
         Args:
@@ -287,22 +289,13 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         self.m_seconds += other.m_seconds
 
     @always_inline
-    fn __isub__(mut self, owned other: Self):
+    fn __isub__(mut self, var other: Self):
         """Subtract Immediate.
 
         Args:
             other: Other.
         """
         self.m_seconds -= other.m_seconds
-
-    @always_inline
-    fn __hash__(self) -> UInt:
-        """Hash.
-
-        Returns:
-            Result.
-        """
-        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -386,11 +379,10 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         return Self(m_seconds=self.m_seconds, hash_val=~self.hash)
 
     @always_inline
-    fn __and__[T: Hashable](self, other: T) -> UInt64:
+    fn __and__(self, other: Self) -> UInt64:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -398,14 +390,13 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash & hash(other)
+        return self.hash & other.hash
 
     @always_inline
-    fn __or__[T: Hashable](self, other: T) -> UInt64:
+    fn __or__(self, other: Self) -> UInt64:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -413,14 +404,13 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash | hash(other)
+        return self.hash | other.hash
 
     @always_inline
-    fn __xor__[T: Hashable](self, other: T) -> UInt64:
+    fn __xor__(self, other: Self) -> UInt64:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -428,7 +418,7 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash ^ hash(other)
+        return self.hash ^ other.hash
 
     @always_inline
     fn __int__(self) -> Int:
@@ -437,7 +427,7 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return hash(self)
+        return Int(self.hash)
 
     @always_inline
     fn __str__(self) -> String:
@@ -450,7 +440,7 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn add(
-        owned self,
+        var self,
         years: Int = 0,
         days: Int = 0,
         hours: Int = 0,
@@ -479,7 +469,7 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn subtract(
-        owned self,
+        var self,
         years: Int = 0,
         days: Int = 0,
         hours: Int = 0,
@@ -547,9 +537,11 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         return self.seconds_since_epoch().cast[DType.float64]()
 
     @always_inline
-    fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
+    fn to_iso[
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS
+    ](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
-        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
+        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_HH_MM_SS`.
         -> `1970-01-01T00:00:00` .
 
         Parameters:
@@ -562,12 +554,15 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        d = _cal.from_hash[_cal_h64](Int(self.hash))
-        return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
+        var d = _cal.from_hash[_cal_h64](Int(self.hash))
+        alias amnt = iso.byte_length()
+        var res = String(capacity=amnt)
+        dt_str.to_iso[iso](res, d[0], d[1], d[2], d[3], d[4], d[5])
+        return res
 
     @staticmethod
     fn from_iso[
-        iso: dt_str.IsoFormat = dt_str.IsoFormat(),
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS
     ](s: String) -> Optional[Self]:
         """Construct a `DateTime64` from an
         [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
@@ -607,9 +602,24 @@ struct DateTime64(EqualityComparable, Hashable, Stringable):
         d = _cal.from_hash[_cal_h64](Int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], d[5], d[6], hash_val=value)
 
+    @always_inline
+    fn write_to[W: Writer](self, mut writer: W):
+        """Write the `DateTime` to a writer.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write to.
+        """
+        var d = _cal.from_hash[_cal_h64](Int(self.hash))
+        dt_str.to_iso[dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS](
+            writer, d[0], d[1], d[2], d[3], d[4], d[5]
+        )
+
 
 @register_passable("trivial")
-struct DateTime32(EqualityComparable, Hashable, Stringable):
+struct DateTime32(Copyable, EqualityComparable, Movable, Stringable):
     """Fast `DateTime32 ` struct. This is a "normal" `DateTime`
     with minute resolution. Uses UTCFastCal epoch
     [1970-01-01, 9999-12-31] and other params at build time.
@@ -649,33 +659,33 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: Intable = Int,
-        T2: Intable = Int,
-        T3: Intable = Int,
-        T4: Intable = Int,
-        T5: Intable = Int,
-        T6: Intable = Int,
-        T7: Intable = Int,
+        T1: _IntCopyable = Int,
+        T2: _IntCopyable = Int,
+        T3: _IntCopyable = Int,
+        T4: _IntCopyable = Int,
+        T5: _IntCopyable = Int,
+        T6: _IntCopyable = Int,
+        T7: _IntCopyable = Int,
     ](
         out self,
-        owned year: Optional[T1] = None,
-        owned month: Optional[T2] = None,
-        owned day: Optional[T3] = None,
-        owned hour: Optional[T4] = None,
-        owned minute: Optional[T5] = None,
-        owned hash_val: Optional[UInt32] = None,
+        var year: Optional[T1] = None,
+        var month: Optional[T2] = None,
+        var day: Optional[T3] = None,
+        var hour: Optional[T4] = None,
+        var minute: Optional[T5] = None,
+        var hash_val: Optional[UInt32] = None,
     ):
         """Construct a `DateTime32` from valid values.
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable.
-            T2: Any type that is Intable.
-            T3: Any type that is Intable.
-            T4: Any type that is Intable.
-            T5: Any type that is Intable.
-            T6: Any type that is Intable.
-            T7: Any type that is Intable.
+            T1: Any type that is `Intable & Copyable & Movable`.
+            T2: Any type that is `Intable & Copyable & Movable`.
+            T3: Any type that is `Intable & Copyable & Movable`.
+            T4: Any type that is `Intable & Copyable & Movable`.
+            T5: Any type that is `Intable & Copyable & Movable`.
+            T6: Any type that is `Intable & Copyable & Movable`.
+            T7: Any type that is `Intable & Copyable & Movable`.
 
         Args:
             year: Year.
@@ -734,13 +744,13 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         return self.minutes.cast[DType.uint64]() * 60
 
     fn replace(
-        owned self,
+        var self,
         *,
-        owned year: Optional[Int] = None,
-        owned month: Optional[Int] = None,
-        owned day: Optional[Int] = None,
-        owned hour: Optional[Int] = None,
-        owned minute: Optional[Int] = None,
+        var year: Optional[Int] = None,
+        var month: Optional[Int] = None,
+        var day: Optional[Int] = None,
+        var hour: Optional[Int] = None,
+        var minute: Optional[Int] = None,
     ) -> Self:
         """Replace values inside the hash.
 
@@ -777,7 +787,7 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __add__(owned self, owned other: Self) -> Self:
+    fn __add__(var self, var other: Self) -> Self:
         """Add.
 
         Args:
@@ -790,7 +800,7 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __sub__(owned self, owned other: Self) -> Self:
+    fn __sub__(var self, var other: Self) -> Self:
         """Subtract.
 
         Args:
@@ -803,7 +813,7 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(mut self, owned other: Self):
+    fn __iadd__(mut self, var other: Self):
         """Add Immediate.
 
         Args:
@@ -812,22 +822,13 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         self.minutes += other.minutes
 
     @always_inline
-    fn __isub__(mut self, owned other: Self):
+    fn __isub__(mut self, var other: Self):
         """Subtract Immediate.
 
         Args:
             other: Other.
         """
         self.minutes -= other.minutes
-
-    @always_inline
-    fn __hash__(self) -> UInt:
-        """Hash.
-
-        Returns:
-            Result.
-        """
-        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -911,11 +912,10 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         return Self(minutes=self.minutes, hash_val=~self.hash)
 
     @always_inline
-    fn __and__[T: Hashable](self, other: T) -> UInt32:
+    fn __and__(self, other: Self) -> UInt32:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -923,14 +923,13 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash & hash(other)
+        return self.hash & other.hash
 
     @always_inline
-    fn __or__[T: Hashable](self, other: T) -> UInt32:
+    fn __or__(self, other: Self) -> UInt32:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -938,14 +937,13 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash | hash(other)
+        return self.hash | other.hash
 
     @always_inline
-    fn __xor__[T: Hashable](self, other: T) -> UInt32:
+    fn __xor__(self, other: Self) -> UInt32:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -953,7 +951,7 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash ^ hash(other)
+        return self.hash ^ other.hash
 
     @always_inline
     fn __int__(self) -> Int:
@@ -962,7 +960,7 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return hash(self)
+        return Int(self.hash)
 
     @always_inline
     fn __str__(self) -> String:
@@ -975,7 +973,7 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn add(
-        owned self,
+        var self,
         years: Int = 0,
         days: Int = 0,
         hours: Int = 0,
@@ -1002,7 +1000,7 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn subtract(
-        owned self,
+        var self,
         years: Int = 0,
         days: Int = 0,
         hours: Int = 0,
@@ -1066,9 +1064,11 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         return self.seconds_since_epoch().cast[DType.float64]()
 
     @always_inline
-    fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
+    fn to_iso[
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS
+    ](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
-        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
+        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_HH_MM_SS`.
         -> `1970-01-01T00:00:00` .
 
         Parameters:
@@ -1081,12 +1081,15 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        d = _cal.from_hash[_cal_h32](Int(self.hash))
-        return dt_str.to_iso[iso](d[0], d[1], d[2], d[3], d[4], d[5])
+        var d = _cal.from_hash[_cal_h32](Int(self.hash))
+        alias amnt = iso.byte_length()
+        var res = String(capacity=amnt)
+        dt_str.to_iso[iso](res, d[0], d[1], d[2], d[3], d[4], d[5])
+        return res
 
     @staticmethod
     fn from_iso[
-        iso: dt_str.IsoFormat = dt_str.IsoFormat(),
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS
     ](s: String) -> Optional[Self]:
         """Construct a `DateTime32` time from an
         [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
@@ -1126,9 +1129,24 @@ struct DateTime32(EqualityComparable, Hashable, Stringable):
         d = _cal.from_hash[_cal_h32](Int(value))
         return Self(d[0], d[1], d[2], d[3], d[4], value)
 
+    @always_inline
+    fn write_to[W: Writer](self, mut writer: W):
+        """Write the `DateTime` to a writer.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write to.
+        """
+        d = _cal.from_hash[_cal_h32](Int(self.hash))
+        dt_str.to_iso[dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS](
+            writer, d[0], d[1], d[2], d[3], d[4], d[5]
+        )
+
 
 @register_passable("trivial")
-struct DateTime16(EqualityComparable, Hashable, Stringable):
+struct DateTime16(Copyable, EqualityComparable, Movable, Stringable):
     """Fast `DateTime16` struct. This is a `DateTime` with
     hour resolution, it can be used as a year, dayofyear,
     hour representation. Uses UTCFastCal epoch
@@ -1167,26 +1185,26 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: Intable = Int,
-        T2: Intable = Int,
-        T3: Intable = Int,
-        T4: Intable = Int,
+        T1: _IntCopyable = Int,
+        T2: _IntCopyable = Int,
+        T3: _IntCopyable = Int,
+        T4: _IntCopyable = Int,
     ](
         out self,
-        owned year: Optional[T1] = None,
-        owned month: Optional[T2] = None,
-        owned day: Optional[T3] = None,
-        owned hour: Optional[T4] = None,
-        owned hash_val: Optional[UInt16] = None,
+        var year: Optional[T1] = None,
+        var month: Optional[T2] = None,
+        var day: Optional[T3] = None,
+        var hour: Optional[T4] = None,
+        var hash_val: Optional[UInt16] = None,
     ):
         """Construct a `DateTime16` from valid values.
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable.
-            T2: Any type that is Intable.
-            T3: Any type that is Intable.
-            T4: Any type that is Intable.
+            T1: Any type that is `Intable & Copyable & Movable`.
+            T2: Any type that is `Intable & Copyable & Movable`.
+            T3: Any type that is `Intable & Copyable & Movable`.
+            T4: Any type that is `Intable & Copyable & Movable`.
 
         Args:
             year: Year.
@@ -1233,11 +1251,11 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
             return 0
 
     fn replace(
-        owned self,
+        var self,
         *,
-        owned year: Optional[Int] = None,
-        owned day: Optional[Int] = None,
-        owned hour: Optional[Int] = None,
+        var year: Optional[Int] = None,
+        var day: Optional[Int] = None,
+        var hour: Optional[Int] = None,
     ) -> Self:
         """Replace values inside the hash.
 
@@ -1275,7 +1293,7 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         return self.hours.cast[DType.uint32]() * 60 * 60
 
     @always_inline
-    fn __add__(owned self, owned other: Self) -> Self:
+    fn __add__(var self, var other: Self) -> Self:
         """Add.
 
         Args:
@@ -1288,7 +1306,7 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __sub__(owned self, owned other: Self) -> Self:
+    fn __sub__(var self, var other: Self) -> Self:
         """Subtract.
 
         Args:
@@ -1301,7 +1319,7 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(mut self, owned other: Self):
+    fn __iadd__(mut self, var other: Self):
         """Add Immediate.
 
         Args:
@@ -1310,22 +1328,13 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         self.hours += other.hours
 
     @always_inline
-    fn __isub__(mut self, owned other: Self):
+    fn __isub__(mut self, var other: Self):
         """Subtract Immediate.
 
         Args:
             other: Other.
         """
         self.hours -= other.hours
-
-    @always_inline
-    fn __hash__(self) -> UInt:
-        """Hash.
-
-        Returns:
-            Result.
-        """
-        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -1409,11 +1418,10 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         return Self(hours=self.hours, hash_val=~self.hash)
 
     @always_inline
-    fn __and__[T: Hashable](self, other: T) -> UInt16:
+    fn __and__(self, other: Self) -> UInt16:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1421,14 +1429,13 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash & hash(other)
+        return self.hash & other.hash
 
     @always_inline
-    fn __or__[T: Hashable](self, other: T) -> UInt16:
+    fn __or__(self, other: Self) -> UInt16:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1436,14 +1443,13 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash | hash(other)
+        return self.hash | other.hash
 
     @always_inline
-    fn __xor__[T: Hashable](self, other: T) -> UInt16:
+    fn __xor__(self, other: Self) -> UInt16:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1451,7 +1457,7 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash ^ hash(other)
+        return self.hash ^ other.hash
 
     @always_inline
     fn __int__(self) -> Int:
@@ -1460,7 +1466,7 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return hash(self)
+        return Int(self.hash)
 
     @always_inline
     fn __str__(self) -> String:
@@ -1473,7 +1479,7 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn add(
-        owned self,
+        var self,
         days: Int = 0,
         hours: Int = 0,
         minutes: Int = 0,
@@ -1496,7 +1502,7 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn subtract(
-        owned self,
+        var self,
         days: Int = 0,
         hours: Int = 0,
         minutes: Int = 0,
@@ -1556,9 +1562,11 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         return self.seconds_since_epoch().cast[DType.float64]()
 
     @always_inline
-    fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
+    fn to_iso[
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS
+    ](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
-        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
+        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_HH_MM_SS`.
         -> `1970-01-01T00:00:00` .
 
         Parameters:
@@ -1571,13 +1579,16 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
             This is done assuming the current hash is valid.
         """
 
-        d = _cal.from_hash[_cal_h16](Int(self.hash))
-        y = d[0] + _cal.min_year
-        return dt_str.to_iso[iso](y, d[1], d[2], d[3], d[4], d[5])
+        var d = _cal.from_hash[_cal_h16](Int(self.hash))
+        d[0] += _cal.min_year
+        alias amnt = iso.byte_length()
+        var res = String(capacity=amnt)
+        dt_str.to_iso[iso](res, d[0], d[1], d[2], d[3], d[4], d[5])
+        return res
 
     @staticmethod
     fn from_iso[
-        iso: dt_str.IsoFormat = dt_str.IsoFormat(),
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS,
     ](s: String) -> Optional[Self]:
         """Construct a `DateTime16` time from an
         [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
@@ -1618,9 +1629,25 @@ struct DateTime16(EqualityComparable, Hashable, Stringable):
         y = d[0] + _cal.min_year
         return Self(year=y, month=d[1], day=d[2], hour=d[3], hash_val=value)
 
+    @always_inline
+    fn write_to[W: Writer](self, mut writer: W):
+        """Write the `DateTime` to a writer.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write to.
+        """
+        d = _cal.from_hash[_cal_h16](Int(self.hash))
+        d[0] += _cal.min_year
+        dt_str.to_iso[dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS](
+            writer, d[0], d[1], d[2], d[3], d[4], d[5]
+        )
+
 
 @register_passable("trivial")
-struct DateTime8(EqualityComparable, Hashable, Stringable):
+struct DateTime8(Copyable, EqualityComparable, Movable, Stringable):
     """Fast `DateTime8` struct. This is a `DateTime`
     with hour resolution, it can be used as a dayofweek,
     hour representation. Uses UTCFastCal epoch
@@ -1658,26 +1685,26 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         self.hash = hash_val
 
     fn __init__[
-        T1: Intable = Int,
-        T2: Intable = Int,
-        T3: Intable = Int,
-        T4: Intable = Int,
+        T1: _IntCopyable = Int,
+        T2: _IntCopyable = Int,
+        T3: _IntCopyable = Int,
+        T4: _IntCopyable = Int,
     ](
         out self,
-        owned year: Optional[T1] = None,
-        owned month: Optional[T2] = None,
-        owned day: Optional[T3] = None,
-        owned hour: Optional[T4] = None,
-        owned hash_val: Optional[UInt8] = None,
+        var year: Optional[T1] = None,
+        var month: Optional[T2] = None,
+        var day: Optional[T3] = None,
+        var hour: Optional[T4] = None,
+        var hash_val: Optional[UInt8] = None,
     ):
         """Construct a `DateTime8` from valid values.
         UTCCalendar is the default.
 
         Parameters:
-            T1: Any type that is Intable.
-            T2: Any type that is Intable.
-            T3: Any type that is Intable.
-            T4: Any type that is Intable.
+            T1: Any type that is `Intable & Copyable & Movable`.
+            T2: Any type that is `Intable & Copyable & Movable`.
+            T3: Any type that is `Intable & Copyable & Movable`.
+            T4: Any type that is `Intable & Copyable & Movable`.
 
         Args:
             year: Year.
@@ -1720,10 +1747,10 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
             return 0
 
     fn replace(
-        owned self,
+        var self,
         *,
-        owned day: Optional[Int] = None,
-        owned hour: Optional[Int] = None,
+        var day: Optional[Int] = None,
+        var hour: Optional[Int] = None,
     ) -> Self:
         """Replace values inside the hash.
 
@@ -1758,7 +1785,7 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         return self.hour.cast[DType.uint16]() * 60 * 60
 
     @always_inline
-    fn __add__(owned self, owned other: Self) -> Self:
+    fn __add__(var self, var other: Self) -> Self:
         """Add.
 
         Args:
@@ -1771,7 +1798,7 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __sub__(owned self, owned other: Self) -> Self:
+    fn __sub__(var self, var other: Self) -> Self:
         """Subtract.
 
         Args:
@@ -1784,7 +1811,7 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         return self
 
     @always_inline
-    fn __iadd__(mut self, owned other: Self):
+    fn __iadd__(mut self, var other: Self):
         """Add Immediate.
 
         Args:
@@ -1793,22 +1820,13 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         self.hours += other.hours
 
     @always_inline
-    fn __isub__(mut self, owned other: Self):
+    fn __isub__(mut self, var other: Self):
         """Subtract Immediate.
 
         Args:
             other: Other.
         """
         self.hours -= other.hours
-
-    @always_inline
-    fn __hash__(self) -> UInt:
-        """Hash.
-
-        Returns:
-            Result.
-        """
-        return Int(self.hash)
 
     @always_inline
     fn __eq__(self, other: Self) -> Bool:
@@ -1892,11 +1910,10 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         return Self(hours=self.hours, hash_val=~self.hash)
 
     @always_inline
-    fn __and__[T: Hashable](self, other: T) -> UInt8:
+    fn __and__(self, other: Self) -> UInt8:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1904,14 +1921,13 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash & hash(other)
+        return self.hash & other.hash
 
     @always_inline
-    fn __or__[T: Hashable](self, other: T) -> UInt8:
+    fn __or__(self, other: Self) -> UInt8:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1919,14 +1935,13 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash | hash(other)
+        return self.hash | other.hash
 
     @always_inline
-    fn __xor__[T: Hashable](self, other: T) -> UInt8:
+    fn __xor__(self, other: Self) -> UInt8:
         """And.
 
         Parameters:
-            T: Any Hashable type.
 
         Args:
             other: Other.
@@ -1934,7 +1949,7 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return self.hash ^ hash(other)
+        return self.hash ^ other.hash
 
     @always_inline
     fn __int__(self) -> Int:
@@ -1943,7 +1958,7 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         Returns:
             Result.
         """
-        return hash(self)
+        return Int(self.hash)
 
     @always_inline
     fn __str__(self) -> String:
@@ -1956,7 +1971,7 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn add(
-        owned self,
+        var self,
         days: Int = 0,
         hours: Int = 0,
         minutes: Int = 0,
@@ -1979,7 +1994,7 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
 
     @always_inline
     fn subtract(
-        owned self,
+        var self,
         days: Int = 0,
         hours: Int = 0,
         minutes: Int = 0,
@@ -2039,9 +2054,11 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         return self.seconds_since_epoch().cast[DType.float64]()
 
     @always_inline
-    fn to_iso[iso: dt_str.IsoFormat = dt_str.IsoFormat()](self) -> String:
+    fn to_iso[
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS
+    ](self) -> String:
         """Return an [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601)
-        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_MM_HH_SS`.
+        compliant `String` e.g. `IsoFormat.YYYY_MM_DD_T_HH_MM_SS`.
         -> `1970-01-01T00:00:00` .
 
         Parameters:
@@ -2053,13 +2070,14 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         Notes:
             This is done assuming the current hash is valid.
         """
-
-        s = dt_str.to_iso[iso](1970, 1, self.day, self.hour, 0, 0)
-        return s
+        alias amnt = iso.byte_length()
+        var res = String(capacity=amnt)
+        dt_str.to_iso[iso](res, 1970, 1, self.day, self.hour, 0, 0)
+        return res
 
     @staticmethod
     fn from_iso[
-        iso: dt_str.IsoFormat = dt_str.IsoFormat(),
+        iso: dt_str.IsoFormat = dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS
     ](s: String) -> Optional[Self]:
         """Construct a `DateTime8` time from an
         [ISO 8601](https://es.wikipedia.org/wiki/ISO_8601) compliant
@@ -2078,11 +2096,10 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         """
 
         try:
-            p = dt_str.from_iso[
+            var p = dt_str.from_iso[
                 iso, iana=False, pyzoneinfo=False, native=False
             ](s)
-            dt = Self(p[0], p[1], p[2], p[3])
-            return dt
+            return Self(p[0], p[1], p[2], p[3])
         except:
             return None
 
@@ -2097,6 +2114,19 @@ struct DateTime8(EqualityComparable, Hashable, Stringable):
         Returns:
             Self.
         """
-
-        d = _cal.from_hash[_cal_h8](Int(value))
+        var d = _cal.from_hash[_cal_h8](Int(value))
         return Self(day=Int(d[2]), hash_val=value).add(hours=Int(d[3]))
+
+    @always_inline
+    fn write_to[W: Writer](self, mut writer: W):
+        """Write the `DateTime` to a writer.
+
+        Parameters:
+            W: The writer type.
+
+        Args:
+            writer: The writer to write to.
+        """
+        dt_str.to_iso[dt_str.IsoFormat.YYYY_MM_DD_T_HH_MM_SS](
+            writer, 1970, 1, self.day, self.hour, 0, 0
+        )

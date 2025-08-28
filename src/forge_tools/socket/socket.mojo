@@ -250,11 +250,11 @@ struct SockPlatform:
     #        """Create a new socket object from an open `FileDescriptor`."""
     #        ...
 
-    #     fn close(owned self) raises:
+    #     fn close(var self) raises:
     #         """Closes the Socket."""
     #         ...
 
-    #     fn __del__(owned self):
+    #     fn __del__(deinit self):
     #         """Closes the Socket if it's the last reference to its
     #         `FileDescriptor`.
     #         """
@@ -518,7 +518,7 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             self._impl = Self._linux_s(fd)
 
-    fn close(owned self) raises:
+    fn close(var self) raises:
         """Closes the Socket."""
 
         @parameter
@@ -530,13 +530,13 @@ struct Socket[
             constrained[False, "Platform not supported yet."]()
             raise Error("Failed to close socket.")
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Closes the Socket if it's the last reference to its
         `FileDescriptor`.
         """
         _ = self^
 
-    fn __enter__(owned self) -> Self:
+    fn __enter__(var self) -> Self:
         """Enter a context.
 
         Returns:

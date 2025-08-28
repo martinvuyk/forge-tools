@@ -234,7 +234,7 @@ struct TzDT:
 
         alias hours = SIMD[DType.uint8, 8](20, 21, 22, 23, 0, 1, 2, 3)
         alias indices = SIMD[DType.uint8, 8](0, 1, 2, 3, 4, 5, 6, 7)
-        result = (hours == hour).cast[DType.uint8]() * indices
+        result = hours.eq(hour).cast[DType.uint8]() * indices
         h = Int(result.reduce_max())
 
         self.month = month
@@ -402,7 +402,7 @@ struct ZoneInfoFile32(ZoneStorageDST):
         except:
             return None
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Delete the file."""
         try:
             import os
@@ -474,7 +474,7 @@ struct ZoneInfoFile8(ZoneStorageNoDST):
         except:
             return None
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Delete the file."""
         try:
             import os
@@ -767,7 +767,7 @@ struct ZoneInfo[T: ZoneStorageDST, A: ZoneStorageNoDST](Copyable, Movable):
 
 fn get_zoneinfo[
     T: ZoneStorageDST = ZoneInfoMem32, A: ZoneStorageNoDST = ZoneInfoMem8
-](owned timezones: List[String] = List[String]()) -> Optional[ZoneInfo[T, A]]:
+](var timezones: List[String] = List[String]()) -> Optional[ZoneInfo[T, A]]:
     """Get all zoneinfo available. First tries to get it
     from the OS, then from the internet, then falls back
     on hardcoded values.

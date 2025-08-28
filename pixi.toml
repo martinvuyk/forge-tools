@@ -13,4 +13,4 @@ test = { cmd = "./scripts/test.sh" }
 benchmark = { cmd = "./scripts/benchmark.sh" }
 
 [dependencies]
-max = ">=25.5.0.dev2025062505,<26"
+max = ">=25.6.0.dev2025082605,<26"

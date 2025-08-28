@@ -194,7 +194,7 @@ struct Result[T: Copyable & Movable](Boolable, Copyable, Movable):
 
     @always_inline("nodebug")
     @implicit
-    fn __init__[A: Copyable & Movable](out self, owned other: Result[A]):
+    fn __init__[A: Copyable & Movable](out self, var other: Result[A]):
         """Create a `Result` by transferring another `Result`'s Error.
 
         Parameters:
@@ -207,7 +207,7 @@ struct Result[T: Copyable & Movable](Boolable, Copyable, Movable):
 
     @always_inline("nodebug")
     @implicit
-    fn __init__(out self, owned value: T):
+    fn __init__(out self, var value: T):
         """Create a `Result` containing a value.
 
         Args:
@@ -427,7 +427,7 @@ struct Result2[T: Copyable & Movable, E: StaticString](
 
     @always_inline("nodebug")
     @implicit
-    fn __init__[A: Copyable & Movable](out self, owned other: Result2[A, E]):
+    fn __init__[A: Copyable & Movable](out self, var other: Result2[A, E]):
         """Create a `Result` by transferring another `Result`'s Error.
 
         Parameters:
@@ -442,7 +442,7 @@ struct Result2[T: Copyable & Movable, E: StaticString](
     @implicit
     fn __init__[
         A: Copyable & Movable, B: StaticString
-    ](out self, owned other: Result2[A, B]):
+    ](out self, var other: Result2[A, B]):
         """Create a `Result` by transferring another `Result`'s Error message.
 
         Parameters:
@@ -456,7 +456,7 @@ struct Result2[T: Copyable & Movable, E: StaticString](
 
     @always_inline("nodebug")
     @implicit
-    fn __init__(out self, owned value: T):
+    fn __init__(out self, var value: T):
         """Create a `Result` containing a value.
 
         Args:

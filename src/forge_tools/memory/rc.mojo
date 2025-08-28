@@ -6,7 +6,7 @@ struct _RcInner[T: Movable]:
     var refcount: UInt64
     var payload: T
 
-    fn __init__(out self, owned value: T):
+    fn __init__(out self, var value: T):
         """Create an initialized instance of this with a refcount of 1."""
         self.refcount = 1
         self.payload = value^
@@ -27,7 +27,7 @@ struct Rc[T: Movable]:
     alias _inner_type = _RcInner[T]
     var _inner: UnsafePointer[_RcInner[T]]
 
-    fn __init__(out self, owned value: T):
+    fn __init__(out self, var value: T):
         """Create an initialized instance of this with a refcount of 1."""
         self._inner = UnsafePointer[Self._inner_type].alloc(1)
         # Cannot use init_pointee_move as _ArcInner isn't movable.
@@ -62,7 +62,7 @@ struct Rc[T: Movable]:
         self._inner[].drop_ref()
 
     @no_inline
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Delete the smart pointer reference.
 
         Decrement the ref count for the reference. If there are no more

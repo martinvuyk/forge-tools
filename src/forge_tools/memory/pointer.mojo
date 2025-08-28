@@ -23,7 +23,7 @@ trait SafePointer:
         """
         ...
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         """Free the memory referenced by the pointer or ignore."""
         ...
 
@@ -310,7 +310,7 @@ struct Pointer[
             ).unsafe_ptr()
         )
 
-    fn __del__(owned self):
+    fn __del__(deinit self):
         @parameter
         if address_space is AddressSpace.GENERIC and is_mutable:
             if self._flags & 0b1101_0000 == 0b0101_0000:

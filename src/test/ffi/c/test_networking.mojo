@@ -4,7 +4,6 @@ from testing import assert_equal, assert_false, assert_raises, assert_true
 from sys.info import is_big_endian, sizeof
 from memory import stack_allocation, UnsafePointer
 from utils import StaticTuple
-from sys.info import os_is_macos, os_is_linux, os_is_windows
 
 from forge_tools.ffi.c.libc import Libc, TryLibc
 from forge_tools.ffi.c.types import (
@@ -200,7 +199,7 @@ def _test_socket_create(libc: Libc):
             alias socket_protocol = combo[2]
 
             @parameter
-            if os_is_macos():
+            if CompilationTarget.is_macos():
                 if (
                     socket_protocol == IPPROTO_SCTP  # default unsupported
                     or address_family == AF_INET6  # default disabled
@@ -249,7 +248,7 @@ def _test_setsockopt(libc: Libc):
         size = socklen_t(sizeof[C.int]())
 
         @parameter
-        if os_is_linux():
+        if CompilationTarget.is_linux():
             fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
             assert_true(fd != -1)
             err = libc.setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, on_null, size)
@@ -262,7 +261,7 @@ def _test_setsockopt(libc: Libc):
             assert_true(err != -1)
             err = libc.setsockopt(fd, SOL_TCP, TCP_KEEPCNT, secs_null, size)
             assert_true(err != -1)
-        elif os_is_windows():
+        elif CompilationTarget.is_windows():
             # TODO
             # tcp_keepalive keepaliveParams;
             # DWORD ret = 0;
@@ -270,7 +269,7 @@ def _test_setsockopt(libc: Libc):
             # keepaliveParams.keepaliveinterval = keepaliveParams.keepalivetime = keepaliveIntervalSec * 1000;
             # WSAIoctl(sockfd, SIO_KEEPALIVE_VALS, &keepaliveParams, sizeof(keepaliveParams), NULL, 0, &ret, NULL, NULL);
             constrained[False, "Unsupported test"]()
-        elif os_is_macos():
+        elif CompilationTarget.is_macos():
             fd = libc.socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)
             assert_true(fd != -1)
             err = libc.setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, on_null, size)
@@ -303,7 +302,7 @@ def _test_bind_listen(libc: Libc):
         err = libc.setsockopt(
             fd,
             SOL_SOCKET,
-            SO_REUSEPORT if not os_is_windows() else SO_REUSEADDR,
+            SO_REUSEPORT if not CompilationTarget.is_windows() else SO_REUSEADDR,
             value_ptr.bitcast[C.void](),
             sizeof[C.int](),
         )
@@ -478,7 +477,7 @@ alias gai_err_msg_windows = (
 
 def _test_gai_strerror(libc: Libc):
     @parameter
-    if os_is_macos():
+    if CompilationTarget.is_macos():
 
         @parameter
         for i in range(len(gai_err_msg_macos)):
@@ -487,7 +486,7 @@ def _test_gai_strerror(libc: Libc):
             msg = errno_msg[1]
             res = char_ptr_to_string(libc.gai_strerror(errno))
             assert_equal(res, msg)
-    elif os_is_windows():
+    elif CompilationTarget.is_windows():
 
         @parameter
         for i in range(len(gai_err_msg_windows)):

@@ -3,7 +3,6 @@
 from testing import assert_equal, assert_false, assert_raises, assert_true
 
 from memory import UnsafePointer, stack_allocation, memcmp
-from sys.info import os_is_linux
 
 from forge_tools.ffi.c.libc import Libc, TryLibc
 from forge_tools.ffi.c.types import C, char_ptr, char_ptr_to_string
@@ -174,7 +173,7 @@ def _test_strerror(libc: Libc):
         res = char_ptr_to_string(libc.strerror(errno))
 
         @parameter
-        if os_is_linux():
+        if CompilationTarget.is_linux():
             assert_equal(res, msg)
 
 
