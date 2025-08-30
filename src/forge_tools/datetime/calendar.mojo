@@ -136,96 +136,69 @@ struct CalendarHashes:
 
 
 trait _Calendarized(Copyable, Movable):
-    @staticmethod
-    fn _get_default_max_year() -> UInt16:
-        ...
+    alias _default_max_year: UInt16
+    alias _default_min_year: UInt16
+    alias _default_min_month: UInt8
+    alias _default_min_day: UInt8
 
     fn _get_max_year(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_max_typical_days_in_year() -> UInt16:
+    fn _get_max_typical_days_in_year(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_max_possible_days_in_year() -> UInt16:
+    fn _get_max_possible_days_in_year(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_max_month() -> UInt8:
+    fn _get_max_month(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_max_hour() -> UInt8:
+    fn _get_max_hour(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_max_minute() -> UInt8:
+    fn _get_max_minute(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_max_typical_second() -> UInt8:
+    fn _get_max_typical_second(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_max_possible_second() -> UInt8:
+    fn _get_max_possible_second(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_max_milisecond() -> UInt16:
+    fn _get_max_milisecond(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_max_microsecond() -> UInt16:
+    fn _get_max_microsecond(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_max_nanosecond() -> UInt16:
-        ...
-
-    @staticmethod
-    fn _get_default_min_year() -> UInt16:
+    fn _get_max_nanosecond(self) -> UInt16:
         ...
 
     fn _get_min_year(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_default_min_month() -> UInt8:
-        ...
-
     fn _get_min_month(self) -> UInt8:
-        ...
-
-    @staticmethod
-    fn _get_default_min_day() -> UInt8:
         ...
 
     fn _get_min_day(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_min_hour() -> UInt8:
+    fn _get_min_hour(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_min_minute() -> UInt8:
+    fn _get_min_minute(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_min_second() -> UInt8:
+    fn _get_min_second(self) -> UInt8:
         ...
 
-    @staticmethod
-    fn _get_min_milisecond() -> UInt16:
+    fn _get_min_milisecond(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_min_microsecond() -> UInt16:
+    fn _get_min_microsecond(self) -> UInt16:
         ...
 
-    @staticmethod
-    fn _get_min_nanosecond() -> UInt16:
+    fn _get_min_nanosecond(self) -> UInt16:
         ...
 
     fn __init__(
@@ -394,7 +367,10 @@ struct Calendar[T: _Calendarized = Gregorian[]](Copyable, Movable):
     """The Calendar implementation."""
 
     fn __init__(
-        out self, min_year: UInt16, min_month: UInt8 = 1, min_day: UInt8 = 1
+        out self,
+        min_year: UInt16,
+        min_month: UInt8 = T._default_min_month,
+        min_day: UInt8 = T._default_min_day,
     ):
         """Get a Calendar with certain values.
 
@@ -409,7 +385,7 @@ struct Calendar[T: _Calendarized = Gregorian[]](Copyable, Movable):
                 min_year=min_year,
                 min_month=min_month,
                 min_day=min_day,
-                max_year=T._get_default_max_year(),
+                max_year=T._default_max_year,
             )
         )
 
@@ -417,10 +393,10 @@ struct Calendar[T: _Calendarized = Gregorian[]](Copyable, Movable):
     fn __init__(
         out self,
         var impl: T = T(
-            min_year=T._get_default_min_year(),
-            min_month=T._get_default_min_month(),
-            min_day=T._get_default_min_day(),
-            max_year=T._get_default_max_year(),
+            min_year=T._default_min_year,
+            min_month=T._default_min_month,
+            min_day=T._default_min_day,
+            max_year=T._default_max_year,
         ),
     ):
         """Construct a `Calendar`.
@@ -849,10 +825,10 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
     alias _min_milisecond: UInt16 = 0
     alias _min_microsecond: UInt16 = 0
     alias _min_nanosecond: UInt16 = 0
-    alias _monthdays = List[UInt8](
-        0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+    alias _monthdays = InlineArray[UInt8, 16](
+        0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0, 0, 0
     )
-    alias _days_before_month = SIMD[DType.uint16, 16](
+    alias _days_before_month = InlineArray[UInt16, 16](
         0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, _m, _m, _m
     )
 
@@ -877,96 +853,64 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         self._min_day = min_day
         self._min_year = min_year
 
-    @staticmethod
-    fn _get_default_max_year() -> UInt16:
-        return Self._default_max_year
-
     fn _get_max_year(self) -> UInt16:
         return self._max_year
 
-    @staticmethod
-    fn _get_max_typical_days_in_year() -> UInt16:
+    fn _get_max_typical_days_in_year(self) -> UInt16:
         return Self._max_typical_days_in_year
 
-    @staticmethod
-    fn _get_max_possible_days_in_year() -> UInt16:
+    fn _get_max_possible_days_in_year(self) -> UInt16:
         return Self._max_possible_days_in_year
 
-    @staticmethod
-    fn _get_max_month() -> UInt8:
+    fn _get_max_month(self) -> UInt8:
         return Self._max_month
 
-    @staticmethod
-    fn _get_max_hour() -> UInt8:
+    fn _get_max_hour(self) -> UInt8:
         return Self._max_hour
 
-    @staticmethod
-    fn _get_max_minute() -> UInt8:
+    fn _get_max_minute(self) -> UInt8:
         return Self._max_minute
 
-    @staticmethod
-    fn _get_max_typical_second() -> UInt8:
+    fn _get_max_typical_second(self) -> UInt8:
         return Self._max_typical_second
 
-    @staticmethod
-    fn _get_max_possible_second() -> UInt8:
+    fn _get_max_possible_second(self) -> UInt8:
         return Self._max_possible_second
 
-    @staticmethod
-    fn _get_max_milisecond() -> UInt16:
+    fn _get_max_milisecond(self) -> UInt16:
         return Self._max_milisecond
 
-    @staticmethod
-    fn _get_max_microsecond() -> UInt16:
+    fn _get_max_microsecond(self) -> UInt16:
         return Self._max_microsecond
 
-    @staticmethod
-    fn _get_max_nanosecond() -> UInt16:
+    fn _get_max_nanosecond(self) -> UInt16:
         return Self._max_nanosecond
-
-    @staticmethod
-    fn _get_default_min_year() -> UInt16:
-        return Self._default_min_year
 
     fn _get_min_year(self) -> UInt16:
         return self._min_year
 
-    @staticmethod
-    fn _get_default_min_month() -> UInt8:
-        return Self._default_min_month
-
     fn _get_min_month(self) -> UInt8:
         return self._min_month
-
-    @staticmethod
-    fn _get_default_min_day() -> UInt8:
-        return Self._default_min_day
 
     fn _get_min_day(self) -> UInt8:
         return self._min_day
 
-    @staticmethod
-    fn _get_min_hour() -> UInt8:
+    fn _get_min_hour(self) -> UInt8:
         return Self._min_hour
 
-    @staticmethod
-    fn _get_min_minute() -> UInt8:
+    fn _get_min_minute(self) -> UInt8:
         return Self._min_minute
 
-    @staticmethod
-    fn _get_min_second() -> UInt8:
+    fn _get_min_second(self) -> UInt8:
         return Self._min_second
 
-    @staticmethod
-    fn _get_min_milisecond() -> UInt16:
+    fn _get_min_milisecond(self) -> UInt16:
         return Self._min_milisecond
 
-    @staticmethod
-    fn _get_min_microsecond() -> UInt16:
+    fn _get_min_microsecond(self) -> UInt16:
         return Self._min_microsecond
 
-    @staticmethod
-    fn _get_min_nanosecond() -> UInt16:
+    fn _get_min_nanosecond(self) -> UInt16:
         return Self._min_nanosecond
 
     fn monthrange(self, year: UInt16, month: UInt8) -> (UInt8, UInt8):
@@ -1020,8 +964,11 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
         Returns:
             The amount of days.
         """
-
-        days = Self._monthdays[Int(month)]
+        debug_assert(
+            1 <= Int(month) <= 12,
+            "A month in a gregorian calendar must be 1 <= month <= 12",
+        )
+        var days = Self._monthdays[month]
         return days + Int(unlikely(month == 2 and Self.is_leapyear(year)))
 
     @always_inline
@@ -1053,7 +1000,7 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             Day of the year: [1, 366] (for Gregorian calendar).
         """
         total = UInt16(Int(month > 2 and Self.is_leapyear(year)))
-        total += Self._days_before_month[Int(month)].cast[DType.uint16]()
+        total += Self._days_before_month[month]
         return total + day.cast[DType.uint16]()
 
     fn day_of_year(self, year: UInt16, month: UInt8, day: UInt8) -> UInt16:
@@ -1080,10 +1027,10 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
             - month: Month of the year: [1, 12] (for Gregorian calendar).
             - day: Day of the month: [1, 31] (for Gregorian calendar).
         """
-
-        c = Self._days_before_month.lt(day_of_year).cast[DType.uint8]()
-        idx = c.reduce_add() - 1
-        rest = day_of_year - Self._days_before_month[Int(idx)]
+        alias vec = Self._days_before_month.unsafe_ptr().load[width=16]()
+        var c = vec.lt(day_of_year).cast[DType.uint8]()
+        var idx = c.reduce_add() - 1
+        var rest = day_of_year - Self._days_before_month[idx]
         rest -= Int(idx > 2 and Self.is_leapyear(year))
         return idx, rest.cast[DType.uint8]()
 
@@ -1500,15 +1447,20 @@ struct Gregorian[include_leapsecs: Bool = True](_Calendarized):
 struct UTCFast(_Calendarized):
     """`UTCFast` Calendar."""
 
+    alias _default_max_year: UInt16 = Gregorian._default_max_year
+    alias _default_min_year: UInt16 = 1970
+    alias _default_min_month: UInt8 = Gregorian._default_min_month
+    alias _default_min_day: UInt8 = Gregorian._default_min_day
+
     var _greg: Gregorian[include_leapsecs=False]
 
     fn __init__(
         out self,
         *,
-        min_year: UInt16 = 1970,
-        min_month: UInt8 = 1,
-        min_day: UInt8 = 1,
-        max_year: UInt16 = 9999,
+        min_year: UInt16 = Self._default_min_year,
+        min_month: UInt8 = Self._default_min_month,
+        min_day: UInt8 = Self._default_min_day,
+        max_year: UInt16 = Self._default_max_year,
     ):
         """Construct a `UTCFast` Calendar from values.
 
@@ -1955,111 +1907,84 @@ struct UTCFast(_Calendarized):
         """
         return Gregorian.is_leapyear(year)
 
-    @staticmethod
-    fn _get_default_max_year() -> UInt16:
-        return Gregorian._get_default_max_year()
-
     fn _get_max_year(self) -> UInt16:
         return self._greg._get_max_year()
 
-    @staticmethod
-    fn _get_max_typical_days_in_year() -> UInt16:
-        return Gregorian._get_max_typical_days_in_year()
+    fn _get_max_typical_days_in_year(self) -> UInt16:
+        return self._greg._get_max_typical_days_in_year()
 
-    @staticmethod
-    fn _get_max_possible_days_in_year() -> UInt16:
-        return Gregorian._get_max_possible_days_in_year()
+    fn _get_max_possible_days_in_year(self) -> UInt16:
+        return self._greg._get_max_possible_days_in_year()
 
-    @staticmethod
-    fn _get_max_month() -> UInt8:
-        return Gregorian._get_max_month()
+    fn _get_max_month(self) -> UInt8:
+        return self._greg._get_max_month()
 
-    @staticmethod
-    fn _get_max_hour() -> UInt8:
-        return Gregorian._get_max_hour()
+    fn _get_max_hour(self) -> UInt8:
+        return self._greg._get_max_hour()
 
-    @staticmethod
-    fn _get_max_minute() -> UInt8:
-        return Gregorian._get_max_minute()
+    fn _get_max_minute(self) -> UInt8:
+        return self._greg._get_max_minute()
 
-    @staticmethod
-    fn _get_max_typical_second() -> UInt8:
-        return Gregorian._get_max_typical_second()
+    fn _get_max_typical_second(self) -> UInt8:
+        return self._greg._get_max_typical_second()
 
-    @staticmethod
-    fn _get_max_possible_second() -> UInt8:
-        return Gregorian._get_max_possible_second()
+    fn _get_max_possible_second(self) -> UInt8:
+        return self._greg._get_max_possible_second()
 
-    @staticmethod
-    fn _get_max_milisecond() -> UInt16:
-        return Gregorian._get_max_milisecond()
+    fn _get_max_milisecond(self) -> UInt16:
+        return self._greg._get_max_milisecond()
 
-    @staticmethod
-    fn _get_max_microsecond() -> UInt16:
-        return Gregorian._get_max_microsecond()
+    fn _get_max_microsecond(self) -> UInt16:
+        return self._greg._get_max_microsecond()
 
-    @staticmethod
-    fn _get_max_nanosecond() -> UInt16:
-        return Gregorian._get_max_nanosecond()
-
-    @staticmethod
-    fn _get_default_min_year() -> UInt16:
-        return Gregorian._get_default_min_year()
+    fn _get_max_nanosecond(self) -> UInt16:
+        return self._greg._get_max_nanosecond()
 
     fn _get_min_year(self) -> UInt16:
         return self._greg._get_min_year()
 
-    @staticmethod
-    fn _get_default_min_month() -> UInt8:
-        return Gregorian._get_default_min_month()
-
     fn _get_min_month(self) -> UInt8:
         return self._greg._get_min_month()
-
-    @staticmethod
-    fn _get_default_min_day() -> UInt8:
-        return Gregorian._get_default_min_day()
 
     fn _get_min_day(self) -> UInt8:
         return self._greg._get_min_day()
 
-    @staticmethod
-    fn _get_min_hour() -> UInt8:
-        return Gregorian._get_min_hour()
+    fn _get_min_hour(self) -> UInt8:
+        return self._greg._get_min_hour()
 
-    @staticmethod
-    fn _get_min_minute() -> UInt8:
-        return Gregorian._get_min_minute()
+    fn _get_min_minute(self) -> UInt8:
+        return self._greg._get_min_minute()
 
-    @staticmethod
-    fn _get_min_second() -> UInt8:
-        return Gregorian._get_min_second()
+    fn _get_min_second(self) -> UInt8:
+        return self._greg._get_min_second()
 
-    @staticmethod
-    fn _get_min_milisecond() -> UInt16:
-        return Gregorian._get_min_milisecond()
+    fn _get_min_milisecond(self) -> UInt16:
+        return self._greg._get_min_milisecond()
 
-    @staticmethod
-    fn _get_min_microsecond() -> UInt16:
-        return Gregorian._get_min_microsecond()
+    fn _get_min_microsecond(self) -> UInt16:
+        return self._greg._get_min_microsecond()
 
-    @staticmethod
-    fn _get_min_nanosecond() -> UInt16:
-        return Gregorian._get_min_nanosecond()
+    fn _get_min_nanosecond(self) -> UInt16:
+        return self._greg._get_min_nanosecond()
 
 
 struct ISOCalendar(_Calendarized):
     """`ISOCalendar` Calendar."""
+
+    alias _default_max_year: UInt16 = Gregorian._default_max_year
+    alias _default_min_year: UInt16 = Gregorian._default_min_year
+    alias _default_min_month: UInt8 = Gregorian._default_min_month
+    alias _default_min_day: UInt8 = Gregorian._default_min_day
 
     var _greg: Gregorian
 
     fn __init__(
         out self,
         *,
-        min_year: UInt16 = 1,
-        min_month: UInt8 = 1,
-        min_day: UInt8 = 1,
-        max_year: UInt16 = 9999,
+        min_year: UInt16 = Self._default_min_year,
+        min_month: UInt8 = Self._default_min_month,
+        min_day: UInt8 = Self._default_min_day,
+        max_year: UInt16 = Self._default_max_year,
     ):
         """Construct an `ISOCalendar` Calendar from values.
 
@@ -2436,94 +2361,62 @@ struct ISOCalendar(_Calendarized):
         """
         return Gregorian.is_leapyear(year)
 
-    @staticmethod
-    fn _get_default_max_year() -> UInt16:
-        return Gregorian._get_default_max_year()
-
     fn _get_max_year(self) -> UInt16:
         return self._greg._get_max_year()
 
-    @staticmethod
-    fn _get_max_typical_days_in_year() -> UInt16:
-        return Gregorian._get_max_typical_days_in_year()
+    fn _get_max_typical_days_in_year(self) -> UInt16:
+        return self._greg._get_max_typical_days_in_year()
 
-    @staticmethod
-    fn _get_max_possible_days_in_year() -> UInt16:
-        return Gregorian._get_max_possible_days_in_year()
+    fn _get_max_possible_days_in_year(self) -> UInt16:
+        return self._greg._get_max_possible_days_in_year()
 
-    @staticmethod
-    fn _get_max_month() -> UInt8:
-        return Gregorian._get_max_month()
+    fn _get_max_month(self) -> UInt8:
+        return self._greg._get_max_month()
 
-    @staticmethod
-    fn _get_max_hour() -> UInt8:
-        return Gregorian._get_max_hour()
+    fn _get_max_hour(self) -> UInt8:
+        return self._greg._get_max_hour()
 
-    @staticmethod
-    fn _get_max_minute() -> UInt8:
-        return Gregorian._get_max_minute()
+    fn _get_max_minute(self) -> UInt8:
+        return self._greg._get_max_minute()
 
-    @staticmethod
-    fn _get_max_typical_second() -> UInt8:
-        return Gregorian._get_max_typical_second()
+    fn _get_max_typical_second(self) -> UInt8:
+        return self._greg._get_max_typical_second()
 
-    @staticmethod
-    fn _get_max_possible_second() -> UInt8:
-        return Gregorian._get_max_possible_second()
+    fn _get_max_possible_second(self) -> UInt8:
+        return self._greg._get_max_possible_second()
 
-    @staticmethod
-    fn _get_max_milisecond() -> UInt16:
-        return Gregorian._get_max_milisecond()
+    fn _get_max_milisecond(self) -> UInt16:
+        return self._greg._get_max_milisecond()
 
-    @staticmethod
-    fn _get_max_microsecond() -> UInt16:
-        return Gregorian._get_max_microsecond()
+    fn _get_max_microsecond(self) -> UInt16:
+        return self._greg._get_max_microsecond()
 
-    @staticmethod
-    fn _get_max_nanosecond() -> UInt16:
-        return Gregorian._get_max_nanosecond()
-
-    @staticmethod
-    fn _get_default_min_year() -> UInt16:
-        return Gregorian._get_default_min_year()
+    fn _get_max_nanosecond(self) -> UInt16:
+        return self._greg._get_max_nanosecond()
 
     fn _get_min_year(self) -> UInt16:
         return self._greg._get_min_year()
 
-    @staticmethod
-    fn _get_default_min_month() -> UInt8:
-        return Gregorian._get_default_min_month()
-
     fn _get_min_month(self) -> UInt8:
         return self._greg._get_min_month()
-
-    @staticmethod
-    fn _get_default_min_day() -> UInt8:
-        return Gregorian._get_default_min_day()
 
     fn _get_min_day(self) -> UInt8:
         return self._greg._get_min_day()
 
-    @staticmethod
-    fn _get_min_hour() -> UInt8:
-        return Gregorian._get_min_hour()
+    fn _get_min_hour(self) -> UInt8:
+        return self._greg._get_min_hour()
 
-    @staticmethod
-    fn _get_min_minute() -> UInt8:
-        return Gregorian._get_min_minute()
+    fn _get_min_minute(self) -> UInt8:
+        return self._greg._get_min_minute()
 
-    @staticmethod
-    fn _get_min_second() -> UInt8:
-        return Gregorian._get_min_second()
+    fn _get_min_second(self) -> UInt8:
+        return self._greg._get_min_second()
 
-    @staticmethod
-    fn _get_min_milisecond() -> UInt16:
-        return Gregorian._get_min_milisecond()
+    fn _get_min_milisecond(self) -> UInt16:
+        return self._greg._get_min_milisecond()
 
-    @staticmethod
-    fn _get_min_microsecond() -> UInt16:
-        return Gregorian._get_min_microsecond()
+    fn _get_min_microsecond(self) -> UInt16:
+        return self._greg._get_min_microsecond()
 
-    @staticmethod
-    fn _get_min_nanosecond() -> UInt16:
-        return Gregorian._get_min_nanosecond()
+    fn _get_min_nanosecond(self) -> UInt16:
+        return self._greg._get_min_nanosecond()

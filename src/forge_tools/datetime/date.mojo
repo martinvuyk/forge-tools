@@ -840,10 +840,10 @@ struct Date[
             dt.replace(
                 calendar=Calendar(
                     Self.C(
-                        min_year=Self.C._get_default_min_year(),
-                        min_month=Self.C._get_default_min_month(),
-                        min_day=Self.C._get_default_min_day(),
-                        max_year=Self.C._get_default_max_year(),
+                        min_year=Self.C._default_min_year,
+                        min_month=Self.C._default_min_month,
+                        min_day=Self.C._default_min_day,
+                        max_year=Self.C._default_max_year,
                     )
                 )
             )

@@ -392,11 +392,11 @@ fn current_sock_platform() -> SockPlatform:
     Returns:
         The current platform.
     """
-    if info.os_is_linux():
+    if info.CompilationTarget.is_linux():
         return SockPlatform.LINUX
-    elif info.os_is_macos():
+    elif info.CompilationTarget.is_macos():
         return SockPlatform.APPLE
-    elif info.os_is_windows():
+    elif info.CompilationTarget.is_windows():
         return SockPlatform.WINDOWS
     else:
         print(
